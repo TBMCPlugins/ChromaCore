@@ -1,20 +1,23 @@
 package buttondevteam.player;
 
-import java.util.UUID;
-
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-import org.yaml.snakeyaml.Yaml;
 
-public class TBMCPlayerAddEvent extends Event {
+public class TBMCPlayerSaveEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
+	private YamlConfiguration yaml;
 	private TBMCPlayer player;
 
-	public TBMCPlayerAddEvent(TBMCPlayer player) {
-		//TODO: Convert player configs
+	public TBMCPlayerSaveEvent(YamlConfiguration yaml, TBMCPlayer player) {
+		// TODO: Convert player configs
+		this.yaml = yaml;
 		this.player = player;
+	}
+
+	public YamlConfiguration GetYaml() {
+		return yaml;
 	}
 
 	public TBMCPlayer GetPlayer() {

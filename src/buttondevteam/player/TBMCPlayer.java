@@ -1,20 +1,13 @@
 package buttondevteam.player;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 public class TBMCPlayer {
 	public String PlayerName;
@@ -22,36 +15,6 @@ public class TBMCPlayer {
 	public UUID UUID;
 
 	public static HashMap<UUID, TBMCPlayer> OnlinePlayers = new HashMap<>();
-
-	public HashMap<String, String> Settings = new HashMap<>();
-
-	public static TBMCPlayer AddPlayerIfNeeded(UUID uuid) {
-		if (!AllPlayers.containsKey(uuid)) {
-			TBMCPlayer player = new TBMCPlayer();
-			player.UUID = uuid;
-			Player p = Bukkit.getPlayer(uuid);
-			if (p != null)
-				player.PlayerName = p.getName();
-			AllPlayers.put(uuid, player);
-			return player;
-		}
-		return AllPlayers.get(uuid);
-	}
-
-	public static void Load(YamlConfiguration yc) { //OLD
-		ConfigurationSection cs = yc.getConfigurationSection("players");
-		for (String key : cs.getKeys(false)) {
-			ConfigurationSection cs2 = cs.getConfigurationSection(key);
-			TBMCPlayer mp = AddPlayerIfNeeded(java.util.UUID.fromString(cs2.getString("uuid")));
-		}
-	}
-
-	public static void Save(YamlConfiguration yc) { //OLD
-		ConfigurationSection cs = yc.createSection("players");
-		for (TBMCPlayer mp : TBMCPlayer.AllPlayers.values()) {
-			ConfigurationSection cs2 = cs.createSection(mp.UUID.toString());
-		}
-	}
 
 	/**
 	 * @param name
@@ -62,7 +25,7 @@ public class TBMCPlayer {
 		@SuppressWarnings("deprecation")
 		Player p = Bukkit.getPlayer(name);
 		if (p != null)
-			return AllPlayers.get(p.getUniqueId());
+			return GetPlayer(p); // TODO: Put playernames into filenames
 		else
 			return null;
 	}
@@ -73,7 +36,7 @@ public class TBMCPlayer {
 	 * @return The {@link TBMCPlayer} object for the player
 	 */
 	public static TBMCPlayer GetPlayer(Player p) {
-		return TBMCPlayer.AllPlayers.get(p.getUniqueId());
+		return TBMCPlayer.OnlinePlayers.get(p.getUniqueId());
 	}
 
 	static TBMCPlayer LoadPlayer(UUID uuid) throws Exception {
@@ -87,7 +50,13 @@ public class TBMCPlayer {
 		else {
 			final YamlConfiguration yc = new YamlConfiguration();
 			yc.load(file);
-			
+			TBMCPlayer player = new TBMCPlayer();
+			player.UUID = uuid;
+			player.PlayerName = yc.getString("playername");
+
+			// Load in other plugins
+			Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerLoadEvent(yc, player));
+			return player;
 		}
 	}
 
@@ -99,7 +68,20 @@ public class TBMCPlayer {
 		Player p = Bukkit.getPlayer(uuid);
 		if (p != null)
 			player.PlayerName = p.getName();
-		AllPlayers.put(uuid, player);
+		OnlinePlayers.put(uuid, player);
+		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerAddEvent(player));
+		SavePlayer(player);
 		return player;
+	}
+
+	static void SavePlayer(TBMCPlayer player) {
+		YamlConfiguration yc = new YamlConfiguration();
+		yc.set("playername", player.PlayerName);
+		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerSaveEvent(yc, player));
+		try {
+			yc.save("tbmcplayers/" + player.UUID + ".yml");
+		} catch (IOException e) {
+			new Exception("Failed to save player data for " + player.PlayerName, e).printStackTrace();
+		}
 	}
 }
