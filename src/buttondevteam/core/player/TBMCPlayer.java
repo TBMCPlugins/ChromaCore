@@ -9,6 +9,18 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
+/**
+ * <p>
+ * The class for holding data common to all TBMC plugins
+ * </p>
+ * <p>
+ * Listen to the load and save events from this package to load and save
+ * plugin-specific data
+ * </p>
+ * 
+ * @author Norbi
+ *
+ */
 public class TBMCPlayer {
 	public String PlayerName;
 

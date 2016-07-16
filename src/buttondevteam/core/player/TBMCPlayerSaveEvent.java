@@ -16,7 +16,7 @@ public class TBMCPlayerSaveEvent extends Event {
 		this.player = player;
 	}
 
-	public YamlConfiguration GetYaml() {
+	public YamlConfiguration GetPlayerConfig() {
 		return yaml;
 	}
 
