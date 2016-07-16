@@ -1,11 +1,7 @@
 package buttondevteam.core.player;
 
-import java.util.UUID;
-
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-import org.yaml.snakeyaml.Yaml;
 
 public class TBMCPlayerAddEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();

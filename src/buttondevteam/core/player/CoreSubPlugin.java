@@ -2,10 +2,10 @@ package buttondevteam.core.player;
 
 import org.bukkit.plugin.Plugin;
 
-public class PlayerSubPlugin {
-	public static Plugin plugin;
+public class CoreSubPlugin {
+	public Plugin plugin;
 
-	public PlayerSubPlugin(Plugin plugin) {
+	public CoreSubPlugin(Plugin plugin) {
 		this.plugin = plugin;
 	}
 
