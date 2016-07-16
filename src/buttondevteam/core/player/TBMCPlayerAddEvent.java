@@ -1,4 +1,4 @@
-package buttondevteam.player;
+package buttondevteam.core.player;
 
 import java.util.UUID;
 

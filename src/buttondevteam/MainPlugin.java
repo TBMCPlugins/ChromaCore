@@ -6,7 +6,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import buttondevteam.alisolarflare.aliarrow.AliArrowSubPlugin;
-import buttondevteam.player.PlayerSubPlugin;
+import buttondevteam.core.player.PlayerSubPlugin;
 
 public class MainPlugin extends JavaPlugin {
 	private PluginDescriptionFile pdfFile;
