@@ -9,6 +9,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
+import com.palmergames.bukkit.towny.Towny;
+import com.palmergames.bukkit.towny.object.Resident;
+import com.palmergames.bukkit.towny.object.ResidentModes;
+import com.palmergames.bukkit.towny.object.TownyUniverse;
+
 /**
  * <p>
  * The class for holding data common to all TBMC plugins
@@ -22,6 +27,8 @@ import org.bukkit.entity.Player;
  *
  */
 public class TBMCPlayer {
+	private static final String TBMC_PLAYERS_DIR = "TBMC/players";
+
 	public String PlayerName;
 
 	public UUID UUID;
@@ -51,20 +58,31 @@ public class TBMCPlayer {
 		return TBMCPlayer.OnlinePlayers.get(p.getUniqueId());
 	}
 
-	static TBMCPlayer LoadPlayer(UUID uuid) throws Exception {
-		if (OnlinePlayers.containsKey(uuid))
-			return OnlinePlayers.get(uuid);
-		File file = new File("TBMC/players");
+	static TBMCPlayer LoadPlayer(Player p) {
+		if (OnlinePlayers.containsKey(p.getUniqueId()))
+			return OnlinePlayers.get(p.getUniqueId());
+		File file = new File(TBMC_PLAYERS_DIR);
 		file.mkdirs();
-		file = new File("TBMC/players", uuid.toString() + ".yml");
+		file = new File(TBMC_PLAYERS_DIR, p.getUniqueId().toString() + ".yml");
 		if (!file.exists())
-			return AddPlayer(uuid);
+			return AddPlayer(p);
 		else {
 			final YamlConfiguration yc = new YamlConfiguration();
-			yc.load(file);
+			try {
+				yc.load(file);
+			} catch (Exception e) {
+				new Exception("Failed to load player data for " + p.getUniqueId(), e).printStackTrace();
+				return null;
+			}
 			TBMCPlayer player = new TBMCPlayer();
-			player.UUID = uuid;
+			player.UUID = p.getUniqueId();
 			player.PlayerName = yc.getString("playername");
+			if (!p.getName().equals(player.PlayerName)) {
+				System.out.println("Renaming " + player.PlayerName + " to " + p.getName());
+				TownyUniverse tu = Towny.getPlugin(Towny.class).getTownyUniverse();
+				tu.getResidentMap().get(player.PlayerName).setName(p.getName());
+				System.out.println("Renaming done.");
+			}
 
 			// Load in other plugins
 			Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerLoadEvent(yc, player));
@@ -72,15 +90,11 @@ public class TBMCPlayer {
 		}
 	}
 
-	static TBMCPlayer AddPlayer(UUID uuid) {
-		if (OnlinePlayers.containsKey(uuid))
-			return OnlinePlayers.get(uuid);
+	static TBMCPlayer AddPlayer(Player p) {
 		TBMCPlayer player = new TBMCPlayer();
-		player.UUID = uuid;
-		Player p = Bukkit.getPlayer(uuid);
-		if (p != null)
-			player.PlayerName = p.getName();
-		OnlinePlayers.put(uuid, player);
+		player.UUID = p.getUniqueId();
+		player.PlayerName = p.getName();
+		OnlinePlayers.put(p.getUniqueId(), player);
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerAddEvent(player));
 		SavePlayer(player);
 		return player;
@@ -91,7 +105,7 @@ public class TBMCPlayer {
 		yc.set("playername", player.PlayerName);
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerSaveEvent(yc, player));
 		try {
-			yc.save("tbmcplayers/" + player.UUID + ".yml");
+			yc.save(TBMC_PLAYERS_DIR + "/" + player.UUID + ".yml");
 		} catch (IOException e) {
 			new Exception("Failed to save player data for " + player.PlayerName, e).printStackTrace();
 		}

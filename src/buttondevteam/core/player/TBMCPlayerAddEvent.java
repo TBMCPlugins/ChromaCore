@@ -3,13 +3,22 @@ package buttondevteam.core.player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+/**
+ * <p>
+ * This event gets called when a new player joins. After this event, the
+ * {@link TBMCPlayerSaveEvent} will be called.
+ * </p>
+ * 
+ * @author Norbi
+ *
+ */
 public class TBMCPlayerAddEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
 	private TBMCPlayer player;
 
 	public TBMCPlayerAddEvent(TBMCPlayer player) {
-		//TODO: Convert player configs
+		// TODO: Convert player configs
 		this.player = player;
 	}
 

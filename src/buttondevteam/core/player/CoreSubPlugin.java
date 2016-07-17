@@ -1,5 +1,8 @@
 package buttondevteam.core.player;
 
+import java.util.logging.Level;
+
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
 public class CoreSubPlugin {
@@ -10,6 +13,7 @@ public class CoreSubPlugin {
 	}
 
 	public void register() {
-		System.out.println("Players subplugin registered!");
+		Bukkit.getPluginManager().registerEvents(new PlayerListener(), plugin);
+		plugin.getLogger().log(Level.INFO, "Core subplugin registered!");
 	}
 }
