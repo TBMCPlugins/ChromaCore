@@ -1,4 +1,4 @@
-package buttondevteam.core.player;
+package buttondevteam.core;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;

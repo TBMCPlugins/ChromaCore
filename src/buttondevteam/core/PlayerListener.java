@@ -1,4 +1,4 @@
-package buttondevteam.core.player;
+package buttondevteam.core;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

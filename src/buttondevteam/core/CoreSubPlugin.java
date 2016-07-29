@@ -1,4 +1,4 @@
-package buttondevteam.core.player;
+package buttondevteam.core;
 
 import java.util.logging.Level;
 
