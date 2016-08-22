@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
@@ -17,8 +18,7 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
  * The class for holding data common to all TBMC plugins
  * </p>
  * <p>
- * Listen to the load and save events from this package to load and save
- * plugin-specific data
+ * Listen to the load and save events from this package to load and save plugin-specific data
  * </p>
  * 
  * @author Norbi
@@ -31,6 +31,18 @@ public class TBMCPlayer {
 
 	public UUID UUID;
 
+	public <T extends TBMCPlayer> T AsPluginPlayer(Class<T> cl) {
+		T obj = null;
+		try {
+			obj = cl.newInstance();
+			obj.UUID = UUID;
+			obj.PlayerName = PlayerName;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return obj;
+	}
+
 	public static HashMap<UUID, TBMCPlayer> OnlinePlayers = new HashMap<>();
 
 	/**
@@ -40,9 +52,9 @@ public class TBMCPlayer {
 	 */
 	public static TBMCPlayer GetFromName(String name) {
 		@SuppressWarnings("deprecation")
-		Player p = Bukkit.getPlayer(name);
+		OfflinePlayer p = Bukkit.getOfflinePlayer(name);
 		if (p != null)
-			return GetPlayer(p); // TODO: Put playernames into filenames
+			return GetPlayer(p);
 		else
 			return null;
 	}
@@ -52,11 +64,14 @@ public class TBMCPlayer {
 	 *            The Player object
 	 * @return The {@link TBMCPlayer} object for the player
 	 */
-	public static TBMCPlayer GetPlayer(Player p) {
-		return TBMCPlayer.OnlinePlayers.get(p.getUniqueId());
+	public static TBMCPlayer GetPlayer(OfflinePlayer p) {
+		if (TBMCPlayer.OnlinePlayers.containsKey(p.getUniqueId()))
+			return TBMCPlayer.OnlinePlayers.get(p.getUniqueId());
+		else
+			return TBMCPlayer.LoadPlayer(p);
 	}
 
-	static TBMCPlayer LoadPlayer(Player p) {
+	protected static TBMCPlayer LoadPlayer(OfflinePlayer p) {
 		if (OnlinePlayers.containsKey(p.getUniqueId()))
 			return OnlinePlayers.get(p.getUniqueId());
 		File file = new File(TBMC_PLAYERS_DIR);
@@ -75,6 +90,7 @@ public class TBMCPlayer {
 			TBMCPlayer player = new TBMCPlayer();
 			player.UUID = p.getUniqueId();
 			player.PlayerName = yc.getString("playername");
+			System.out.println("Player name: " + player.PlayerName);
 			if (!p.getName().equals(player.PlayerName)) {
 				System.out.println("Renaming " + player.PlayerName + " to " + p.getName());
 				TownyUniverse tu = Towny.getPlugin(Towny.class).getTownyUniverse();
@@ -88,7 +104,7 @@ public class TBMCPlayer {
 		}
 	}
 
-	static TBMCPlayer AddPlayer(Player p) {
+	static TBMCPlayer AddPlayer(OfflinePlayer p) {
 		TBMCPlayer player = new TBMCPlayer();
 		player.UUID = p.getUniqueId();
 		player.PlayerName = p.getName();
@@ -107,5 +123,19 @@ public class TBMCPlayer {
 		} catch (IOException e) {
 			new Exception("Failed to save player data for " + player.PlayerName, e).printStackTrace();
 		}
+	}
+
+	static void JoinPlayer(TBMCPlayer player) {
+		OnlinePlayers.put(player.UUID, player);
+		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerJoinEvent(player));
+	}
+
+	static void QuitPlayer(TBMCPlayer player) {
+		OnlinePlayers.remove(player.UUID);
+		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player));
+	}
+
+	<T extends TBMCPlayer> T GetAs(Class<T> cl) { // TODO: Serialize player classes
+		return null;
 	}
 }
