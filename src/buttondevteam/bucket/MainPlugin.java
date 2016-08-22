@@ -1,4 +1,4 @@
-package buttondevteam;
+package buttondevteam.bucket;
 
 import java.util.logging.Logger;
 
@@ -6,8 +6,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import buttondevteam.alisolarflare.aliarrow.AliArrowSubPlugin;
-import buttondevteam.core.CoreSubPlugin;
+import buttondevteam.bucket.alisolarflare.aliarrow.AliArrowSubPlugin;
+import buttondevteam.bucket.core.CoreSubPlugin;
 
 public class MainPlugin extends JavaPlugin {
 	public static MainPlugin Instance;

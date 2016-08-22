@@ -1,10 +1,10 @@
-package buttondevteam.alisolarflare.aliarrow;
+package buttondevteam.bucket.alisolarflare.aliarrow;
 
 import org.bukkit.Particle;
 import org.bukkit.entity.Arrow;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import buttondevteam.MainPlugin;
+import buttondevteam.bucket.MainPlugin;
 
 public class AliArrowTask extends BukkitRunnable{
 	MainPlugin plugin;

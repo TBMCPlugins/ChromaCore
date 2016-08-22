@@ -1,4 +1,4 @@
-package buttondevteam.core;
+package buttondevteam.bucket.core;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -10,12 +10,17 @@ public class PlayerListener implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void OnPlayerJoin(PlayerJoinEvent event) {
-		if (TBMCPlayer.LoadPlayer(event.getPlayer()) == null)
+		TBMCPlayer player = TBMCPlayer.LoadPlayer(event.getPlayer());
+		if (player == null)
 			event.getPlayer().sendMessage("§c[TBMC] Failed to load player data! Please contact a mod.");
+		else
+			TBMCPlayer.JoinPlayer(player);
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void OnPlayerLeave(PlayerQuitEvent event) {
-		TBMCPlayer.SavePlayer(TBMCPlayer.GetPlayer(event.getPlayer()));
+		TBMCPlayer player = TBMCPlayer.GetPlayer(event.getPlayer());
+		TBMCPlayer.SavePlayer(player);
+		TBMCPlayer.QuitPlayer(player);
 	}
 }

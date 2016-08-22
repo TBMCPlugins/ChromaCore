@@ -1,4 +1,4 @@
-package buttondevteam.core;
+package buttondevteam.bucket.core;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,7 +14,7 @@ import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import buttondevteam.MainPlugin;
+import buttondevteam.bucket.MainPlugin;
 
 public final class TBMCCoreAPI {
 	/**
