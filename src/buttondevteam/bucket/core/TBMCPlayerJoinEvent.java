@@ -1,14 +1,19 @@
-package buttondevteam.player;
+package buttondevteam.bucket.core;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-public class TBMCPlayerAddEvent extends Event {
+public class TBMCPlayerJoinEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-	public TBMCPlayerAddEvent(TBMCPlayer tbmcplayer) {
-		// TODO: Separate player configs, figure out how to make one TBMCPlayer
-		// object have all the other plugin properties
+	private TBMCPlayer player;
+
+	public TBMCPlayerJoinEvent(TBMCPlayer player) {
+		this.player = player;
+	}
+
+	public TBMCPlayer GetPlayer() {
+		return player;
 	}
 
 	@Override

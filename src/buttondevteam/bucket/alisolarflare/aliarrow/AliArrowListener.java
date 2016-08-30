@@ -1,4 +1,4 @@
-package buttondevteam.alisolarflare.aliarrow;
+package buttondevteam.bucket.alisolarflare.aliarrow;
 
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.EntityType;
@@ -6,7 +6,8 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
-import buttondevteam.MainPlugin;
+
+import buttondevteam.bucket.MainPlugin;
 
 public class AliArrowListener implements Listener {
 	private final MainPlugin plugin;

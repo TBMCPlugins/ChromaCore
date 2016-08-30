@@ -1,8 +1,8 @@
-package buttondevteam.alisolarflare.aliarrow;
+package buttondevteam.bucket.alisolarflare.aliarrow;
 
 import java.util.logging.Level;
 
-import buttondevteam.MainPlugin;
+import buttondevteam.bucket.MainPlugin;
 
 public class AliArrowSubPlugin {
 	private MainPlugin plugin;
