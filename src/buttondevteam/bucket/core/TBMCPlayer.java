@@ -11,6 +11,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import com.palmergames.bukkit.towny.Towny;
+import com.palmergames.bukkit.towny.object.Resident;
 import com.palmergames.bukkit.towny.object.TownyUniverse;
 
 /**
@@ -94,7 +95,14 @@ public class TBMCPlayer {
 			if (!p.getName().equals(player.PlayerName)) {
 				System.out.println("Renaming " + player.PlayerName + " to " + p.getName());
 				TownyUniverse tu = Towny.getPlugin(Towny.class).getTownyUniverse();
-				tu.getResidentMap().get(player.PlayerName).setName(p.getName());
+				Resident resident = tu.getResidentMap().get(player.PlayerName);
+				if (resident == null)
+					System.out.println("Resident not found - couldn't rename in Towny.");
+				else if (tu.getResidentMap().contains(p.getName()))
+					System.out.println("Target resident name is already in use."); // TODO: Handle
+				else
+					resident.setName(p.getName());
+				player.PlayerName = p.getName();
 				System.out.println("Renaming done.");
 			}
 
