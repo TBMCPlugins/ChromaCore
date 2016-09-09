@@ -18,7 +18,6 @@ public class TBMCPlayerAddEvent extends Event {
 	private TBMCPlayer player;
 
 	public TBMCPlayerAddEvent(TBMCPlayer player) {
-		// TODO: Convert player configs
 		this.player = player;
 	}
 

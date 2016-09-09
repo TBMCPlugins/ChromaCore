@@ -11,7 +11,6 @@ public class TBMCPlayerSaveEvent extends Event {
 	private TBMCPlayer player;
 
 	public TBMCPlayerSaveEvent(YamlConfiguration yaml, TBMCPlayer player) {
-		// TODO: Convert player configs
 		this.yaml = yaml;
 		this.player = player;
 	}
