@@ -4,7 +4,7 @@ jdk:
 #   - ./prepareEnvironment.sh
 install:
    - echo "Downloading Towny JAR..."
-   - wget --header 'Accept-Language: en-us,en;q=0.5' -O "Towny.jar" http://palmergames.com/file-repo/Towny%20Advanced/Development/0.91.1.5/Towny.jar
+   - wget --header 'Accept-Language: en-us;q=0.5' -O "Towny.jar" http://palmergames.com/file-repo/Towny%20Advanced/Development/0.91.1.5/Towny.jar
    - head Towny.jar
    - mvn install:install-file -Dfile=Towny.jar -DgroupId=com.palmergames -DartifactId=Towny -Dversion=0.91.1.5 -Dpackaging=jar
    - mvn clean install -DskipTests 
