@@ -11,15 +11,18 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.json.simple.JSONObject;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import buttondevteam.bucket.MainPlugin;
 
 public final class TBMCCoreAPI {
 	/**
-	 * Updates or installs the specified plugin. The plugin JAR filename must
-	 * match the plugin's repository name.
+	 * Updates or installs the specified plugin. The plugin JAR filename must match the plugin's repository name.
 	 * 
 	 * @param name
 	 *            The plugin's repository/JAR name.
@@ -48,10 +51,10 @@ public final class TBMCCoreAPI {
 		List<String> ret = new ArrayList<>();
 		try {
 			String resp = DownloadString("https://api.github.com/orgs/TBMCPlugins/repos");
-			JSONArray arr = new JSONArray(resp);
-			for (Object obj : arr) {
-				JSONObject jobj = (JSONObject) obj;
-				ret.add(jobj.getString("name"));
+			JsonArray arr = new JsonParser().parse(resp).getAsJsonArray();
+			for (JsonElement obj : arr) {
+				JsonObject jobj = obj.getAsJsonObject();
+				ret.add(jobj.get("name").getAsString());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
