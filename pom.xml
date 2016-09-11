@@ -31,6 +31,11 @@
 				<goals> <goal>shade</goal> </goals> <configuration> <artifactSet> <includes> 
 				</includes> </artifactSet> <pluginExecution> <action> <execute /> </action> 
 				</pluginExecution> </configuration> </execution> </executions> </plugin> -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.0.1</version>
+			</plugin>
 		</plugins>
 	</build>
 	<repositories>
