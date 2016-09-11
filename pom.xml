@@ -38,7 +38,7 @@
 				<executions>
 					<execution>
 						<id>copy</id>
-						<phase>package</phase>
+						<phase>compile</phase>
 						<goals>
 							<goal>copy-resources</goal>
 						</goals>
