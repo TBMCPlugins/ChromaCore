@@ -33,7 +33,7 @@ public final class TBMCCoreAPI {
 		String ret = "";
 		URL url;
 		try {
-			url = new URL("https://github.com/TBMCPlugins/" + name + "/raw/master/" + name + ".jar");
+			url = new URL("com/github/TBMCPlugins/" + name + "/master-SNAPSHOT/" + name + "-master-SNAPSHOT.jar");
 			FileUtils.copyURLToFile(url, new File("plugins/" + name + ".jar"));
 		} catch (Exception e) {
 			MainPlugin.Instance.getLogger().warning("Error!\n" + e);
