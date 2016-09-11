@@ -1,2 +1,2 @@
-# ButtonPluginBucket
-A place where finished projects go, that are too small to deserve their own plugin
+# ButtonCore
+A plugin that server as a container for things common to many of our plugins
