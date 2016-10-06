@@ -1,6 +1,7 @@
 package buttondevteam.bucket.core;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -33,8 +34,14 @@ public final class TBMCCoreAPI {
 		String ret = "";
 		URL url;
 		try {
-			url = new URL("https://jitpack.io/com/github/TBMCPlugins/" + name + "/master-SNAPSHOT/" + name + "-master-SNAPSHOT.jar");
+			url = new URL("https://jitpack.io/com/github/TBMCPlugins/" + name + "/master-SNAPSHOT/" + name
+					+ "-master-SNAPSHOT.jar");
 			FileUtils.copyURLToFile(url, new File("plugins/" + name + ".jar"));
+		} catch (FileNotFoundException e) {
+			ret = "Can't find JAR, the build probably failed. Build log (scroll to bottom):\nhttps://jitpack.io/com/github/TBMCPlugins/"
+					+ name + "/master-SNAPSHOT/build.log";
+		} catch (IOException e) {
+			ret = "IO error - Did you spell the plugin's name correctly?\ne.getMessage()";
 		} catch (Exception e) {
 			MainPlugin.Instance.getLogger().warning("Error!\n" + e);
 			ret = e.toString();
