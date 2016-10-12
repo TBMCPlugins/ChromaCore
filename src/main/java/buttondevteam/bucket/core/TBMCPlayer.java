@@ -92,7 +92,10 @@ public class TBMCPlayer {
 			player.UUID = p.getUniqueId();
 			player.PlayerName = yc.getString("playername");
 			System.out.println("Player name: " + player.PlayerName);
-			if (!p.getName().equals(player.PlayerName)) {
+			if (player.PlayerName == null) {
+				player.PlayerName = p.getName();
+				System.out.println("Player name saved: " + player.PlayerName);
+			} else if (!p.getName().equals(player.PlayerName)) {
 				System.out.println("Renaming " + player.PlayerName + " to " + p.getName());
 				TownyUniverse tu = Towny.getPlugin(Towny.class).getTownyUniverse();
 				Resident resident = tu.getResidentMap().get(player.PlayerName);
