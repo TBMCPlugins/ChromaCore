@@ -23,10 +23,10 @@ import buttondevteam.bucket.MainPlugin;
 
 public final class TBMCCoreAPI {
 	/**
-	 * Updates or installs the specified plugin. The plugin JAR filename must match the plugin's repository name.
+	 * Updates or installs the specified plugin. The plugin must use Maven.
 	 * 
 	 * @param name
-	 *            The plugin's repository/JAR name.
+	 *            The plugin's repository name.
 	 * @return Error message or empty string
 	 */
 	public static String UpdatePlugin(String name) {
@@ -41,7 +41,7 @@ public final class TBMCCoreAPI {
 			ret = "Can't find JAR, the build probably failed. Build log (scroll to bottom):\nhttps://jitpack.io/com/github/TBMCPlugins/"
 					+ name + "/master-SNAPSHOT/build.log";
 		} catch (IOException e) {
-			ret = "IO error - Did you spell the plugin's name correctly?\ne.getMessage()";
+			ret = "IO error - Did you spell the plugin's name correctly?\n" + e.getMessage();
 		} catch (Exception e) {
 			MainPlugin.Instance.getLogger().warning("Error!\n" + e);
 			ret = e.toString();
