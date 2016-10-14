@@ -12,8 +12,6 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.json.simple.JSONObject;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -30,19 +28,31 @@ public final class TBMCCoreAPI {
 	 * @return Error message or empty string
 	 */
 	public static String UpdatePlugin(String name) {
-		MainPlugin.Instance.getLogger().info("Updating TBMC plugin: " + name);
+		List<String> plugins = GetPluginNames();
+		String correctname = null;
+		for (String plugin : plugins) {
+			if (plugin.equalsIgnoreCase(name)) {
+				correctname = plugin; // Fixes capitalization
+				break;
+			}
+		}
+		if (correctname == null) {
+			MainPlugin.Instance.getLogger().warning("There was an error while updating TBMC plugin: " + name);
+			return "Can't find plugin: " + name;
+		}
+		MainPlugin.Instance.getLogger().info("Updating TBMC plugin: " + correctname);
 		String ret = "";
 		URL url;
 		try {
 			url = new URL("https://jitpack.io/com/github/TBMCPlugins/"
-					+ (name.equalsIgnoreCase("ButtonCore") ? "ButtonCore/ButtonCore" : name) + "/master-SNAPSHOT/"
-					+ name + "-master-SNAPSHOT.jar"); // ButtonCore exception required since it hosts Towny as well
-			FileUtils.copyURLToFile(url, new File("plugins/" + name + ".jar"));
+					+ (correctname.equals("ButtonCore") ? "ButtonCore/ButtonCore" : correctname) + "/master-SNAPSHOT/"
+					+ correctname + "-master-SNAPSHOT.jar"); // ButtonCore exception required since it hosts Towny as well
+			FileUtils.copyURLToFile(url, new File("plugins/" + correctname + ".jar"));
 		} catch (FileNotFoundException e) {
 			ret = "Can't find JAR, the build probably failed. Build log (scroll to bottom):\nhttps://jitpack.io/com/github/TBMCPlugins/"
-					+ name + "/master-SNAPSHOT/build.log";
+					+ correctname + "/master-SNAPSHOT/build.log";
 		} catch (IOException e) {
-			ret = "IO error - Did you spell the plugin's name correctly?\n" + e.getMessage();
+			ret = "IO error!\n" + e.getMessage();
 		} catch (Exception e) {
 			MainPlugin.Instance.getLogger().warning("Error!\n" + e);
 			ret = e.toString();
