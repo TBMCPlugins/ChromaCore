@@ -32,7 +32,7 @@ public class AliArrowListener implements Listener {
 				AliArrowTask aliArrowTask = new AliArrowTask(plugin,arrow,"alisolarflare");
 				aliArrowTask.runTaskTimer(plugin, 2, 1);
 				return;
-			}else if (!(projectile.getShooter().equals(plugin.getServer().getPlayer("Zanthr")))){
+			}else if (projectile.getShooter().equals(plugin.getServer().getPlayer("Zanthr"))){
 				AliArrowTask aliArrowTask = new AliArrowTask(plugin,arrow,"alisolarflare");
 				aliArrowTask.runTaskTimer(plugin, 2, 1);
 				return;
