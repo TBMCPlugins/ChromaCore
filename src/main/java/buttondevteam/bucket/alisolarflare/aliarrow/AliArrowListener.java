@@ -24,15 +24,21 @@ public class AliArrowListener implements Listener {
 				return;
 			}
 			Projectile projectile = event.getEntity();
-			if (!(projectile.getShooter().equals(plugin.getServer().getPlayer("Ali")))){
-				return;
-			}
 			Arrow arrow = (Arrow) projectile;
 			if (!(arrow.isCritical())){
 				return;
 			}
-			AliArrowTask aliArrowTask = new AliArrowTask(plugin,arrow);
-			aliArrowTask.runTaskTimer(plugin, 2, 1);
+			if (projectile.getShooter().equals(plugin.getServer().getPlayer("alisolarflare"))){
+				AliArrowTask aliArrowTask = new AliArrowTask(plugin,arrow,"alisolarflare");
+				aliArrowTask.runTaskTimer(plugin, 2, 1);
+				return;
+			}else if (!(projectile.getShooter().equals(plugin.getServer().getPlayer("Zanthr")))){
+				AliArrowTask aliArrowTask = new AliArrowTask(plugin,arrow,"alisolarflare");
+				aliArrowTask.runTaskTimer(plugin, 2, 1);
+				return;
+			}
+			return;
+			
 		}catch(Exception e){
 			return;
 		}
