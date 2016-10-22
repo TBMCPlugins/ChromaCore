@@ -2,11 +2,9 @@ package buttondevteam.bucket;
 
 import java.util.logging.Logger;
 
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import buttondevteam.bucket.alisolarflare.aliarrow.AliArrowSubPlugin;
 import buttondevteam.bucket.core.CoreSubPlugin;
 
 public class MainPlugin extends JavaPlugin {
@@ -14,7 +12,6 @@ public class MainPlugin extends JavaPlugin {
 
 	private PluginDescriptionFile pdfFile;
 	private Logger logger;
-	private AliArrowSubPlugin aliArrowSubPlugin;
 	private CoreSubPlugin playerSubPlugin;
 
 	public void onEnable() {
@@ -32,8 +29,6 @@ public class MainPlugin extends JavaPlugin {
 	}
 
 	private void registerSubPlugins() {
-		aliArrowSubPlugin = new AliArrowSubPlugin(this);
-		aliArrowSubPlugin.register();
 		playerSubPlugin = new CoreSubPlugin(this);
 		playerSubPlugin.register();
 	}
