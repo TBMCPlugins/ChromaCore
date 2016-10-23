@@ -1,4 +1,4 @@
-package buttondevteam.bucket.core;
+package buttondevteam.bucket;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

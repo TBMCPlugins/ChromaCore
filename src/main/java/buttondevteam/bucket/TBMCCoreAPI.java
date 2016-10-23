@@ -1,4 +1,4 @@
-package buttondevteam.bucket.core;
+package buttondevteam.bucket;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,8 +16,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
-import buttondevteam.bucket.MainPlugin;
 
 public final class TBMCCoreAPI {
 	/**

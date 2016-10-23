@@ -1,4 +1,4 @@
-package buttondevteam.bucket.core;
+package buttondevteam.bucket;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Event;

@@ -1,4 +1,4 @@
-package buttondevteam.bucket.core;
+package buttondevteam.bucket;
 
 import java.io.File;
 import java.io.IOException;
