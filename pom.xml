@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>buttondevteam</groupId>
+	<groupId>com.github.TBMCPlugins.ButtonCore</groupId>
 	<artifactId>ButtonCore</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>master-SNAPSHOT</version>
 	<name>ButtonCore</name>
 	<description>ButtonCore</description>
 	<build>
@@ -15,16 +15,16 @@
 					<exclude>**/*.java</exclude>
 				</excludes>
 			</resource>
-            <resource>
-                <directory>src/main/resources</directory>
-                <includes>
-                    <include>*.properties</include>
-                    <include>*.yml</include>
-                    <include>*.csv</include>
-                    <include>*.txt</include>
-                </includes>
-                <filtering>true</filtering>
-            </resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>*.properties</include>
+					<include>*.yml</include>
+					<include>*.csv</include>
+					<include>*.txt</include>
+				</includes>
+				<filtering>true</filtering>
+			</resource>
 		</resources>
 		<finalName>ButtonCore</finalName>
 		<plugins>
@@ -97,6 +97,11 @@
 		<dependency>
 			<groupId>com.github.TBMCPlugins.ButtonCore</groupId>
 			<artifactId>Towny</artifactId>
+			<version>master-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.TBMCPlugins</groupId>
+			<artifactId>DiscordPlugin</artifactId>
 			<version>master-SNAPSHOT</version>
 		</dependency>
 	</dependencies>

@@ -3,6 +3,7 @@ package buttondevteam.core;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
+import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -19,7 +20,8 @@ public class MainPlugin extends JavaPlugin {
 		logger = getLogger();
 
 		logger.info(pdfFile.getName() + " has been Enabled (V." + pdfFile.getVersion() + ").");
-		Bukkit.getPluginManager().registerEvents(new PlayerListener(), this);
+		EventExceptionHandler.registerEvents(new PlayerListener(), this, new EventExceptionDiscordSender() {
+		});
 	}
 
 }
