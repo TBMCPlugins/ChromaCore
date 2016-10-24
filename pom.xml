@@ -104,6 +104,11 @@
 			<artifactId>DiscordPlugin</artifactId>
 			<version>master-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>com.github.TBMCPlugins</groupId>
+			<artifactId>ButtonLib</artifactId>
+			<version>master-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 	<organization>
 		<name>TBMCPlugins</name>

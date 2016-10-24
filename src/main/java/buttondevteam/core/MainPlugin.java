@@ -20,8 +20,7 @@ public class MainPlugin extends JavaPlugin {
 		logger = getLogger();
 
 		logger.info(pdfFile.getName() + " has been Enabled (V." + pdfFile.getVersion() + ").");
-		EventExceptionHandler.registerEvents(new PlayerListener(), this, new EventExceptionDiscordSender() {
-		});
+		EventExceptionHandler.registerEvents(new PlayerListener(), this, new EventExceptionDiscordSender());
 	}
 
 }
