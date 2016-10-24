@@ -36,11 +36,31 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
-			<!-- <<plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-shade-plugin</artifactId> 
-				<version>2.4.2</version> <executions> <execution> <phase>package</phase> 
-				<goals> <goal>shade</goal> </goals> <configuration> <artifactSet> <includes> 
-				</includes> </artifactSet> <pluginExecution> <action> <execute /> </action> 
-				</pluginExecution> </configuration> </execution> </executions> </plugin> -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.4.2</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<artifactSet>
+								<includes>
+									<include>com.github.TBMCPlugins.ButtonLib:ButtonLib</include>
+								</includes>
+							</artifactSet>
+							<pluginExecution>
+								<action>
+									<execute />
+								</action>
+							</pluginExecution>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
@@ -95,7 +115,7 @@
 		</dependency>
 		<!-- Change jitpack.yml to set location of Towny JAR -->
 		<dependency>
-			<groupId>com.github.TBMCPlugins.ButtonCore</groupId>
+			<groupId>com.github.TBMCPlugins.ButtonLib</groupId>
 			<artifactId>Towny</artifactId>
 			<version>master-SNAPSHOT</version>
 		</dependency>
@@ -105,7 +125,7 @@
 			<version>master-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>com.github.TBMCPlugins</groupId>
+			<groupId>com.github.TBMCPlugins.ButtonLib</groupId>
 			<artifactId>ButtonLib</artifactId>
 			<version>master-SNAPSHOT</version>
 		</dependency>
