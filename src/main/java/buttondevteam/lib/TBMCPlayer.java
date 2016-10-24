@@ -70,7 +70,7 @@ public class TBMCPlayer {
 			return TBMCPlayer.LoadPlayer(p);
 	}
 
-	protected static TBMCPlayer LoadPlayer(OfflinePlayer p) {
+	public static TBMCPlayer LoadPlayer(OfflinePlayer p) {
 		if (OnlinePlayers.containsKey(p.getUniqueId()))
 			return OnlinePlayers.get(p.getUniqueId());
 		File file = new File(TBMC_PLAYERS_DIR);
@@ -123,7 +123,7 @@ public class TBMCPlayer {
 		return player;
 	}
 
-	static void SavePlayer(TBMCPlayer player) {
+	public static void SavePlayer(TBMCPlayer player) {
 		YamlConfiguration yc = new YamlConfiguration();
 		yc.set("playername", player.PlayerName);
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerSaveEvent(yc, player));
@@ -134,12 +134,12 @@ public class TBMCPlayer {
 		}
 	}
 
-	static void JoinPlayer(TBMCPlayer player) {
+	public static void JoinPlayer(TBMCPlayer player) {
 		OnlinePlayers.put(player.UUID, player);
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerJoinEvent(player));
 	}
 
-	static void QuitPlayer(TBMCPlayer player) {
+	public static void QuitPlayer(TBMCPlayer player) {
 		OnlinePlayers.remove(player.UUID);
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player));
 	}
