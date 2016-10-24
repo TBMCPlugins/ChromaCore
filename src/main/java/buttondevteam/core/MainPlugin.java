@@ -2,11 +2,10 @@ package buttondevteam.core;
 
 import java.util.logging.Logger;
 
-import org.bukkit.Bukkit;
-import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import buttondevteam.discordplugin.EventExceptionDiscordSender;
 import buttondevteam.lib.EventExceptionHandler;
 
 public class MainPlugin extends JavaPlugin {
