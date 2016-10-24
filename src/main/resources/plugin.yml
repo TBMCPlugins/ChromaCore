@@ -1,4 +1,4 @@
 name: ButtonPluginBucket
-main: buttondevteam.bucket.MainPlugin
+main: buttondevteam.core.MainPlugin
 version: 1.0
 author: TBMCPlugins
