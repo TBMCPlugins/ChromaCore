@@ -45,8 +45,8 @@ public final class TBMCCoreAPI {
 		URL url;
 		try {
 			url = new URL("https://jitpack.io/com/github/TBMCPlugins/"
-					+ (correctname.equals("ButtonCore") ? "ButtonCore/ButtonCore" : correctname) + "/master-SNAPSHOT/"
-					+ correctname + "-master-SNAPSHOT.jar"); // ButtonCore exception required since it hosts Towny as well
+					+ correctname + "/master-SNAPSHOT/"
+					+ correctname + "-master-SNAPSHOT.jar"); // ButtonLib exception not required, not a separate plugin
 			FileUtils.copyURLToFile(url, new File("plugins/" + correctname + ".jar"));
 		} catch (FileNotFoundException e) {
 			ret = "Can't find JAR, the build probably failed. Build log (scroll to bottom):\nhttps://jitpack.io/com/github/TBMCPlugins/"
