@@ -7,6 +7,8 @@ import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import buttondevteam.lib.EventExceptionHandler;
+
 public class MainPlugin extends JavaPlugin {
 	public static MainPlugin Instance;
 
