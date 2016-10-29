@@ -12,17 +12,17 @@ public class PlayerListener implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void OnPlayerJoin(PlayerJoinEvent event) {
-		TBMCPlayer player = TBMCPlayer.LoadPlayer(event.getPlayer());
+		TBMCPlayer player = TBMCPlayer.loadPlayer(event.getPlayer());
 		if (player == null)
 			event.getPlayer().sendMessage("§c[TBMC] Failed to load player data! Please contact a mod.");
 		else
-			TBMCPlayer.JoinPlayer(player);
+			TBMCPlayer.joinPlayer(player);
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void OnPlayerLeave(PlayerQuitEvent event) {
-		TBMCPlayer player = TBMCPlayer.GetPlayer(event.getPlayer());
-		TBMCPlayer.SavePlayer(player);
-		TBMCPlayer.QuitPlayer(player);
+		TBMCPlayer player = TBMCPlayer.getPlayer(event.getPlayer());
+		TBMCPlayer.savePlayer(player);
+		TBMCPlayer.quitPlayer(player);
 	}
 }
