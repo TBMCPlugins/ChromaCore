@@ -210,7 +210,7 @@ public class TBMCPlayer implements AutoCloseable {
 	 *            The TBMCPlayer subclass
 	 * @return The player as a subtype of TBMCPlayer
 	 */
-	public static <T extends TBMCPlayer> TBMCPlayer getPlayerAs(OfflinePlayer p, Class<T> cl) {
+	public static <T extends TBMCPlayer> T getPlayerAs(OfflinePlayer p, Class<T> cl) {
 		return getPlayer(p).asPluginPlayer(cl);
 	}
 
@@ -225,7 +225,7 @@ public class TBMCPlayer implements AutoCloseable {
 	 *            The TBMCPlayer subclass
 	 * @return The player as a subtype of TBMCPlayer
 	 */
-	public static <T extends TBMCPlayer> TBMCPlayer getPlayerAs(UUID uuid, Class<T> cl) {
+	public static <T extends TBMCPlayer> T getPlayerAs(UUID uuid, Class<T> cl) {
 		return getPlayer(uuid).asPluginPlayer(cl);
 	}
 
