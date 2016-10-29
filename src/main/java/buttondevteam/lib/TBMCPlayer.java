@@ -251,6 +251,7 @@ public class TBMCPlayer implements AutoCloseable {
 			TBMCPlayer player = new TBMCPlayer();
 			player.uuid = p.getUniqueId();
 			player.data.putAll(yc.getValues(true));
+			LoadedPlayers.put(p.getUniqueId(), player); // Accessing any value requires it to be in the map
 			Bukkit.getLogger().info("Loaded player: " + player.getPlayerName());
 			if (player.getPlayerName() == null) {
 				player.setPlayerName(p.getName());
@@ -268,7 +269,6 @@ public class TBMCPlayer implements AutoCloseable {
 				player.setPlayerName(p.getName());
 				Bukkit.getLogger().info("Renaming done.");
 			}
-			LoadedPlayers.put(p.getUniqueId(), player);
 
 			// Load in other plugins
 			Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerLoadEvent(yc, player));
@@ -282,8 +282,8 @@ public class TBMCPlayer implements AutoCloseable {
 	public static TBMCPlayer addPlayer(OfflinePlayer p) {
 		TBMCPlayer player = new TBMCPlayer();
 		player.uuid = p.getUniqueId();
+		LoadedPlayers.put(p.getUniqueId(), player); // Accessing any value requires it to be in the map
 		player.setPlayerName(p.getName());
-		LoadedPlayers.put(p.getUniqueId(), player);
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerAddEvent(player));
 		savePlayer(player);
 		return player;
