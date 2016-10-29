@@ -24,7 +24,7 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
  * @author Norbi
  *
  */
-public class TBMCPlayer implements AutoCloseable {
+public class TBMCPlayer implements AutoCloseable { //TODO: Load player data in Core
 	private static final String TBMC_PLAYERS_DIR = "TBMC/players";
 
 	private HashMap<String, Object> data = new HashMap<>();
@@ -127,11 +127,22 @@ public class TBMCPlayer implements AutoCloseable {
 	private static HashMap<UUID, TBMCPlayer> LoadedPlayers = new HashMap<>();
 
 	/**
+	 * This method returns a TBMC player from their name. Calling this method may return an offline player which will load it, therefore it's highly recommended to use {@link #close()} to unload the player data. Using
+	 * try-with-resources may be the easiest way to achieve this. Example:
+	 * 
+	 * <pre>
+	 * {@code
+	 * try(TBMCPlayer player = getFromName(p))
+	 * {
+	 * 	...
+	 * }
+	 * </pre>
+	 * 
 	 * @param name
 	 *            The player's name
 	 * @return The {@link TBMCPlayer} object for the player
 	 */
-	public static TBMCPlayer GetFromName(String name) {
+	public static TBMCPlayer getFromName(String name) {
 		@SuppressWarnings("deprecation")
 		OfflinePlayer p = Bukkit.getOfflinePlayer(name);
 		if (p != null)
@@ -146,7 +157,7 @@ public class TBMCPlayer implements AutoCloseable {
 	 * 
 	 * <pre>
 	 * {@code
-	 * try(TBMCPlayer player = GetPlayer(p))
+	 * try(TBMCPlayer player = getPlayer(p))
 	 * {
 	 * 	...
 	 * }
