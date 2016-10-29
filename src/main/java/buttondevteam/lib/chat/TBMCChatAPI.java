@@ -1,6 +1,7 @@
 package buttondevteam.lib.chat;
 
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -18,6 +19,20 @@ public class TBMCChatAPI {
 
 	public static HashMap<String, TBMCCommandBase> GetCommands() {
 		return commands;
+	}
+
+	public static String[] GetSubCommands(TBMCCommandBase command) {
+		ArrayList<String> cmds = new ArrayList<String>();
+		cmds.add("§6---- Subcommands ----");
+		for (TBMCCommandBase cmd : TBMCChatAPI.GetCommands().values()) {
+			if (cmd.GetCommandPath().startsWith(command.GetCommandPath() + "/")) {
+				int ind = cmd.GetCommandPath().indexOf('/', command.GetCommandPath().length() + 2);
+				if (ind >= 0)
+					continue;
+				cmds.add(cmd.GetCommandPath().replace('/', ' '));
+			}
+		}
+		return cmds.toArray(new String[cmds.size()]);
 	}
 
 	/**
