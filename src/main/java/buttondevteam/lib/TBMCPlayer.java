@@ -108,10 +108,12 @@ public class TBMCPlayer implements AutoCloseable {
 	}
 
 	/**
-	 * Gets the TBMCPlayer object as a specific plugin player, keeping it's data
+	 * Gets the TBMCPlayer object as a specific plugin player, keeping it's data *
 	 * 
+	 * @param p
+	 *            Player to get
 	 * @param cl
-	 * @return
+	 *            The TBMCPlayer subclass
 	 */
 	public <T extends TBMCPlayer> T asPluginPlayer(Class<T> cl) {
 		T obj = null;
@@ -175,7 +177,7 @@ public class TBMCPlayer implements AutoCloseable {
 	}
 
 	/**
-	 * This method returns a TBMC player from a Bukkit player. Calling this method may return an offline player, therefore it's highly recommended to use {@link #close()} to unload the player data.
+	 * This method returns a TBMC player from a player UUID. Calling this method may return an offline player, therefore it's highly recommended to use {@link #close()} to unload the player data.
 	 * Using try-with-resources may be the easiest way to achieve this. Example:
 	 * 
 	 * <pre>
@@ -195,6 +197,36 @@ public class TBMCPlayer implements AutoCloseable {
 			return TBMCPlayer.LoadedPlayers.get(uuid);
 		else
 			return TBMCPlayer.loadPlayer(Bukkit.getOfflinePlayer(uuid));
+	}
+
+	/**
+	 * This is a convenience method for {@link #getPlayer(OfflinePlayer)}.{@link #asPluginPlayer(Class)}.
+	 * 
+	 * See those methods for more information.
+	 * 
+	 * @param p
+	 *            Player to get
+	 * @param cl
+	 *            The TBMCPlayer subclass
+	 * @return The player as a subtype of TBMCPlayer
+	 */
+	public static <T extends TBMCPlayer> TBMCPlayer getPlayerAs(OfflinePlayer p, Class<T> cl) {
+		return getPlayer(p).asPluginPlayer(cl);
+	}
+
+	/**
+	 * This is a convenience method for {@link #getPlayer(UUID)}.{@link #asPluginPlayer(Class)}
+	 * 
+	 * See those methods for more information.
+	 * 
+	 * @param uuid
+	 *            The UUID of the player to get
+	 * @param cl
+	 *            The TBMCPlayer subclass
+	 * @return The player as a subtype of TBMCPlayer
+	 */
+	public static <T extends TBMCPlayer> TBMCPlayer getPlayerAs(UUID uuid, Class<T> cl) {
+		return getPlayer(uuid).asPluginPlayer(cl);
 	}
 
 	/**
