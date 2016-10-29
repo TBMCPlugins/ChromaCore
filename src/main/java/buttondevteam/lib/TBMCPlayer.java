@@ -24,7 +24,7 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
  * @author Norbi
  *
  */
-public class TBMCPlayer implements AutoCloseable { //TODO: Load player data in Core
+public class TBMCPlayer implements AutoCloseable {
 	private static final String TBMC_PLAYERS_DIR = "TBMC/players";
 
 	private HashMap<String, Object> data = new HashMap<>();
@@ -127,8 +127,8 @@ public class TBMCPlayer implements AutoCloseable { //TODO: Load player data in C
 	private static HashMap<UUID, TBMCPlayer> LoadedPlayers = new HashMap<>();
 
 	/**
-	 * This method returns a TBMC player from their name. Calling this method may return an offline player which will load it, therefore it's highly recommended to use {@link #close()} to unload the player data. Using
-	 * try-with-resources may be the easiest way to achieve this. Example:
+	 * This method returns a TBMC player from their name. Calling this method may return an offline player which will load it, therefore it's highly recommended to use {@link #close()} to unload the
+	 * player data. Using try-with-resources may be the easiest way to achieve this. Example:
 	 * 
 	 * <pre>
 	 * {@code
@@ -172,6 +172,29 @@ public class TBMCPlayer implements AutoCloseable { //TODO: Load player data in C
 			return TBMCPlayer.LoadedPlayers.get(p.getUniqueId());
 		else
 			return TBMCPlayer.loadPlayer(p);
+	}
+
+	/**
+	 * This method returns a TBMC player from a Bukkit player. Calling this method may return an offline player, therefore it's highly recommended to use {@link #close()} to unload the player data.
+	 * Using try-with-resources may be the easiest way to achieve this. Example:
+	 * 
+	 * <pre>
+	 * {@code
+	 * try(TBMCPlayer player = getPlayer(p))
+	 * {
+	 * 	...
+	 * }
+	 * </pre>
+	 * 
+	 * @param p
+	 *            The Player object
+	 * @return The {@link TBMCPlayer} object for the player
+	 */
+	public static TBMCPlayer getPlayer(UUID uuid) {
+		if (TBMCPlayer.LoadedPlayers.containsKey(uuid))
+			return TBMCPlayer.LoadedPlayers.get(uuid);
+		else
+			return TBMCPlayer.loadPlayer(Bukkit.getOfflinePlayer(uuid));
 	}
 
 	/**
