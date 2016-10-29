@@ -3,6 +3,7 @@ package buttondevteam.lib;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -17,32 +18,113 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
  * The class for holding data common to all TBMC plugins
  * </p>
  * <p>
- * Listen to the load and save events from this package to load and save plugin-specific data
+ * Use {@link #asPluginPlayer(Class)} to get plugin-specific data
  * </p>
  * 
  * @author Norbi
  *
  */
-public class TBMCPlayer {
+public class TBMCPlayer implements AutoCloseable {
 	private static final String TBMC_PLAYERS_DIR = "TBMC/players";
 
-	public String PlayerName;
+	private HashMap<String, Object> data = new HashMap<>();
 
-	public UUID UUID;
+	/**
+	 * <p>
+	 * Gets a player data entry for the caller plugin returning the desired type.<br>
+	 * <i>It will automatically determine the key and the return type.</i><br>
+	 * Usage:
+	 * </p>
+	 * 
+	 * <pre>
+	 * {@code
+	 * public String getPlayerName() {
+	 * 	return getData();
+	 * }
+	 * </pre>
+	 * 
+	 * @return The value or null if not found
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T> T getData() {
+		StackTraceElement st = new Exception().getStackTrace()[0];
+		String mname = st.getMethodName();
+		if (!mname.startsWith("get"))
+			throw new UnsupportedOperationException("Can only use getData from a getXYZ method");
+		return (T) LoadedPlayers.get(uuid).data.get(mname.substring("get".length()).toLowerCase());
+	}
 
-	public <T extends TBMCPlayer> T AsPluginPlayer(Class<T> cl) {
+	/**
+	 * Sets a player data entry <i>based on the caller method</i><br>
+	 * Usage:
+	 * </p>
+	 * 
+	 * <pre>
+	 * {@code
+	 * public String setPlayerName(String value) {
+	 * 	return setData(value);
+	 * }
+	 * </pre>
+	 * 
+	 * @param value
+	 *            The value to set
+	 */
+	protected void setData(Object value) {
+		StackTraceElement st = new Exception().getStackTrace()[0];
+		String mname = st.getMethodName();
+		if (!mname.startsWith("set"))
+			throw new UnsupportedOperationException("Can only use setData from a setXYZ method");
+		LoadedPlayers.get(uuid).data.put(mname.substring("set".length()).toLowerCase(), value);
+	}
+
+	/**
+	 * Gets the player's Minecraft name
+	 * 
+	 * @return The player's Minecraft name
+	 */
+	public String getPlayerName() {
+		return getData();
+	}
+
+	/**
+	 * Sets the player's Minecraft name
+	 * 
+	 * @param playerName
+	 *            the new name
+	 */
+	public void setPlayerName(String playerName) {
+		setData(playerName);
+	}
+
+	private UUID uuid; // Do not save it in the file
+
+	/**
+	 * Get the player's UUID
+	 * 
+	 * @return The Minecraft UUID of the player
+	 */
+	public UUID getUuid() {
+		return uuid;
+	}
+
+	/**
+	 * Gets the TBMCPlayer object as a specific plugin player, keeping it's data
+	 * 
+	 * @param cl
+	 * @return
+	 */
+	public <T extends TBMCPlayer> T asPluginPlayer(Class<T> cl) {
 		T obj = null;
 		try {
 			obj = cl.newInstance();
-			obj.UUID = UUID;
-			obj.PlayerName = PlayerName;
+			((TBMCPlayer) obj).data.putAll(data);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return obj;
 	}
 
-	public static HashMap<UUID, TBMCPlayer> OnlinePlayers = new HashMap<>();
+	private static HashMap<UUID, TBMCPlayer> LoadedPlayers = new HashMap<>();
 
 	/**
 	 * @param name
@@ -53,31 +135,45 @@ public class TBMCPlayer {
 		@SuppressWarnings("deprecation")
 		OfflinePlayer p = Bukkit.getOfflinePlayer(name);
 		if (p != null)
-			return GetPlayer(p);
+			return getPlayer(p);
 		else
 			return null;
 	}
 
 	/**
+	 * This method returns a TBMC player from a Bukkit player. Calling this method may return an offline player, therefore it's highly recommended to use {@link #close()} to unload the player data.
+	 * Using try-with-resources may be the easiest way to achieve this. Example:
+	 * 
+	 * <pre>
+	 * {@code
+	 * try(TBMCPlayer player = GetPlayer(p))
+	 * {
+	 * 	...
+	 * }
+	 * </pre>
+	 * 
 	 * @param p
 	 *            The Player object
 	 * @return The {@link TBMCPlayer} object for the player
 	 */
-	public static TBMCPlayer GetPlayer(OfflinePlayer p) {
-		if (TBMCPlayer.OnlinePlayers.containsKey(p.getUniqueId()))
-			return TBMCPlayer.OnlinePlayers.get(p.getUniqueId());
+	public static TBMCPlayer getPlayer(OfflinePlayer p) {
+		if (TBMCPlayer.LoadedPlayers.containsKey(p.getUniqueId()))
+			return TBMCPlayer.LoadedPlayers.get(p.getUniqueId());
 		else
-			return TBMCPlayer.LoadPlayer(p);
+			return TBMCPlayer.loadPlayer(p);
 	}
 
-	public static TBMCPlayer LoadPlayer(OfflinePlayer p) {
-		if (OnlinePlayers.containsKey(p.getUniqueId()))
-			return OnlinePlayers.get(p.getUniqueId());
+	/**
+	 * Only intended to use from ButtonCore
+	 */
+	public static TBMCPlayer loadPlayer(OfflinePlayer p) {
+		if (LoadedPlayers.containsKey(p.getUniqueId()))
+			return LoadedPlayers.get(p.getUniqueId());
 		File file = new File(TBMC_PLAYERS_DIR);
 		file.mkdirs();
 		file = new File(TBMC_PLAYERS_DIR, p.getUniqueId().toString() + ".yml");
 		if (!file.exists())
-			return AddPlayer(p);
+			return addPlayer(p);
 		else {
 			final YamlConfiguration yc = new YamlConfiguration();
 			try {
@@ -87,25 +183,26 @@ public class TBMCPlayer {
 				return null;
 			}
 			TBMCPlayer player = new TBMCPlayer();
-			player.UUID = p.getUniqueId();
-			player.PlayerName = yc.getString("playername");
-			System.out.println("Player name: " + player.PlayerName);
-			if (player.PlayerName == null) {
-				player.PlayerName = p.getName();
-				System.out.println("Player name saved: " + player.PlayerName);
-			} else if (!p.getName().equals(player.PlayerName)) {
-				System.out.println("Renaming " + player.PlayerName + " to " + p.getName());
+			player.uuid = p.getUniqueId();
+			player.data.putAll(yc.getValues(true));
+			Bukkit.getLogger().info("Loaded player: " + player.getPlayerName());
+			if (player.getPlayerName() == null) {
+				player.setPlayerName(p.getName());
+				Bukkit.getLogger().info("Player name saved: " + player.getPlayerName());
+			} else if (!p.getName().equals(player.getPlayerName())) {
+				Bukkit.getLogger().info("Renaming " + player.getPlayerName() + " to " + p.getName());
 				TownyUniverse tu = Towny.getPlugin(Towny.class).getTownyUniverse();
-				Resident resident = tu.getResidentMap().get(player.PlayerName);
+				Resident resident = tu.getResidentMap().get(player.getPlayerName());
 				if (resident == null)
-					System.out.println("Resident not found - couldn't rename in Towny.");
+					Bukkit.getLogger().warning("Resident not found - couldn't rename in Towny.");
 				else if (tu.getResidentMap().contains(p.getName()))
-					System.out.println("Target resident name is already in use."); // TODO: Handle
+					Bukkit.getLogger().warning("Target resident name is already in use."); // TODO: Handle
 				else
 					resident.setName(p.getName());
-				player.PlayerName = p.getName();
-				System.out.println("Renaming done.");
+				player.setPlayerName(p.getName());
+				Bukkit.getLogger().info("Renaming done.");
 			}
+			LoadedPlayers.put(p.getUniqueId(), player);
 
 			// Load in other plugins
 			Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerLoadEvent(yc, player));
@@ -113,38 +210,58 @@ public class TBMCPlayer {
 		}
 	}
 
-	static TBMCPlayer AddPlayer(OfflinePlayer p) {
+	/**
+	 * Only intended to use from ButtonCore
+	 */
+	public static TBMCPlayer addPlayer(OfflinePlayer p) {
 		TBMCPlayer player = new TBMCPlayer();
-		player.UUID = p.getUniqueId();
-		player.PlayerName = p.getName();
-		OnlinePlayers.put(p.getUniqueId(), player);
+		player.uuid = p.getUniqueId();
+		player.setPlayerName(p.getName());
+		LoadedPlayers.put(p.getUniqueId(), player);
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerAddEvent(player));
-		SavePlayer(player);
+		savePlayer(player);
 		return player;
 	}
 
-	public static void SavePlayer(TBMCPlayer player) {
+	/**
+	 * Only intended to use from ButtonCore
+	 */
+	public static void savePlayer(TBMCPlayer player) {
 		YamlConfiguration yc = new YamlConfiguration();
-		yc.set("playername", player.PlayerName);
+		for (Entry<String, Object> item : player.data.entrySet())
+			yc.set(item.getKey(), item.getValue());
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerSaveEvent(yc, player));
 		try {
-			yc.save(TBMC_PLAYERS_DIR + "/" + player.UUID + ".yml");
+			yc.save(TBMC_PLAYERS_DIR + "/" + player.uuid + ".yml");
 		} catch (IOException e) {
-			new Exception("Failed to save player data for " + player.PlayerName, e).printStackTrace();
+			new Exception("Failed to save player data for " + player.getPlayerName(), e).printStackTrace();
 		}
 	}
 
-	public static void JoinPlayer(TBMCPlayer player) {
-		OnlinePlayers.put(player.UUID, player);
+	/**
+	 * Only intended to use from ButtonCore
+	 */
+	public static void joinPlayer(TBMCPlayer player) {
+		LoadedPlayers.put(player.uuid, player);
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerJoinEvent(player));
 	}
 
-	public static void QuitPlayer(TBMCPlayer player) {
-		OnlinePlayers.remove(player.UUID);
+	/**
+	 * Only intended to use from ButtonCore
+	 */
+	public static void quitPlayer(TBMCPlayer player) {
+		LoadedPlayers.remove(player.uuid);
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player));
 	}
 
-	<T extends TBMCPlayer> T GetAs(Class<T> cl) { // TODO: Serialize player classes
-		return null;
+	/**
+	 * By default the player data will only get cleaned from memory when the player quits. Therefore this method must be called when accessing an offline player to clean the player data up. Calling
+	 * this method will have no effect on online players.<br>
+	 * Therefore, the recommended use is to call it when using {@link #GetPlayer} or use try-with-resources.
+	 */
+	@Override
+	public void close() throws Exception {
+		if (!Bukkit.getPlayer(uuid).isOnline())
+			LoadedPlayers.remove(uuid);
 	}
 }
