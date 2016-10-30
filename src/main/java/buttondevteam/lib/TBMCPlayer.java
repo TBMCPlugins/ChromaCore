@@ -47,7 +47,7 @@ public class TBMCPlayer implements AutoCloseable {
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T> T getData() {
-		StackTraceElement st = new Exception().getStackTrace()[0];
+		StackTraceElement st = new Exception().getStackTrace()[1];
 		String mname = st.getMethodName();
 		if (!mname.startsWith("get"))
 			throw new UnsupportedOperationException("Can only use getData from a getXYZ method");
@@ -75,6 +75,54 @@ public class TBMCPlayer implements AutoCloseable {
 		if (!mname.startsWith("set"))
 			throw new UnsupportedOperationException("Can only use setData from a setXYZ method");
 		LoadedPlayers.get(uuid).data.put(mname.substring("set".length()).toLowerCase(), value);
+	}
+
+	/**
+	 * <p>
+	 * Gets a player data entry for the caller plugin returning the desired type, <b>which is an enum</b><br>
+	 * <i>It will automatically determine the key and the return type.</i><br>
+	 * Usage:
+	 * </p>
+	 * 
+	 * <pre>
+	 * {@code
+	 * public String getPlayerName() {
+	 * 	return getData();
+	 * }
+	 * </pre>
+	 * 
+	 * @return The value or null if not found
+	 */
+	protected <T extends Enum<T>> T getEnumData(Class<T> cl) {
+		StackTraceElement st = new Exception().getStackTrace()[1];
+		String mname = st.getMethodName();
+		if (!mname.startsWith("get"))
+			throw new UnsupportedOperationException("Can only use getData from a getXYZ method");
+		return Enum.valueOf(cl,
+				(String) LoadedPlayers.get(uuid).data.get(mname.substring("get".length()).toLowerCase()));
+	}
+
+	/**
+	 * Sets a player data entry <i>based on the caller method</i><br>
+	 * Usage:
+	 * </p>
+	 * 
+	 * <pre>
+	 * {@code
+	 * public String setPlayerName(String value) {
+	 * 	return setData(value);
+	 * }
+	 * </pre>
+	 * 
+	 * @param value
+	 *            The value to set
+	 */
+	protected void setEnumData(Enum<?> value) {
+		StackTraceElement st = new Exception().getStackTrace()[0];
+		String mname = st.getMethodName();
+		if (!mname.startsWith("set"))
+			throw new UnsupportedOperationException("Can only use setData from a setXYZ method");
+		LoadedPlayers.get(uuid).data.put(mname.substring("set".length()).toLowerCase(), value.toString());
 	}
 
 	/**
