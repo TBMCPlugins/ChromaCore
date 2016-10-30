@@ -51,7 +51,10 @@ public class TBMCPlayer implements AutoCloseable {
 		String mname = st.getMethodName();
 		if (!mname.startsWith("get"))
 			throw new UnsupportedOperationException("Can only use getData from a getXYZ method");
-		return (T) LoadedPlayers.get(uuid).data.get(mname.substring("get".length()).toLowerCase());
+		Object ret = LoadedPlayers.get(uuid).data.get(mname.substring("get".length()).toLowerCase());
+		if (Integer.class.isAssignableFrom(ret.getClass()))
+			throw new UnsupportedOperationException("For integers use getIntData()");
+		return (T) ret;
 	}
 
 	/**
@@ -86,8 +89,8 @@ public class TBMCPlayer implements AutoCloseable {
 	 * 
 	 * <pre>
 	 * {@code
-	 * public String getPlayerName() {
-	 * 	return getData();
+	 * public String getSomeEnum() {
+	 * 	return getEnumData();
 	 * }
 	 * </pre>
 	 * 
@@ -97,9 +100,12 @@ public class TBMCPlayer implements AutoCloseable {
 		StackTraceElement st = new Exception().getStackTrace()[1];
 		String mname = st.getMethodName();
 		if (!mname.startsWith("get"))
-			throw new UnsupportedOperationException("Can only use getData from a getXYZ method");
-		return Enum.valueOf(cl,
-				(String) LoadedPlayers.get(uuid).data.get(mname.substring("get".length()).toLowerCase()));
+			throw new UnsupportedOperationException("Can only use getEnumData from a getXYZ method");
+		final String retstr = (String) LoadedPlayers.get(uuid).data.get(mname.substring("get".length()).toLowerCase());
+		if (retstr != null)
+			return Enum.valueOf(cl, retstr);
+		else
+			return null;
 	}
 
 	/**
@@ -109,8 +115,8 @@ public class TBMCPlayer implements AutoCloseable {
 	 * 
 	 * <pre>
 	 * {@code
-	 * public String setPlayerName(String value) {
-	 * 	return setData(value);
+	 * public String setSomeEnum(SomeEnum value) {
+	 * 	return setEnumData(value);
 	 * }
 	 * </pre>
 	 * 
@@ -121,8 +127,63 @@ public class TBMCPlayer implements AutoCloseable {
 		StackTraceElement st = new Exception().getStackTrace()[0];
 		String mname = st.getMethodName();
 		if (!mname.startsWith("set"))
-			throw new UnsupportedOperationException("Can only use setData from a setXYZ method");
+			throw new UnsupportedOperationException("Can only use setEnumData from a setXYZ method");
 		LoadedPlayers.get(uuid).data.put(mname.substring("set".length()).toLowerCase(), value.toString());
+	}
+
+	/**
+	 * <p>
+	 * Gets a player data entry for the caller plugin returning the desired type, <b>which is a number</b><br>
+	 * <i>It will automatically determine the key and the return type.</i><br>
+	 * Usage:
+	 * </p>
+	 * 
+	 * <pre>
+	 * {@code
+	 * public short getNumber() {
+	 * 	return getIntData();
+	 * }
+	 * </pre>
+	 * 
+	 * @return The value or null if not found
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T extends Number> T getIntData(Class<T> cl) {
+		StackTraceElement st = new Exception().getStackTrace()[1];
+		String mname = st.getMethodName();
+		if (!mname.startsWith("get"))
+			throw new UnsupportedOperationException("Can only use getIntData from a getXYZ method");
+		Object obj = LoadedPlayers.get(uuid).data.get(mname.substring("get".length()).toLowerCase());
+		if (!(obj instanceof Integer))
+			throw new UnsupportedOperationException("The retrieved object isn't a number: " + obj);
+		Integer int_ = (Integer) obj;
+		if (Short.class.isAssignableFrom(cl))
+			return (T) (Object) int_.shortValue();
+		else
+			return (T) (Object) int_;
+	}
+
+	/**
+	 * Sets a player data entry <i>based on the caller method</i><br>
+	 * Usage:
+	 * </p>
+	 * 
+	 * <pre>
+	 * {@code
+	 * public String setNumber(short value) {
+	 * 	return setIntData(value);
+	 * }
+	 * </pre>
+	 * 
+	 * @param value
+	 *            The value to set
+	 */
+	protected void setIntData(Number value) {
+		StackTraceElement st = new Exception().getStackTrace()[0];
+		String mname = st.getMethodName();
+		if (!mname.startsWith("set"))
+			throw new UnsupportedOperationException("Can only use setIntData from a setXYZ method");
+		LoadedPlayers.get(uuid).data.put(mname.substring("set".length()).toLowerCase(), value);
 	}
 
 	/**
@@ -167,6 +228,7 @@ public class TBMCPlayer implements AutoCloseable {
 		T obj = null;
 		try {
 			obj = cl.newInstance();
+			((TBMCPlayer) obj).uuid = uuid;
 			((TBMCPlayer) obj).data.putAll(data);
 		} catch (Exception e) {
 			e.printStackTrace();
