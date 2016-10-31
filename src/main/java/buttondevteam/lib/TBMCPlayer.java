@@ -51,7 +51,7 @@ public class TBMCPlayer implements AutoCloseable {
 		String mname = st.getMethodName();
 		if (!mname.startsWith("get"))
 			throw new UnsupportedOperationException("Can only use getData from a getXYZ method");
-		Object ret = LoadedPlayers.get(uuid).data.get(mname.substring("get".length()).toLowerCase());
+		Object ret = getLoadedPlayers().get(uuid).data.get(mname.substring("get".length()).toLowerCase());
 		if (Integer.class.isAssignableFrom(ret.getClass()))
 			throw new UnsupportedOperationException("For integers use getIntData()");
 		return (T) ret;
@@ -77,7 +77,7 @@ public class TBMCPlayer implements AutoCloseable {
 		String mname = st.getMethodName();
 		if (!mname.startsWith("set"))
 			throw new UnsupportedOperationException("Can only use setData from a setXYZ method");
-		LoadedPlayers.get(uuid).data.put(mname.substring("set".length()).toLowerCase(), value);
+		getLoadedPlayers().get(uuid).data.put(mname.substring("set".length()).toLowerCase(), value);
 	}
 
 	/**
@@ -101,7 +101,7 @@ public class TBMCPlayer implements AutoCloseable {
 		String mname = st.getMethodName();
 		if (!mname.startsWith("get"))
 			throw new UnsupportedOperationException("Can only use getEnumData from a getXYZ method");
-		final String retstr = (String) LoadedPlayers.get(uuid).data.get(mname.substring("get".length()).toLowerCase());
+		final String retstr = (String) getLoadedPlayers().get(uuid).data.get(mname.substring("get".length()).toLowerCase());
 		if (retstr != null)
 			return Enum.valueOf(cl, retstr);
 		else
@@ -128,7 +128,7 @@ public class TBMCPlayer implements AutoCloseable {
 		String mname = st.getMethodName();
 		if (!mname.startsWith("set"))
 			throw new UnsupportedOperationException("Can only use setEnumData from a setXYZ method");
-		LoadedPlayers.get(uuid).data.put(mname.substring("set".length()).toLowerCase(), value.toString());
+		getLoadedPlayers().get(uuid).data.put(mname.substring("set".length()).toLowerCase(), value.toString());
 	}
 
 	/**
@@ -153,7 +153,7 @@ public class TBMCPlayer implements AutoCloseable {
 		String mname = st.getMethodName();
 		if (!mname.startsWith("get"))
 			throw new UnsupportedOperationException("Can only use getIntData from a getXYZ method");
-		Object obj = LoadedPlayers.get(uuid).data.get(mname.substring("get".length()).toLowerCase());
+		Object obj = getLoadedPlayers().get(uuid).data.get(mname.substring("get".length()).toLowerCase());
 		if (!(obj instanceof Integer))
 			throw new UnsupportedOperationException("The retrieved object isn't a number: " + obj);
 		Integer int_ = (Integer) obj;
@@ -183,7 +183,7 @@ public class TBMCPlayer implements AutoCloseable {
 		String mname = st.getMethodName();
 		if (!mname.startsWith("set"))
 			throw new UnsupportedOperationException("Can only use setIntData from a setXYZ method");
-		LoadedPlayers.get(uuid).data.put(mname.substring("set".length()).toLowerCase(), value);
+		getLoadedPlayers().get(uuid).data.put(mname.substring("set".length()).toLowerCase(), value);
 	}
 
 	/**
@@ -280,8 +280,8 @@ public class TBMCPlayer implements AutoCloseable {
 	 * @return The {@link TBMCPlayer} object for the player
 	 */
 	public static TBMCPlayer getPlayer(OfflinePlayer p) {
-		if (TBMCPlayer.LoadedPlayers.containsKey(p.getUniqueId()))
-			return TBMCPlayer.LoadedPlayers.get(p.getUniqueId());
+		if (TBMCPlayer.getLoadedPlayers().containsKey(p.getUniqueId()))
+			return TBMCPlayer.getLoadedPlayers().get(p.getUniqueId());
 		else
 			return TBMCPlayer.loadPlayer(p);
 	}
@@ -303,8 +303,8 @@ public class TBMCPlayer implements AutoCloseable {
 	 * @return The {@link TBMCPlayer} object for the player
 	 */
 	public static TBMCPlayer getPlayer(UUID uuid) {
-		if (TBMCPlayer.LoadedPlayers.containsKey(uuid))
-			return TBMCPlayer.LoadedPlayers.get(uuid);
+		if (TBMCPlayer.getLoadedPlayers().containsKey(uuid))
+			return TBMCPlayer.getLoadedPlayers().get(uuid);
 		else
 			return TBMCPlayer.loadPlayer(Bukkit.getOfflinePlayer(uuid));
 	}
@@ -343,8 +343,8 @@ public class TBMCPlayer implements AutoCloseable {
 	 * Only intended to use from ButtonCore
 	 */
 	public static TBMCPlayer loadPlayer(OfflinePlayer p) {
-		if (LoadedPlayers.containsKey(p.getUniqueId()))
-			return LoadedPlayers.get(p.getUniqueId());
+		if (getLoadedPlayers().containsKey(p.getUniqueId()))
+			return getLoadedPlayers().get(p.getUniqueId());
 		File file = new File(TBMC_PLAYERS_DIR);
 		file.mkdirs();
 		file = new File(TBMC_PLAYERS_DIR, p.getUniqueId().toString() + ".yml");
@@ -361,7 +361,7 @@ public class TBMCPlayer implements AutoCloseable {
 			TBMCPlayer player = new TBMCPlayer();
 			player.uuid = p.getUniqueId();
 			player.data.putAll(yc.getValues(true));
-			LoadedPlayers.put(p.getUniqueId(), player); // Accessing any value requires it to be in the map
+			getLoadedPlayers().put(p.getUniqueId(), player); // Accessing any value requires it to be in the map
 			Bukkit.getLogger().info("Loaded player: " + player.getPlayerName());
 			if (player.getPlayerName() == null) {
 				player.setPlayerName(p.getName());
@@ -392,7 +392,7 @@ public class TBMCPlayer implements AutoCloseable {
 	public static TBMCPlayer addPlayer(OfflinePlayer p) {
 		TBMCPlayer player = new TBMCPlayer();
 		player.uuid = p.getUniqueId();
-		LoadedPlayers.put(p.getUniqueId(), player); // Accessing any value requires it to be in the map
+		getLoadedPlayers().put(p.getUniqueId(), player); // Accessing any value requires it to be in the map
 		player.setPlayerName(p.getName());
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerAddEvent(player));
 		savePlayer(player);
@@ -418,7 +418,7 @@ public class TBMCPlayer implements AutoCloseable {
 	 * Only intended to use from ButtonCore
 	 */
 	public static void joinPlayer(TBMCPlayer player) {
-		LoadedPlayers.put(player.uuid, player);
+		getLoadedPlayers().put(player.uuid, player);
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerJoinEvent(player));
 	}
 
@@ -426,7 +426,7 @@ public class TBMCPlayer implements AutoCloseable {
 	 * Only intended to use from ButtonCore
 	 */
 	public static void quitPlayer(TBMCPlayer player) {
-		LoadedPlayers.remove(player.uuid);
+		getLoadedPlayers().remove(player.uuid);
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player));
 	}
 
@@ -438,6 +438,10 @@ public class TBMCPlayer implements AutoCloseable {
 	@Override
 	public void close() throws Exception {
 		if (!Bukkit.getPlayer(uuid).isOnline())
-			LoadedPlayers.remove(uuid);
+			getLoadedPlayers().remove(uuid);
+	}
+
+	public static HashMap<UUID, TBMCPlayer> getLoadedPlayers() {
+		return LoadedPlayers;
 	}
 }
