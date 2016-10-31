@@ -73,7 +73,7 @@ public class TBMCPlayer implements AutoCloseable {
 	 *            The value to set
 	 */
 	protected void setData(Object value) {
-		StackTraceElement st = new Exception().getStackTrace()[0];
+		StackTraceElement st = new Exception().getStackTrace()[1];
 		String mname = st.getMethodName();
 		if (!mname.startsWith("set"))
 			throw new UnsupportedOperationException("Can only use setData from a setXYZ method");
@@ -124,7 +124,7 @@ public class TBMCPlayer implements AutoCloseable {
 	 *            The value to set
 	 */
 	protected void setEnumData(Enum<?> value) {
-		StackTraceElement st = new Exception().getStackTrace()[0];
+		StackTraceElement st = new Exception().getStackTrace()[1];
 		String mname = st.getMethodName();
 		if (!mname.startsWith("set"))
 			throw new UnsupportedOperationException("Can only use setEnumData from a setXYZ method");
@@ -179,7 +179,7 @@ public class TBMCPlayer implements AutoCloseable {
 	 *            The value to set
 	 */
 	protected void setIntData(Number value) {
-		StackTraceElement st = new Exception().getStackTrace()[0];
+		StackTraceElement st = new Exception().getStackTrace()[1];
 		String mname = st.getMethodName();
 		if (!mname.startsWith("set"))
 			throw new UnsupportedOperationException("Can only use setIntData from a setXYZ method");
