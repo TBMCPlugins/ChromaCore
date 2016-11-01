@@ -44,9 +44,8 @@ public final class TBMCCoreAPI {
 		String ret = "";
 		URL url;
 		try {
-			url = new URL("https://jitpack.io/com/github/TBMCPlugins/"
-					+ correctname + "/master-SNAPSHOT/"
-					+ correctname + "-master-SNAPSHOT.jar"); // ButtonLib exception not required, not a separate plugin
+			url = new URL("https://jitpack.io/com/github/TBMCPlugins/" + correctname + "/master-SNAPSHOT/" + correctname
+					+ "-master-SNAPSHOT.jar"); // ButtonLib exception not required, not a separate plugin
 			FileUtils.copyURLToFile(url, new File("plugins/" + correctname + ".jar"));
 		} catch (FileNotFoundException e) {
 			ret = "Can't find JAR, the build probably failed. Build log (scroll to bottom):\nhttps://jitpack.io/com/github/TBMCPlugins/"
@@ -90,5 +89,11 @@ public final class TBMCCoreAPI {
 		String body = IOUtils.toString(in, encoding);
 		in.close();
 		return body;
+	}
+
+	public static void SendException(String sourcemsg, Exception e) {
+		Bukkit.getPluginManager().callEvent(new TBMCExceptionEvent(sourcemsg, e));
+		Bukkit.getLogger().warning(sourcemsg);
+		e.printStackTrace();
 	}
 }
