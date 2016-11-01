@@ -101,7 +101,8 @@ public class TBMCPlayer implements AutoCloseable {
 		String mname = st.getMethodName();
 		if (!mname.startsWith("get"))
 			throw new UnsupportedOperationException("Can only use getEnumData from a getXYZ method");
-		final String retstr = (String) getLoadedPlayers().get(uuid).data.get(mname.substring("get".length()).toLowerCase());
+		final String retstr = (String) getLoadedPlayers().get(uuid).data
+				.get(mname.substring("get".length()).toLowerCase());
 		if (retstr != null)
 			return Enum.valueOf(cl, retstr);
 		else
@@ -443,5 +444,22 @@ public class TBMCPlayer implements AutoCloseable {
 
 	public static HashMap<UUID, TBMCPlayer> getLoadedPlayers() {
 		return LoadedPlayers;
+	}
+
+	/**
+	 * Get player information. This method calls the {@link TBMCPlayerGetInfoEvent} to get all the player information across the TBMC plugins.
+	 * 
+	 * @param target
+	 *            The {@link InfoTarget} to return the info for.
+	 * @return The player information.
+	 */
+	public String getInfo(InfoTarget target) {
+		TBMCPlayerGetInfoEvent event = new TBMCPlayerGetInfoEvent(this, target);
+		Bukkit.getServer().getPluginManager().callEvent(event);
+		return event.getResult();
+	}
+
+	public enum InfoTarget {
+		MCHover, MCCommand, Discord
 	}
 }
