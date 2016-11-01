@@ -437,7 +437,7 @@ public class TBMCPlayer implements AutoCloseable {
 	 * Therefore, the recommended use is to call it when using {@link #GetPlayer} or use try-with-resources.
 	 */
 	@Override
-	public void close() throws Exception {
+	public void close() {
 		if (!Bukkit.getPlayer(uuid).isOnline())
 			getLoadedPlayers().remove(uuid);
 	}
