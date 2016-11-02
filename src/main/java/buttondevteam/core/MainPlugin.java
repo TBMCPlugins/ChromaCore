@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import buttondevteam.discordplugin.EventExceptionDiscordSender;
+import buttondevteam.lib.EventExceptionCoreHandler;
 import buttondevteam.lib.EventExceptionHandler;
 import buttondevteam.lib.TBMCPlayer;
 
@@ -25,7 +25,7 @@ public class MainPlugin extends JavaPlugin {
 		logger = getLogger();
 
 		logger.info(pdfFile.getName() + " has been Enabled (V." + pdfFile.getVersion() + ").");
-		EventExceptionHandler.registerEvents(new PlayerListener(), this, new EventExceptionDiscordSender());
+		EventExceptionHandler.registerEvents(new PlayerListener(), this, new EventExceptionCoreHandler());
 	}
 
 	@Override

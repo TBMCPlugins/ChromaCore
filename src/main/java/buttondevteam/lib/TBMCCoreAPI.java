@@ -92,7 +92,7 @@ public final class TBMCCoreAPI {
 		return body;
 	}
 
-	public static void SendException(String sourcemsg, Exception e) {
+	public static void SendException(String sourcemsg, Throwable e) {
 		Bukkit.getPluginManager().callEvent(new TBMCExceptionEvent(sourcemsg, e));
 		Bukkit.getLogger().warning(sourcemsg);
 		e.printStackTrace();

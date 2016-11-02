@@ -98,7 +98,7 @@
 		<dependency>
 			<groupId>com.github.TBMCPlugins.ButtonCore</groupId>
 			<artifactId>Towny</artifactId>
-			<version>master-SNAPSHOT</version>
+			<version>master-v1.0-g0f7e08b-32</version>
 		</dependency>
 	</dependencies>
 	<organization>
