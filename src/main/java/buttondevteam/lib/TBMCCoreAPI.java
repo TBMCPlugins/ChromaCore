@@ -13,6 +13,8 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.event.Listener;
+import org.bukkit.plugin.Plugin;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -96,5 +98,9 @@ public final class TBMCCoreAPI {
 		Bukkit.getPluginManager().callEvent(new TBMCExceptionEvent(sourcemsg, e));
 		Bukkit.getLogger().warning(sourcemsg);
 		e.printStackTrace();
+	}
+
+	public static void RegisterEventsForExceptions(Listener listener, Plugin plugin) {
+		EventExceptionHandler.registerEvents(listener, plugin, new EventExceptionCoreHandler());
 	}
 }
