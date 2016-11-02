@@ -9,6 +9,8 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+
 import com.palmergames.bukkit.towny.Towny;
 import com.palmergames.bukkit.towny.object.Resident;
 import com.palmergames.bukkit.towny.object.TownyUniverse;
@@ -438,7 +440,8 @@ public class TBMCPlayer implements AutoCloseable {
 	 */
 	@Override
 	public void close() {
-		if (!Bukkit.getPlayer(uuid).isOnline())
+		final Player player = Bukkit.getPlayer(uuid);
+		if (player == null || !player.isOnline())
 			getLoadedPlayers().remove(uuid);
 	}
 
