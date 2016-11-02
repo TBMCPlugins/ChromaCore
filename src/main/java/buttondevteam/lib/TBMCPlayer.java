@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 package buttondevteam.lib;
 
 import java.io.File;
