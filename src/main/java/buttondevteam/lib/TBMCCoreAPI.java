@@ -102,12 +102,28 @@ public final class TBMCCoreAPI {
 		return body;
 	}
 
+	/**
+	 * Send exception to the {@link TBMCExceptionEvent}.
+	 * 
+	 * @param sourcemsg
+	 *            A message that is shown at the top of the exception (before the exception's message)
+	 * @param e
+	 *            The exception to send
+	 */
 	public static void SendException(String sourcemsg, Throwable e) {
 		Bukkit.getPluginManager().callEvent(new TBMCExceptionEvent(sourcemsg, e));
 		Bukkit.getLogger().warning(sourcemsg);
 		e.printStackTrace();
 	}
 
+	/**
+	 * Registers Bukkit events, handling the exceptions occuring in those events
+	 * 
+	 * @param listener
+	 *            The class that handles the events
+	 * @param plugin
+	 *            The plugin which the listener belongs to
+	 */
 	public static void RegisterEventsForExceptions(Listener listener, Plugin plugin) {
 		EventExceptionHandler.registerEvents(listener, plugin, new EventExceptionCoreHandler());
 	}

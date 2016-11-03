@@ -1,6 +1,5 @@
 package buttondevteam.lib.chat;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,7 +13,6 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
 import buttondevteam.lib.TBMCCoreAPI;
-import buttondevteam.lib.TBMCPlayer;
 
 public class TBMCChatAPI {
 
@@ -24,6 +22,13 @@ public class TBMCChatAPI {
 		return commands;
 	}
 
+	/**
+	 * Returns messages formatted for Minecraft chat listing the subcommands of the command.
+	 * 
+	 * @param command
+	 *            The command which we want the subcommands of
+	 * @return The subcommands
+	 */
 	public static String[] GetSubCommands(TBMCCommandBase command) {
 		ArrayList<String> cmds = new ArrayList<String>();
 		cmds.add("§6---- Subcommands ----");
@@ -42,6 +47,9 @@ public class TBMCChatAPI {
 	 * <p>
 	 * This method adds a plugin's commands to help and sets their executor.
 	 * </p>
+	 * <p>
+	 * </p>
+	 * <b>The command classes have to have a constructor each with no parameters</b>
 	 * <p>
 	 * The <u>command must be registered</u> in the caller plugin's plugin.yml. Otherwise the plugin will output a messsage to console.
 	 * </p>
@@ -129,29 +137,5 @@ public class TBMCChatAPI {
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("An error occured while registering command " + cmd.GetCommandPath(), e);
 		}
-	}
-
-	/**
-	 * <p>
-	 * Add player information for {@link PlayerInfoCommand}. Only mods can see the given information.
-	 * </p>
-	 * 
-	 * @param player
-	 * @param infoline
-	 */
-	public void AddPlayerInfoForMods(TBMCPlayer player, String infoline) {
-		// TODO
-	}
-
-	/**
-	 * <p>
-	 * Add player information for hover text at {@link ChatProcessing}. Every online player can see the given information.
-	 * </p>
-	 * 
-	 * @param player
-	 * @param infoline
-	 */
-	public void AddPlayerInfoForHover(TBMCPlayer player, String infoline) {
-		// TODO
 	}
 }

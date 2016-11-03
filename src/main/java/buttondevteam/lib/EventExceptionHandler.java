@@ -20,7 +20,7 @@ import org.bukkit.plugin.RegisteredListener;
 
 import com.google.common.collect.Lists;
 
-public abstract class EventExceptionHandler { // https://gist.github.com/aadnk/5430459
+abstract class EventExceptionHandler { // https://gist.github.com/aadnk/5430459
     // For wrapping a registered listener
     private static class ExceptionRegisteredListener extends RegisteredListener {
         /**
