@@ -7,7 +7,9 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,7 +59,7 @@ public final class TBMCCoreAPI {
 				result.delete();
 				ret = "The downloaded JAR is too small (smnaller than 25 bytes). Am I downloading from the right place?";
 			} else
-				Files.move(result.toPath(), finalresult.toPath());
+				Files.move(result.toPath(), finalresult.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		} catch (FileNotFoundException e) {
 			ret = "Can't find JAR, the build probably failed. Build log (scroll to bottom):\nhttps://jitpack.io/com/github/TBMCPlugins/"
 					+ correctname
