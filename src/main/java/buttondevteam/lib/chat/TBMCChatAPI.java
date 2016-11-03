@@ -1,7 +1,9 @@
 package buttondevteam.lib.chat;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -11,6 +13,7 @@ import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
+import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.TBMCPlayer;
 
 public class TBMCChatAPI {
@@ -53,10 +56,10 @@ public class TBMCChatAPI {
 	 */
 	public static void AddCommands(JavaPlugin plugin, Class<? extends TBMCCommandBase> acmdclass) {
 		plugin.getLogger().info("Registering commands for " + plugin.getName());
-		Reflections rf = new Reflections(
-				new ConfigurationBuilder().setUrls(ClasspathHelper.forClassLoader(plugin.getClass().getClassLoader()))
-						.addClassLoader(plugin.getClass().getClassLoader()).addScanners(new SubTypesScanner())
-						.filterInputsBy((String pkg) -> pkg.contains(acmdclass.getPackage().getName())));
+		Reflections rf = new Reflections(new ConfigurationBuilder()
+				.setUrls(ClasspathHelper.forPackage(acmdclass.getPackage().getName(),
+						plugin.getClass().getClassLoader()))
+				.addClassLoader(plugin.getClass().getClassLoader()).addScanners(new SubTypesScanner()));
 		Set<Class<? extends TBMCCommandBase>> cmds = rf.getSubTypesOf(TBMCCommandBase.class);
 		for (Class<? extends TBMCCommandBase> cmd : cmds) {
 			try {
@@ -66,10 +69,39 @@ public class TBMCChatAPI {
 				c.plugin = plugin;
 				commands.put(c.GetCommandPath(), c);
 			} catch (InstantiationException e) {
-				e.printStackTrace();
+				TBMCCoreAPI.SendException("An error occured while registering command " + cmd.getName(), e);
 			} catch (IllegalAccessException e) {
-				e.printStackTrace();
+				TBMCCoreAPI.SendException("An error occured while registering command " + cmd.getName(), e);
 			}
+		}
+	}
+
+	/**
+	 * <p>
+	 * This method adds a plugin's command to help and sets it's executor.
+	 * </p>
+	 * <p>
+	 * The <u>command must be registered</u> in the caller plugin's plugin.yml. Otherwise the plugin will output a messsage to console.
+	 * </p>
+	 * <p>
+	 * <i>Using this method after the server is done loading will have no effect.</i>
+	 * </p>
+	 * 
+	 * @param plugin
+	 *            The caller plugin
+	 * @param thecmdclass
+	 *            The command's class to create it (because why let you create the command class)
+	 */
+	public static void AddCommand(JavaPlugin plugin, Class<? extends TBMCCommandBase> thecmdclass, Object... params) {
+		plugin.getLogger().info("Registering command " + thecmdclass.getName() + " for " + plugin.getName());
+		try {
+			TBMCCommandBase c = thecmdclass
+					.getConstructor(Arrays.stream(params).map(p -> p.getClass()).toArray(Class[]::new))
+					.newInstance(params);
+			c.plugin = plugin;
+			commands.put(c.GetCommandPath(), c);
+		} catch (Exception e) {
+			TBMCCoreAPI.SendException("An error occured while registering command " + thecmdclass.getName(), e);
 		}
 	}
 
