@@ -107,6 +107,32 @@ public class TBMCChatAPI {
 
 	/**
 	 * <p>
+	 * This method adds a plugin's command to help and sets it's executor.
+	 * </p>
+	 * <p>
+	 * The <u>command must be registered</u> in the caller plugin's plugin.yml. Otherwise the plugin will output a messsage to console.
+	 * </p>
+	 * <p>
+	 * <i>Using this method after the server is done loading will have no effect.</i>
+	 * </p>
+	 * 
+	 * @param plugin
+	 *            The caller plugin
+	 * @param cmd
+	 *            The command to add
+	 */
+	public static void AddCommand(JavaPlugin plugin, TBMCCommandBase cmd) {
+		plugin.getLogger().info("Registering command " + cmd.GetCommandPath() + " for " + plugin.getName());
+		try {
+			cmd.plugin = plugin;
+			commands.put(cmd.GetCommandPath(), cmd);
+		} catch (Exception e) {
+			TBMCCoreAPI.SendException("An error occured while registering command " + cmd.GetCommandPath(), e);
+		}
+	}
+
+	/**
+	 * <p>
 	 * Add player information for {@link PlayerInfoCommand}. Only mods can see the given information.
 	 * </p>
 	 * 
