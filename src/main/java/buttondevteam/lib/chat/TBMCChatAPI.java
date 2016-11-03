@@ -33,11 +33,11 @@ public class TBMCChatAPI {
 		ArrayList<String> cmds = new ArrayList<String>();
 		cmds.add("§6---- Subcommands ----");
 		for (TBMCCommandBase cmd : TBMCChatAPI.GetCommands().values()) {
-			if (cmd.GetCommandPath().startsWith(command.GetCommandPath() + "/")) {
+			if (cmd.GetCommandPath().startsWith(command.GetCommandPath() + " ")) {
 				int ind = cmd.GetCommandPath().indexOf('/', command.GetCommandPath().length() + 2);
 				if (ind >= 0)
 					continue;
-				cmds.add(cmd.GetCommandPath().replace('/', ' '));
+				cmds.add("/" + cmd.GetCommandPath());
 			}
 		}
 		return cmds.toArray(new String[cmds.size()]);
@@ -133,7 +133,7 @@ public class TBMCChatAPI {
 	 *            The command to add
 	 */
 	public static void AddCommand(JavaPlugin plugin, TBMCCommandBase cmd) {
-		plugin.getLogger().info("Registering command " + cmd.GetCommandPath() + " for " + plugin.getName());
+		plugin.getLogger().info("Registering command /" + cmd.GetCommandPath() + " for " + plugin.getName());
 		try {
 			cmd.plugin = plugin;
 			commands.put(cmd.GetCommandPath(), cmd);
