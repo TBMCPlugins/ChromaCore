@@ -101,15 +101,18 @@ public class TBMCChatAPI {
 	 *            The command's class to create it (because why let you create the command class)
 	 */
 	public static void AddCommand(JavaPlugin plugin, Class<? extends TBMCCommandBase> thecmdclass, Object... params) {
-		plugin.getLogger().info("Registering command " + thecmdclass.getName() + " for " + plugin.getName());
+		plugin.getLogger().info("Registering command " + thecmdclass.getSimpleName() + " for " + plugin.getName());
 		try {
-			TBMCCommandBase c = thecmdclass
-					.getConstructor(Arrays.stream(params).map(p -> p.getClass()).toArray(Class[]::new))
-					.newInstance(params);
+			TBMCCommandBase c;
+			if (params.length > 0)
+				c = thecmdclass.getConstructor(Arrays.stream(params).map(p -> p.getClass()).toArray(Class[]::new))
+						.newInstance(params);
+			else
+				c = thecmdclass.newInstance();
 			c.plugin = plugin;
 			commands.put(c.GetCommandPath(), c);
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("An error occured while registering command " + thecmdclass.getName(), e);
+			TBMCCoreAPI.SendException("An error occured while registering command " + thecmdclass.getSimpleName(), e);
 		}
 	}
 
