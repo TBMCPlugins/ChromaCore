@@ -3,6 +3,13 @@ package buttondevteam.lib.chat;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
+/**
+ * Extend this class to create new TBMCCommand and use {@link TBMCChatAPI#AddCommand(org.bukkit.plugin.java.JavaPlugin, TBMCCommandBase)} to add it. <u><b>Note:</b></u> The command path (command name
+ * and subcommand arguments) will be the class name by default, removing any "command" from it. To change it (especially for subcommands), override {@link #GetCommandPath()}.
+ * 
+ * @author Norbi
+ *
+ */
 public abstract class TBMCCommandBase {
 
 	public TBMCCommandBase() {

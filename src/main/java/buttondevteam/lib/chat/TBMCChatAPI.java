@@ -75,6 +75,8 @@ public class TBMCChatAPI {
 					continue;
 				TBMCCommandBase c = cmd.newInstance();
 				c.plugin = plugin;
+				if (!CheckForNulls(plugin, c))
+					continue;
 				commands.put(c.GetCommandPath(), c);
 			} catch (InstantiationException e) {
 				TBMCCoreAPI.SendException("An error occured while registering command " + cmd.getName(), e);
@@ -110,6 +112,8 @@ public class TBMCChatAPI {
 			else
 				c = thecmdclass.newInstance();
 			c.plugin = plugin;
+			if (!CheckForNulls(plugin, c))
+				return;
 			commands.put(c.GetCommandPath(), c);
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("An error occured while registering command " + thecmdclass.getSimpleName(), e);
@@ -133,6 +137,8 @@ public class TBMCChatAPI {
 	 *            The command to add
 	 */
 	public static void AddCommand(JavaPlugin plugin, TBMCCommandBase cmd) {
+		if (!CheckForNulls(plugin, cmd))
+			return;
 		plugin.getLogger().info("Registering command /" + cmd.GetCommandPath() + " for " + plugin.getName());
 		try {
 			cmd.plugin = plugin;
@@ -140,5 +146,18 @@ public class TBMCChatAPI {
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("An error occured while registering command " + cmd.GetCommandPath(), e);
 		}
+	}
+
+	private static boolean CheckForNulls(JavaPlugin plugin, TBMCCommandBase cmd) {
+		if (cmd == null) {
+			TBMCCoreAPI.SendException("An error occured while registering a command for plugin " + plugin.getName(),
+					new Exception("The command is null!"));
+			return false;
+		} else if (cmd.GetCommandPath() == null) {
+			TBMCCoreAPI.SendException("An error occured while registering command " + cmd.getClass().getSimpleName()
+					+ " for plugin " + plugin.getName(), new Exception("The command path is null!"));
+			return false;
+		}
+		return true;
 	}
 }
