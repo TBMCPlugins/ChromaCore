@@ -16,6 +16,7 @@ public class TBMCExceptionEvent extends Event {
 
 	private String sourcemsg;
 	private Throwable exception;
+	private boolean handled;
 
 	TBMCExceptionEvent(String sourcemsg, Throwable exception) {
 		this.sourcemsg = sourcemsg;
@@ -38,6 +39,22 @@ public class TBMCExceptionEvent extends Event {
 	 */
 	public Throwable getException() {
 		return exception;
+	}
+
+	/**
+	 * Gets if this event was handled
+	 * 
+	 * @return True if it was handled
+	 */
+	public boolean isHandled() {
+		return handled;
+	}
+
+	/**
+	 * Flags the event as handled
+	 */
+	public void setHandled() {
+		this.handled = true;
 	}
 
 	@Override

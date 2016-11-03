@@ -11,7 +11,9 @@ import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -106,6 +108,8 @@ public final class TBMCCoreAPI {
 		return body;
 	}
 
+	private static HashMap<String, Throwable> exceptionsToSend = new HashMap<>();
+
 	/**
 	 * Send exception to the {@link TBMCExceptionEvent}.
 	 * 
@@ -115,7 +119,11 @@ public final class TBMCCoreAPI {
 	 *            The exception to send
 	 */
 	public static void SendException(String sourcemsg, Throwable e) {
-		Bukkit.getPluginManager().callEvent(new TBMCExceptionEvent(sourcemsg, e));
+		SendUnsentExceptions();
+		TBMCExceptionEvent event = new TBMCExceptionEvent(sourcemsg, e);
+		Bukkit.getPluginManager().callEvent(event);
+		if (!event.isHandled())
+			exceptionsToSend.put(sourcemsg, e);
 		Bukkit.getLogger().warning(sourcemsg);
 		e.printStackTrace();
 	}
@@ -130,5 +138,17 @@ public final class TBMCCoreAPI {
 	 */
 	public static void RegisterEventsForExceptions(Listener listener, Plugin plugin) {
 		EventExceptionHandler.registerEvents(listener, plugin, new EventExceptionCoreHandler());
+	}
+
+	/**
+	 * Send exceptions that haven't been sent (their events didn't get handled). This method is used by the DiscordPlugin's ready event
+	 */
+	public static void SendUnsentExceptions() {
+		for (Entry<String, Throwable> entry : exceptionsToSend.entrySet()) {
+			TBMCExceptionEvent event = new TBMCExceptionEvent(entry.getKey(), entry.getValue());
+			Bukkit.getPluginManager().callEvent(event);
+			if (event.isHandled())
+				exceptionsToSend.remove(entry.getKey());
+		}
 	}
 }
