@@ -34,7 +34,7 @@ public class TBMCChatAPI {
 		cmds.add("§6---- Subcommands ----");
 		for (TBMCCommandBase cmd : TBMCChatAPI.GetCommands().values()) {
 			if (cmd.GetCommandPath().startsWith(command.GetCommandPath() + " ")) {
-				int ind = cmd.GetCommandPath().indexOf('/', command.GetCommandPath().length() + 2);
+				int ind = cmd.GetCommandPath().indexOf(' ', command.GetCommandPath().length() + 2);
 				if (ind >= 0)
 					continue;
 				cmds.add("/" + cmd.GetCommandPath());
