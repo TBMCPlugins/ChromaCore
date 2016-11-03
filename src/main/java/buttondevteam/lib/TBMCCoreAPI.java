@@ -60,7 +60,9 @@ public final class TBMCCoreAPI {
 				Files.move(result.toPath(), finalresult.toPath());
 		} catch (FileNotFoundException e) {
 			ret = "Can't find JAR, the build probably failed. Build log (scroll to bottom):\nhttps://jitpack.io/com/github/TBMCPlugins/"
-					+ correctname + "/master-SNAPSHOT/build.log";
+					+ correctname
+					+ "/master-SNAPSHOT/build.log\nIf you'd like to rebuild the same commit, go to:\nhttps://jitpack.io/#TBMCPlugins/"
+					+ correctname + "\nAnd delete the newest build.";
 		} catch (IOException e) {
 			ret = "IO error!\n" + e.getMessage();
 		} catch (Exception e) {
