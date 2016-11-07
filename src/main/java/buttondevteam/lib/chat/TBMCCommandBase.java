@@ -16,6 +16,8 @@ public abstract class TBMCCommandBase {
 	}
 	
 	public abstract boolean OnCommand(CommandSender sender, String alias, String[] args);
+	
+	public abstract String[] GetHelpText(String alias);
 
 	/**
 	 * The command's path, or name if top-level command.<br>
@@ -26,9 +28,6 @@ public abstract class TBMCCommandBase {
 	 * 
 	 * @return The command path, <i>which is the command class name by default</i> (removing any "command" from it)
 	 */
-	
-	public abstract String[] GetHelpText(String alias);
-	
 	public String GetCommandPath() {
 		return getClass().getSimpleName().toLowerCase().replace("command", "");
 	}
