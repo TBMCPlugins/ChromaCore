@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -18,6 +17,7 @@ import java.util.Map.Entry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
@@ -32,9 +32,11 @@ public final class TBMCCoreAPI {
 	 * 
 	 * @param name
 	 *            The plugin's repository name.
-	 * @return Error message or empty string
+	 * @param sender
+	 *            The command sender (if not console, messages will be printed to console as well).
 	 */
-	public static String UpdatePlugin(String name) {
+	public static void UpdatePlugin(String name, CommandSender sender) {
+		info(sender, "Checking plugin name...");
 		List<String> plugins = GetPluginNames();
 		String correctname = null;
 		for (String plugin : plugins) {
@@ -44,11 +46,9 @@ public final class TBMCCoreAPI {
 			}
 		}
 		if (correctname == null) {
-			Bukkit.getLogger().warning("There was an error while updating TBMC plugin: " + name);
-			return "Can't find plugin: " + name;
+			error(sender, "Can't find plugin: " + name);
 		}
-		Bukkit.getLogger().info("Updating TBMC plugin: " + correctname);
-		String ret = "";
+		info(sender, "Updating TBMC plugin: " + correctname);
 		URL url;
 		File result = new File("plugins/" + correctname + ".jar_tmp");
 		File finalresult = new File("plugins/" + correctname + ".jar");
@@ -59,21 +59,36 @@ public final class TBMCCoreAPI {
 			FileUtils.copyURLToFile(url, result);
 			if (!result.exists() || result.length() < 25) {
 				result.delete();
-				ret = "The downloaded JAR is too small (smnaller than 25 bytes). Am I downloading from the right place?";
-			} else
+				error(sender, "The downloaded JAR for " + correctname
+						+ " is too small (smnaller than 25 bytes). Am I downloading from the right place?");
+			} else {
 				Files.move(result.toPath(), finalresult.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				info(sender, "Updating plugin " + correctname + " done!");
+			}
 		} catch (FileNotFoundException e) {
-			ret = "Can't find JAR, the build probably failed. Build log (scroll to bottom):\nhttps://jitpack.io/com/github/TBMCPlugins/"
-					+ correctname
-					+ "/master-SNAPSHOT/build.log\nIf you'd like to rebuild the same commit, go to:\nhttps://jitpack.io/#TBMCPlugins/"
-					+ correctname + "\nAnd delete the newest build.";
+			error(sender,
+					"Can't find JAR for " + correctname + ", the build probably failed. Build log (scroll to bottom):"
+							+ "\n" + "https://jitpack.io/com/github/TBMCPlugins/" + correctname
+							+ "/master-SNAPSHOT/build.log\nIf you'd like to rebuild the same commit, go to:\nhttps://jitpack.io/#TBMCPlugins/"
+							+ correctname + "\nAnd delete the newest build.");
 		} catch (IOException e) {
-			ret = "IO error!\n" + e.getMessage();
+			error(sender, "IO error while updating " + correctname + "\n" + e.getMessage());
 		} catch (Exception e) {
-			Bukkit.getLogger().warning("Error!\n" + e);
-			ret = e.toString();
+			e.printStackTrace();
+			error(sender, "Unknown error while updating " + correctname + ": " + e);
 		}
-		return ret;
+	}
+
+	private static void error(CommandSender sender, String message) {
+		if (!sender.equals(Bukkit.getConsoleSender()))
+			Bukkit.getLogger().warning(message);
+		sender.sendMessage("§c" + message);
+	}
+
+	private static void info(CommandSender sender, String message) {
+		if (!sender.equals(Bukkit.getConsoleSender()))
+			Bukkit.getLogger().info(message);
+		sender.sendMessage("§b" + message);
 	}
 
 	/**
