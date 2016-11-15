@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 
+import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
@@ -159,5 +160,9 @@ public class TBMCChatAPI {
 			return false;
 		}
 		return true;
+	}
+
+	public static void SendChatMessage(Channel channel, CommandSender sender, String message) {
+		// TODO
 	}
 }
