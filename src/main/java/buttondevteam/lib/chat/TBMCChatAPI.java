@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.reflections.Reflections;
@@ -13,6 +14,7 @@ import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
+import buttondevteam.lib.TBMCChatEvent;
 import buttondevteam.lib.TBMCCoreAPI;
 
 public class TBMCChatAPI {
@@ -174,6 +176,7 @@ public class TBMCChatAPI {
 	}
 
 	public static void SendChatMessage(Channel channel, CommandSender sender, String message) {
-		// TODO
+		TBMCChatEvent event = new TBMCChatEvent(sender, channel, message);
+		Bukkit.getPluginManager().callEvent(event);
 	}
 }
