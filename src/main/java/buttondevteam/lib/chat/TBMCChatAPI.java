@@ -115,7 +115,7 @@ public class TBMCChatAPI {
 	 *            The command's class to create it (because why let you create the command class)
 	 */
 	public static void AddCommand(JavaPlugin plugin, Class<? extends TBMCCommandBase> thecmdclass, Object... params) {
-		plugin.getLogger().info("Registering command " + thecmdclass.getSimpleName() + " for " + plugin.getName());
+		// plugin.getLogger().info("Registering command " + thecmdclass.getSimpleName() + " for " + plugin.getName());
 		try {
 			TBMCCommandBase c;
 			if (params.length > 0)
@@ -151,7 +151,7 @@ public class TBMCChatAPI {
 	public static void AddCommand(JavaPlugin plugin, TBMCCommandBase cmd) {
 		if (!CheckForNulls(plugin, cmd))
 			return;
-		plugin.getLogger().info("Registering command /" + cmd.GetCommandPath() + " for " + plugin.getName());
+		// plugin.getLogger().info("Registering command /" + cmd.GetCommandPath() + " for " + plugin.getName());
 		try {
 			cmd.plugin = plugin;
 			commands.put(cmd.GetCommandPath(), cmd);
