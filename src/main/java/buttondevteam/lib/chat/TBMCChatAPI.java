@@ -31,11 +31,22 @@ public class TBMCChatAPI {
 	 * @return The subcommands
 	 */
 	public static String[] GetSubCommands(TBMCCommandBase command) {
+		return GetSubCommands(command.GetCommandPath());
+	}
+
+	/**
+	 * Returns messages formatted for Minecraft chat listing the subcommands of the command.
+	 * 
+	 * @param command
+	 *            The command which we want the subcommands of
+	 * @return The subcommands
+	 */
+	public static String[] GetSubCommands(String command) {
 		ArrayList<String> cmds = new ArrayList<String>();
 		cmds.add("§6---- Subcommands ----");
 		for (TBMCCommandBase cmd : TBMCChatAPI.GetCommands().values()) {
-			if (cmd.GetCommandPath().startsWith(command.GetCommandPath() + " ")) {
-				int ind = cmd.GetCommandPath().indexOf(' ', command.GetCommandPath().length() + 2);
+			if (cmd.GetCommandPath().startsWith(command + " ")) {
+				int ind = cmd.GetCommandPath().indexOf(' ', command.length() + 2);
 				if (ind >= 0)
 					continue;
 				cmds.add("/" + cmd.GetCommandPath());
