@@ -4,7 +4,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 public class DebugPotato {
 	private List<String> message;
@@ -105,5 +109,20 @@ public class DebugPotato {
 			}
 		}
 		return newMessage;
+	}
+	public ItemStack toItemStack() {
+		ItemStack potato = new ItemStack(Material.BAKED_POTATO);
+		ItemMeta meta = potato.getItemMeta();
+		meta.setDisplayName(this.getType() == null ? "Spicy Debug Potato" : this.getType());
+		if (this.getMessage() == null){
+			List<String> message = new ArrayList<String>();
+			message.add("nullMessage");
+			meta.setLore(message);
+		}else{
+			meta.setLore(this.getMessage());
+		}
+		potato.setItemMeta(meta);
+		potato.addUnsafeEnchantment(Enchantment.ARROW_FIRE, 10);
+		return potato;
 	}
 }
