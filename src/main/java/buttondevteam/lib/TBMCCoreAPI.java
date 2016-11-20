@@ -153,11 +153,15 @@ public final class TBMCCoreAPI {
 		e.printStackTrace();
 		Optional<? extends Player> randomPlayer = Bukkit.getOnlinePlayers().stream().findAny();
 		if (randomPlayer.isPresent())
-			DebugPotatoAPI.SendDebugPotato(randomPlayer.get(),
-					new String[] { //
-							"§b§o" + potatoMessages[new Random().nextInt(potatoMessages.length)], //
-							"§c§o" + sourcemsg, //
-							"§a§oFind a dev to fix this issue" });
+			DebugPotatoAPI.SendDebugPotato(
+					new DebugPotato()
+							.setMessage(new String[] { //
+									"§b§o" + potatoMessages[new Random().nextInt(potatoMessages.length)], //
+									"§c§o" + sourcemsg, //
+									"§a§oFind a dev to fix this issue" })
+							.setType(e instanceof IOException ? "Potato on a Stick"
+									: e instanceof ClassCastException ? "Square Potato" : "Plain Potato"),
+					randomPlayer.get());
 	}
 
 	/**
