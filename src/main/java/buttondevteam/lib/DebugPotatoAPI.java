@@ -15,13 +15,9 @@ public class DebugPotatoAPI {
 		ItemStack potato = new ItemStack(Material.BAKED_POTATO);
 		ItemMeta meta = potato.getItemMeta();
 		meta.setDisplayName(dp.getType() == null ? "Spicy Debug Potato" : dp.getType());
-		if (dp.getMessage() == null){
-			List<String> message = new ArrayList<String>();
-			message.add("nullMessage");
-			meta.setLore(message);
-		}else{
-			meta.setLore(dp.getMessage());
-		}
+		if (dp.getMessage() == null)
+			dp.setMessage("nullMessage");
+		meta.setLore(dp.getMessage());
 		potato.setItemMeta(meta);
 		potato.addUnsafeEnchantment(Enchantment.ARROW_FIRE, 10);
 		return potato;
