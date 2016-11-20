@@ -1,5 +1,8 @@
 package buttondevteam.lib;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
@@ -12,9 +15,13 @@ public class DebugPotatoAPI {
 		ItemStack potato = new ItemStack(Material.BAKED_POTATO);
 		ItemMeta meta = potato.getItemMeta();
 		meta.setDisplayName(dp.getType() == null ? "Spicy Debug Potato" : dp.getType());
-		if (dp.getMessage() == null)
-			throw new IllegalArgumentException("Potato message is empty!");
-		meta.setLore(dp.getMessage());
+		if (dp.getMessage() == null){
+			List<String> message = new ArrayList<String>();
+			message.add("nullMessage");
+			meta.setLore(message);
+		}else{
+			meta.setLore(dp.getMessage());
+		}
 		potato.setItemMeta(meta);
 		potato.addUnsafeEnchantment(Enchantment.ARROW_FIRE, 10);
 		return potato;
