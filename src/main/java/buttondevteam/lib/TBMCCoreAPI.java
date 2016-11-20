@@ -13,11 +13,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
@@ -125,6 +128,13 @@ public final class TBMCCoreAPI {
 
 	private static HashMap<String, Throwable> exceptionsToSend = new HashMap<>();
 
+	private static final String[] potatoMessages = new String[] { //
+			"Well shit", //
+			"Wait what", //
+			"Hwat", //
+			"Wat" //
+	};
+
 	/**
 	 * Send exception to the {@link TBMCExceptionEvent}.
 	 * 
@@ -141,6 +151,13 @@ public final class TBMCCoreAPI {
 			exceptionsToSend.put(sourcemsg, e);
 		Bukkit.getLogger().warning(sourcemsg);
 		e.printStackTrace();
+		Optional<? extends Player> randomPlayer = Bukkit.getOnlinePlayers().stream().findAny();
+		if (randomPlayer.isPresent())
+			DebugPotatoAPI.SendDebugPotato(randomPlayer.get(),
+					new String[] { //
+							"§b§o" + potatoMessages[new Random().nextInt(potatoMessages.length)], //
+							"§c§o" + sourcemsg, //
+							"§a§oFind a dev to fix this issue" });
 	}
 
 	/**
@@ -159,6 +176,10 @@ public final class TBMCCoreAPI {
 	 * Send exceptions that haven't been sent (their events didn't get handled). This method is used by the DiscordPlugin's ready event
 	 */
 	public static void SendUnsentExceptions() {
+		if (exceptionsToSend.size() > 20) {
+			exceptionsToSend.clear(); // Don't call more and more events if all the handler plugins are unloaded
+			Bukkit.getLogger().warning("Unhandled exception list is over 20! Clearing!");
+		}
 		for (Entry<String, Throwable> entry : exceptionsToSend.entrySet()) {
 			TBMCExceptionEvent event = new TBMCExceptionEvent(entry.getKey(), entry.getValue());
 			Bukkit.getPluginManager().callEvent(event);
