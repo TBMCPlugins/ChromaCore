@@ -157,6 +157,8 @@ public class TBMCPlayer implements AutoCloseable {
 		if (!mname.startsWith("get"))
 			throw new UnsupportedOperationException("Can only use getIntData from a getXYZ method");
 		Object obj = getLoadedPlayers().get(uuid).data.get(mname.substring("get".length()).toLowerCase());
+		if (obj == null)
+			return null;
 		if (obj instanceof Short)
 			return (T) obj;
 		if (!(Integer.class.isAssignableFrom(obj.getClass())))
