@@ -14,21 +14,19 @@ public abstract class TBMCCommandBase {
 
 	public TBMCCommandBase() {
 	}
-	
+
 	public abstract boolean OnCommand(CommandSender sender, String alias, String[] args);
+
+	public abstract String[] GetHelpText(String alias);
 
 	/**
 	 * The command's path, or name if top-level command.<br>
 	 * For example:<br>
 	 * "u admin updateplugin" or "u" for the top level one<br>
-	 * <br>
-	 * <u>Note:</u> If you have a command which has subcommands (like /u admin), you need a separate command class for that as well.
+	 * <u>The path must be lowercase!</u><br>
 	 * 
 	 * @return The command path, <i>which is the command class name by default</i> (removing any "command" from it)
 	 */
-	
-	public abstract String[] GetHelpText(String alias);
-	
 	public String GetCommandPath() {
 		return getClass().getSimpleName().toLowerCase().replace("command", "");
 	}

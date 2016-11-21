@@ -6,12 +6,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
+import buttondevteam.lib.TBMCChatEvent;
 import buttondevteam.lib.TBMCCoreAPI;
 
 public class TBMCChatAPI {
@@ -30,11 +33,22 @@ public class TBMCChatAPI {
 	 * @return The subcommands
 	 */
 	public static String[] GetSubCommands(TBMCCommandBase command) {
+		return GetSubCommands(command.GetCommandPath());
+	}
+
+	/**
+	 * Returns messages formatted for Minecraft chat listing the subcommands of the command.
+	 * 
+	 * @param command
+	 *            The command which we want the subcommands of
+	 * @return The subcommands
+	 */
+	public static String[] GetSubCommands(String command) {
 		ArrayList<String> cmds = new ArrayList<String>();
 		cmds.add("§6---- Subcommands ----");
 		for (TBMCCommandBase cmd : TBMCChatAPI.GetCommands().values()) {
-			if (cmd.GetCommandPath().startsWith(command.GetCommandPath() + " ")) {
-				int ind = cmd.GetCommandPath().indexOf(' ', command.GetCommandPath().length() + 2);
+			if (cmd.GetCommandPath().startsWith(command + " ")) {
+				int ind = cmd.GetCommandPath().indexOf(' ', command.length() + 2);
 				if (ind >= 0)
 					continue;
 				cmds.add("/" + cmd.GetCommandPath());
@@ -103,7 +117,7 @@ public class TBMCChatAPI {
 	 *            The command's class to create it (because why let you create the command class)
 	 */
 	public static void AddCommand(JavaPlugin plugin, Class<? extends TBMCCommandBase> thecmdclass, Object... params) {
-		plugin.getLogger().info("Registering command " + thecmdclass.getSimpleName() + " for " + plugin.getName());
+		// plugin.getLogger().info("Registering command " + thecmdclass.getSimpleName() + " for " + plugin.getName());
 		try {
 			TBMCCommandBase c;
 			if (params.length > 0)
@@ -139,7 +153,7 @@ public class TBMCChatAPI {
 	public static void AddCommand(JavaPlugin plugin, TBMCCommandBase cmd) {
 		if (!CheckForNulls(plugin, cmd))
 			return;
-		plugin.getLogger().info("Registering command /" + cmd.GetCommandPath() + " for " + plugin.getName());
+		// plugin.getLogger().info("Registering command /" + cmd.GetCommandPath() + " for " + plugin.getName());
 		try {
 			cmd.plugin = plugin;
 			commands.put(cmd.GetCommandPath(), cmd);
@@ -159,5 +173,10 @@ public class TBMCChatAPI {
 			return false;
 		}
 		return true;
+	}
+
+	public static void SendChatMessage(Channel channel, CommandSender sender, String message) {
+		TBMCChatEvent event = new TBMCChatEvent(sender, channel, message);
+		Bukkit.getPluginManager().callEvent(event);
 	}
 }
