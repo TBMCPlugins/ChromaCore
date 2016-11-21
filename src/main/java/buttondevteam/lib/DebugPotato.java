@@ -20,8 +20,9 @@ public class DebugPotato {
 	 * @param player
 	 *            The player
 	 */
-	public void Send(Player player) {
-		DebugPotatoAPI.SendDebugPotato(this, player);
+	public void Send(Player player){
+		player.getInventory().addItem(this.toItemStack());
+		return;
 	}
 
 	/**

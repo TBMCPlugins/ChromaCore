@@ -152,16 +152,16 @@ public final class TBMCCoreAPI {
 		Bukkit.getLogger().warning(sourcemsg);
 		e.printStackTrace();
 		Optional<? extends Player> randomPlayer = Bukkit.getOnlinePlayers().stream().findAny();
-		if (randomPlayer.isPresent())
-			DebugPotatoAPI.SendDebugPotato(
-					new DebugPotato()
+		if (randomPlayer.isPresent()){
+			DebugPotato potato = new DebugPotato()
 							.setMessage(new String[] { //
 									"§b§o" + potatoMessages[new Random().nextInt(potatoMessages.length)], //
 									"§c§o" + sourcemsg, //
 									"§a§oFind a dev to fix this issue" })
 							.setType(e instanceof IOException ? "Potato on a Stick"
-									: e instanceof ClassCastException ? "Square Potato" : "Plain Potato"),
-					randomPlayer.get());
+									: e instanceof ClassCastException ? "Square Potato" : "Plain Potato");
+			potato.Send(randomPlayer.get());
+		}
 	}
 
 	/**
