@@ -127,6 +127,7 @@ public final class TBMCCoreAPI {
 	}
 
 	private static HashMap<String, Throwable> exceptionsToSend = new HashMap<>();
+	private static List<String> debugMessagesToSend = new ArrayList<>();
 
 	private static final String[] potatoMessages = new String[] { //
 			"Well shit", //
@@ -163,6 +164,13 @@ public final class TBMCCoreAPI {
 			potato.Send(randomPlayer.get());
 		}
 	}
+	public static void sendDebugMessage(String debugMessage){
+		SendUnsentDebugMessages();
+		TBMCDebugMessageEvent event = new TBMCDebugMessageEvent(debugMessage);
+		Bukkit.getPluginManager().callEvent(event);
+		if (!event.isSent())
+			debugMessagesToSend.add(debugMessage);
+	}
 
 	/**
 	 * Registers Bukkit events, handling the exceptions occuring in those events
@@ -190,5 +198,18 @@ public final class TBMCCoreAPI {
 			if (event.isHandled())
 				exceptionsToSend.remove(entry.getKey());
 		}
+	}
+
+	public static void SendUnsentDebugMessages() {
+		if (debugMessagesToSend.size() > 20) {
+			debugMessagesToSend.clear(); // Don't call more and more DebugMessages if all the handler plugins are unloaded
+			Bukkit.getLogger().warning("Unhandled Debug Message list is over 20! Clearing!");
+		}
+		for (String message : debugMessagesToSend) {
+			TBMCDebugMessageEvent event = new TBMCDebugMessageEvent(message);
+			Bukkit.getPluginManager().callEvent(event);
+			if (event.isSent())
+				debugMessagesToSend.remove(message);
+		}	
 	}
 }
