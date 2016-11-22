@@ -98,6 +98,10 @@ public class DebugPotato {
 		int currentLineLength = 0;
 		int wordlength;
 		int maxLineLength = 40;
+		if (message.length() <= maxLineLength){
+			newMessage.add(message);
+			return newMessage;
+		}
 		for (String word : splitString) {
 			wordlength = word.length();
 			if (currentLineLength == 0 || (currentLineLength + wordlength) < maxLineLength) {
@@ -114,7 +118,7 @@ public class DebugPotato {
 	public ItemStack toItemStack() {
 		ItemStack potato = new ItemStack(Material.BAKED_POTATO);
 		ItemMeta meta = potato.getItemMeta();
-		meta.setDisplayName(this.getType() == null ? "Spicy Debug Potato" : this.getType());
+		meta.setDisplayName(this.getType() == null ? "Null Flavoured Debug Potato" : this.getType());
 		if (this.getMessage() == null){
 			List<String> message = new ArrayList<String>();
 			message.add("nullMessage");
