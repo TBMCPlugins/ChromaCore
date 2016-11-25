@@ -6,6 +6,7 @@ public class Gary extends DebugPotato {
 
 	public Gary() {
 		super.setMessage("I'M A POTATO");
+		super.setType("Gary");
 	}
 
 	/**
@@ -29,6 +30,14 @@ public class Gary extends DebugPotato {
 	 */
 	@Override
 	public DebugPotato setMessage(String[] message) {
+		return this;
+	}
+
+	/**
+	 * Gary has it's name already, therefore this method has no effect.
+	 */
+	@Override
+	public DebugPotato setType(String type) {
 		return this;
 	}
 }
