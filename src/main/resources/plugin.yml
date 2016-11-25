@@ -2,3 +2,4 @@ name: ButtonCore
 main: buttondevteam.core.MainPlugin
 version: 1.0
 author: TBMCPlugins
+database: true
