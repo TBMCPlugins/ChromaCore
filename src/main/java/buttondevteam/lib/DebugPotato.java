@@ -42,7 +42,11 @@ public class DebugPotato {
 	 * @return This potato
 	 */
 	public DebugPotato setMessage(List<String> message) {
-		this.message = message;
+		this.message = WordWrap(message.toString());
+		return this;
+	}
+	public DebugPotato setMessage(List<String> message, boolean isWordWrapped) {
+		this.message = (isWordWrapped) ? WordWrap(message.toString()): message;
 		return this;
 	}
 
