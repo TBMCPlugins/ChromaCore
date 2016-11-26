@@ -36,37 +36,46 @@ public class DebugPotato {
 
 	/**
 	 * Sets the message (lore of the potato).
-	 * 
-	 * @param message
-	 *            The message
+	 * @param message The message you wish to set
+	 * @param forceWordWrap Word Wraps the whole String List, without preserving previous line breaks. Preserves line breaks if false
+	 * @return This potato
+	 */
+
+	public DebugPotato setMessage(List<String> message, boolean forceWordWrap) {
+		if (forceWordWrap){
+			this.message = WordWrap(message.toString());
+		}else{
+			List<String> outputList = new ArrayList<String>();
+			List<String> tempList = new ArrayList<String>();
+			for(String line: message){
+				tempList = WordWrap(line.toString());
+				for (String s: tempList){
+					outputList.add(s);
+				}
+			}
+			this.message = outputList;
+		}
+		
+		return this;
+	}
+	/**
+	 * Sets the message (lore of the potato). It will be word wrapped automatically.
 	 * @return This potato
 	 */
 	public DebugPotato setMessage(List<String> message) {
-		this.message = WordWrap(message.toString());
-		return this;
-	}
-	public DebugPotato setMessage(List<String> message, boolean isWordWrapped) {
-		this.message = (isWordWrapped) ? WordWrap(message.toString()): message;
-		return this;
+		return setMessage(message, false);
 	}
 
 	/**
 	 * Sets the message (lore of the potato). It will be word wrapped automatically.
-	 * 
-	 * @param message
-	 *            The message
 	 * @return This potato
 	 */
 	public DebugPotato setMessage(String message) {
-		this.message = WordWrap(message);
-		return this;
+		return setMessage(Arrays.asList(message));
 	}
 
 	/**
-	 * Sets the message (lore of the potato).
-	 * 
-	 * @param message
-	 *            The message
+	 * Sets the message (lore of the potato). It will be word wrapped automatically.
 	 * @return This potato
 	 */
 	public DebugPotato setMessage(String[] message) {
