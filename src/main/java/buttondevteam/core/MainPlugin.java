@@ -28,7 +28,7 @@ public class MainPlugin extends JavaPlugin {
 		pdfFile = getDescription();
 		logger = getLogger();
 
-		setupDatabase();
+		/*setupDatabase();
 		DataManager.setDatabase(getDatabase());
 		final UUID cid = UUID.randomUUID();
 		final UUID mcid = UUID.randomUUID();
@@ -37,7 +37,7 @@ public class MainPlugin extends JavaPlugin {
 		System.out.println("----");
 		DataManager.save(new CPlayer(cid, mcid));
 		System.out.println("----");
-		System.out.println(DataManager.load(CPlayer.class, cid).getMinecraftID());
+		System.out.println(DataManager.load(CPlayer.class, cid).getMinecraftID());*/
 		logger.info(pdfFile.getName() + " has been Enabled (V." + pdfFile.getVersion() + ").");
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 	}
