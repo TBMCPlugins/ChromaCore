@@ -66,8 +66,8 @@ public class DebugPotato {
 	 * @return This potato
 	 */
 	public DebugPotato setMessage(String[] message) {
-		this.message = Arrays.asList(message);
-		return this;
+		return setMessage(Arrays.asList(message));
+		 
 	}
 
 	/**
@@ -113,6 +113,7 @@ public class DebugPotato {
 				currentLineLength = word.length();
 			}
 		}
+		newMessage.add(currentLine);
 		return newMessage;
 	}
 	public ItemStack toItemStack() {
