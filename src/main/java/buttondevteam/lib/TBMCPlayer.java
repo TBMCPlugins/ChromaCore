@@ -433,8 +433,8 @@ public class TBMCPlayer implements AutoCloseable {
 	 * Only intended to use from ButtonCore
 	 */
 	public static void quitPlayer(TBMCPlayer player) {
-		getLoadedPlayers().remove(player.uuid);
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player));
+		getLoadedPlayers().remove(player.uuid);
 	}
 
 	/**
