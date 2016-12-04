@@ -4,19 +4,17 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import javax.persistence.PersistenceException;
-
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import buttondevteam.lib.CPlayer;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.TBMCPlayer;
-import buttondevteam.lib.db.CData;
-import buttondevteam.lib.db.DataManager;
+import net.milkbowl.vault.permission.Permission;
 
 public class MainPlugin extends JavaPlugin {
 	public static MainPlugin Instance;
+	public static Permission permission;
 
 	private PluginDescriptionFile pdfFile;
 	private Logger logger;
@@ -27,29 +25,10 @@ public class MainPlugin extends JavaPlugin {
 		Instance = this;
 		pdfFile = getDescription();
 		logger = getLogger();
-
-		/*setupDatabase();
-		DataManager.setDatabase(getDatabase());
-		final UUID cid = UUID.randomUUID();
-		final UUID mcid = UUID.randomUUID();
-		System.out.println(cid);
-		System.out.println(mcid);
-		System.out.println("----");
-		DataManager.save(new CPlayer(cid, mcid));
-		System.out.println("----");
-		System.out.println(DataManager.load(CPlayer.class, cid).getMinecraftID());*/
+		setupPermissions();
 		logger.info(pdfFile.getName() + " has been Enabled (V." + pdfFile.getVersion() + ").");
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 	}
-	
-    private void setupDatabase() {
-        try {
-            getDatabase().find(CPlayer.class).findRowCount();
-        } catch (PersistenceException ex) {
-            System.out.println("Installing database for ButtonCore due to first time usage");
-            installDDL();
-        }
-    }
 
 	@Override
 	public void onDisable() {
@@ -58,5 +37,14 @@ public class MainPlugin extends JavaPlugin {
 			TBMCPlayer.savePlayer(entry.getValue());
 		}
 		logger.info("Player data saved.");
+	}
+
+	private boolean setupPermissions() {
+		RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager()
+				.getRegistration(Permission.class);
+		if (permissionProvider != null) {
+			permission = permissionProvider.getProvider();
+		}
+		return (permission != null);
 	}
 }
