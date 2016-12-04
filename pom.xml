@@ -75,6 +75,10 @@
 			<id>jitpack.io</id>
 			<url>https://jitpack.io/</url>
 		</repository>
+		<repository>
+			<id>vault-repo</id>
+			<url>http://nexus.hc.to/content/repositories/pub_releases</url>
+		</repository>
 	</repositories>
 	<dependencies>
 		<dependency>
@@ -99,6 +103,12 @@
 			<groupId>com.github.TBMCPlugins.ButtonCore</groupId>
 			<artifactId>Towny</artifactId>
 			<version>master-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.milkbowl</groupId> <!-- net.milkbowl.vault -->
+			<artifactId>VaultAPI</artifactId>
+			<version>master-SNAPSHOT</version> <!--  1.6 -->
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 	<organization>
