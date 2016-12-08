@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -151,7 +152,7 @@ public class TBMCPlayer implements AutoCloseable {
 	 * @return The value or null if not found
 	 */
 	@SuppressWarnings("unchecked")
-	protected <T extends Number> T getIntData(Class<T> cl) {
+	protected <T extends Number> Optional<T> getIntData(Class<T> cl) {
 		StackTraceElement st = new Exception().getStackTrace()[1];
 		String mname = st.getMethodName();
 		if (!mname.startsWith("get"))
@@ -160,14 +161,14 @@ public class TBMCPlayer implements AutoCloseable {
 		if (obj == null)
 			return null;
 		if (obj instanceof Short)
-			return (T) obj;
+			return Optional.of((T) obj);
 		if (!(Integer.class.isAssignableFrom(obj.getClass())))
 			throw new UnsupportedOperationException("The retrieved object isn't an integer: " + obj);
 		Integer int_ = (Integer) obj;
 		if (Short.class.isAssignableFrom(cl))
-			return (T) (Object) int_.shortValue();
+			return Optional.of((T) (Object) int_.shortValue());
 		else
-			return (T) (Object) int_;
+			return Optional.of((T) (Object) int_);
 	}
 
 	/**
