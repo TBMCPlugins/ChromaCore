@@ -36,12 +36,31 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
-			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-shade-plugin</artifactId> 
-				<version>2.4.2</version> <executions> <execution> <phase>package</phase> 
-				<goals> <goal>shade</goal> </goals> <configuration> <artifactSet> <includes> 
-				<include>com.github.TBMCPlugins.ButtonLib:ButtonLib</include> </includes> 
-				</artifactSet> <pluginExecution> <action> <execute /> </action> </pluginExecution> 
-				</configuration> </execution> </executions> </plugin> -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.4.2</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<artifactSet>
+								<includes>
+									<include>org.reflections:reflections</include>
+								</includes>
+							</artifactSet>
+							<pluginExecution>
+								<action>
+									<execute />
+								</action>
+							</pluginExecution>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
@@ -107,7 +126,7 @@
 		<dependency>
 			<groupId>com.github.milkbowl</groupId> <!-- net.milkbowl.vault -->
 			<artifactId>VaultAPI</artifactId>
-			<version>master-SNAPSHOT</version> <!--  1.6 -->
+			<version>master-SNAPSHOT</version> <!-- 1.6 -->
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
@@ -125,7 +144,7 @@
 	<properties>
 		<!-- github server corresponds to entry in ~/.m2/settings.xml -->
 		<github.global.server>github</github.global.server>
- 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<scm>
 		<url>https://github.com/TBMCPlugins/mvn-repo</url>
