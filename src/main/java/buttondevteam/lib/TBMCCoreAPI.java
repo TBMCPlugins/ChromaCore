@@ -39,6 +39,20 @@ public final class TBMCCoreAPI {
 	 *            The command sender (if not console, messages will be printed to console as well).
 	 */
 	public static void UpdatePlugin(String name, CommandSender sender) {
+		UpdatePlugin(name, sender, "master");
+	}
+
+	/**
+	 * Updates or installs the specified plugin from the specified branch. The plugin must use Maven.
+	 * 
+	 * @param name
+	 *            The plugin's repository name.
+	 * @param sender
+	 *            The command sender (if not console, messages will be printed to console as well).
+	 * @param branch
+	 *            The branch to download the plugin from.
+	 */
+	public static void UpdatePlugin(String name, CommandSender sender, String branch) {
 		info(sender, "Checking plugin name...");
 		List<String> plugins = GetPluginNames();
 		String correctname = null;
@@ -51,28 +65,30 @@ public final class TBMCCoreAPI {
 		if (correctname == null) {
 			error(sender, "Can't find plugin: " + name);
 		}
-		info(sender, "Updating TBMC plugin: " + correctname);
+		info(sender, "Updating TBMC plugin: " + correctname + " from " + branch);
 		URL url;
 		File result = new File("plugins/" + correctname + ".jar_tmp");
 		File finalresult = new File("plugins/" + correctname + ".jar");
 		try {
 			url = new URL("https://jitpack.io/com/github/TBMCPlugins/"
-					+ (correctname.equals("ButtonCore") ? "ButtonCore/ButtonCore" : correctname) + "/master-SNAPSHOT/"
-					+ correctname + "-master-SNAPSHOT.jar"); // ButtonCore exception required since it hosts Towny as well
+					+ (correctname.equals("ButtonCore") ? "ButtonCore/ButtonCore" : correctname) + "/" + branch
+					+ "-SNAPSHOT/" + correctname + "-" + branch + "-SNAPSHOT.jar"); // ButtonCore exception required since it hosts Towny as well
 			FileUtils.copyURLToFile(url, result);
 			if (!result.exists() || result.length() < 25) {
 				result.delete();
-				error(sender, "The downloaded JAR for " + correctname
+				error(sender, "The downloaded JAR for " + correctname + " from " + branch
 						+ " is too small (smnaller than 25 bytes). Am I downloading from the right place?");
 			} else {
+				finalresult.delete(); // Attempt to support Windows
 				Files.move(result.toPath(), finalresult.toPath(), StandardCopyOption.REPLACE_EXISTING);
-				info(sender, "Updating plugin " + correctname + " done!");
+				info(sender, "Updating plugin " + correctname + " from " + branch + " done!");
 			}
 		} catch (FileNotFoundException e) {
 			error(sender,
-					"Can't find JAR for " + correctname + ", the build probably failed. Build log (scroll to bottom):"
-							+ "\n" + "https://jitpack.io/com/github/TBMCPlugins/" + correctname
-							+ "/master-SNAPSHOT/build.log\nIf you'd like to rebuild the same commit, go to:\nhttps://jitpack.io/#TBMCPlugins/"
+					"Can't find JAR for " + correctname + " from " + branch
+							+ ", the build probably failed. Build log (scroll to bottom):" + "\n"
+							+ "https://jitpack.io/com/github/TBMCPlugins/" + correctname + "/" + branch
+							+ "-SNAPSHOT/build.log\nIf you'd like to rebuild the same commit, go to:\nhttps://jitpack.io/#TBMCPlugins/"
 							+ correctname + "\nAnd delete the newest build.");
 		} catch (IOException e) {
 			error(sender, "IO error while updating " + correctname + "\n" + e.getMessage());
@@ -153,18 +169,19 @@ public final class TBMCCoreAPI {
 		Bukkit.getLogger().warning(sourcemsg);
 		e.printStackTrace();
 		Optional<? extends Player> randomPlayer = Bukkit.getOnlinePlayers().stream().findAny();
-		if (randomPlayer.isPresent()){
+		if (randomPlayer.isPresent()) {
 			DebugPotato potato = new DebugPotato()
-							.setMessage(new String[] { //
-									"§b§o" + potatoMessages[new Random().nextInt(potatoMessages.length)], //
-									"§c§o" + sourcemsg, //
-									"§a§oFind a dev to fix this issue" })
-							.setType(e instanceof IOException ? "Potato on a Stick"
-									: e instanceof ClassCastException ? "Square Potato" : "Plain Potato");
+					.setMessage(new String[] { //
+							"§b§o" + potatoMessages[new Random().nextInt(potatoMessages.length)], //
+							"§c§o" + sourcemsg, //
+							"§a§oFind a dev to fix this issue" })
+					.setType(e instanceof IOException ? "Potato on a Stick"
+							: e instanceof ClassCastException ? "Square Potato" : "Plain Potato");
 			potato.Send(randomPlayer.get());
 		}
 	}
-	public static void sendDebugMessage(String debugMessage){
+
+	public static void sendDebugMessage(String debugMessage) {
 		SendUnsentDebugMessages();
 		TBMCDebugMessageEvent event = new TBMCDebugMessageEvent(debugMessage);
 		Bukkit.getPluginManager().callEvent(event);
@@ -210,6 +227,6 @@ public final class TBMCCoreAPI {
 			Bukkit.getPluginManager().callEvent(event);
 			if (event.isSent())
 				debugMessagesToSend.remove(message);
-		}	
+		}
 	}
 }
