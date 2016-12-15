@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -29,6 +28,15 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 public final class TBMCCoreAPI {
+	static List<String> coders = new ArrayList<String>() {
+		private static final long serialVersionUID = -4462159250738367334L;
+	{
+		add("Alisolarflare");
+		add("NorbiPeti");
+		add("iie");
+		add("thewindmillman");
+		add("mayskam1995");
+	}};
 	/**
 	 * Updates or installs the specified plugin. The plugin must use Maven.
 	 * 
@@ -85,10 +93,10 @@ public final class TBMCCoreAPI {
 		} catch (FileNotFoundException e) {
 			error(sender,
 					"Can't find JAR for " + correctname + " from " + branch
-							+ ", the build probably failed. Build log (scroll to bottom):" + "\n"
-							+ "https://jitpack.io/com/github/TBMCPlugins/" + correctname + "/" + branch
-							+ "-SNAPSHOT/build.log\nIf you'd like to rebuild the same commit, go to:\nhttps://jitpack.io/#TBMCPlugins/"
-							+ correctname + "\nAnd delete the newest build.");
+					+ ", the build probably failed. Build log (scroll to bottom):" + "\n"
+					+ "https://jitpack.io/com/github/TBMCPlugins/" + correctname + "/" + branch
+					+ "-SNAPSHOT/build.log\nIf you'd like to rebuild the same commit, go to:\nhttps://jitpack.io/#TBMCPlugins/"
+					+ correctname + "\nAnd delete the newest build.");
 		} catch (IOException e) {
 			error(sender, "IO error while updating " + correctname + "\n" + e.getMessage());
 		} catch (Exception e) {
@@ -153,7 +161,10 @@ public final class TBMCCoreAPI {
 	 * @param e
 	 *            The exception to send
 	 */
-	public static void SendException(String sourcemsg, Throwable e) {
+	public static void SendException(String sourcemsg, Throwable e){
+		SendException(sourcemsg, e, false);
+	}
+	public static void SendException(String sourcemsg, Throwable e, boolean debugPotato) {
 		SendUnsentExceptions();
 		TBMCExceptionEvent event = new TBMCExceptionEvent(sourcemsg, e);
 		Bukkit.getPluginManager().callEvent(event);
@@ -161,16 +172,28 @@ public final class TBMCCoreAPI {
 			exceptionsToSend.put(sourcemsg, e);
 		Bukkit.getLogger().warning(sourcemsg);
 		e.printStackTrace();
-		Optional<? extends Player> randomPlayer = Bukkit.getOnlinePlayers().stream().findAny();
-		if (randomPlayer.isPresent()) {
-			DebugPotato potato = new DebugPotato()
-					.setMessage(new String[] { //
-							"§b§o" + e.getClass().getSimpleName(), //
-							"§c§o" + sourcemsg, //
-							"§a§oFind a dev to fix this issue" })
-					.setType(e instanceof IOException ? "Potato on a Stick"
-							: e instanceof ClassCastException ? "Square Potato" : "Plain Potato");
-			potato.Send(randomPlayer.get());
+		if (debugPotato){
+			List<Player> devsOnline = new ArrayList<Player>();
+			for (Player player : Bukkit.getOnlinePlayers()){
+				if (coders.contains(player.getName())){
+					devsOnline.add(player);
+				}
+			};
+			if (!devsOnline.isEmpty()) {
+				DebugPotato potato = new DebugPotato()
+						.setMessage(new String[] { //
+								"§b§o" + e.getClass().getSimpleName(), //
+								"§c§o" + sourcemsg, //
+						"§a§oFind a dev to fix this issue" })
+						.setType(e instanceof IOException ? "Throwable Potato"
+								: e instanceof ClassCastException ? "Squished Potato" 
+										: e instanceof NullPointerException ? "Plain Potato" 
+												: e instanceof StackOverflowError ? "Chips"
+														: "Error Potato");
+				for (Player dev : devsOnline){
+					potato.Send(dev);
+				}
+			}
 		}
 	}
 
