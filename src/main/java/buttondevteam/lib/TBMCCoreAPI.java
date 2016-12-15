@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -145,12 +144,6 @@ public final class TBMCCoreAPI {
 	private static HashMap<String, Throwable> exceptionsToSend = new HashMap<>();
 	private static List<String> debugMessagesToSend = new ArrayList<>();
 
-	private static final String[] potatoMessages = new String[] { //
-			"Well shit", //
-			"Wait what", //
-			"Hwat", //
-			"Wat" //
-	};
 
 	/**
 	 * Send exception to the {@link TBMCExceptionEvent}.
@@ -172,7 +165,7 @@ public final class TBMCCoreAPI {
 		if (randomPlayer.isPresent()) {
 			DebugPotato potato = new DebugPotato()
 					.setMessage(new String[] { //
-							"§b§o" + potatoMessages[new Random().nextInt(potatoMessages.length)], //
+							"§b§o" + e.getClass().getSimpleName(), //
 							"§c§o" + sourcemsg, //
 							"§a§oFind a dev to fix this issue" })
 					.setType(e instanceof IOException ? "Potato on a Stick"
