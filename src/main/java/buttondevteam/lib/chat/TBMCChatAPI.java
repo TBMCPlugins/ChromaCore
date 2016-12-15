@@ -15,6 +15,7 @@ import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
+import buttondevteam.core.CommandCaller;
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCChatEvent;
 import buttondevteam.lib.TBMCCoreAPI;
@@ -102,6 +103,7 @@ public class TBMCChatAPI {
 				if (!CheckForNulls(plugin, c))
 					continue;
 				commands.put(c.GetCommandPath(), c);
+				CommandCaller.RegisterCommand(c);
 			} catch (InstantiationException e) {
 				TBMCCoreAPI.SendException("An error occured while registering command " + cmd.getName(), e);
 			} catch (IllegalAccessException e) {
@@ -139,6 +141,7 @@ public class TBMCChatAPI {
 			if (!CheckForNulls(plugin, c))
 				return;
 			commands.put(c.GetCommandPath(), c);
+			CommandCaller.RegisterCommand(c);
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("An error occured while registering command " + thecmdclass.getSimpleName(), e);
 		}
@@ -167,6 +170,7 @@ public class TBMCChatAPI {
 		try {
 			cmd.plugin = plugin;
 			commands.put(cmd.GetCommandPath(), cmd);
+			CommandCaller.RegisterCommand(cmd);
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("An error occured while registering command " + cmd.GetCommandPath(), e);
 		}
