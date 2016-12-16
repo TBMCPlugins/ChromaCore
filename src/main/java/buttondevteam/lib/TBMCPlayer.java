@@ -57,6 +57,8 @@ public class TBMCPlayer implements AutoCloseable {
 		Object ret = getLoadedPlayers().get(uuid).data.get(mname.substring("get".length()).toLowerCase());
 		if (ret != null && Integer.class.isAssignableFrom(ret.getClass()))
 			throw new UnsupportedOperationException("For integers use getIntData()");
+		if (ret != null && Boolean.class.isAssignableFrom(ret.getClass()))
+			throw new UnsupportedOperationException("For booleans use getBoolData()");
 		return (T) ret;
 	}
 
@@ -192,6 +194,34 @@ public class TBMCPlayer implements AutoCloseable {
 		if (!mname.startsWith("set"))
 			throw new UnsupportedOperationException("Can only use setIntData from a setXYZ method");
 		getLoadedPlayers().get(uuid).data.put(mname.substring("set".length()).toLowerCase(), value);
+	}
+
+	/**
+	 * <p>
+	 * Gets a player data entry for the caller plugin returning a boolean.<br>
+	 * Usage:
+	 * </p>
+	 * 
+	 * <pre>
+	 * {@code
+	 * public String getFlairCheater() {
+	 * 	return getBoolData();
+	 * }
+	 * </pre>
+	 * 
+	 * @return The value or false if not found
+	 */
+	protected boolean getBoolData() {
+		StackTraceElement st = new Exception().getStackTrace()[1];
+		String mname = st.getMethodName();
+		if (!mname.startsWith("get"))
+			throw new UnsupportedOperationException("Can only use getData from a getXYZ method");
+		Object ret = getLoadedPlayers().get(uuid).data.get(mname.substring("get".length()).toLowerCase());
+		if (ret != null && !Boolean.class.isAssignableFrom(ret.getClass()))
+			throw new UnsupportedOperationException("Not a boolean!");
+		if (ret == null)
+			return false;
+		return (boolean) ret;
 	}
 
 	/**
