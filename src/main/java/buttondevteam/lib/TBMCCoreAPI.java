@@ -71,6 +71,7 @@ public final class TBMCCoreAPI {
 		}
 		if (correctname == null) {
 			error(sender, "Can't find plugin: " + name);
+			return;
 		}
 		info(sender, "Updating TBMC plugin: " + correctname + " from " + branch);
 		URL url;
@@ -85,6 +86,7 @@ public final class TBMCCoreAPI {
 				result.delete();
 				error(sender, "The downloaded JAR for " + correctname + " from " + branch
 						+ " is too small (smnaller than 25 bytes). Am I downloading from the right place?");
+				return;
 			} else {
 				finalresult.delete(); // Attempt to support Windows
 				Files.move(result.toPath(), finalresult.toPath(), StandardCopyOption.REPLACE_EXISTING);

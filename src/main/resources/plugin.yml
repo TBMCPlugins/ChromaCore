@@ -2,4 +2,6 @@ name: ButtonCore
 main: buttondevteam.core.MainPlugin
 version: 1.0
 author: TBMCPlugins
-database: true
+commands:
+  updateplugin:
+    description: Update a TBMC plugin

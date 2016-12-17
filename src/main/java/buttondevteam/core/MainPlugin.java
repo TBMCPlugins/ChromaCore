@@ -10,6 +10,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.TBMCPlayer;
+import buttondevteam.lib.chat.TBMCChatAPI;
 import net.milkbowl.vault.permission.Permission;
 
 public class MainPlugin extends JavaPlugin {
@@ -26,8 +27,9 @@ public class MainPlugin extends JavaPlugin {
 		pdfFile = getDescription();
 		logger = getLogger();
 		setupPermissions();
-		logger.info(pdfFile.getName() + " has been Enabled (V." + pdfFile.getVersion() + ").");
+		TBMCChatAPI.AddCommand(this, UpdatePluginCommand.class);
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
+		logger.info(pdfFile.getName() + " has been Enabled (V." + pdfFile.getVersion() + ").");
 	}
 
 	@Override
