@@ -189,8 +189,20 @@ public class TBMCChatAPI {
 		return true;
 	}
 
-	public static void SendChatMessage(Channel channel, CommandSender sender, String message) {
+	/**
+	 * Sends a chat message to Minecraft
+	 * 
+	 * @param channel
+	 *            The channel to send to
+	 * @param sender
+	 *            The sender to send from
+	 * @param message
+	 *            The message to send
+	 * @return The event cancelled state
+	 */
+	public static boolean SendChatMessage(Channel channel, CommandSender sender, String message) {
 		TBMCChatEvent event = new TBMCChatEvent(sender, channel, message);
 		Bukkit.getPluginManager().callEvent(event);
+		return event.isCancelled();
 	}
 }
