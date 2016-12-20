@@ -5,3 +5,5 @@ author: TBMCPlugins
 commands:
   updateplugin:
     description: Update a TBMC plugin
+  schrestart:
+    description: Schedules a restart for a given time.
