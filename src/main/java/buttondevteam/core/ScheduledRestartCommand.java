@@ -68,4 +68,9 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 	public boolean GetModOnly() {
 		return true;
 	}
+
+	@Override
+	public String GetCommandPath() {
+		return "schrestart";
+	}
 }
