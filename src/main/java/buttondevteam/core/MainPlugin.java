@@ -16,6 +16,7 @@ import net.milkbowl.vault.permission.Permission;
 public class MainPlugin extends JavaPlugin {
 	public static MainPlugin Instance;
 	public static Permission permission;
+	public static boolean Test;
 
 	private PluginDescriptionFile pdfFile;
 	private Logger logger;
@@ -27,6 +28,8 @@ public class MainPlugin extends JavaPlugin {
 		pdfFile = getDescription();
 		logger = getLogger();
 		setupPermissions();
+		Test = getConfig().getBoolean("test", true);
+		saveConfig();
 		TBMCChatAPI.AddCommand(this, UpdatePluginCommand.class);
 		TBMCChatAPI.AddCommand(this, ScheduledRestartCommand.class);
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
