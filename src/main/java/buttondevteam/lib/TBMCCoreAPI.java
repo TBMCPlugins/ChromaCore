@@ -69,7 +69,7 @@ public final class TBMCCoreAPI {
 			return false;
 		}
 		info(sender, "Checking branch name...");
-		if (TBMCCoreAPI.IsTestServer() && !branch.equalsIgnoreCase("master")) {
+		if (!TBMCCoreAPI.IsTestServer() && !branch.equalsIgnoreCase("master")) {
 			error(sender, "The server is in production mode, updating only allowed from master!");
 			return false;
 		}
