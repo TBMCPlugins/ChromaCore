@@ -52,8 +52,9 @@ public final class TBMCCoreAPI {
 	 *            The command sender (if not console, messages will be printed to console as well).
 	 * @param branch
 	 *            The branch to download the plugin from.
+	 * @return Success or not
 	 */
-	public static void UpdatePlugin(String name, CommandSender sender, String branch) {
+	public static boolean UpdatePlugin(String name, CommandSender sender, String branch) {
 		info(sender, "Checking plugin name...");
 		List<String> plugins = GetPluginNames();
 		String correctname = null;
@@ -65,22 +66,24 @@ public final class TBMCCoreAPI {
 		}
 		if (correctname == null) {
 			error(sender, "Can't find plugin: " + name);
-			return;
+			return false;
 		}
 		info(sender, "Checking branch name...");
 		if (TBMCCoreAPI.IsTestServer() && !branch.equalsIgnoreCase("master")) {
 			error(sender, "The server is in production mode, updating only allowed from master!");
-			return;
+			return false;
 		}
 		Optional<String> correctbranch = GetPluginBranches(correctname).stream().filter(b -> b.equalsIgnoreCase(branch))
 				.findAny();
 		if (!correctbranch.isPresent()) {
 			error(sender, "Can't find branch \"" + branch + "\" for plugin \"" + correctname + "\"");
-			return;
+			return false;
 		}
 		info(sender, "Updating TBMC plugin: " + correctname + " from " + correctbranch.get());
 		URL url;
-		File result = new File("plugins/" + correctname + ".jar_tmp");
+		final boolean isWindows = System.getProperty("os.name").contains("Windows");
+		File result = new File(
+				"plugins/" + correctname + (isWindows ? ".jar" : ".jar_tmp"));
 		File finalresult = new File("plugins/" + correctname + ".jar");
 		try {
 			url = new URL("https://jitpack.io/com/github/TBMCPlugins/"
@@ -91,11 +94,12 @@ public final class TBMCCoreAPI {
 				result.delete();
 				error(sender, "The downloaded JAR for " + correctname + " from " + correctbranch.get()
 						+ " is too small (smnaller than 25 bytes). Am I downloading from the right place?");
-				return;
+				return false;
 			} else {
-				finalresult.delete(); // Attempt to support Windows
-				Files.move(result.toPath(), finalresult.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				if (!isWindows)
+					Files.move(result.toPath(), finalresult.toPath(), StandardCopyOption.REPLACE_EXISTING);
 				info(sender, "Updating plugin " + correctname + " from " + correctbranch.get() + " done!");
+				return true;
 			}
 		} catch (FileNotFoundException e) {
 			error(sender,
@@ -110,6 +114,7 @@ public final class TBMCCoreAPI {
 			e.printStackTrace();
 			error(sender, "Unknown error while updating " + correctname + ": " + e);
 		}
+		return false;
 	}
 
 	private static void error(CommandSender sender, String message) {
