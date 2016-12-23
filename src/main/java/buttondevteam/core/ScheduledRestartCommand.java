@@ -43,7 +43,7 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 				Bukkit.spigot().restart();
 			}
 			if (restartcounter % 200 == 0)
-				Bukkit.broadcastMessage("§c-- The server is restarting in " + restartcounter);
+				Bukkit.broadcastMessage("§c-- The server is restarting in " + restartcounter / 20 + " seconds!");
 			restartbar.setProgress(restartcounter / restarttime);
 			restartcounter--;
 		}, 1, 1);
