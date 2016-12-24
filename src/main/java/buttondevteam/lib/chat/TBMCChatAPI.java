@@ -56,8 +56,11 @@ public class TBMCChatAPI {
 		for (TBMCCommandBase cmd : TBMCChatAPI.GetCommands().values()) {
 			if (cmd.GetCommandPath().startsWith(command + " ")) {
 				int ind = cmd.GetCommandPath().indexOf(' ', command.length() + 2);
-				if (ind >= 0)
-					continue;
+				if (ind >= 0) {
+					String newcmd = cmd.GetCommandPath().substring(0, ind);
+					if (!cmds.contains("/" + newcmd))
+						cmds.add("/" + newcmd);
+				}
 				if (cmd.GetPlayerOnly() && !(sender instanceof Player))
 					continue;
 				if (cmd.GetModOnly() && !MainPlugin.permission.has(sender, "tbmc.admin"))
