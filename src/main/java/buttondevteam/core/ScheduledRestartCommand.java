@@ -1,5 +1,7 @@
 package buttondevteam.core;
 
+import java.util.stream.Collectors;
+
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarFlag;
@@ -32,7 +34,11 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 		restartbar = Bukkit.createBossBar("Server restart in " + ticks / 20f, BarColor.RED, BarStyle.SOLID,
 				BarFlag.DARKEN_SKY);
 		restartbar.setProgress(1);
+		// System.out.println("Progress: " + restartbar.getProgress());
 		Bukkit.getOnlinePlayers().stream().forEach(p -> restartbar.addPlayer(p));
+		/*
+		 * System.out.println( "Players: " + restartbar.getPlayers().stream().map(p -> p.getName()).collect(Collectors.joining(", ")));
+		 */
 		sender.sendMessage("Scheduled restart in " + ticks / 20f);
 		ScheduledServerRestartEvent e = new ScheduledServerRestartEvent(ticks);
 		Bukkit.getPluginManager().callEvent(e);
@@ -44,7 +50,11 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 			}
 			if (restartcounter % 200 == 0)
 				Bukkit.broadcastMessage("§c-- The server is restarting in " + restartcounter / 20 + " seconds!");
-			restartbar.setProgress(restartcounter / restarttime);
+			restartbar.setProgress(restartcounter / (double) restarttime);
+			restartbar.setTitle("Server restart in " + restartcounter / 20f);
+			/*
+			 * if (restartcounter % 20 == 0) System.out.println("Progress: " + restartbar.getProgress());
+			 */
 			restartcounter--;
 		}, 1, 1);
 		return true;
