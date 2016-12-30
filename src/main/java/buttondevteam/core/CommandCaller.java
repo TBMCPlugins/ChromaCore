@@ -56,20 +56,18 @@ public class CommandCaller implements CommandExecutor {
 			path += " " + arg;
 		TBMCCommandBase cmd = TBMCChatAPI.GetCommands().get(path);
 		int argc = 0;
-		while (cmd == null && path.contains(" ")) {
+		String[] subcmds = null;
+		while (cmd == null && (subcmds = TBMCChatAPI.GetSubCommands(path, sender)).length == 0 && path.contains(" ")) {
 			path = path.substring(0, path.lastIndexOf(' '));
 			argc++;
 			cmd = TBMCChatAPI.GetCommands().get(path);
 		}
 		if (cmd == null) {
-			String[] subcmds = TBMCChatAPI.GetSubCommands(path, sender);
-			if (subcmds.length > 0)
+			if (subcmds == null || subcmds.length > 0)
 				sender.sendMessage(subcmds);
 			else {
-				final String errormsg = "§cYou don't have access to any of this command's subcommands.";
+				final String errormsg = "§cYou don't have access to any of this command's subcommands or it doesn't have any.";
 				sender.sendMessage(errormsg);
-				if (!(sender instanceof ConsoleCommandSender))
-					Bukkit.getConsoleSender().sendMessage(errormsg);
 			}
 			return true;
 		}

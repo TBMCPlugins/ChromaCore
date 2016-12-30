@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -42,7 +43,8 @@ public class TBMCChatAPI {
 	}
 
 	/**
-	 * Returns messages formatted for Minecraft chat listing the subcommands of the command.
+	 * Returns messages formatted for Minecraft chat listing the subcommands of the command.<br>
+	 * Returns a header if subcommands were found, otherwise returns an empty array.
 	 * 
 	 * @param command
 	 *            The command which we want the subcommands of
@@ -52,20 +54,24 @@ public class TBMCChatAPI {
 	 */
 	public static String[] GetSubCommands(String command, CommandSender sender) {
 		ArrayList<String> cmds = new ArrayList<String>();
-		cmds.add("§6---- Subcommands ----");
+		Consumer<String> addToCmds = cmd -> {
+			if (cmds.size() == 0)
+				cmds.add("§6---- Subcommands ----");
+			cmds.add(cmd);
+		};
 		for (TBMCCommandBase cmd : TBMCChatAPI.GetCommands().values()) {
 			if (cmd.GetCommandPath().startsWith(command + " ")) {
-				int ind = cmd.GetCommandPath().indexOf(' ', command.length() + 2);
-				if (ind >= 0) {
-					String newcmd = cmd.GetCommandPath().substring(0, ind);
-					if (!cmds.contains("/" + newcmd))
-						cmds.add("/" + newcmd);
-				}
 				if (cmd.GetPlayerOnly() && !(sender instanceof Player))
 					continue;
 				if (cmd.GetModOnly() && !MainPlugin.permission.has(sender, "tbmc.admin"))
 					continue;
-				cmds.add("/" + cmd.GetCommandPath());
+				int ind = cmd.GetCommandPath().indexOf(' ', command.length() + 2);
+				if (ind >= 0) {
+					String newcmd = cmd.GetCommandPath().substring(0, ind);
+					if (!cmds.contains("/" + newcmd))
+						addToCmds.accept("/" + newcmd);
+				} else
+					addToCmds.accept("/" + cmd.GetCommandPath());
 			}
 		}
 		return cmds.toArray(new String[cmds.size()]);
