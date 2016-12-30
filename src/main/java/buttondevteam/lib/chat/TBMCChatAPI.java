@@ -61,17 +61,17 @@ public class TBMCChatAPI {
 		};
 		for (TBMCCommandBase cmd : TBMCChatAPI.GetCommands().values()) {
 			if (cmd.GetCommandPath().startsWith(command + " ")) {
+				if (cmd.GetPlayerOnly() && !(sender instanceof Player))
+					continue;
+				if (cmd.GetModOnly() && !MainPlugin.permission.has(sender, "tbmc.admin"))
+					continue;
 				int ind = cmd.GetCommandPath().indexOf(' ', command.length() + 2);
 				if (ind >= 0) {
 					String newcmd = cmd.GetCommandPath().substring(0, ind);
 					if (!cmds.contains("/" + newcmd))
 						addToCmds.accept("/" + newcmd);
-				}
-				if (cmd.GetPlayerOnly() && !(sender instanceof Player))
-					continue;
-				if (cmd.GetModOnly() && !MainPlugin.permission.has(sender, "tbmc.admin"))
-					continue;
-				addToCmds.accept("/" + cmd.GetCommandPath());
+				} else
+					addToCmds.accept("/" + cmd.GetCommandPath());
 			}
 		}
 		return cmds.toArray(new String[cmds.size()]);
