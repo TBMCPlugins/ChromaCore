@@ -36,7 +36,7 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 		sender.sendMessage("Scheduled restart in " + ticks / 20f);
 		ScheduledServerRestartEvent e = new ScheduledServerRestartEvent(ticks);
 		Bukkit.getPluginManager().callEvent(e);
-		restarttask = Bukkit.getScheduler().runTaskTimerAsynchronously(MainPlugin.Instance, () -> {
+		restarttask = Bukkit.getScheduler().runTaskTimer(MainPlugin.Instance, () -> {
 			if (restartcounter < 0) {
 				restarttask.cancel();
 				restartbar.getPlayers().stream().forEach(p -> restartbar.removePlayer(p));
