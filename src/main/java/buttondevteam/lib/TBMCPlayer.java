@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -30,7 +31,7 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
 public class TBMCPlayer implements AutoCloseable {
 	private static final String TBMC_PLAYERS_DIR = "TBMC/players";
 
-	private HashMap<String, Object> data = new HashMap<>();
+	private ConcurrentHashMap<String, Object> data = new ConcurrentHashMap<>();
 
 	/**
 	 * <p>
@@ -254,6 +255,8 @@ public class TBMCPlayer implements AutoCloseable {
 		return uuid;
 	}
 
+	private ConcurrentHashMap<Class<? extends TBMCPlayer>, TBMCPlayer> playermap = new ConcurrentHashMap<>(); // TODO
+
 	/**
 	 * Gets the TBMCPlayer object as a specific plugin player, keeping it's data *
 	 * 
@@ -262,12 +265,16 @@ public class TBMCPlayer implements AutoCloseable {
 	 * @param cl
 	 *            The TBMCPlayer subclass
 	 */
+	@SuppressWarnings("unchecked")
 	public <T extends TBMCPlayer> T asPluginPlayer(Class<T> cl) {
 		T obj = null;
+		if (playermap.containsKey(cl))
+			return (T) playermap.get(cl);
 		try {
 			obj = cl.newInstance();
 			((TBMCPlayer) obj).uuid = uuid;
-			((TBMCPlayer) obj).data.putAll(data);
+			// ((TBMCPlayer) obj).data.putAll(data);
+			playermap.put(cl, obj);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
