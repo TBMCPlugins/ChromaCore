@@ -9,8 +9,8 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import buttondevteam.lib.TBMCCoreAPI;
-import buttondevteam.lib.TBMCPlayer;
 import buttondevteam.lib.chat.TBMCChatAPI;
+import buttondevteam.lib.player.TBMCPlayer;
 import net.milkbowl.vault.permission.Permission;
 
 public class MainPlugin extends JavaPlugin {

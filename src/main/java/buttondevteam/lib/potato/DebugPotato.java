@@ -1,4 +1,4 @@
-package buttondevteam.lib;
+package buttondevteam.lib.potato;
 
 import java.util.ArrayList;
 import java.util.Arrays;

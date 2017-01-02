@@ -1,4 +1,4 @@
-package buttondevteam.lib;
+package buttondevteam.lib.player;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package buttondevteam.lib;
+package buttondevteam.lib.player;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;

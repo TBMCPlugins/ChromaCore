@@ -1,4 +1,4 @@
-package buttondevteam.lib;
+package buttondevteam.lib.player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-import buttondevteam.lib.TBMCPlayer.InfoTarget;
+import buttondevteam.lib.player.TBMCPlayer.InfoTarget;
 
 /**
  * <p>
