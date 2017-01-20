@@ -4,6 +4,9 @@ import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -14,12 +17,12 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	private static final HashMap<Class<?>, String> playerTypes = new HashMap<>();
 
-	public static Map<Class<?>, String> getPlayerTypes() {
-		return Collections.unmodifiableMap(playerTypes);
-	}
-
 	public static <T extends ChromaGamerBase> void addPlayerType(Class<T> cl, String folder) {
 		playerTypes.put(cl, folder);
+	}
+
+	public static <T extends ChromaGamerBase> String getFolderForType(Class<T> cl) {
+		return playerTypes.get(cl);
 	}
 
 	/**
@@ -28,27 +31,22 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	public abstract String getFileName();
 
 	/**
-	 * This method returns the folder the file is in. For example, for Minecraft data, this should be "minecraft", for Discord, "discord", etc.
+	 * The 'id' must be always set
 	 */
-	public abstract String getFolder();
-
 	protected YamlConfiguration plugindata;
 
 	public YamlConfiguration getData() {
 		return plugindata;
 	}
 
-	// protected void load() {
-	/*
-	 * public static void load() { try { plugindata = YamlConfiguration.loadConfiguration(new File(getFolder(), getFileName())); } catch (Exception e) {
-	 * TBMCCoreAPI.SendException("An error occured while loading gamer data", e); } } protected void save() { try { plugindata.save(new File(getFolder(), getFileName())); } catch (Exception e) {
-	 * TBMCCoreAPI.SendException("An error occured while saving gamer data", e); } }
-	 */
+	public String getID() {
+		return plugindata != null ? plugindata.getString("id") : null;
+	}
 
 	protected static <T extends ChromaGamerBase> T getUser(String fname, Class<T> cl) {
 		try {
 			T obj = cl.newInstance();
-			obj.plugindata = YamlConfiguration // TODO: Put all IDs
+			obj.plugindata = YamlConfiguration
 					.loadConfiguration(new File(TBMC_PLAYERS_DIR + playerTypes.get(cl), fname));
 			return obj;
 		} catch (Exception e) {
@@ -59,6 +57,18 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		plugindata.save(new File(TBMC_PLAYERS_DIR + getFolder(), getFileName()));
+		plugindata.save(new File(TBMC_PLAYERS_DIR + getFolderForType(getClass()), getFileName()));
+	}
+
+	public <T extends ChromaGamerBase> void connectWith(T user) {
+		// Set the ID, go through all linked files and connect them as well
+		plugindata.set(playerTypes.get(user.getClass()) + "_id", user.plugindata.getString("id"));
+		final String ownFolder = getFolderForType(getClass());
+		user.plugindata.set(ownFolder + "_id", plugindata.getString("id"));
+		BiConsumer<YamlConfiguration, YamlConfiguration> sync = (pdata1, pdata2) -> {
+			for (Entry<Class<?>, String> entry : playerTypes.entrySet())
+				if (pdata1.contains(entry.getValue() + "_id", false))
+					pdata2.set(entry.getValue() + "_id", pdata1.getString(entry.getValue() + "_id"));
+		}; // ...
 	}
 }

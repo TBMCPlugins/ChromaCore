@@ -17,11 +17,6 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 		return getUUID().toString();
 	}
 
-	@Override
-	public String getFolder() {
-		return FOLDER_NAME;
-	}
-
 	// protected ConfigurationSection plugindata;
 
 	/*
