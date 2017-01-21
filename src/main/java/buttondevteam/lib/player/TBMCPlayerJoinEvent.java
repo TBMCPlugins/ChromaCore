@@ -6,13 +6,13 @@ import org.bukkit.event.HandlerList;
 public class TBMCPlayerJoinEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-	private TBMCPlayer player;
+	private TBMCPlayerBase player;
 
-	public TBMCPlayerJoinEvent(TBMCPlayer player) {
+	public TBMCPlayerJoinEvent(TBMCPlayerBase player) {
 		this.player = player;
 	}
 
-	public TBMCPlayer GetPlayer() {
+	public TBMCPlayerBase GetPlayer() {
 		return player;
 	}
 

@@ -7,19 +7,13 @@ import org.bukkit.event.HandlerList;
 public class TBMCPlayerSaveEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-	private YamlConfiguration yaml;
-	private TBMCPlayer player;
+	private TBMCPlayerBase player;
 
-	public TBMCPlayerSaveEvent(YamlConfiguration yaml, TBMCPlayer player) {
-		this.yaml = yaml;
+	public TBMCPlayerSaveEvent(TBMCPlayerBase player) {
 		this.player = player;
 	}
 
-	public YamlConfiguration GetPlayerConfig() {
-		return yaml;
-	}
-
-	public TBMCPlayer GetPlayer() {
+	public TBMCPlayerBase GetPlayer() {
 		return player;
 	}
 

@@ -1,25 +1,18 @@
 package buttondevteam.lib.player;
 
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
 public class TBMCPlayerLoadEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-	private YamlConfiguration yaml;
-	private TBMCPlayer player;
+	private TBMCPlayerBase player;
 
-	public TBMCPlayerLoadEvent(YamlConfiguration yaml, TBMCPlayer player) {
-		this.yaml = yaml;
+	public TBMCPlayerLoadEvent(TBMCPlayerBase player) {
 		this.player = player;
 	}
 
-	public YamlConfiguration GetPlayerConfig() {
-		return yaml;
-	}
-
-	public TBMCPlayer GetPlayer() {
+	public TBMCPlayerBase GetPlayer() {
 		return player;
 	}
 

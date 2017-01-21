@@ -10,7 +10,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import buttondevteam.lib.TBMCCoreAPI;
 
 public abstract class ChromaGamerBase implements AutoCloseable {
-	private static final String TBMC_PLAYERS_DIR = "TBMC/players/";
+	public static final String TBMC_PLAYERS_DIR = "TBMC/players/";
 
 	private static final HashMap<Class<?>, String> playerTypes = new HashMap<>();
 
@@ -57,8 +57,9 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	protected static <T extends ChromaGamerBase> T getUser(String fname, Class<T> cl) {
 		try {
 			T obj = cl.newInstance();
-			obj.plugindata = YamlConfiguration
-					.loadConfiguration(new File(TBMC_PLAYERS_DIR + getFolderForType(cl), fname));
+			final File file = new File(TBMC_PLAYERS_DIR + getFolderForType(cl), fname + ".yml");
+			file.mkdirs();
+			obj.plugindata = YamlConfiguration.loadConfiguration(file);
 			return obj;
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("An error occured while loading a " + cl.getSimpleName() + "!", e);
@@ -68,7 +69,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		plugindata.save(new File(TBMC_PLAYERS_DIR + getFolderForType(getClass()), getFileName()));
+		plugindata.save(new File(TBMC_PLAYERS_DIR + getFolder(), getFileName() + ".yml"));
 	}
 
 	/**
@@ -79,11 +80,11 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 */
 	public <T extends ChromaGamerBase> void connectWith(T user) {
 		// Set the ID, go through all linked files and connect them as well
-		plugindata.set(getFolderForType(user.getClass()) + "_id", user.plugindata.getString("id"));
-		final String ownFolder = getFolderForType(getClass());
+		plugindata.set(user.getFolder() + "_id", user.plugindata.getString("id"));
+		final String ownFolder = user.getFolder();
 		user.plugindata.set(ownFolder + "_id", plugindata.getString("id"));
 		Consumer<YamlConfiguration> sync = sourcedata -> {
-			final String sourcefolder = sourcedata == plugindata ? ownFolder : getFolderForType(user.getClass());
+			final String sourcefolder = sourcedata == plugindata ? ownFolder : user.getFolder();
 			final String id = sourcedata.getString("id");
 			for (Entry<Class<?>, String> entry : playerTypes.entrySet()) { // Set our ID in all files we can find, both from our connections and the new ones
 				final String otherid = sourcedata.getString(entry.getValue() + "_id");
@@ -120,5 +121,9 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		if (!plugindata.contains(newfolder + "_id"))
 			return null;
 		return getUser(plugindata.getString(newfolder + "_id"), cl);
+	}
+
+	public String getFolder() {
+		return getFolderForType(getClass());
 	}
 }

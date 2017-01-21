@@ -6,13 +6,13 @@ import org.bukkit.event.HandlerList;
 public class TBMCPlayerQuitEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-	private TBMCPlayer player;
+	private TBMCPlayerBase player;
 
-	public TBMCPlayerQuitEvent(TBMCPlayer player) {
+	public TBMCPlayerQuitEvent(TBMCPlayerBase player) {
 		this.player = player;
 	}
 
-	public TBMCPlayer GetPlayer() {
+	public TBMCPlayerBase GetPlayer() {
 		return player;
 	}
 
