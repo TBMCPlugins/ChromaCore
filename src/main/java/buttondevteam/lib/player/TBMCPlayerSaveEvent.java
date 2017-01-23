@@ -1,6 +1,5 @@
 package buttondevteam.lib.player;
 
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 

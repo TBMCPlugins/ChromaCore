@@ -71,10 +71,9 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	static final ConcurrentHashMap<String, TBMCPlayerBase> playermap = new ConcurrentHashMap<>();
 
 	/**
-	 * Gets the TBMCPlayer object as a specific plugin player, keeping it's data *
+	 * Gets the TBMCPlayer object as a specific plugin player, keeping it's data<br>
+	 * Make sure to use try-with-resources with this to save the data, as it may need to load the file
 	 * 
-	 * @param p
-	 *            Player to get
 	 * @param cl
 	 *            The TBMCPlayer subclass
 	 */
@@ -85,7 +84,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	/**
 	 * Only intended to use from ButtonCore
 	 */
-	public static <T extends TBMCPlayerBase> T loadPlayer(OfflinePlayer p, Class<T> cl) {
+	public static <T extends TBMCPlayerBase> T loadPlayer(OfflinePlayer p, Class<T> cl) { // TODO: Load player files and get player classes backed by the YAML
 		T player = getPlayer(p.getUniqueId(), cl);
 		Bukkit.getLogger().info("Loaded player: " + player.getPlayerName());
 		if (player.getPlayerName() == null) {
@@ -142,5 +141,64 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	public static void quitPlayer(TBMCPlayerBase player) {
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player));
 		playermap.remove(player.uuid + "-" + player.getFolder());
+		try {
+			player.close();
+		} catch (Exception e) {
+			TBMCCoreAPI.SendException("Error while saving quitting player " + player.getPlayerName() + " ("
+					+ player.getFolder() + "/" + player.getFileName() + ")!", e);
+		}
+	}
+
+	public static void savePlayers() {
+		playermap.values().stream().forEach(p -> {
+			try {
+				p.close();
+			} catch (Exception e) {
+				TBMCCoreAPI.SendException("Error while saving player " + p.getPlayerName() + " (" + p.getFolder() + "/"
+						+ p.getFileName() + ")!", e);
+			}
+		});
+	}
+
+	/**
+	 * This method returns a TBMC player from their name. Calling this method may return an offline player which will load it, therefore it's highly recommended to use {@link #close()} to unload the
+	 * player data. Using try-with-resources may be the easiest way to achieve this. Example:
+	 * 
+	 * <pre>
+	 * {@code
+	 * try(TBMCPlayer player = getFromName(p))
+	 * {
+	 * 	...
+	 * }
+	 * </pre>
+	 * 
+	 * @param name
+	 *            The player's name
+	 * @return The {@link TBMCPlayer} object for the player
+	 */
+	public static <T extends TBMCPlayerBase> T getFromName(String name, Class<T> cl) {
+		@SuppressWarnings("deprecation")
+		OfflinePlayer p = Bukkit.getOfflinePlayer(name);
+		if (p != null)
+			return getPlayer(p.getUniqueId(), cl);
+		else
+			return null;
+	}
+
+	/**
+	 * Get player information. This method calls the {@link TBMCPlayerGetInfoEvent} to get all the player information across the TBMC plugins.
+	 * 
+	 * @param target
+	 *            The {@link InfoTarget} to return the info for.
+	 * @return The player information.
+	 */
+	public String getInfo(InfoTarget target) {
+		TBMCPlayerGetInfoEvent event = new TBMCPlayerGetInfoEvent(this, target);
+		Bukkit.getServer().getPluginManager().callEvent(event);
+		return event.getResult();
+	}
+
+	public enum InfoTarget {
+		MCHover, MCCommand, Discord
 	}
 }

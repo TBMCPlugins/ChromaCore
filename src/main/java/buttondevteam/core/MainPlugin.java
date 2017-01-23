@@ -1,7 +1,5 @@
 package buttondevteam.core;
 
-import java.util.Map.Entry;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -10,7 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.TBMCChatAPI;
-import buttondevteam.lib.player.TBMCPlayer;
+import buttondevteam.lib.player.TBMCPlayerBase;
 import net.milkbowl.vault.permission.Permission;
 
 public class MainPlugin extends JavaPlugin {
@@ -39,9 +37,7 @@ public class MainPlugin extends JavaPlugin {
 	@Override
 	public void onDisable() {
 		logger.info("Saving player data...");
-		for (Entry<UUID, TBMCPlayer> entry : TBMCPlayer.getLoadedPlayers().entrySet()) {
-			TBMCPlayer.savePlayer(entry.getValue());
-		}
+		TBMCPlayerBase.savePlayers();
 		logger.info("Player data saved.");
 	}
 

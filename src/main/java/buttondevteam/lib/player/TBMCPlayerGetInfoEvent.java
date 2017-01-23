@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-import buttondevteam.lib.player.TBMCPlayer.InfoTarget;
+import buttondevteam.lib.player.TBMCPlayerBase.InfoTarget;
 
 /**
  * <p>
@@ -20,11 +20,11 @@ import buttondevteam.lib.player.TBMCPlayer.InfoTarget;
 public class TBMCPlayerGetInfoEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-	private TBMCPlayer player;
+	private TBMCPlayerBase player;
 	private List<String> infolines;
-	private TBMCPlayer.InfoTarget target;
+	private InfoTarget target;
 
-	TBMCPlayerGetInfoEvent(TBMCPlayer player, TBMCPlayer.InfoTarget target) {
+	TBMCPlayerGetInfoEvent(TBMCPlayerBase player, InfoTarget target) {
 		this.player = player;
 		infolines = new ArrayList<>();
 		this.target = target;
@@ -35,7 +35,7 @@ public class TBMCPlayerGetInfoEvent extends Event {
 	 * 
 	 * @return A player object
 	 */
-	public TBMCPlayer getPlayer() {
+	public TBMCPlayerBase getPlayer() {
 		return player;
 	}
 
@@ -54,7 +54,7 @@ public class TBMCPlayerGetInfoEvent extends Event {
 	 * 
 	 * @return The target of the information.
 	 */
-	public TBMCPlayer.InfoTarget getTarget() {
+	public InfoTarget getTarget() {
 		return target;
 	}
 
