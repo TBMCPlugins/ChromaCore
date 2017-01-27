@@ -1,10 +1,16 @@
 package buttondevteam.lib.player;
 
+import java.io.File;
+import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+
 import com.palmergames.bukkit.towny.Towny;
 import com.palmergames.bukkit.towny.exceptions.AlreadyRegisteredException;
 import com.palmergames.bukkit.towny.exceptions.NotRegisteredException;
@@ -28,8 +34,6 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	public void setPlayerName(String value) {
 		plugindata.set("playername", value);
 	}
-
-	public abstract String getPluginName();
 
 	@Override
 	public String getFileName() {
@@ -60,15 +64,29 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	public static <T extends TBMCPlayerBase> T getPlayer(UUID uuid, Class<T> cl) {
 		if (playermap.containsKey(uuid + "-" + cl.getSimpleName()))
 			return (T) playermap.get(uuid + "-" + cl.getSimpleName());
-		T obj = ChromaGamerBase.getUser(uuid.toString(), cl);
-		obj.uuid = uuid;
-		return obj;
+		try {
+			T player;
+			if (playerfiles.containsKey(uuid)) {
+				player = cl.newInstance();
+				player.plugindata = playerfiles.get(uuid);
+				playermap.put(player.uuid + "-" + player.getFolder(), player); // It will get removed on player quit
+			} else
+				player = ChromaGamerBase.getUser(uuid.toString(), cl);
+			player.uuid = uuid;
+			return player;
+		} catch (Exception e) {
+			TBMCCoreAPI.SendException(
+					"Failed to get player with UUID " + uuid + " and class " + cl.getSimpleName() + "!", e);
+			return null;
+		}
 	}
 
 	/**
 	 * Key: UUID-Class
 	 */
 	static final ConcurrentHashMap<String, TBMCPlayerBase> playermap = new ConcurrentHashMap<>();
+
+	private static final ConcurrentHashMap<UUID, YamlConfiguration> playerfiles = new ConcurrentHashMap<>();
 
 	/**
 	 * Gets the TBMCPlayer object as a specific plugin player, keeping it's data<br>
@@ -84,9 +102,25 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	/**
 	 * Only intended to use from ButtonCore
 	 */
-	public static <T extends TBMCPlayerBase> T loadPlayer(OfflinePlayer p, Class<T> cl) { // TODO: Load player files and get player classes backed by the YAML
-		T player = getPlayer(p.getUniqueId(), cl);
-		Bukkit.getLogger().info("Loaded player: " + player.getPlayerName());
+	public static void savePlayer(TBMCPlayerBase player) {
+		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerSaveEvent(player));
+		try {
+			player.close();
+		} catch (Exception e) {
+			new Exception("Failed to save player data for " + player.getPlayerName(), e).printStackTrace();
+		}
+	}
+
+	/**
+	 * Only intended to use from ButtonCore
+	 */
+	public static void joinPlayer(UUID uuid) {
+		YamlConfiguration yc;
+		if (playerfiles.containsKey(uuid))
+			yc = playerfiles.get(uuid);
+		else
+			playerfiles.put(uuid, yc = YamlConfiguration.loadConfiguration(new File("minecraft", uuid + ".yml")));
+		/*Bukkit.getLogger().info("Loaded player: " + player.getPlayerName());
 		if (player.getPlayerName() == null) {
 			player.setPlayerName(p.getName());
 			Bukkit.getLogger().info("Player name saved: " + player.getPlayerName());
@@ -112,40 +146,27 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 
 		// Load in other plugins
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerLoadEvent(player));
-		return player;
+		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerJoinEvent(player));*/
 	}
 
 	/**
 	 * Only intended to use from ButtonCore
 	 */
-	public static void savePlayer(TBMCPlayerBase player) {
-		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerSaveEvent(player));
-		try {
-			player.close();
-		} catch (Exception e) {
-			new Exception("Failed to save player data for " + player.getPlayerName(), e).printStackTrace();
+	public static void quitPlayer(Player p) {
+		Iterator<Entry<String, TBMCPlayerBase>> it = playermap.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<String, TBMCPlayerBase> entry = it.next();
+			if (entry.getKey().startsWith(p.getUniqueId().toString())) { // Save every player data
+				TBMCPlayerBase player = entry.getValue(); // TODO: Separate plugin data by plugin name (annotations?)
+				Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player));
+			}
 		}
-	}
-
-	/**
-	 * Only intended to use from ButtonCore
-	 */
-	public static void joinPlayer(TBMCPlayerBase player) {
-		playermap.put(player.uuid + "-" + player.getFolder(), player);
-		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerJoinEvent(player));
-	}
-
-	/**
-	 * Only intended to use from ButtonCore
-	 */
-	public static void quitPlayer(TBMCPlayerBase player) {
-		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player));
-		playermap.remove(player.uuid + "-" + player.getFolder());
-		try {
-			player.close();
+		final YamlConfiguration playerfile = playerfiles.get(p.getUniqueId());
+		try { // Only save to file once, not for each plugin
+			playerfile.save(p.getUniqueId().toString() + ".yml"); // TODO: Bring this together with the close() method, like a common method or something
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Error while saving quitting player " + player.getPlayerName() + " ("
-					+ player.getFolder() + "/" + player.getFileName() + ")!", e);
+			TBMCCoreAPI.SendException("Error while saving quitting player " + playerfile.getString("playername") + " ("
+					+ "minecraft/" + p.getUniqueId() + ".yml)!", e);
 		}
 	}
 

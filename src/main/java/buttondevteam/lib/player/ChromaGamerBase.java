@@ -41,7 +41,8 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	}
 
 	/**
-	 * This method returns the filename for this player data. For example, for Minecraft-related data, use MC UUIDs, for Discord data, use Discord IDs, etc.
+	 * This method returns the filename for this player data. For example, for Minecraft-related data, use MC UUIDs, for Discord data, use Discord IDs, etc.<br>
+	 * <b>Does not include .yml</b>
 	 */
 	public abstract String getFileName();
 
