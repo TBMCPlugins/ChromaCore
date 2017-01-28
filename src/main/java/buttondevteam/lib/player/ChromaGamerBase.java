@@ -60,7 +60,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		try {
 			T obj = cl.newInstance();
 			final File file = new File(TBMC_PLAYERS_DIR + getFolderForType(cl), fname + ".yml");
-			file.mkdirs();
+			file.getParentFile().mkdirs();
 			obj.plugindata = YamlConfiguration.loadConfiguration(file);
 			return obj;
 		} catch (Exception e) {

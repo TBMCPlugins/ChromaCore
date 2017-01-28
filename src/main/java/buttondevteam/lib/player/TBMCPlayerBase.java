@@ -38,13 +38,6 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 		return getUUID().toString();
 	}
 
-	// protected ConfigurationSection plugindata;
-
-	/*
-	 * public static void load() { super.load(); plugindata = super.plugindata.getConfigurationSection(getPluginName()); if (plugindata == null) plugindata =
-	 * super.plugindata.createSection(getPluginName()); } protected void save() { plugindata = super.plugindata.createSection(getPluginName(), plugindata.getValues(true)); super.save(); }
-	 */
-
 	static {
 		addPlayerType(TBMCPlayerBase.class, FOLDER_NAME);
 	}
@@ -137,6 +130,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 			player.setPlayerName(p.getName());
 			Bukkit.getLogger().info("Renaming done.");
 		}
+		playermap.put(p.getUniqueId() + "-" + TBMCPlayer.class.getSimpleName(), player);
 
 		// Load in other plugins
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerLoadEvent(player));
