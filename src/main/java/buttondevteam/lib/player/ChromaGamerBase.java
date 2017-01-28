@@ -1,6 +1,7 @@
 package buttondevteam.lib.player;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
@@ -68,8 +69,26 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		return null;
 	}
 
+	/**
+	 * Saves the player. It'll pass all exceptions to the caller. To automatically handle the exception, use {@link #save()} instead.
+	 */
 	@Override
 	public void close() throws Exception {
+		save_();
+	}
+
+	/**
+	 * Saves the player. It'll send all exceptions that may happen. To catch the exception, use {@link #close()} instead.
+	 */
+	public void save() {
+		try {
+			save_();
+		} catch (Exception e) {
+			TBMCCoreAPI.SendException("Error while saving player data!", e);
+		}
+	}
+
+	private void save_() throws IOException {
 		plugindata.save(new File(TBMC_PLAYERS_DIR + getFolder(), getFileName() + ".yml"));
 	}
 

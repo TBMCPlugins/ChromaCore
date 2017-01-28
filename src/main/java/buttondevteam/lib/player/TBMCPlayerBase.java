@@ -114,13 +114,9 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	/**
 	 * Only intended to use from ButtonCore
 	 */
-	public static void joinPlayer(UUID uuid) {
-		YamlConfiguration yc;
-		if (playerfiles.containsKey(uuid))
-			yc = playerfiles.get(uuid);
-		else
-			playerfiles.put(uuid, yc = YamlConfiguration.loadConfiguration(new File("minecraft", uuid + ".yml")));
-		/*Bukkit.getLogger().info("Loaded player: " + player.getPlayerName());
+	public static void joinPlayer(Player p) {
+		TBMCPlayer player = TBMCPlayerBase.getPlayer(p.getUniqueId(), TBMCPlayer.class);
+		Bukkit.getLogger().info("Loaded player: " + player.getPlayerName());
 		if (player.getPlayerName() == null) {
 			player.setPlayerName(p.getName());
 			Bukkit.getLogger().info("Player name saved: " + player.getPlayerName());
@@ -146,7 +142,8 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 
 		// Load in other plugins
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerLoadEvent(player));
-		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerJoinEvent(player));*/
+		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerJoinEvent(player));
+		player.save();
 	}
 
 	/**
