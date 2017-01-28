@@ -1,6 +1,5 @@
 package buttondevteam.lib.player;
 
-import java.io.File;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -8,7 +7,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import com.palmergames.bukkit.towny.Towny;
@@ -66,10 +64,10 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 			return (T) playermap.get(uuid + "-" + cl.getSimpleName());
 		try {
 			T player;
-			if (playerfiles.containsKey(uuid)) {
+			if (playermap.containsKey(uuid + "-" + TBMCPlayer.class.getSimpleName())) {
 				player = cl.newInstance();
-				player.plugindata = playerfiles.get(uuid);
-				playermap.put(player.uuid + "-" + player.getFolder(), player); // It will get removed on player quit
+				player.plugindata = playermap.get(uuid + "-" + TBMCPlayer.class.getSimpleName()).plugindata;
+				playermap.put(player.uuid + "-" + cl.getSimpleName(), player); // It will get removed on player quit
 			} else
 				player = ChromaGamerBase.getUser(uuid.toString(), cl);
 			player.uuid = uuid;
@@ -85,8 +83,6 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	 * Key: UUID-Class
 	 */
 	static final ConcurrentHashMap<String, TBMCPlayerBase> playermap = new ConcurrentHashMap<>();
-
-	private static final ConcurrentHashMap<UUID, YamlConfiguration> playerfiles = new ConcurrentHashMap<>();
 
 	/**
 	 * Gets the TBMCPlayer object as a specific plugin player, keeping it's data<br>
@@ -124,11 +120,13 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 			Bukkit.getLogger().info("Renaming " + player.getPlayerName() + " to " + p.getName());
 			TownyUniverse tu = Towny.getPlugin(Towny.class).getTownyUniverse();
 			Resident resident = tu.getResidentMap().get(player.getPlayerName());
-			if (resident == null)
+			if (resident == null) {
 				Bukkit.getLogger().warning("Resident not found - couldn't rename in Towny.");
-			else if (tu.getResidentMap().contains(p.getName()))
+				TBMCCoreAPI.sendDebugMessage("Resident not found - couldn't rename in Towny.");
+			} else if (tu.getResidentMap().contains(p.getName())) {
 				Bukkit.getLogger().warning("Target resident name is already in use."); // TODO: Handle
-			else
+				TBMCCoreAPI.sendDebugMessage("Target resident name is already in use.");
+			} else
 				try {
 					TownyUniverse.getDataSource().renamePlayer(resident, p.getName());
 				} catch (AlreadyRegisteredException e) {
@@ -158,13 +156,8 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 				Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player));
 			}
 		}
-		final YamlConfiguration playerfile = playerfiles.get(p.getUniqueId());
-		try { // Only save to file once, not for each plugin
-			playerfile.save(p.getUniqueId().toString() + ".yml"); // TODO: Bring this together with the close() method, like a common method or something
-		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Error while saving quitting player " + playerfile.getString("playername") + " ("
-					+ "minecraft/" + p.getUniqueId() + ".yml)!", e);
-		}
+		final TBMCPlayerBase player = playermap.get(p.getUniqueId() + "-" + TBMCPlayer.class.getSimpleName());
+		player.save();
 	}
 
 	public static void savePlayers() {

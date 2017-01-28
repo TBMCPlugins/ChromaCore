@@ -84,7 +84,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		try {
 			save_();
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Error while saving player data!", e);
+			TBMCCoreAPI.SendException("Error while saving player to " + getFolder() + "/" + getFileName() + ".yml!", e);
 		}
 	}
 
