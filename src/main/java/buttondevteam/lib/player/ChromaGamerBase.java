@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import buttondevteam.lib.TBMCCoreAPI;
@@ -56,7 +57,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		return plugindata != null ? plugindata.getString("id") : null;
 	}
 
-	protected static <T extends ChromaGamerBase> T getUser(String fname, Class<T> cl) {
+	public static <T extends ChromaGamerBase> T getUser(String fname, Class<T> cl) {
 		try {
 			T obj = cl.newInstance();
 			final File file = new File(TBMC_PLAYERS_DIR + getFolderForType(cl), fname + ".yml");
@@ -127,6 +128,17 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	}
 
 	/**
+	 * Retunrs the ID for the T typed player object connected with this one or null if no connection found.
+	 * 
+	 * @param cl
+	 *            The player class to get the ID from
+	 * @return The ID or null if not found
+	 */
+	public <T extends ChromaGamerBase> String getConnectedID(Class<T> cl) {
+		return plugindata.getString(getFolderForType(cl) + "_id");
+	}
+
+	/**
 	 * Returns this player as a plugin player. This will return a new instance unless the player is online.<br>
 	 * Make sure to close both the returned and this object. A try-with-resources block or two can help.<br>
 	 * 
@@ -145,5 +157,22 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	public String getFolder() {
 		return getFolderForType(getClass());
+	}
+
+	/**
+	 * Get player information. This method calls the {@link TBMCPlayerGetInfoEvent} to get all the player information across the TBMC plugins.
+	 * 
+	 * @param target
+	 *            The {@link InfoTarget} to return the info for.
+	 * @return The player information.
+	 */
+	public String getInfo(InfoTarget target) {
+		TBMCPlayerGetInfoEvent event = new TBMCPlayerGetInfoEvent(this, target);
+		Bukkit.getServer().getPluginManager().callEvent(event);
+		return event.getResult();
+	}
+
+	public enum InfoTarget {
+		MCHover, MCCommand, Discord
 	}
 }

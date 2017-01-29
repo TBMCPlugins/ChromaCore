@@ -189,21 +189,4 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 		else
 			return null;
 	}
-
-	/**
-	 * Get player information. This method calls the {@link TBMCPlayerGetInfoEvent} to get all the player information across the TBMC plugins.
-	 * 
-	 * @param target
-	 *            The {@link InfoTarget} to return the info for.
-	 * @return The player information.
-	 */
-	public String getInfo(InfoTarget target) {
-		TBMCPlayerGetInfoEvent event = new TBMCPlayerGetInfoEvent(this, target);
-		Bukkit.getServer().getPluginManager().callEvent(event);
-		return event.getResult();
-	}
-
-	public enum InfoTarget {
-		MCHover, MCCommand, Discord
-	}
 }

@@ -1,6 +1,6 @@
 package buttondevteam.lib.player;
 
 @PlayerClass(pluginname = "ButtonCore")
-public class TBMCPlayer extends TBMCPlayerBase {
+public final class TBMCPlayer extends TBMCPlayerBase {
 
 }
