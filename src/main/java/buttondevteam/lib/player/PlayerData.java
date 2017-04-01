@@ -16,7 +16,7 @@ public class PlayerData<T> {
 		return (T) yaml.get(name);
 	}
 
-	public void set(String value) {
+	public void set(T value) {
 		yaml.set(name, value);
 	}
 }

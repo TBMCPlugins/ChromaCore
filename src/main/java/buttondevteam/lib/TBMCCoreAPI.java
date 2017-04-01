@@ -21,7 +21,7 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.potato.DebugPotato;
 
-public final class TBMCCoreAPI {
+public class TBMCCoreAPI {
 	static List<String> coders = new ArrayList<String>() {
 		private static final long serialVersionUID = -4462159250738367334L;
 		{

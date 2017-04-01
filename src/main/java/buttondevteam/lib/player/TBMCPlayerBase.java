@@ -26,7 +26,8 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	protected TBMCPlayerBase() {
 		if (getClass().isAnnotationPresent(PlayerClass.class))
 			pluginname = getClass().getAnnotation(PlayerClass.class).pluginname();
-		throw new RuntimeException("Class not defined as player class! Use @PlayerClass");
+		else
+			throw new RuntimeException("Class not defined as player class! Use @PlayerClass");
 	}
 
 	public UUID getUUID() {
@@ -42,7 +43,6 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 		return getUUID().toString();
 	}
 
-
 	/**
 	 * Use from a method with the name of the key. For example, use flair() for the enclosing method to save to and load from "flair"
 	 * 
@@ -50,6 +50,15 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	 */
 	protected <T> PlayerData<T> data() {
 		return super.data(pluginname);
+	}
+
+	/**
+	 * Use from a method with the name of the key. For example, use flair() for the enclosing method to save to and load from "flair"
+	 * 
+	 * @return A data object with methods to get and set
+	 */
+	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(Class<T> cl) {
+		return super.dataEnum(pluginname, cl);
 	}
 
 	/**

@@ -46,7 +46,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	public abstract String getFileName();
 
 	/**
-	 * The 'id' must be always set
+	 * Use {@link #data()} or {@link #data(String)} where possible; the 'id' must be always set
 	 */
 	protected YamlConfiguration plugindata;
 
@@ -177,7 +177,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	protected <T> PlayerData<T> data(String sectionname) {
 		if (!getClass().isAnnotationPresent(UserClass.class))
 			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
-		String mname = sectionname + "." + new Exception().getStackTrace()[1].getMethodName();
+		String mname = sectionname + "." + new Exception().getStackTrace()[2].getMethodName();
 		if (!datamap.containsKey(mname))
 			datamap.put(mname, new PlayerData<T>(mname, plugindata));
 		return datamap.get(mname);
@@ -192,10 +192,43 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	protected <T> PlayerData<T> data() {
 		if (!getClass().isAnnotationPresent(UserClass.class))
 			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
-		String mname = new Exception().getStackTrace()[2].getMethodName();
+		String mname = new Exception().getStackTrace()[1].getMethodName();
 		if (!datamap.containsKey(mname))
 			datamap.put(mname, new PlayerData<T>(mname, plugindata));
 		return datamap.get(mname);
+	}
+
+	@SuppressWarnings("rawtypes")
+	private HashMap<String, EnumPlayerData> dataenummap = new HashMap<>();
+
+	/**
+	 * Use from a data() method, which is in a method with the name of the key. For example, use flair() for the enclosing method of the outer data() to save to and load from "flair"
+	 * 
+	 * @return A data object with methods to get and set
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(String sectionname, Class<T> cl) {
+		if (!getClass().isAnnotationPresent(UserClass.class))
+			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
+		String mname = sectionname + "." + new Exception().getStackTrace()[2].getMethodName();
+		if (!dataenummap.containsKey(mname))
+			dataenummap.put(mname, new EnumPlayerData<T>(mname, plugindata, cl));
+		return dataenummap.get(mname);
+	}
+
+	/**
+	 * Use from a method with the name of the key. For example, use flair() for the enclosing method to save to and load from "flair"
+	 * 
+	 * @return A data object with methods to get and set
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(Class<T> cl) {
+		if (!getClass().isAnnotationPresent(UserClass.class))
+			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
+		String mname = new Exception().getStackTrace()[1].getMethodName();
+		if (!dataenummap.containsKey(mname))
+			dataenummap.put(mname, new EnumPlayerData<T>(mname, plugindata, cl));
+		return dataenummap.get(mname);
 	}
 
 	/**
