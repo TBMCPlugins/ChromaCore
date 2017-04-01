@@ -13,10 +13,21 @@ public class PlayerData<T> {
 
 	@SuppressWarnings("unchecked")
 	public T get() {
-		return (T) yaml.get(name);
+		Object value = yaml.get(name);
+		return (T) value;
 	}
 
 	public void set(T value) {
 		yaml.set(name, value);
+	}
+
+	public T getOrDefault(T def) {
+		T value = get();
+		return value == null ? def : value;
+	}
+
+	@Override
+	public String toString() {
+		return get().toString();
 	}
 }

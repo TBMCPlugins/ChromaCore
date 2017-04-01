@@ -152,7 +152,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 *            The target player class
 	 * @return The player as a {@link T} object or null if not having an account there
 	 */
-	public <T extends ChromaGamerBase> T getAs(Class<T> cl) {
+	public <T extends ChromaGamerBase> T getAs(Class<T> cl) { // TODO: Provide a way to use TBMCPlayerBase's loaded players
 		String newfolder = getFolderForType(cl);
 		if (newfolder == null)
 			throw new RuntimeException("The specified class " + cl.getSimpleName() + " isn't registered!");

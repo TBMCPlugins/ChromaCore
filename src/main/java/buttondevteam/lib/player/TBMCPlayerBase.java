@@ -48,6 +48,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	 * 
 	 * @return A data object with methods to get and set
 	 */
+	@Override
 	protected <T> PlayerData<T> data() {
 		return super.data(pluginname);
 	}
@@ -57,6 +58,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	 * 
 	 * @return A data object with methods to get and set
 	 */
+	@Override
 	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(Class<T> cl) {
 		return super.dataEnum(pluginname, cl);
 	}

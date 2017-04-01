@@ -50,12 +50,18 @@ public class PlayerDataTest extends TestCase {
 			assertEquals("Test", p.PlayerName().get());
 			p.testenum().set(TestEnum.A); // TODO: Fix enum saving
 			assertEquals(TestEnum.A, p.testenum().get());
+			// p.TestShort().set((short) 5);
+			// assertEquals((short) 5, (short) (int) p.TestShort().get());
+			p.TestBool().set(true);
+			assertEquals(true, (boolean) p.TestBool().get());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		try (TestPlayerClass p = TBMCPlayerBase.getPlayer(uuid, TestPlayerClass.class)) {
 			assertEquals("Test", p.PlayerName().get());
 			assertEquals(TestEnum.A, p.testenum().get());
+			// assertEquals((short) 5, (short) p.TestShort().get());
+			assertEquals(true, (boolean) p.TestBool().get());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

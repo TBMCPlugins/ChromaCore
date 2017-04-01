@@ -18,4 +18,9 @@ public class EnumPlayerData<T extends Enum<T>> {
 	public void set(T value) {
 		data.set(value.toString());
 	}
+
+	public T getOrDefault(T def) {
+		T value = get();
+		return value == null ? def : value;
+	}
 }
