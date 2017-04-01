@@ -12,7 +12,10 @@ public class EnumPlayerData<T extends Enum<T>> {
 	}
 
 	public T get() {
-		return Enum.valueOf(cl, data.get());
+		String str = data.get();
+		if (str == null || str.equals(""))
+			return null;
+		return Enum.valueOf(cl, str);
 	}
 
 	public void set(T value) {

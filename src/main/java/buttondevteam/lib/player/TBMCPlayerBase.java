@@ -35,7 +35,8 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	}
 
 	public PlayerData<String> PlayerName() {
-		return data();
+		//System.out.println("Calling playername"); // TODO: TMP - The data will only get stored if it's changed
+		return super.data();
 	}
 
 	@Override
@@ -50,6 +51,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	 */
 	@Override
 	protected <T> PlayerData<T> data() {
+		//System.out.println("Calling TMBCPlayerBase data"); // TODO: TMP - Sigh
 		return super.data(pluginname);
 	}
 
@@ -76,14 +78,17 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	public static <T extends TBMCPlayerBase> T getPlayer(UUID uuid, Class<T> cl) {
 		if (playermap.containsKey(uuid + "-" + cl.getSimpleName()))
 			return (T) playermap.get(uuid + "-" + cl.getSimpleName());
+		//System.out.println("A");
 		try {
 			T player;
 			if (playermap.containsKey(uuid + "-" + TBMCPlayer.class.getSimpleName())) {
+				//System.out.println("B"); - Don't program when tired
 				player = cl.newInstance();
 				player.plugindata = playermap.get(uuid + "-" + TBMCPlayer.class.getSimpleName()).plugindata;
-				playermap.put(player.uuid + "-" + cl.getSimpleName(), player); // It will get removed on player quit
+				playermap.put(uuid + "-" + cl.getSimpleName(), player); // It will get removed on player quit
 			} else
 				player = ChromaGamerBase.getUser(uuid.toString(), cl);
+			//System.out.println("C");
 			player.uuid = uuid;
 			return player;
 		} catch (Exception e) {
@@ -163,16 +168,15 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	 * Only intended to use from ButtonCore
 	 */
 	public static void quitPlayer(Player p) {
+		final TBMCPlayerBase player = playermap.get(p.getUniqueId() + "-" + TBMCPlayer.class.getSimpleName());
+		player.save();
+		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player));
 		Iterator<Entry<String, TBMCPlayerBase>> it = playermap.entrySet().iterator();
 		while (it.hasNext()) {
 			Entry<String, TBMCPlayerBase> entry = it.next();
-			if (entry.getKey().startsWith(p.getUniqueId().toString())) { // Save every player data
-				TBMCPlayerBase player = entry.getValue(); // TODO: Separate plugin data by plugin name (annotations?)
-				Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player));
-			}
+			if (entry.getKey().startsWith(p.getUniqueId().toString()))
+				it.remove();
 		}
-		final TBMCPlayerBase player = playermap.get(p.getUniqueId() + "-" + TBMCPlayer.class.getSimpleName());
-		player.save();
 	}
 
 	public static void savePlayers() {

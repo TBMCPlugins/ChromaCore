@@ -21,7 +21,8 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	public static void RegisterPluginUserClass(Class<? extends ChromaGamerBase> userclass) {
 		if (userclass.isAnnotationPresent(UserClass.class))
 			playerTypes.put(userclass, userclass.getAnnotation(UserClass.class).foldername());
-		throw new RuntimeException("Class not registered as a user class! Use @UserClass or TBMCPlayerBase");
+		else //<-- Really important
+			throw new RuntimeException("Class not registered as a user class! Use @UserClass or TBMCPlayerBase");
 	}
 
 	/**
@@ -64,9 +65,11 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	public static <T extends ChromaGamerBase> T getUser(String fname, Class<T> cl) {
 		try {
 			T obj = cl.newInstance();
-			final File file = new File(TBMC_PLAYERS_DIR + getFolderForType(cl), fname + ".yml");
+			final String folder = getFolderForType(cl);
+			final File file = new File(TBMC_PLAYERS_DIR + folder, fname + ".yml");
 			file.getParentFile().mkdirs();
 			obj.plugindata = YamlConfiguration.loadConfiguration(file);
+			obj.plugindata.set(folder + "_id", obj.getID());
 			return obj;
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("An error occured while loading a " + cl.getSimpleName() + "!", e);
@@ -152,10 +155,15 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 *            The target player class
 	 * @return The player as a {@link T} object or null if not having an account there
 	 */
+	@SuppressWarnings("unchecked")
 	public <T extends ChromaGamerBase> T getAs(Class<T> cl) { // TODO: Provide a way to use TBMCPlayerBase's loaded players
+		//System.out.println("getAs cls: " + cl.getSimpleName() + " =? " + getClass().getSimpleName()); // TODO: TMP - Don't be tired when programming
+		if (cl.getSimpleName().equals(getClass().getSimpleName()))
+			return (T) this;
 		String newfolder = getFolderForType(cl);
 		if (newfolder == null)
 			throw new RuntimeException("The specified class " + cl.getSimpleName() + " isn't registered!");
+		System.out.println("getAs newfolder: " + newfolder);
 		if (!plugindata.contains(newfolder + "_id"))
 			return null;
 		return getUser(plugindata.getString(newfolder + "_id"), cl);
@@ -190,6 +198,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T> PlayerData<T> data() {
+		//System.out.println("Calling ChromaGamerBase data"); // TODO: TMP - Debugged for hours
 		if (!getClass().isAnnotationPresent(UserClass.class))
 			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
 		String mname = new Exception().getStackTrace()[1].getMethodName();
