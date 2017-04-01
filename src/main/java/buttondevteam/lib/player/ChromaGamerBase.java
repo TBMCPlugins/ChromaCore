@@ -8,7 +8,6 @@ import java.util.function.Consumer;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
-
 import buttondevteam.lib.TBMCCoreAPI;
 
 public abstract class ChromaGamerBase implements AutoCloseable {
@@ -17,29 +16,27 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	private static final HashMap<Class<?>, String> playerTypes = new HashMap<>();
 
 	/**
-	 * Use only if outside Minecraft, and use it to register your plugin's class.
-	 * 
-	 * @param cl
-	 *            The custom player class
-	 * @param folder
-	 *            The folder to store the data in (like "discord")
+	 * Used for connecting with every type of user ({@link #connectWith(ChromaGamerBase)})
 	 */
-	public static <T extends ChromaGamerBase> void addPlayerType(Class<T> cl, String folder) {
-		playerTypes.put(cl, folder);
+	public static void RegisterPluginUserClass(Class<? extends ChromaGamerBase> userclass) {
+		if (userclass.isAnnotationPresent(UserClass.class))
+			playerTypes.put(userclass, userclass.getAnnotation(UserClass.class).foldername());
+		throw new RuntimeException("Class not registered as a user class! Use @UserClass or TBMCPlayerBase");
 	}
 
 	/**
-	 * Returns the folder name for the given player class. If a direct match is not found, it'll look for superclasses.
+	 * Returns the folder name for the given player class.
 	 * 
 	 * @param cl
 	 *            The class to get the folder from (like {@link TBMCPlayerBase} or one of it's subclasses
 	 * @return The folder name for the given type
+	 * @throws RuntimeException
+	 *             If the class doesn't have the {@link UserClass} annotation.
 	 */
 	public static <T extends ChromaGamerBase> String getFolderForType(Class<T> cl) {
-		if (playerTypes.containsKey(cl))
-			return playerTypes.get(cl);
-		return playerTypes.entrySet().stream().filter(e -> e.getKey().isAssignableFrom(cl)).findAny()
-				.orElseThrow(() -> new RuntimeException("Type not registered as a player type!")).getValue();
+		if (cl.isAnnotationPresent(UserClass.class))
+			return cl.getAnnotation(UserClass.class).foldername();
+		throw new RuntimeException("Class not registered as a user class! Use @UserClass");
 	}
 
 	/**
@@ -57,6 +54,13 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		return plugindata != null ? plugindata.getString("id") : null;
 	}
 
+	/***
+	 * Loads a user from disk and returns the user object. Make sure to use the subclasses' methods, where possible, like {@link TBMCPlayerBase#getPlayer(java.util.UUID, Class)}
+	 * 
+	 * @param fname
+	 * @param cl
+	 * @return
+	 */
 	public static <T extends ChromaGamerBase> T getUser(String fname, Class<T> cl) {
 		try {
 			T obj = cl.newInstance();
@@ -101,6 +105,8 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 */
 	public <T extends ChromaGamerBase> void connectWith(T user) {
 		// Set the ID, go through all linked files and connect them as well
+		if (!playerTypes.containsKey(getClass()))
+			throw new RuntimeException("Class not registered as a user class! Use TBMCCoreAPI.RegisterUserClass");
 		plugindata.set(user.getFolder() + "_id", user.plugindata.getString("id"));
 		final String ownFolder = user.getFolder();
 		user.plugindata.set(ownFolder + "_id", plugindata.getString("id"));
@@ -157,6 +163,39 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	public String getFolder() {
 		return getFolderForType(getClass());
+	}
+
+	@SuppressWarnings("rawtypes")
+	private HashMap<String, PlayerData> datamap = new HashMap<>();
+
+	/**
+	 * Use from a data() method, which is in a method with the name of the key. For example, use flair() for the enclosing method of the outer data() to save to and load from "flair"
+	 * 
+	 * @return A data object with methods to get and set
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T> PlayerData<T> data(String sectionname) {
+		if (!getClass().isAnnotationPresent(UserClass.class))
+			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
+		String mname = sectionname + "." + new Exception().getStackTrace()[1].getMethodName();
+		if (!datamap.containsKey(mname))
+			datamap.put(mname, new PlayerData<T>(mname, plugindata));
+		return datamap.get(mname);
+	}
+
+	/**
+	 * Use from a method with the name of the key. For example, use flair() for the enclosing method to save to and load from "flair"
+	 * 
+	 * @return A data object with methods to get and set
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T> PlayerData<T> data() {
+		if (!getClass().isAnnotationPresent(UserClass.class))
+			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
+		String mname = new Exception().getStackTrace()[2].getMethodName();
+		if (!datamap.containsKey(mname))
+			datamap.put(mname, new PlayerData<T>(mname, plugindata));
+		return datamap.get(mname);
 	}
 
 	/**

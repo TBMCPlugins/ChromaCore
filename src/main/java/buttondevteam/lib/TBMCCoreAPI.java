@@ -18,6 +18,7 @@ import org.bukkit.plugin.Plugin;
 import com.google.gson.*;
 
 import buttondevteam.core.MainPlugin;
+import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.potato.DebugPotato;
 
 public final class TBMCCoreAPI {
@@ -83,8 +84,7 @@ public final class TBMCCoreAPI {
 		info(sender, "Updating TBMC plugin: " + correctname + " from " + correctbranch.get());
 		URL url;
 		final boolean isWindows = System.getProperty("os.name").contains("Windows");
-		File result = new File(
-				"plugins/" + correctname + (isWindows ? ".jar" : ".jar_tmp"));
+		File result = new File("plugins/" + correctname + (isWindows ? ".jar" : ".jar_tmp"));
 		File finalresult = new File("plugins/" + correctname + ".jar");
 		try {
 			url = new URL("https://jitpack.io/com/github/TBMCPlugins/"
@@ -248,6 +248,10 @@ public final class TBMCCoreAPI {
 	 */
 	public static void RegisterEventsForExceptions(Listener listener, Plugin plugin) {
 		EventExceptionHandler.registerEvents(listener, plugin, new EventExceptionCoreHandler());
+	}
+
+	public static <T extends ChromaGamerBase> void RegisterUserClass(Class<T> userclass) {
+		ChromaGamerBase.RegisterPluginUserClass(userclass);
 	}
 
 	/**

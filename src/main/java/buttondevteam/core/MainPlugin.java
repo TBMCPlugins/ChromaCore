@@ -31,6 +31,7 @@ public class MainPlugin extends JavaPlugin {
 		TBMCChatAPI.AddCommand(this, UpdatePluginCommand.class);
 		TBMCChatAPI.AddCommand(this, ScheduledRestartCommand.class);
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
+		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
 		logger.info(pdfFile.getName() + " has been Enabled (V." + pdfFile.getVersion() + ").");
 	}
 

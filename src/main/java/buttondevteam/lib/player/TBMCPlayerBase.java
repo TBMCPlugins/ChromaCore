@@ -17,20 +17,24 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
 
 import buttondevteam.lib.TBMCCoreAPI;
 
+@UserClass(foldername = "minecraft")
 public abstract class TBMCPlayerBase extends ChromaGamerBase {
-	private static final String FOLDER_NAME = "minecraft";
 	protected UUID uuid;
+
+	private String pluginname;
+
+	protected TBMCPlayerBase() {
+		if (getClass().isAnnotationPresent(PlayerClass.class))
+			pluginname = getClass().getAnnotation(PlayerClass.class).pluginname();
+		throw new RuntimeException("Class not defined as player class! Use @PlayerClass");
+	}
 
 	public UUID getUUID() {
 		return uuid;
 	}
 
-	public String getPlayerName() {
-		return plugindata.getString("playername", "");
-	}
-
-	public void setPlayerName(String value) {
-		plugindata.set("playername", value);
+	public PlayerData<String> PlayerName() {
+		return data();
 	}
 
 	@Override
@@ -38,8 +42,14 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 		return getUUID().toString();
 	}
 
-	static {
-		addPlayerType(TBMCPlayerBase.class, FOLDER_NAME);
+
+	/**
+	 * Use from a method with the name of the key. For example, use flair() for the enclosing method to save to and load from "flair"
+	 * 
+	 * @return A data object with methods to get and set
+	 */
+	protected <T> PlayerData<T> data() {
+		return super.data(pluginname);
 	}
 
 	/**
@@ -96,7 +106,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 		try {
 			player.close();
 		} catch (Exception e) {
-			new Exception("Failed to save player data for " + player.getPlayerName(), e).printStackTrace();
+			new Exception("Failed to save player data for " + player.PlayerName().get(), e).printStackTrace();
 		}
 	}
 
@@ -105,14 +115,14 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	 */
 	public static void joinPlayer(Player p) {
 		TBMCPlayer player = TBMCPlayerBase.getPlayer(p.getUniqueId(), TBMCPlayer.class);
-		Bukkit.getLogger().info("Loaded player: " + player.getPlayerName());
-		if (player.getPlayerName() == null) {
-			player.setPlayerName(p.getName());
-			Bukkit.getLogger().info("Player name saved: " + player.getPlayerName());
-		} else if (!p.getName().equals(player.getPlayerName())) {
-			Bukkit.getLogger().info("Renaming " + player.getPlayerName() + " to " + p.getName());
+		Bukkit.getLogger().info("Loaded player: " + player.PlayerName().get());
+		if (player.PlayerName().get() == null) {
+			player.PlayerName().set(p.getName());
+			Bukkit.getLogger().info("Player name saved: " + player.PlayerName().get());
+		} else if (!p.getName().equals(player.PlayerName().get())) {
+			Bukkit.getLogger().info("Renaming " + player.PlayerName().get() + " to " + p.getName());
 			TownyUniverse tu = Towny.getPlugin(Towny.class).getTownyUniverse();
-			Resident resident = tu.getResidentMap().get(player.getPlayerName());
+			Resident resident = tu.getResidentMap().get(player.PlayerName().get());
 			if (resident == null) {
 				Bukkit.getLogger().warning("Resident not found - couldn't rename in Towny.");
 				TBMCCoreAPI.sendDebugMessage("Resident not found - couldn't rename in Towny.");
@@ -127,7 +137,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 				} catch (NotRegisteredException e) {
 					TBMCCoreAPI.SendException("Failed to rename resident, the resident isn't registered.", e);
 				}
-			player.setPlayerName(p.getName());
+			player.PlayerName().set(p.getName());
 			Bukkit.getLogger().info("Renaming done.");
 		}
 		playermap.put(p.getUniqueId() + "-" + TBMCPlayer.class.getSimpleName(), player);
@@ -159,8 +169,8 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 			try {
 				p.close();
 			} catch (Exception e) {
-				TBMCCoreAPI.SendException("Error while saving player " + p.getPlayerName() + " (" + p.getFolder() + "/"
-						+ p.getFileName() + ")!", e);
+				TBMCCoreAPI.SendException("Error while saving player " + p.PlayerName().get() + " (" + p.getFolder()
+						+ "/" + p.getFileName() + ")!", e);
 			}
 		});
 	}
