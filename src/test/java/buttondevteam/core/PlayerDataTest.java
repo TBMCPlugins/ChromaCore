@@ -48,7 +48,7 @@ public class PlayerDataTest extends TestCase {
 		try (TestPlayerClass p = TBMCPlayerBase.getPlayer(uuid, TestPlayerClass.class)) {
 			p.PlayerName().set("Test");
 			assertEquals("Test", p.PlayerName().get());
-			p.testenum().set(TestEnum.A); // TODO: Fix enum saving
+			p.testenum().set(TestEnum.A);
 			assertEquals(TestEnum.A, p.testenum().get());
 			// p.TestShort().set((short) 5);
 			// assertEquals((short) 5, (short) (int) p.TestShort().get());

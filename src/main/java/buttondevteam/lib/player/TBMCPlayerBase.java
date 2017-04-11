@@ -17,7 +17,7 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
 
 import buttondevteam.lib.TBMCCoreAPI;
 
-@UserClass(foldername = "minecraft")
+@AbstractUserClass(foldername = "minecraft", prototype = TBMCPlayer.class)
 public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	protected UUID uuid;
 
@@ -31,17 +31,13 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	}
 
 	public UUID getUUID() {
+		if (uuid == null)
+			uuid = UUID.fromString(getFileName());
 		return uuid;
 	}
 
 	public PlayerData<String> PlayerName() {
-		//System.out.println("Calling playername"); // TODO: TMP - The data will only get stored if it's changed
 		return super.data();
-	}
-
-	@Override
-	public String getFileName() {
-		return getUUID().toString();
 	}
 
 	/**
@@ -51,7 +47,6 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	 */
 	@Override
 	protected <T> PlayerData<T> data() {
-		//System.out.println("Calling TMBCPlayerBase data"); // TODO: TMP - Sigh
 		return super.data(pluginname);
 	}
 
@@ -78,17 +73,17 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	public static <T extends TBMCPlayerBase> T getPlayer(UUID uuid, Class<T> cl) {
 		if (playermap.containsKey(uuid + "-" + cl.getSimpleName()))
 			return (T) playermap.get(uuid + "-" + cl.getSimpleName());
-		//System.out.println("A");
+		// System.out.println("A");
 		try {
 			T player;
 			if (playermap.containsKey(uuid + "-" + TBMCPlayer.class.getSimpleName())) {
-				//System.out.println("B"); - Don't program when tired
+				// System.out.println("B"); - Don't program when tired
 				player = cl.newInstance();
 				player.plugindata = playermap.get(uuid + "-" + TBMCPlayer.class.getSimpleName()).plugindata;
 				playermap.put(uuid + "-" + cl.getSimpleName(), player); // It will get removed on player quit
 			} else
 				player = ChromaGamerBase.getUser(uuid.toString(), cl);
-			//System.out.println("C");
+			// System.out.println("C");
 			player.uuid = uuid;
 			return player;
 		} catch (Exception e) {

@@ -21,7 +21,10 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	public static void RegisterPluginUserClass(Class<? extends ChromaGamerBase> userclass) {
 		if (userclass.isAnnotationPresent(UserClass.class))
 			playerTypes.put(userclass, userclass.getAnnotation(UserClass.class).foldername());
-		else //<-- Really important
+		else if (userclass.isAnnotationPresent(AbstractUserClass.class))
+			playerTypes.put(userclass.getAnnotation(AbstractUserClass.class).prototype(),
+					userclass.getAnnotation(AbstractUserClass.class).foldername());
+		else // <-- Really important
 			throw new RuntimeException("Class not registered as a user class! Use @UserClass or TBMCPlayerBase");
 	}
 
@@ -37,23 +40,23 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	public static <T extends ChromaGamerBase> String getFolderForType(Class<T> cl) {
 		if (cl.isAnnotationPresent(UserClass.class))
 			return cl.getAnnotation(UserClass.class).foldername();
-		throw new RuntimeException("Class not registered as a user class! Use @UserClass");
+		else if (cl.isAnnotationPresent(AbstractUserClass.class))
+			return cl.getAnnotation(AbstractUserClass.class).foldername();
+		throw new RuntimeException("Class not registered as a user class! Use @UserClass or @AbstractUserClass");
 	}
 
 	/**
-	 * This method returns the filename for this player data. For example, for Minecraft-related data, use MC UUIDs, for Discord data, use Discord IDs, etc.<br>
+	 * This method returns the filename for this player data. For example, for Minecraft-related data, MC UUIDs, for Discord data, use Discord IDs, etc.<br>
 	 * <b>Does not include .yml</b>
 	 */
-	public abstract String getFileName();
+	public final String getFileName() {
+		return plugindata.getString(getFolder() + "_id");
+	}
 
 	/**
 	 * Use {@link #data()} or {@link #data(String)} where possible; the 'id' must be always set
 	 */
 	protected YamlConfiguration plugindata;
-
-	public String getID() {
-		return plugindata != null ? plugindata.getString("id") : null;
-	}
 
 	/***
 	 * Loads a user from disk and returns the user object. Make sure to use the subclasses' methods, where possible, like {@link TBMCPlayerBase#getPlayer(java.util.UUID, Class)}
@@ -69,7 +72,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 			final File file = new File(TBMC_PLAYERS_DIR + folder, fname + ".yml");
 			file.getParentFile().mkdirs();
 			obj.plugindata = YamlConfiguration.loadConfiguration(file);
-			obj.plugindata.set(folder + "_id", obj.getID());
+			obj.plugindata.set(folder + "_id", fname);
 			return obj;
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("An error occured while loading a " + cl.getSimpleName() + "!", e);
@@ -110,13 +113,16 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		// Set the ID, go through all linked files and connect them as well
 		if (!playerTypes.containsKey(getClass()))
 			throw new RuntimeException("Class not registered as a user class! Use TBMCCoreAPI.RegisterUserClass");
-		plugindata.set(user.getFolder() + "_id", user.plugindata.getString("id"));
-		final String ownFolder = user.getFolder();
-		user.plugindata.set(ownFolder + "_id", plugindata.getString("id"));
+		final String ownFolder = getFolder();
+		user.plugindata.set(ownFolder + "_id", plugindata.getString(ownFolder + "_id"));
+		final String userFolder = user.getFolder();
+		plugindata.set(userFolder + "_id", user.plugindata.getString(userFolder + "_id"));
 		Consumer<YamlConfiguration> sync = sourcedata -> {
-			final String sourcefolder = sourcedata == plugindata ? ownFolder : user.getFolder();
-			final String id = sourcedata.getString("id");
+			final String sourcefolder = sourcedata == plugindata ? ownFolder : userFolder;
+			final String id = sourcedata.getString(sourcefolder + "_id");
 			for (Entry<Class<?>, String> entry : playerTypes.entrySet()) { // Set our ID in all files we can find, both from our connections and the new ones
+				if (entry.getKey() == getClass() || entry.getKey() == user.getClass())
+					continue;
 				final String otherid = sourcedata.getString(entry.getValue() + "_id");
 				if (otherid == null)
 					continue;
@@ -157,13 +163,13 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 */
 	@SuppressWarnings("unchecked")
 	public <T extends ChromaGamerBase> T getAs(Class<T> cl) { // TODO: Provide a way to use TBMCPlayerBase's loaded players
-		//System.out.println("getAs cls: " + cl.getSimpleName() + " =? " + getClass().getSimpleName()); // TODO: TMP - Don't be tired when programming
 		if (cl.getSimpleName().equals(getClass().getSimpleName()))
 			return (T) this;
 		String newfolder = getFolderForType(cl);
 		if (newfolder == null)
 			throw new RuntimeException("The specified class " + cl.getSimpleName() + " isn't registered!");
-		System.out.println("getAs newfolder: " + newfolder);
+		if (newfolder.equals(getFolder())) // If in the same folder, the same filename is used
+			return getUser(getFileName(), cl);
 		if (!plugindata.contains(newfolder + "_id"))
 			return null;
 		return getUser(plugindata.getString(newfolder + "_id"), cl);
@@ -171,6 +177,12 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	public String getFolder() {
 		return getFolderForType(getClass());
+	}
+
+	private void ThrowIfNoUser() {
+		if (!getClass().isAnnotationPresent(UserClass.class)
+				&& !getClass().isAnnotationPresent(AbstractUserClass.class))
+			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -183,8 +195,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T> PlayerData<T> data(String sectionname) {
-		if (!getClass().isAnnotationPresent(UserClass.class))
-			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
+		ThrowIfNoUser();
 		String mname = sectionname + "." + new Exception().getStackTrace()[2].getMethodName();
 		if (!datamap.containsKey(mname))
 			datamap.put(mname, new PlayerData<T>(mname, plugindata));
@@ -198,9 +209,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T> PlayerData<T> data() {
-		//System.out.println("Calling ChromaGamerBase data"); // TODO: TMP - Debugged for hours
-		if (!getClass().isAnnotationPresent(UserClass.class))
-			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
+		ThrowIfNoUser();
 		String mname = new Exception().getStackTrace()[1].getMethodName();
 		if (!datamap.containsKey(mname))
 			datamap.put(mname, new PlayerData<T>(mname, plugindata));
@@ -217,8 +226,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(String sectionname, Class<T> cl) {
-		if (!getClass().isAnnotationPresent(UserClass.class))
-			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
+		ThrowIfNoUser();
 		String mname = sectionname + "." + new Exception().getStackTrace()[2].getMethodName();
 		if (!dataenummap.containsKey(mname))
 			dataenummap.put(mname, new EnumPlayerData<T>(mname, plugindata, cl));
@@ -232,8 +240,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(Class<T> cl) {
-		if (!getClass().isAnnotationPresent(UserClass.class))
-			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
+		ThrowIfNoUser();
 		String mname = new Exception().getStackTrace()[1].getMethodName();
 		if (!dataenummap.containsKey(mname))
 			dataenummap.put(mname, new EnumPlayerData<T>(mname, plugindata, cl));
