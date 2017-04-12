@@ -2,6 +2,7 @@ package buttondevteam.lib.player;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -208,5 +209,12 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 			return getPlayer(p.getUniqueId(), cl);
 		else
 			return null;
+	}
+
+	@Override
+	public void close() throws Exception {
+		Set<String> keys = plugindata.getKeys(false);
+		if (keys.size() > 1) // PlayerName is always saved, but we don't need a file for just that
+			super.close();
 	}
 }
