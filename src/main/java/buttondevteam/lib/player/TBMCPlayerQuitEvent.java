@@ -1,19 +1,19 @@
-package buttondevteam.lib;
+package buttondevteam.lib.player;
 
-import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-public class TBMCYEEHAWEvent extends Event {
+public class TBMCPlayerQuitEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
-	private CommandSender sender;
 
-	public TBMCYEEHAWEvent(CommandSender sender) {
-		this.sender = sender;
+	private TBMCPlayerBase player;
+
+	public TBMCPlayerQuitEvent(TBMCPlayerBase player) {
+		this.player = player;
 	}
 
-	public CommandSender getSender() {
-		return sender;
+	public TBMCPlayerBase GetPlayer() {
+		return player;
 	}
 
 	@Override

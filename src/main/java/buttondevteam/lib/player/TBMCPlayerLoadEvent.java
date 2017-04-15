@@ -1,18 +1,18 @@
-package buttondevteam.lib;
+package buttondevteam.lib.player;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-public class TBMCPlayerQuitEvent extends Event {
+public class TBMCPlayerLoadEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-	private TBMCPlayer player;
+	private TBMCPlayerBase player;
 
-	public TBMCPlayerQuitEvent(TBMCPlayer player) {
+	public TBMCPlayerLoadEvent(TBMCPlayerBase player) {
 		this.player = player;
 	}
 
-	public TBMCPlayer GetPlayer() {
+	public TBMCPlayerBase GetPlayer() {
 		return player;
 	}
 
