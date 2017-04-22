@@ -27,23 +27,12 @@ public abstract class TBMCCommandBase {
 	 * 
 	 * @return The command path, <i>which is the command class name by default</i> (removing any "command" from it)
 	 */
-	public String GetCommandPath() {
-		return getClass().getSimpleName().toLowerCase().replace("command", "");
+	public final String GetCommandPath() {
+		if (!getClass().isAnnotationPresent(CommandClass.class))
+			throw new RuntimeException("No @Command annotation on command class " + getClass().getSimpleName() + "!");
+		String path = getClass().getAnnotation(CommandClass.class).path();
+		return path.length() == 0 ? getClass().getSimpleName().toLowerCase().replace("command", "") : path;
 	}
-
-	/**
-	 * Determines whether the command can only be used as a player, or command blocks or the console can use it as well.
-	 * 
-	 * @return If the command is player only
-	 */
-	public abstract boolean GetPlayerOnly();
-
-	/**
-	 * Determines whether the command can only be used by mods or regular players can use it as well.
-	 * 
-	 * @return If the command is mod only
-	 */
-	public abstract boolean GetModOnly();
 
 	Plugin plugin; // Used By TBMCChatAPI
 

@@ -9,8 +9,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.scheduler.BukkitTask;
 
 import buttondevteam.lib.ScheduledServerRestartEvent;
+import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.TBMCCommandBase;
 
+@CommandClass(modOnly = true, path = "schrestart")
 public class ScheduledRestartCommand extends TBMCCommandBase {
 	private static volatile int restartcounter;
 	private static volatile BukkitTask restarttask;
@@ -65,20 +67,5 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 				"This command restarts the server 1 minute after it's executed, warning players every 10 seconds.", //
 				"You can optionally set the amount of ticks to wait before the restart." //
 		};
-	}
-
-	@Override
-	public boolean GetPlayerOnly() {
-		return false;
-	}
-
-	@Override
-	public boolean GetModOnly() {
-		return true;
-	}
-
-	@Override
-	public String GetCommandPath() {
-		return "schrestart";
 	}
 }

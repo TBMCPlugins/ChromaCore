@@ -4,8 +4,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.TBMCCommandBase;
 
+@CommandClass(modOnly = true)
 public class UpdatePluginCommand extends TBMCCommandBase {
 	@Override
 	public boolean OnCommand(CommandSender sender, String alias, String[] args) {
@@ -36,15 +38,5 @@ public class UpdatePluginCommand extends TBMCCommandBase {
 				"To update a plugin: /" + alias + " <plugin>", //
 				"To list the plugin names: /" + alias //
 		};
-	}
-
-	@Override
-	public boolean GetPlayerOnly() {
-		return false;
-	}
-
-	@Override
-	public boolean GetModOnly() {
-		return true;
 	}
 }

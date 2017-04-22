@@ -8,6 +8,8 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.chat.CommandClass;
+import buttondevteam.lib.chat.PlayerCommandBase;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.chat.TBMCCommandBase;
 
@@ -69,11 +71,12 @@ public class CommandCaller implements CommandExecutor {
 			}
 			return true;
 		}
-		if (cmd.GetModOnly() && !MainPlugin.permission.has(sender, "tbmc.admin")) {
+		if (cmd.getClass().getAnnotation(CommandClass.class).modOnly()
+				&& !MainPlugin.permission.has(sender, "tbmc.admin")) {
 			sender.sendMessage("§cYou need to be a mod to use this command.");
 			return true;
 		}
-		if (cmd.GetPlayerOnly() && !(sender instanceof Player)) {
+		if (cmd instanceof PlayerCommandBase && !(sender instanceof Player)) {
 			sender.sendMessage("§cOnly ingame players can use this command.");
 			return true;
 		}
