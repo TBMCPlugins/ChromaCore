@@ -5,11 +5,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.CommandClass;
-import buttondevteam.lib.chat.PlayerCommandBase;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.chat.TBMCCommandBase;
 
@@ -74,10 +72,6 @@ public class CommandCaller implements CommandExecutor {
 		if (cmd.getClass().getAnnotation(CommandClass.class).modOnly()
 				&& !MainPlugin.permission.has(sender, "tbmc.admin")) {
 			sender.sendMessage("§cYou need to be a mod to use this command.");
-			return true;
-		}
-		if (cmd instanceof PlayerCommandBase && !(sender instanceof Player)) {
-			sender.sendMessage("§cOnly ingame players can use this command.");
 			return true;
 		}
 		final String[] cmdargs = args.length > 0 ? Arrays.copyOfRange(args, args.length - argc, args.length) : args;
