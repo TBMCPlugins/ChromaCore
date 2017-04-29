@@ -215,4 +215,14 @@ public class TBMCChatAPI {
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
 	}
+
+	/**
+	 * Register a chat channel. See {@link Channel#Channel(String, Color, String, java.util.function.Function)} for details.
+	 * 
+	 * @param channel
+	 *            A new {@link Channel} to register
+	 */
+	public static void RegisterChatChannel(Channel channel) {
+		Channel.RegisterChannel(channel);
+	}
 }
