@@ -20,6 +20,7 @@ import buttondevteam.core.CommandCaller;
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCChatEvent;
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.chat.Channel.RecipientTestResult;
 
 public class TBMCChatAPI {
 
@@ -200,7 +201,7 @@ public class TBMCChatAPI {
 	}
 
 	/**
-	 * Sends a chat message to Minecraft
+	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.
 	 * 
 	 * @param channel
 	 *            The channel to send to
@@ -211,7 +212,20 @@ public class TBMCChatAPI {
 	 * @return The event cancelled state
 	 */
 	public static boolean SendChatMessage(Channel channel, CommandSender sender, String message) {
-		TBMCChatEvent event = new TBMCChatEvent(sender, channel, message);
+		if (!Channel.getChannels().contains(channel))
+			throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
+		int score;
+		if (channel.filteranderrormsg == null)
+			score = -1;
+		else {
+			RecipientTestResult result = channel.filteranderrormsg.apply(sender);
+			if (result.errormessage != null) {
+				sender.sendMessage("§c" + result.errormessage);
+				return true;
+			}
+			score = result.score;
+		}
+		TBMCChatEvent event = new TBMCChatEvent(sender, channel, message, score);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
 	}
