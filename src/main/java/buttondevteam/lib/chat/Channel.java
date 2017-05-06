@@ -6,13 +6,6 @@ import java.util.function.Function;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import com.palmergames.bukkit.towny.exceptions.NotRegisteredException;
-import com.palmergames.bukkit.towny.object.Nation;
-import com.palmergames.bukkit.towny.object.Resident;
-import com.palmergames.bukkit.towny.object.Town;
-
-import buttondevteam.core.MainPlugin;
 
 public class Channel {
 	public final String DisplayName;
@@ -44,16 +37,6 @@ public class Channel {
 		this.color = color;
 		ID = command;
 		this.filteranderrormsg = filteranderrormsg;
-	}
-
-	static {
-		RegisterChannel(GlobalChat = new Channel("§fg§f", Color.White, "g", null));
-		RegisterChannel(AdminChat = new Channel("§cADMIN§f", Color.Red, "a", s -> s.isOp() ? new RecipientTestResult(0)
-				: new RecipientTestResult("You need to be an admin to use this channel.")));
-		RegisterChannel(ModChat = new Channel("§9MOD§f", Color.Blue, "mod",
-				s -> s.isOp() || (s instanceof Player && MainPlugin.permission.playerInGroup((Player) s, "mod"))
-						? new RecipientTestResult(0) //
-						: new RecipientTestResult("You need to be a mod to use this channel.")));
 	}
 
 	public static List<Channel> getChannels() {

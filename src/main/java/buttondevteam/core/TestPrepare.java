@@ -11,6 +11,10 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import buttondevteam.lib.chat.Channel;
+import buttondevteam.lib.chat.Color;
+import buttondevteam.lib.chat.TBMCChatAPI;
+
 public class TestPrepare {
 	public static void PrepareServer() {
 		Bukkit.setServer(Mockito.mock(Server.class, new Answer<Object>() {
@@ -34,5 +38,6 @@ public class TestPrepare {
 				return cl.isAssignableFrom(invocation.getMethod().getReturnType());
 			}
 		}));
+		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fg§f", Color.White, "g", null));
 	}
 }
