@@ -19,6 +19,7 @@ import org.reflections.util.ConfigurationBuilder;
 import buttondevteam.core.CommandCaller;
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCChatEvent;
+import buttondevteam.lib.TBMCChatPreprocessEvent;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.Channel.RecipientTestResult;
 
@@ -214,6 +215,10 @@ public class TBMCChatAPI {
 	public static boolean SendChatMessage(Channel channel, CommandSender sender, String message) {
 		if (!Channel.getChannels().contains(channel))
 			throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
+		TBMCChatPreprocessEvent eventPre = new TBMCChatPreprocessEvent(sender, channel, message);
+		Bukkit.getPluginManager().callEvent(eventPre);
+		if (eventPre.isCancelled())
+			return true;
 		int score;
 		if (channel.filteranderrormsg == null)
 			score = -1;
@@ -225,7 +230,7 @@ public class TBMCChatAPI {
 			}
 			score = result.score;
 		}
-		TBMCChatEvent event = new TBMCChatEvent(sender, channel, message, score);
+		TBMCChatEvent event = new TBMCChatEvent(sender, channel, eventPre.getMessage(), score);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
 	}
