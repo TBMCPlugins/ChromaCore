@@ -13,42 +13,36 @@ import buttondevteam.lib.chat.TBMCCommandBase;
 
 public class CommandCaller implements CommandExecutor {
 
-	private static final String REGISTER_ERROR_MSG = "An error occured while registering commands";
-
 	private CommandCaller() {
 	}
 
 	private static CommandCaller instance;
 
-	public static void RegisterCommand(TBMCCommandBase cmd) {
+	public static void RegisterCommand(TBMCCommandBase cmd) throws Exception {
 		if (instance == null)
 			instance = new CommandCaller();
-		if (cmd.GetCommandPath() == null) {
-			TBMCCoreAPI.SendException(REGISTER_ERROR_MSG,
-					new Exception("Command " + cmd.getClass().getSimpleName() + " has no command path!"));
-			return;
-		}
-		if (cmd.getPlugin() == null) {
-			TBMCCoreAPI.SendException(REGISTER_ERROR_MSG,
-					new Exception("Command " + cmd.GetCommandPath() + " has no plugin!"));
-			return;
-		}
+		String topcmd = cmd.GetCommandPath();
+		if (topcmd == null)
+			throw new Exception("Command " + cmd.getClass().getSimpleName() + " has no command path!");
+		if (cmd.getPlugin() == null)
+			throw new Exception("Command " + cmd.GetCommandPath() + " has no plugin!");
 		int i;
-		String topcmd;
-		if ((i = (topcmd = cmd.GetCommandPath()).indexOf(' ')) != -1) // Get top-level command
-			topcmd = cmd.GetCommandPath().substring(0, i);
+		if ((i = topcmd.indexOf(' ')) != -1) // Get top-level command
+			topcmd = topcmd.substring(0, i);
 		{
 			PluginCommand pc = ((JavaPlugin) cmd.getPlugin()).getCommand(topcmd);
 			if (pc == null)
-				TBMCCoreAPI.SendException(REGISTER_ERROR_MSG, new Exception("Top level command " + topcmd
-						+ " not registered in plugin.yml for plugin: " + cmd.getPlugin().getName()));
+				throw new Exception("Top level command " + topcmd + " not registered in plugin.yml for plugin: "
+						+ cmd.getPlugin().getName());
 			else
 				pc.setExecutor(instance);
+			System.out.println("Executor set");
 		}
 	}
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
+		System.out.println("onCommand called");
 		String path = command.getName().toLowerCase();
 		for (String arg : args)
 			path += " " + arg;

@@ -201,8 +201,10 @@ public class TBMCCoreAPI {
 		SendUnsentExceptions();
 		TBMCExceptionEvent event = new TBMCExceptionEvent(sourcemsg, e);
 		Bukkit.getPluginManager().callEvent(event);
-		if (!event.isHandled())
-			exceptionsToSend.put(sourcemsg, e);
+		synchronized (exceptionsToSend) {
+			if (!event.isHandled())
+				exceptionsToSend.put(sourcemsg, e);
+		}
 		Bukkit.getLogger().warning(sourcemsg);
 		e.printStackTrace();
 		if (debugPotato) {
@@ -212,7 +214,6 @@ public class TBMCCoreAPI {
 					devsOnline.add(player);
 				}
 			}
-			;
 			if (!devsOnline.isEmpty()) {
 				DebugPotato potato = new DebugPotato()
 						.setMessage(new String[] { //
@@ -234,8 +235,10 @@ public class TBMCCoreAPI {
 		SendUnsentDebugMessages();
 		TBMCDebugMessageEvent event = new TBMCDebugMessageEvent(debugMessage);
 		Bukkit.getPluginManager().callEvent(event);
-		if (!event.isSent())
-			debugMessagesToSend.add(debugMessage);
+		synchronized (debugMessagesToSend) {
+			if (!event.isSent())
+				debugMessagesToSend.add(debugMessage);
+		}
 	}
 
 	/**
@@ -258,28 +261,32 @@ public class TBMCCoreAPI {
 	 * Send exceptions that haven't been sent (their events didn't get handled). This method is used by the DiscordPlugin's ready event
 	 */
 	public static void SendUnsentExceptions() {
-		if (exceptionsToSend.size() > 20) {
-			exceptionsToSend.clear(); // Don't call more and more events if all the handler plugins are unloaded
-			Bukkit.getLogger().warning("Unhandled exception list is over 20! Clearing!");
-		}
-		for (Entry<String, Throwable> entry : exceptionsToSend.entrySet()) {
-			TBMCExceptionEvent event = new TBMCExceptionEvent(entry.getKey(), entry.getValue());
-			Bukkit.getPluginManager().callEvent(event);
-			if (event.isHandled())
-				exceptionsToSend.remove(entry.getKey());
+		synchronized (exceptionsToSend) {
+			if (exceptionsToSend.size() > 20) {
+				exceptionsToSend.clear(); // Don't call more and more events if all the handler plugins are unloaded
+				Bukkit.getLogger().warning("Unhandled exception list is over 20! Clearing!");
+			}
+			for (Entry<String, Throwable> entry : exceptionsToSend.entrySet()) {
+				TBMCExceptionEvent event = new TBMCExceptionEvent(entry.getKey(), entry.getValue());
+				Bukkit.getPluginManager().callEvent(event);
+				if (event.isHandled())
+					exceptionsToSend.remove(entry.getKey());
+			}
 		}
 	}
 
 	public static void SendUnsentDebugMessages() {
-		if (debugMessagesToSend.size() > 20) {
-			debugMessagesToSend.clear(); // Don't call more and more DebugMessages if all the handler plugins are unloaded
-			Bukkit.getLogger().warning("Unhandled Debug Message list is over 20! Clearing!");
-		}
-		for (String message : debugMessagesToSend) {
-			TBMCDebugMessageEvent event = new TBMCDebugMessageEvent(message);
-			Bukkit.getPluginManager().callEvent(event);
-			if (event.isSent())
-				debugMessagesToSend.remove(message);
+		synchronized (debugMessagesToSend) {
+			if (debugMessagesToSend.size() > 20) {
+				debugMessagesToSend.clear(); // Don't call more and more DebugMessages if all the handler plugins are unloaded
+				Bukkit.getLogger().warning("Unhandled Debug Message list is over 20! Clearing!");
+			}
+			for (String message : debugMessagesToSend) {
+				TBMCDebugMessageEvent event = new TBMCDebugMessageEvent(message);
+				Bukkit.getPluginManager().callEvent(event);
+				if (event.isSent())
+					debugMessagesToSend.remove(message);
+			}
 		}
 	}
 

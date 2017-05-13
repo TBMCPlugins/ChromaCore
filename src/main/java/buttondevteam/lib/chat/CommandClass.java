@@ -6,6 +6,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * <b>Abstract classes with no {@link CommandClass} annotations will be ignored.</b> Classes that are not abstract or have the annotation will be included in the command path unless
+ * {@link #excludeFromPath()} is true.
+ * 
+ * @author NorbiPeti
+ *
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Inherited
@@ -26,4 +33,9 @@ public @interface CommandClass {
 	 * @return The command path, <i>which is the command class name by default</i> (removing any "command" from it)
 	 */
 	public String path() default "";
+
+	/**
+	 * Exclude this class from the path. Useful if more commands share some property but aren't subcommands of a common command. See {@link CommandClass} for more details.
+	 */
+	public boolean excludeFromPath() default false;
 }

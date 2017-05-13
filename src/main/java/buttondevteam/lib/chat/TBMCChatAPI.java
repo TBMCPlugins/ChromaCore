@@ -4,6 +4,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -61,20 +62,20 @@ public class TBMCChatAPI {
 				cmds.add("§6---- Subcommands ----");
 			cmds.add(cmd);
 		};
-		for (TBMCCommandBase cmd : TBMCChatAPI.GetCommands().values()) {
-			if (cmd.GetCommandPath().startsWith(command + " ")) {
-				if (cmd.isPlayerOnly() && !(sender instanceof Player))
+		for (Entry<String, TBMCCommandBase> cmd : TBMCChatAPI.GetCommands().entrySet()) {
+			if (cmd.getKey().startsWith(command + " ")) {
+				if (cmd.getValue().isPlayerOnly() && !(sender instanceof Player))
 					continue;
 				if (cmd.getClass().getAnnotation(CommandClass.class).modOnly()
 						&& !MainPlugin.permission.has(sender, "tbmc.admin"))
 					continue;
-				int ind = cmd.GetCommandPath().indexOf(' ', command.length() + 2);
+				int ind = cmd.getKey().indexOf(' ', command.length() + 2);
 				if (ind >= 0) {
-					String newcmd = cmd.GetCommandPath().substring(0, ind);
+					String newcmd = cmd.getKey().substring(0, ind);
 					if (!cmds.contains("/" + newcmd))
 						addToCmds.accept("/" + newcmd);
 				} else
-					addToCmds.accept("/" + cmd.GetCommandPath());
+					addToCmds.accept("/" + cmd.getKey());
 			}
 		}
 		return cmds.toArray(new String[cmds.size()]);
@@ -99,15 +100,22 @@ public class TBMCChatAPI {
 	 * @param acmdclass
 	 *            A command's class to get the package name for commands. The provided class's package and subpackages are scanned for commands.
 	 */
-	public static void AddCommands(JavaPlugin plugin, Class<? extends TBMCCommandBase> acmdclass) {
-		plugin.getLogger().info("Registering commands for " + plugin.getName());
+	public static synchronized void AddCommands(JavaPlugin plugin, Class<? extends TBMCCommandBase> acmdclass) {
+		plugin.getLogger().info("Registering commands from " + acmdclass.getPackage().getName());
 		Reflections rf = new Reflections(new ConfigurationBuilder()
 				.setUrls(ClasspathHelper.forPackage(acmdclass.getPackage().getName(),
 						plugin.getClass().getClassLoader()))
+				.addUrls(
+						ClasspathHelper.forClass(OptionallyPlayerCommandBase.class,
+								OptionallyPlayerCommandBase.class.getClassLoader()),
+						ClasspathHelper.forClass(PlayerCommandBase.class, PlayerCommandBase.class.getClassLoader())) // http://stackoverflow.com/questions/12917417/using-reflections-for-finding-the-transitive-subtypes-of-a-class-when-not-all
 				.addClassLoader(plugin.getClass().getClassLoader()).addScanners(new SubTypesScanner()));
 		Set<Class<? extends TBMCCommandBase>> cmds = rf.getSubTypesOf(TBMCCommandBase.class);
 		for (Class<? extends TBMCCommandBase> cmd : cmds) {
 			try {
+				if (!cmd.getPackage().getName().startsWith(acmdclass.getPackage().getName()))
+					continue; // It keeps including the commands from here
+				//System.out.println("Class found: " + cmd.getName());
 				if (Modifier.isAbstract(cmd.getModifiers()))
 					continue;
 				TBMCCommandBase c = cmd.newInstance();
@@ -116,9 +124,7 @@ public class TBMCChatAPI {
 					continue;
 				commands.put(c.GetCommandPath(), c);
 				CommandCaller.RegisterCommand(c);
-			} catch (InstantiationException e) {
-				TBMCCoreAPI.SendException("An error occured while registering command " + cmd.getName(), e);
-			} catch (IllegalAccessException e) {
+			} catch (Exception e) {
 				TBMCCoreAPI.SendException("An error occured while registering command " + cmd.getName(), e);
 			}
 		}
