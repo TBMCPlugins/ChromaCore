@@ -115,7 +115,6 @@ public class TBMCChatAPI {
 			try {
 				if (!cmd.getPackage().getName().startsWith(acmdclass.getPackage().getName()))
 					continue; // It keeps including the commands from here
-				//System.out.println("Class found: " + cmd.getName());
 				if (Modifier.isAbstract(cmd.getModifiers()))
 					continue;
 				TBMCCommandBase c = cmd.newInstance();

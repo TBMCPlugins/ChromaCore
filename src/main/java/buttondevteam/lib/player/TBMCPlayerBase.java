@@ -74,17 +74,14 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	public static <T extends TBMCPlayerBase> T getPlayer(UUID uuid, Class<T> cl) {
 		if (playermap.containsKey(uuid + "-" + cl.getSimpleName()))
 			return (T) playermap.get(uuid + "-" + cl.getSimpleName());
-		// System.out.println("A");
 		try {
 			T player;
 			if (playermap.containsKey(uuid + "-" + TBMCPlayer.class.getSimpleName())) {
-				// System.out.println("B"); - Don't program when tired
 				player = cl.newInstance();
 				player.plugindata = playermap.get(uuid + "-" + TBMCPlayer.class.getSimpleName()).plugindata;
 				playermap.put(uuid + "-" + cl.getSimpleName(), player); // It will get removed on player quit
 			} else
 				player = ChromaGamerBase.getUser(uuid.toString(), cl);
-			// System.out.println("C");
 			player.uuid = uuid;
 			return player;
 		} catch (Exception e) {

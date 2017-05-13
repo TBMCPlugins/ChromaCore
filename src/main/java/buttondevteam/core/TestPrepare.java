@@ -21,8 +21,6 @@ public class TestPrepare {
 
 			@Override
 			public Object answer(InvocationOnMock invocation) throws Throwable {
-				// System.out.println("Return type: " + invocation.getMethod().getReturnType());
-				// System.out.println(String.class.isAssignableFrom(invocation.getMethod().getReturnType()));
 				if (returns(invocation, String.class))
 					return "test";
 				if (returns(invocation, Logger.class))

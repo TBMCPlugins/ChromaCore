@@ -36,13 +36,11 @@ public class CommandCaller implements CommandExecutor {
 						+ cmd.getPlugin().getName());
 			else
 				pc.setExecutor(instance);
-			System.out.println("Executor set");
 		}
 	}
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
-		System.out.println("onCommand called");
 		String path = command.getName().toLowerCase();
 		for (String arg : args)
 			path += " " + arg;
