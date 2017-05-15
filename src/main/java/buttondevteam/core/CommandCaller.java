@@ -5,43 +5,35 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.chat.TBMCCommandBase;
 
 public class CommandCaller implements CommandExecutor {
-
-	private static final String REGISTER_ERROR_MSG = "An error occured while registering commands";
 
 	private CommandCaller() {
 	}
 
 	private static CommandCaller instance;
 
-	public static void RegisterCommand(TBMCCommandBase cmd) {
+	public static void RegisterCommand(TBMCCommandBase cmd) throws Exception {
 		if (instance == null)
 			instance = new CommandCaller();
-		if (cmd.GetCommandPath() == null) {
-			TBMCCoreAPI.SendException(REGISTER_ERROR_MSG,
-					new Exception("Command " + cmd.getClass().getSimpleName() + " has no command path!"));
-			return;
-		}
-		if (cmd.getPlugin() == null) {
-			TBMCCoreAPI.SendException(REGISTER_ERROR_MSG,
-					new Exception("Command " + cmd.GetCommandPath() + " has no plugin!"));
-			return;
-		}
+		String topcmd = cmd.GetCommandPath();
+		if (topcmd == null)
+			throw new Exception("Command " + cmd.getClass().getSimpleName() + " has no command path!");
+		if (cmd.getPlugin() == null)
+			throw new Exception("Command " + cmd.GetCommandPath() + " has no plugin!");
 		int i;
-		String topcmd;
-		if ((i = (topcmd = cmd.GetCommandPath()).indexOf(' ')) != -1) // Get top-level command
-			topcmd = cmd.GetCommandPath().substring(0, i);
+		if ((i = topcmd.indexOf(' ')) != -1) // Get top-level command
+			topcmd = topcmd.substring(0, i);
 		{
 			PluginCommand pc = ((JavaPlugin) cmd.getPlugin()).getCommand(topcmd);
 			if (pc == null)
-				TBMCCoreAPI.SendException(REGISTER_ERROR_MSG, new Exception("Top level command " + topcmd
-						+ " not registered in plugin.yml for plugin: " + cmd.getPlugin().getName()));
+				throw new Exception("Top level command " + topcmd + " not registered in plugin.yml for plugin: "
+						+ cmd.getPlugin().getName());
 			else
 				pc.setExecutor(instance);
 		}
@@ -69,12 +61,9 @@ public class CommandCaller implements CommandExecutor {
 			}
 			return true;
 		}
-		if (cmd.GetModOnly() && !MainPlugin.permission.has(sender, "tbmc.admin")) {
+		if (cmd.getClass().getAnnotation(CommandClass.class).modOnly()
+				&& !MainPlugin.permission.has(sender, "tbmc.admin")) {
 			sender.sendMessage("§cYou need to be a mod to use this command.");
-			return true;
-		}
-		if (cmd.GetPlayerOnly() && !(sender instanceof Player)) {
-			sender.sendMessage("§cOnly ingame players can use this command.");
 			return true;
 		}
 		final String[] cmdargs = args.length > 0 ? Arrays.copyOfRange(args, args.length - argc, args.length) : args;

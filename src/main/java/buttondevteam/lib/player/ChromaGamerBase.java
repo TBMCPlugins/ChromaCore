@@ -9,6 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import buttondevteam.lib.TBMCCoreAPI;
 
+@ChromaGamerEnforcer
 public abstract class ChromaGamerBase implements AutoCloseable {
 	public static final String TBMC_PLAYERS_DIR = "TBMC/players/";
 

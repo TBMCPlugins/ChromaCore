@@ -224,3 +224,4 @@ TheButtonAutoFlair/out/artifacts/Autoflair/Autoflair.jar
 *.xml
 
 TBMC/
+/.apt_generated/

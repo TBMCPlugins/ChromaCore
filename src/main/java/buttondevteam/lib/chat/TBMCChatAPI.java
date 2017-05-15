@@ -4,6 +4,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -19,7 +20,9 @@ import org.reflections.util.ConfigurationBuilder;
 import buttondevteam.core.CommandCaller;
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCChatEvent;
+import buttondevteam.lib.TBMCChatPreprocessEvent;
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.chat.Channel.RecipientTestResult;
 
 public class TBMCChatAPI {
 
@@ -59,19 +62,20 @@ public class TBMCChatAPI {
 				cmds.add("§6---- Subcommands ----");
 			cmds.add(cmd);
 		};
-		for (TBMCCommandBase cmd : TBMCChatAPI.GetCommands().values()) {
-			if (cmd.GetCommandPath().startsWith(command + " ")) {
-				if (cmd.GetPlayerOnly() && !(sender instanceof Player))
+		for (Entry<String, TBMCCommandBase> cmd : TBMCChatAPI.GetCommands().entrySet()) {
+			if (cmd.getKey().startsWith(command + " ")) {
+				if (cmd.getValue().isPlayerOnly() && !(sender instanceof Player))
 					continue;
-				if (cmd.GetModOnly() && !MainPlugin.permission.has(sender, "tbmc.admin"))
+				if (cmd.getClass().getAnnotation(CommandClass.class).modOnly()
+						&& !MainPlugin.permission.has(sender, "tbmc.admin"))
 					continue;
-				int ind = cmd.GetCommandPath().indexOf(' ', command.length() + 2);
+				int ind = cmd.getKey().indexOf(' ', command.length() + 2);
 				if (ind >= 0) {
-					String newcmd = cmd.GetCommandPath().substring(0, ind);
+					String newcmd = cmd.getKey().substring(0, ind);
 					if (!cmds.contains("/" + newcmd))
 						addToCmds.accept("/" + newcmd);
 				} else
-					addToCmds.accept("/" + cmd.GetCommandPath());
+					addToCmds.accept("/" + cmd.getKey());
 			}
 		}
 		return cmds.toArray(new String[cmds.size()]);
@@ -96,15 +100,21 @@ public class TBMCChatAPI {
 	 * @param acmdclass
 	 *            A command's class to get the package name for commands. The provided class's package and subpackages are scanned for commands.
 	 */
-	public static void AddCommands(JavaPlugin plugin, Class<? extends TBMCCommandBase> acmdclass) {
-		plugin.getLogger().info("Registering commands for " + plugin.getName());
+	public static synchronized void AddCommands(JavaPlugin plugin, Class<? extends TBMCCommandBase> acmdclass) {
+		plugin.getLogger().info("Registering commands from " + acmdclass.getPackage().getName());
 		Reflections rf = new Reflections(new ConfigurationBuilder()
 				.setUrls(ClasspathHelper.forPackage(acmdclass.getPackage().getName(),
 						plugin.getClass().getClassLoader()))
+				.addUrls(
+						ClasspathHelper.forClass(OptionallyPlayerCommandBase.class,
+								OptionallyPlayerCommandBase.class.getClassLoader()),
+						ClasspathHelper.forClass(PlayerCommandBase.class, PlayerCommandBase.class.getClassLoader())) // http://stackoverflow.com/questions/12917417/using-reflections-for-finding-the-transitive-subtypes-of-a-class-when-not-all
 				.addClassLoader(plugin.getClass().getClassLoader()).addScanners(new SubTypesScanner()));
 		Set<Class<? extends TBMCCommandBase>> cmds = rf.getSubTypesOf(TBMCCommandBase.class);
 		for (Class<? extends TBMCCommandBase> cmd : cmds) {
 			try {
+				if (!cmd.getPackage().getName().startsWith(acmdclass.getPackage().getName()))
+					continue; // It keeps including the commands from here
 				if (Modifier.isAbstract(cmd.getModifiers()))
 					continue;
 				TBMCCommandBase c = cmd.newInstance();
@@ -113,9 +123,7 @@ public class TBMCChatAPI {
 					continue;
 				commands.put(c.GetCommandPath(), c);
 				CommandCaller.RegisterCommand(c);
-			} catch (InstantiationException e) {
-				TBMCCoreAPI.SendException("An error occured while registering command " + cmd.getName(), e);
-			} catch (IllegalAccessException e) {
+			} catch (Exception e) {
 				TBMCCoreAPI.SendException("An error occured while registering command " + cmd.getName(), e);
 			}
 		}
@@ -199,7 +207,7 @@ public class TBMCChatAPI {
 	}
 
 	/**
-	 * Sends a chat message to Minecraft
+	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.
 	 * 
 	 * @param channel
 	 *            The channel to send to
@@ -210,8 +218,35 @@ public class TBMCChatAPI {
 	 * @return The event cancelled state
 	 */
 	public static boolean SendChatMessage(Channel channel, CommandSender sender, String message) {
-		TBMCChatEvent event = new TBMCChatEvent(sender, channel, message);
+		if (!Channel.getChannels().contains(channel))
+			throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
+		TBMCChatPreprocessEvent eventPre = new TBMCChatPreprocessEvent(sender, channel, message);
+		Bukkit.getPluginManager().callEvent(eventPre);
+		if (eventPre.isCancelled())
+			return true;
+		int score;
+		if (channel.filteranderrormsg == null)
+			score = -1;
+		else {
+			RecipientTestResult result = channel.filteranderrormsg.apply(sender);
+			if (result.errormessage != null) {
+				sender.sendMessage("§c" + result.errormessage);
+				return true;
+			}
+			score = result.score;
+		}
+		TBMCChatEvent event = new TBMCChatEvent(sender, channel, eventPre.getMessage(), score);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
+	}
+
+	/**
+	 * Register a chat channel. See {@link Channel#Channel(String, Color, String, java.util.function.Function)} for details.
+	 * 
+	 * @param channel
+	 *            A new {@link Channel} to register
+	 */
+	public static void RegisterChatChannel(Channel channel) {
+		Channel.RegisterChannel(channel);
 	}
 }

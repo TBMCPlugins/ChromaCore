@@ -9,8 +9,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.scheduler.BukkitTask;
 
 import buttondevteam.lib.ScheduledServerRestartEvent;
+import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.TBMCCommandBase;
 
+@CommandClass(modOnly = true, path = "schrestart")
 public class ScheduledRestartCommand extends TBMCCommandBase {
 	private static volatile int restartcounter;
 	private static volatile BukkitTask restarttask;
@@ -32,11 +34,7 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 		restartbar = Bukkit.createBossBar("Server restart in " + ticks / 20f, BarColor.RED, BarStyle.SOLID,
 				BarFlag.DARKEN_SKY);
 		restartbar.setProgress(1);
-		// System.out.println("Progress: " + restartbar.getProgress());
 		Bukkit.getOnlinePlayers().stream().forEach(p -> restartbar.addPlayer(p));
-		/*
-		 * System.out.println( "Players: " + restartbar.getPlayers().stream().map(p -> p.getName()).collect(Collectors.joining(", ")));
-		 */
 		sender.sendMessage("Scheduled restart in " + ticks / 20f);
 		ScheduledServerRestartEvent e = new ScheduledServerRestartEvent(ticks);
 		Bukkit.getPluginManager().callEvent(e);
@@ -50,9 +48,6 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 				Bukkit.broadcastMessage("§c-- The server is restarting in " + restartcounter / 20 + " seconds!");
 			restartbar.setProgress(restartcounter / (double) restarttime);
 			restartbar.setTitle(String.format("Server restart in %f.2", restartcounter / 20f));
-			/*
-			 * if (restartcounter % 20 == 0) System.out.println("Progress: " + restartbar.getProgress());
-			 */
 			restartcounter--;
 		}, 1, 1);
 		return true;
@@ -65,20 +60,5 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 				"This command restarts the server 1 minute after it's executed, warning players every 10 seconds.", //
 				"You can optionally set the amount of ticks to wait before the restart." //
 		};
-	}
-
-	@Override
-	public boolean GetPlayerOnly() {
-		return false;
-	}
-
-	@Override
-	public boolean GetModOnly() {
-		return true;
-	}
-
-	@Override
-	public String GetCommandPath() {
-		return "schrestart";
 	}
 }
