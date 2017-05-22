@@ -18,13 +18,14 @@ public abstract class TBMCCommandBase {
 
 	public TBMCCommandBase() {
 		path = getcmdpath();
+		modonly = ismodonly();
 	}
 
 	public abstract boolean OnCommand(CommandSender sender, String alias, String[] args);
 
 	public abstract String[] GetHelpText(String alias);
 
-	private String path = null;
+	private final String path;
 
 	/**
 	 * The command's path, or name if top-level command.<br>
@@ -76,5 +77,31 @@ public abstract class TBMCCommandBase {
 						? getClass().isAnnotationPresent(OptionallyPlayerCommandClass.class)
 								? getClass().getAnnotation(OptionallyPlayerCommandClass.class).playerOnly() : true
 						: false;
+	}
+
+	private final boolean modonly;
+
+	/**
+	 * Returns true if this class' or any superclass' modOnly property is set to true.
+	 */
+	public final boolean isModOnly() {
+		return modonly;
+	}
+
+	private final boolean ismodonly() {
+		if (!getClass().isAnnotationPresent(CommandClass.class))
+			throw new RuntimeException(
+					"No @CommandClass annotation on command class " + getClass().getSimpleName() + "!");
+		boolean modOnly = getClass().getAnnotation(CommandClass.class).modOnly();
+		for (Class<?> cl = getClass().getSuperclass(); cl != null
+				&& !cl.getPackage().getName().equals(TBMCCommandBase.class.getPackage().getName()); cl = cl
+						.getSuperclass()) { //
+			if (cl.isAnnotationPresent(CommandClass.class) && !modOnly
+					&& cl.getAnnotation(CommandClass.class).modOnly()) {
+				modOnly = true;
+				break;
+			}
+		}
+		return modOnly;
 	}
 }

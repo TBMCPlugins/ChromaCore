@@ -8,7 +8,8 @@ import java.lang.annotation.Target;
 
 /**
  * <b>Abstract classes with no {@link CommandClass} annotations will be ignored.</b> Classes that are not abstract or have the annotation will be included in the command path unless
- * {@link #excludeFromPath()} is true.
+ * {@link #excludeFromPath()} is true.<br>
+ * <i>All commands with no modOnly set will <u>not be mod only</u></i>
  * 
  * @author NorbiPeti
  *
@@ -18,11 +19,12 @@ import java.lang.annotation.Target;
 @Inherited
 public @interface CommandClass {
 	/**
-	 * Determines whether the command can only be used by mods and above or regular players can use it as well.
+	 * Determines whether the command can only be used by mods and above or regular players can use it as well.<br>
+	 * <b>If not set, the command will <u>not</u> be mod only</b>
 	 * 
 	 * @return If the command is mod only
 	 */
-	public boolean modOnly();
+	public boolean modOnly() default false;
 
 	/**
 	 * The command's path, or name if top-level command.<br>

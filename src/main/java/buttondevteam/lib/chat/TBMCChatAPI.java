@@ -66,8 +66,7 @@ public class TBMCChatAPI {
 			if (cmd.getKey().startsWith(command + " ")) {
 				if (cmd.getValue().isPlayerOnly() && !(sender instanceof Player))
 					continue;
-				if (cmd.getClass().getAnnotation(CommandClass.class).modOnly()
-						&& !MainPlugin.permission.has(sender, "tbmc.admin"))
+				if (cmd.getValue().isModOnly() && !MainPlugin.permission.has(sender, "tbmc.admin"))
 					continue;
 				int ind = cmd.getKey().indexOf(' ', command.length() + 2);
 				if (ind >= 0) {

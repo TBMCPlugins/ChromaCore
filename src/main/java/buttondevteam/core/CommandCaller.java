@@ -61,8 +61,7 @@ public class CommandCaller implements CommandExecutor {
 			}
 			return true;
 		}
-		if (cmd.getClass().getAnnotation(CommandClass.class).modOnly()
-				&& !MainPlugin.permission.has(sender, "tbmc.admin")) {
+		if (cmd.isModOnly() && !MainPlugin.permission.has(sender, "tbmc.admin")) {
 			sender.sendMessage("§cYou need to be a mod to use this command.");
 			return true;
 		}
