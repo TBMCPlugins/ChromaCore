@@ -1,7 +1,5 @@
 package randomTP;
 
-import java.util.Random;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -16,45 +14,45 @@ import net.minecraft.server.v1_11_R1.WorldBorder;
 
 public class Main extends JavaPlugin
 {
-	private static final Random random = new Random();
+	private World			world;
+	private WorldBorder 	border;
+	private double 			size,
+							borderCenterX,
+							borderCenterZ;
 	
-	private static World		world;
-	private static WorldBorder 	border;
-	private static double 		size,
-								borderCenterX,
-								borderCenterZ;
+	private int 			x,z;
+	private final int 		radius = 70;
 	
-	private static int 			x,z;
-	private static final int 	radius = 70,
-								diameter = radius * 2;
-	
-	private static Location		center,
-								north,
-								south,
-								east,
-								west;
+	private Location		center,
+							north,
+							south,
+							east,
+							west;
 		
-	private static boolean 		centerUsed,
-								northUsed, 
-								southUsed, 
-								eastUsed, 
-								westUsed;
+	private boolean 		centerUsed,
+							northUsed, 
+							southUsed, 
+							eastUsed, 
+							westUsed;
 	
-	private static StringBuffer availableDirections = new StringBuffer(5);
-	private static int 			dir;
+	private StringBuilder	availableDirections = new StringBuilder(5);
+	private char[]			chars = {1,2,3,4,5};
+	private int 			dir;
 	
 	/*================================================================================================*/
 	
 	public void onEnable()
 	{
+		getCommand("randomtp").setExecutor(this);
+		
 		world         = Bukkit.getWorld("World");
 		border        = ((CraftWorld) world).getHandle().getWorldBorder();
 		
-		size          = border.getSize();
+		size          = border.getSize() - (radius * 2);
 		borderCenterX = border.getCenterX();
 		borderCenterZ = border.getCenterZ();
 		
-		getCommand("randomtp").setExecutor(this);
+		newLocation();
 	}
 	
 	/*================================================================================================*/
@@ -73,23 +71,20 @@ public class Main extends JavaPlugin
 		//MAXIMUM TEN THOUSAND ATTEMPTS
 		for (int i = 0; i < 10000; i++)
 		{
-			//CHOOSE A RANDOM LOCATION WITHIN THE WORLDBORDER, ALLOWING SPACE FOR OUTER POSITIONS
-			x = (int) Math.floor((random.nextDouble() - 0.5) * (size - diameter)) + center.getBlockX();
-			z = (int) Math.floor((random.nextDouble() - 0.5) * (size - diameter)) + center.getBlockY();
+			//CHOOSE A RANDOM AREA WITHIN THE WORLDBORDER, ALLOWING SPACE FOR OUTER POSITIONS
+			x = (int) (Math.floor((Math.random() - 0.5) * size) + border.getCenterX());
+			z = (int) (Math.floor((Math.random() - 0.5) * size) + border.getCenterZ());
 			
 			//CHECK THAT CENTER AND OUTER POSITIONS DO NOT HAVE WATER AT THEIR HIGHEST BLOCKS
-			if (world.getHighestBlockAt( x          , z          ).getType() != Material.WATER &&
-				world.getHighestBlockAt( x          , z - radius ).getType() != Material.WATER &&
-				world.getHighestBlockAt( x          , z + radius ).getType() != Material.WATER &&
-				world.getHighestBlockAt( x - radius , z          ).getType() != Material.WATER &&
-				world.getHighestBlockAt( x + radius , z          ).getType() != Material.WATER)
+			if (!world.getHighestBlockAt( x          , z          ).getType().equals(Material.WATER) &&
+				!world.getHighestBlockAt( x          , z - radius ).getType().equals(Material.WATER) &&
+				!world.getHighestBlockAt( x          , z + radius ).getType().equals(Material.WATER) &&
+				!world.getHighestBlockAt( x - radius , z          ).getType().equals(Material.WATER) &&
+				!world.getHighestBlockAt( x + radius , z          ).getType().equals(Material.WATER))
 			{
-				//IF NEW LOCATION CHECKS OUT, RESET VALUES
-				availableDirections.setCharAt(0, (char) 1);
-				availableDirections.setCharAt(1, (char) 2);
-				availableDirections.setCharAt(2, (char) 3);
-				availableDirections.setCharAt(3, (char) 4);
-				availableDirections.setCharAt(4, (char) 5);
+				//IF NEW LOCATION IS VALID, RESET VALUES
+				availableDirections.setLength(0);
+				availableDirections.append(chars);
 				
 				center = world.getHighestBlockAt( x          , z          ).getLocation();
 				north  = world.getHighestBlockAt( x          , z - radius ).getLocation();
@@ -102,6 +97,8 @@ public class Main extends JavaPlugin
 				return true;
 			}
 		}
+		centerUsed = northUsed = southUsed = eastUsed = westUsed = true;
+		
 		return false;
 	}
 	
@@ -111,18 +108,23 @@ public class Main extends JavaPlugin
 		if (player == null) 
 			return false;
 		
-		//IF ALL POSITIONS USED, CHOOSE NEW LOCATION, AND IF NEW LOCATION FAILS RETURN FALSE
-		if (centerUsed && northUsed && southUsed && eastUsed && westUsed && !newLocation()) 
-			return false;
+		//IF NO POSITIONS AVAILABLE, OR BORDER HAS CHANGED, FIND NEW LOCATION
+		if (((centerUsed && northUsed && southUsed && eastUsed && westUsed) ||
 				
-		//IF BORDER HAS CHANGED, CHOOSE NEW LOCATION, AND IF NEW LOCATION FAILS RETURN FALSE
-		if ((borderCenterX != (borderCenterX = border.getCenterX()) ||  
+			 borderCenterX != (borderCenterX = border.getCenterX()) ||  
 			 borderCenterZ != (borderCenterZ = border.getCenterZ()) ||
-			 size          != (size          = border.getSize()))        && !newLocation()) 
+			 size          != (size          = border.getSize()))
+			
+			&& !newLocation()) 
+		{
+			//RETURN FALSE AND MESSAGE PLAYER IF UNABLE TO FIND NEW LOCATION.
+			player.sendMessage("could not find a location in 10,000 attempts");
+			player.sendMessage("... sorry bud. I did try. 10,000 times.");
 			return false;
+		}
 		
 		//CHOOSE ONE OF THE FIVE POSITIONS RANDOMLY AND TELEPORT THE PLAYER THERE, THEN REMOVE THAT POSITION
-		switch(dir = availableDirections.charAt((int) Math.floor(random.nextDouble() * availableDirections.length())))
+		switch(availableDirections.charAt(dir = (int) Math.floor(Math.random() * availableDirections.length())))
 		{
 			case (char) 1: player.teleport(center); centerUsed = true; break;
 			case (char) 2: player.teleport(north ); northUsed  = true; break;
