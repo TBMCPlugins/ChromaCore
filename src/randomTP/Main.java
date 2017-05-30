@@ -108,35 +108,41 @@ public class Main extends JavaPlugin
 			westHeadMaterial     = world.getBlockAt( westX , westY   +1 , z      ).getType();
 			
 			//CONFIRM THAT ALL FIVE POSITIONS ARE ON SOLID GROUND WITH AIR AT HEAD HEIGHT
-			if (centerHeadMaterial == Material.AIR &&
-				northHeadMaterial  == Material.AIR &&
-				southHeadMaterial  == Material.AIR &&
-				eastHeadMaterial   == Material.AIR &&
-				westHeadMaterial   == Material.AIR &&
+			if (centerHeadMaterial  .equals(Material.AIR) &&
+				northHeadMaterial   .equals(Material.AIR) &&
+				southHeadMaterial   .equals(Material.AIR) &&
+				eastHeadMaterial    .equals(Material.AIR) &&
+				westHeadMaterial    .equals(Material.AIR) &&
 					
-				centerGroundMaterial != Material.STATIONARY_WATER &&
-				northGroundMaterial  != Material.STATIONARY_WATER &&
-				southGroundMaterial  != Material.STATIONARY_WATER &&
-				eastGroundMaterial   != Material.STATIONARY_WATER &&
-				westGroundMaterial   != Material.STATIONARY_WATER &&
+				!centerGroundMaterial.equals(Material.STATIONARY_WATER) &&
+				!northGroundMaterial .equals(Material.STATIONARY_WATER) &&
+				!southGroundMaterial .equals(Material.STATIONARY_WATER) &&
+				!eastGroundMaterial  .equals(Material.STATIONARY_WATER) &&
+				!westGroundMaterial  .equals(Material.STATIONARY_WATER) &&
 						
-				centerGroundMaterial != Material.WATER &&
-				northGroundMaterial  != Material.WATER &&
-				southGroundMaterial  != Material.WATER &&
-				eastGroundMaterial   != Material.WATER &&
-				westGroundMaterial   != Material.WATER &&
+				!centerGroundMaterial.equals(Material.WATER) &&
+				!northGroundMaterial .equals(Material.WATER) &&
+				!southGroundMaterial .equals(Material.WATER) &&
+				!eastGroundMaterial  .equals(Material.WATER) &&
+				!westGroundMaterial  .equals(Material.WATER) &&
 				
-				centerGroundMaterial != Material.STATIONARY_LAVA &&
-				northGroundMaterial  != Material.STATIONARY_LAVA &&
-				southGroundMaterial  != Material.STATIONARY_LAVA &&
-				eastGroundMaterial   != Material.STATIONARY_LAVA &&
-				westGroundMaterial   != Material.STATIONARY_LAVA &&
+				!centerGroundMaterial.equals(Material.STATIONARY_LAVA) &&
+				!northGroundMaterial .equals(Material.STATIONARY_LAVA) &&
+				!southGroundMaterial .equals(Material.STATIONARY_LAVA) &&
+				!eastGroundMaterial  .equals(Material.STATIONARY_LAVA) &&
+				!westGroundMaterial  .equals(Material.STATIONARY_LAVA) &&
 				
-				centerGroundMaterial != Material.LAVA &&
-				northGroundMaterial  != Material.LAVA &&
-				southGroundMaterial  != Material.LAVA &&
-				eastGroundMaterial   != Material.LAVA &&
-				westGroundMaterial   != Material.LAVA)
+				!centerGroundMaterial.equals(Material.LAVA) &&
+				!northGroundMaterial .equals(Material.LAVA) &&
+				!southGroundMaterial .equals(Material.LAVA) &&
+				!eastGroundMaterial  .equals(Material.LAVA) &&
+				!westGroundMaterial  .equals(Material.LAVA) &&
+				
+				!centerGroundMaterial.equals(Material.AIR) &&
+				!northGroundMaterial .equals(Material.AIR) &&
+				!southGroundMaterial .equals(Material.AIR) &&
+				!eastGroundMaterial  .equals(Material.AIR) &&
+				!westGroundMaterial  .equals(Material.AIR))
 			{
 				//IF LOCATION VALID, SET NEW POSITIONS AND RESET TRACKING VARIABLES
 				center = world.getBlockAt( x     , centerY , z      ).getLocation();
