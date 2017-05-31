@@ -22,17 +22,19 @@ public class Main extends JavaPlugin
 	private double 			size, 
 							usableSize,
 							borderCenterX,
-							borderCenterZ;
+							borderCenterZ,
+							
+							x,z;
+							
+	private int				centerX, centerZ, centerY, 
+							northZ, southZ, eastX, westX,
+							northY, southY, eastY, westY;
 	
-	private int 			x,z,
-							centerY, northY, southY, eastY, westY,
-							         northZ, southZ, eastX, westX;
-	
-	private Material		centerGroundMaterial, centerHeadMaterial,
-							northGroundMaterial,  northHeadMaterial,
-							southGroundMaterial,  southHeadMaterial,
-							eastGroundMaterial,   eastHeadMaterial,
-							westGroundMaterial,   westHeadMaterial;
+	private Material		centerGroundMaterial, centerFeetMaterial, centerHeadMaterial,
+							northGroundMaterial,  northFeetMaterial,  northHeadMaterial,
+							southGroundMaterial,  southFeetMaterial,  southHeadMaterial,
+							eastGroundMaterial,   eastFeetMaterial,   eastHeadMaterial,
+							westGroundMaterial,   westFeetMaterial,   westHeadMaterial;
 							
 	private Location		center,
 							north,
@@ -54,21 +56,61 @@ public class Main extends JavaPlugin
 	
 	public void onEnable()
 	{
-		world  = (CraftWorld) Bukkit.getWorld("World");
-		border = world.getHandle().getWorldBorder();
-		
-		newLocation();
-		
 		getCommand("randomtp").setExecutor(this);
-		}
+		
+		world = (CraftWorld) Bukkit.getWorld("World");
+		border = world.getHandle().getWorldBorder();
+		newLocation();
+	}
 	
 	/*================================================================================================*/
 		
 	public boolean onCommand(CommandSender sender, Command label, String command, String[] args)
 	{
-		if (sender.isOp()) return rtp(Bukkit.getPlayer(args[0])); 
+		if (sender.isOp()) return rtp(Bukkit.getPlayer(args[0])); else return false;
+	}
+	
+	/*================================================================================================*/
+	
+	public synchronized boolean rtp(Player player)
+	{
+		if (player == null) 
+			return false;
 		
-		else return false;
+		//if border has changed, or no positions available, find new location
+		if ((centerUsed && northUsed && southUsed && eastUsed && westUsed) ||
+			
+			(borderCenterX != border.getCenterX() ||  
+			 borderCenterZ != border.getCenterZ() ||
+			 size          != border.getSize())
+			
+			&& !newLocation()) 
+		{
+			//message player and return false if unable to find new location
+			player.sendMessage("§c could not find a location in 10,000 attempts");
+			player.sendMessage("§c (sorry bud... I did try!)");
+			return false;
+		}
+		
+		//randomly select one of the open positions and teleport the player there, then remove the position
+		switch(availableDirections.charAt(dir = (int) Math.floor(Math.random() * availableDirections.length())))
+		{
+			case (char) 1: player.teleport(center); centerUsed = true; break;
+			case (char) 2: player.teleport(north ); northUsed  = true; break;
+			case (char) 3: player.teleport(south ); southUsed  = true; break;
+			case (char) 4: player.teleport(east  ); eastUsed   = true; break;
+			case (char) 5: player.teleport(west  ); westUsed   = true; break;
+		}
+		availableDirections.deleteCharAt(dir);
+		
+		//imply that our server has a personality
+		player.sendMessage("§7 *poof*");
+		
+		//if all 5 positions have been teleported to, choose a new location
+		if (centerUsed && northUsed && southUsed && eastUsed && westUsed)
+			newLocation();
+		
+		return true;
 	}
 	
 	/*================================================================================================*/
@@ -80,127 +122,116 @@ public class Main extends JavaPlugin
 		borderCenterX = border.getCenterX();
 		borderCenterZ = border.getCenterZ();
 		
-		//MAXIMUM TEN THOUSAND ATTEMPTS
+		//maximum ten thousand attempts
 		for (int i = 0; i < 10000; i++)
 		{
-			//RANDOMLY CHOOSE AN X AND Z WITHIN WORLD BORDER
-			x = (int) (Math.floor((Math.random() - 0.5) * usableSize) + border.getCenterX());
-			z = (int) (Math.floor((Math.random() - 0.5) * usableSize) + border.getCenterZ());
+			//choose an x and z inside the current world border, allowing a margin for the outer positions
+			centerX = (int) (Math.floor((Math.random() - 0.5) * usableSize) + border.getCenterX());
+			centerZ = (int) (Math.floor((Math.random() - 0.5) * usableSize) + border.getCenterZ());
 			
-			//GET OTHER COORDINATES
-										centerY = world.getHighestBlockYAt( x     , z      );
-			northZ = z - radius;		northY  = world.getHighestBlockYAt( x     , northZ );
-			southZ = z + radius;		southY  = world.getHighestBlockYAt( x     , southZ );
-			eastX  = x + radius;		eastY   = world.getHighestBlockYAt( eastX , z      );
-			westX  = x - radius;		westY   = world.getHighestBlockYAt( westX , z      );
+			//get center of block
+			x = centerX + .5;
+			z = centerZ + .5;
 			
-			//GET MATERIALS FOR GROUND AND HEAD-HEIGHT BLOCKS AT EACH POSITION
-			centerGroundMaterial = world.getBlockAt( x     , centerY -1 , z      ).getType();
-			northGroundMaterial  = world.getBlockAt( x     , northY  -1 , northZ ).getType();
-			southGroundMaterial  = world.getBlockAt( x     , southY  -1 , southZ ).getType();
-			eastGroundMaterial   = world.getBlockAt( eastX , eastY   -1 , z      ).getType();
-			westGroundMaterial   = world.getBlockAt( westX , westY   -1 , z      ).getType();
+			//get other coordinates
+			northZ = centerZ - radius;		
+			southZ = centerZ + radius;		
+			eastX  = centerX + radius;		
+			westX  = centerX - radius;		
 			
-			centerHeadMaterial   = world.getBlockAt( x     , centerY +1 , z      ).getType();
-			northHeadMaterial    = world.getBlockAt( x     , northY  +1 , northZ ).getType();
-			southHeadMaterial    = world.getBlockAt( x     , southY  +1 , southZ ).getType();
-			eastHeadMaterial     = world.getBlockAt( eastX , eastY   +1 , z      ).getType();
-			westHeadMaterial     = world.getBlockAt( westX , westY   +1 , z      ).getType();
+			centerY = world.getHighestBlockYAt( centerX , centerZ );
+			northY  = world.getHighestBlockYAt( centerX , northZ  );
+			southY  = world.getHighestBlockYAt( centerX , southZ  );
+			eastY   = world.getHighestBlockYAt( eastX   , centerZ );
+			westY   = world.getHighestBlockYAt( westX   , centerZ );
 			
-			//CONFIRM THAT ALL FIVE POSITIONS ARE ON SOLID GROUND WITH AIR AT HEAD HEIGHT
-			if (centerHeadMaterial  .equals(Material.AIR) &&
-				northHeadMaterial   .equals(Material.AIR) &&
-				southHeadMaterial   .equals(Material.AIR) &&
-				eastHeadMaterial    .equals(Material.AIR) &&
-				westHeadMaterial    .equals(Material.AIR) &&
-					
-				!centerGroundMaterial.equals(Material.STATIONARY_WATER) &&
-				!northGroundMaterial .equals(Material.STATIONARY_WATER) &&
-				!southGroundMaterial .equals(Material.STATIONARY_WATER) &&
-				!eastGroundMaterial  .equals(Material.STATIONARY_WATER) &&
-				!westGroundMaterial  .equals(Material.STATIONARY_WATER) &&
-						
-				!centerGroundMaterial.equals(Material.WATER) &&
-				!northGroundMaterial .equals(Material.WATER) &&
-				!southGroundMaterial .equals(Material.WATER) &&
-				!eastGroundMaterial  .equals(Material.WATER) &&
-				!westGroundMaterial  .equals(Material.WATER) &&
+			//get materials for ground, feet-height and head-height blocks at each of the five positions
+			centerGroundMaterial = world.getBlockAt( centerX , centerY -1 , centerZ ).getType();
+			northGroundMaterial  = world.getBlockAt( centerX , northY  -1 , northZ  ).getType();
+			southGroundMaterial  = world.getBlockAt( centerX , southY  -1 , southZ  ).getType();
+			eastGroundMaterial   = world.getBlockAt( eastX   , eastY   -1 , centerZ ).getType();
+			westGroundMaterial   = world.getBlockAt( westX   , westY   -1 , centerZ ).getType();
+			
+			centerFeetMaterial   = world.getBlockAt( centerX , centerY    , centerZ ).getType();
+			northFeetMaterial    = world.getBlockAt( centerX , northY     , northZ  ).getType();
+			southFeetMaterial    = world.getBlockAt( centerX , southY     , southZ  ).getType();
+			eastFeetMaterial     = world.getBlockAt( eastX   , eastY      , centerZ ).getType();
+			westFeetMaterial     = world.getBlockAt( westX   , westY      , centerZ ).getType();
+			
+			centerHeadMaterial   = world.getBlockAt( centerX , centerY +1 , centerZ ).getType();
+			northHeadMaterial    = world.getBlockAt( centerX , northY  +1 , northZ  ).getType();
+			southHeadMaterial    = world.getBlockAt( centerX , southY  +1 , southZ  ).getType();
+			eastHeadMaterial     = world.getBlockAt( eastX   , eastY   +1 , centerZ ).getType();
+			westHeadMaterial     = world.getBlockAt( westX   , westY   +1 , centerZ ).getType();
+			
+			//test that all five positions are on solid ground with air at head height
+			if (centerHeadMaterial   == Material.AIR &&
+				northHeadMaterial    == Material.AIR &&
+				southHeadMaterial    == Material.AIR &&
+				eastHeadMaterial     == Material.AIR &&
+				westHeadMaterial     == Material.AIR &&
 				
-				!centerGroundMaterial.equals(Material.STATIONARY_LAVA) &&
-				!northGroundMaterial .equals(Material.STATIONARY_LAVA) &&
-				!southGroundMaterial .equals(Material.STATIONARY_LAVA) &&
-				!eastGroundMaterial  .equals(Material.STATIONARY_LAVA) &&
-				!westGroundMaterial  .equals(Material.STATIONARY_LAVA) &&
+				centerFeetMaterial   == Material.AIR &&
+				northFeetMaterial    == Material.AIR &&
+				southFeetMaterial    == Material.AIR &&
+				eastFeetMaterial     == Material.AIR &&
+				westFeetMaterial     == Material.AIR &&
 				
-				!centerGroundMaterial.equals(Material.LAVA) &&
-				!northGroundMaterial .equals(Material.LAVA) &&
-				!southGroundMaterial .equals(Material.LAVA) &&
-				!eastGroundMaterial  .equals(Material.LAVA) &&
-				!westGroundMaterial  .equals(Material.LAVA) &&
+				centerGroundMaterial != Material.AIR &&
+				northGroundMaterial  != Material.AIR &&
+				southGroundMaterial  != Material.AIR &&
+				eastGroundMaterial   != Material.AIR &&
+				westGroundMaterial   != Material.AIR &&
 				
-				!centerGroundMaterial.equals(Material.AIR) &&
-				!northGroundMaterial .equals(Material.AIR) &&
-				!southGroundMaterial .equals(Material.AIR) &&
-				!eastGroundMaterial  .equals(Material.AIR) &&
-				!westGroundMaterial  .equals(Material.AIR))
+				centerGroundMaterial != Material.STATIONARY_WATER &&
+				northGroundMaterial  != Material.STATIONARY_WATER &&
+				southGroundMaterial  != Material.STATIONARY_WATER &&
+				eastGroundMaterial   != Material.STATIONARY_WATER &&
+				westGroundMaterial   != Material.STATIONARY_WATER &&
+				
+				centerGroundMaterial != Material.WATER &&
+				northGroundMaterial  != Material.WATER &&
+				southGroundMaterial  != Material.WATER &&
+				eastGroundMaterial   != Material.WATER &&
+				westGroundMaterial   != Material.WATER &&
+				
+				centerGroundMaterial != Material.STATIONARY_LAVA &&
+				northGroundMaterial  != Material.STATIONARY_LAVA &&
+				southGroundMaterial  != Material.STATIONARY_LAVA &&
+				eastGroundMaterial   != Material.STATIONARY_LAVA &&
+				westGroundMaterial   != Material.STATIONARY_LAVA &&
+				
+				centerGroundMaterial != Material.LAVA &&
+				northGroundMaterial  != Material.LAVA &&
+				southGroundMaterial  != Material.LAVA &&
+				eastGroundMaterial   != Material.LAVA &&
+				westGroundMaterial   != Material.LAVA)
 			{
-				//IF LOCATION VALID, SET NEW POSITIONS AND RESET TRACKING VARIABLES
-				center = world.getBlockAt( x     , centerY , z      ).getLocation();
-				north  = world.getBlockAt( x     , northY  , northZ ).getLocation();
-				south  = world.getBlockAt( x     , southY  , southZ ).getLocation();
-				east   = world.getBlockAt( eastX , eastY   , z      ).getLocation();
-				west   = world.getBlockAt( westX , westY   , z      ).getLocation();
+				//set new positions and reset
+				center = new Location( world, x          , (double) centerY , z           );
+				north  = new Location( world, x          , (double) northY  , northZ + .5 );
+				south  = new Location( world, x          , (double) southY  , southZ + .5 );
+				east   = new Location( world, eastX + .5 , (double) eastY   , z           );
+				west   = new Location( world, westX + .5 , (double) westY   , z           );
 				
 				availableDirections.setLength(0);
 				availableDirections.append(chars);
 				
-				centerUsed = northUsed = southUsed = eastUsed = westUsed = false;
+				centerUsed = 
+				northUsed  = 
+				southUsed  = 
+				eastUsed   = 
+				westUsed   = false;
 				
 				return true;
 			}
 		}
-		centerUsed = northUsed = southUsed = eastUsed = westUsed = true;
+		centerUsed = 
+		northUsed  = 
+		southUsed  = 
+		eastUsed   = 
+		westUsed   = true;
 		
 		return false;
-	}
-	
-	/*================================================================================================*/
-	
-	public synchronized boolean rtp(Player player)
-	{
-		if (player == null) 
-			return false;
-		
-		//IF BORDER HAS CHANGED, OR NO POSITIONS AVAILABLE, FIND NEW LOCATION
-		if ((centerUsed && northUsed && southUsed && eastUsed && westUsed) ||
-			
-			(borderCenterX != border.getCenterX() ||  
-			 borderCenterZ != border.getCenterZ() ||
-			 size          != border.getSize())
-			
-			&& !newLocation()) 
-		{
-			//MESSAGE PLAYER AND RETURN FALSE IF UNABLE TO FIND NEW LOCATION.
-			player.sendMessage("could not find location in 10,000 attempts");
-			player.sendMessage("... sorry bud. I did try.");
-			return false;
-		}
-		
-		//RANDOMLY SELECT ONE OF THE OPEN POSITIONS AND TELEPORT THE PLAYER THERE. THEN, REMOVE THE POSITION
-		switch(availableDirections.charAt(dir = (int) Math.floor(Math.random() * availableDirections.length())))
-		{
-			case (char) 1: player.teleport(center); centerUsed = true; break;
-			case (char) 2: player.teleport(north ); northUsed  = true; break;
-			case (char) 3: player.teleport(south ); southUsed  = true; break;
-			case (char) 4: player.teleport(east  ); eastUsed   = true; break;
-			case (char) 5: player.teleport(west  ); westUsed   = true; break;
-		}
-		availableDirections.deleteCharAt(dir);
-		
-		//IF ALL 5 POSITIONS HAVE BEEN TELEPORTED TO, CHOOSE NEW LOCATION
-		if (centerUsed && northUsed && southUsed && eastUsed && westUsed)
-			newLocation();
-		
-		return true;
 	}
 }
