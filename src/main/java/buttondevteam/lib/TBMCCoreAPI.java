@@ -81,6 +81,16 @@ public class TBMCCoreAPI {
 			error(sender, "Can't find branch \"" + branch + "\" for plugin \"" + correctname + "\"");
 			return false;
 		}
+		try {
+			if (DownloadString("https://raw.githubusercontent.com/TBMCPlugins/" + correctname + "/"
+					+ correctbranch.get() + "/pom.xml").equals("404: Not Found\n")) {
+				error(sender, "The plugin doesn't appear to have a pom.xml. Make sure it's a Maven project.");
+				return false;
+			}
+		} catch (IOException e1) {
+			error(sender, "The plugin doesn't appear to have a pom.xml. Make sure it's a Maven project.\n" + e1);
+			return false;
+		}
 		info(sender, "Updating TBMC plugin: " + correctname + " from " + correctbranch.get());
 		URL url;
 		final boolean isWindows = System.getProperty("os.name").contains("Windows");
