@@ -7,13 +7,16 @@ import java.util.function.Consumer;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
+
+import com.google.common.collect.HashBiMap;
+
 import buttondevteam.lib.TBMCCoreAPI;
 
 @ChromaGamerEnforcer
 public abstract class ChromaGamerBase implements AutoCloseable {
 	public static final String TBMC_PLAYERS_DIR = "TBMC/players/";
 
-	private static final HashMap<Class<?>, String> playerTypes = new HashMap<>();
+	private static final HashBiMap<Class<?>, String> playerTypes = HashBiMap.create();
 
 	/**
 	 * Used for connecting with every type of user ({@link #connectWith(ChromaGamerBase)})
@@ -32,7 +35,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 * Returns the folder name for the given player class.
 	 * 
 	 * @param cl
-	 *            The class to get the folder from (like {@link TBMCPlayerBase} or one of it's subclasses
+	 *            The class to get the folder from (like {@link TBMCPlayerBase} or one of it's subclasses)
 	 * @return The folder name for the given type
 	 * @throws RuntimeException
 	 *             If the class doesn't have the {@link UserClass} annotation.
@@ -43,6 +46,17 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		else if (cl.isAnnotationPresent(AbstractUserClass.class))
 			return cl.getAnnotation(AbstractUserClass.class).foldername();
 		throw new RuntimeException("Class not registered as a user class! Use @UserClass or @AbstractUserClass");
+	}
+
+	/**
+	 * Returns the player class for the given folder name.
+	 * 
+	 * @param foldername
+	 *            The folder to get the class from (like "minecraft")
+	 * @return The type for the given folder name or null if not found
+	 */
+	public static Class<?> getTypeForFolder(String foldername) {
+		return playerTypes.inverse().get(foldername);
 	}
 
 	/**
