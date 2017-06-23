@@ -5,10 +5,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
@@ -23,6 +25,9 @@ public class PluginUpdater {
 	private PluginUpdater() {
 	}
 
+	/**
+	 * See {@link TBMCCoreAPI#UpdatePlugin(String, CommandSender, String)}
+	 */
 	public static boolean UpdatePlugin(String name, CommandSender sender, String branch) {
 		info(sender, "Checking plugin name...");
 		List<String> plugins = GetPluginNames();
@@ -53,6 +58,11 @@ public class PluginUpdater {
 			return false;
 		}
 		info(sender, "Updating TBMC plugin: " + correctname + " from " + correctbranch.get());
+		return updatePluginJitPack(sender, correctname, correctbranch);
+	}
+
+	private static boolean updatePluginJitPack(CommandSender sender, String correctname,
+			Optional<String> correctbranch) {
 		URL url;
 		final boolean isWindows = System.getProperty("os.name").contains("Windows");
 		File result = new File("plugins/" + correctname + (isWindows ? ".jar" : ".jar_tmp"));
@@ -87,6 +97,31 @@ public class PluginUpdater {
 			error(sender, "Unknown error while updating " + correctname + ": " + e);
 		}
 		return false;
+	}
+
+	private boolean updatePluginLocal(CommandSender sender, String correctname, Optional<String> correctbranch) {
+		try {
+			ThrowingBiConsumer<String, String> runcmd = (cmd, err) -> {
+				if (Runtime.getRuntime().exec(cmd).waitFor() != 0)
+					throw new Exception(err);
+			};
+			if (!new File(correctname).isDirectory())
+				runcmd.accept("git clone https://github.com/TBMCPlugins/" + correctname + ".git " + correctname,
+						"Git clone failed!");
+			runcmd.accept("cd " + correctname + " && git checkout " + correctbranch.get(), "Git checkout failed!");
+			runcmd.accept("git pull " + correctbranch, "Git pull failed!");
+			runcmd.accept("../apache-maven-something/mvn clean install", "Error during Maven build!");
+			File source = new File("target/" + correctname + ".jar");
+			File target = new File(""); //TODO - TODOOOO
+		} catch (Exception e) {
+			error(sender, "Error while updating " + correctname + " locally: " + e);
+		}
+		return false;
+	}
+
+	@FunctionalInterface
+	private interface ThrowingBiConsumer<T, V> {
+		void accept(T t, V u) throws Exception;
 	}
 
 	/**
