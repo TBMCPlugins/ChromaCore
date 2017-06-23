@@ -3,6 +3,7 @@ package buttondevteam.core;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
+import buttondevteam.lib.PluginUpdater;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.TBMCCommandBase;
@@ -14,7 +15,7 @@ public class UpdatePluginCommand extends TBMCCommandBase {
 		if (args.length == 0) {
 			sender.sendMessage("Downloading plugin names...");
 			boolean first = true;
-			for (String plugin : TBMCCoreAPI.GetPluginNames()) {
+			for (String plugin : PluginUpdater.GetPluginNames()) {
 				if (first) {
 					sender.sendMessage("§6---- Plugin names ----");
 					first = false;
