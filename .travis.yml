@@ -1,0 +1,4 @@
+cache:
+  directories:
+  - $HOME/.m2/repository/org/bukkit/craftbukkit
+# before_install: - Wget BuildTools and run if cached folder not found
