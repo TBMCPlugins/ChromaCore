@@ -1,4 +1,12 @@
 cache:
   directories:
   - $HOME/.m2/repository/org/bukkit/craftbukkit
-# before_install: - Wget BuildTools and run if cached folder not found
+before_install: # Wget BuildTools and run if cached folder not found
+  - if [ ! -d "$HOME/.m2/repository/org/bukkit/craftbukkit" ]; then
+  - wget -O BuildTools.jar https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar
+  - java -jar BuildTools.jar
+  - fi
+
+language: java
+jdk:
+  - oraclejdk8
