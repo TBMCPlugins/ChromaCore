@@ -10,8 +10,4 @@ before_install: | # Wget BuildTools and run if cached folder not found
 language: java
 jdk:
   - oraclejdk8
-sudo: false # Enable after each server update
-addons:
-  apt:
-    packages:
-      - oracle-java8-installer
+sudo: true # Enable after each server update
