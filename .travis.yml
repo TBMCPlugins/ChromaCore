@@ -14,13 +14,13 @@ sudo: true
 deploy:
   # deploy develop to the staging environment
   - provider: script
-    script: ./deploy.sh staging
+    script: chmod +x deploy.sh && sh deploy.sh staging
     on:
       branch: dev
     skip_cleanup: true
   # deploy master to production
   - provider: script
-    script: ./deploy.sh production
+    script: chmod +x deploy.sh && sh deploy.sh production
     on:
       branch: master
     skip_cleanup: true
