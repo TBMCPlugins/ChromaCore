@@ -12,6 +12,7 @@ jdk:
   - oraclejdk8
 sudo: true
 deploy:
+  skip_cleanup: true
   # deploy develop to the staging environment
   - provider: script
     script: deploy.sh staging
