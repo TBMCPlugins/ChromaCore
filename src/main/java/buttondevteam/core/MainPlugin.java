@@ -36,8 +36,9 @@ public class MainPlugin extends JavaPlugin {
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
 		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fg§f", Color.White, "g", null));
-		TBMCChatAPI.RegisterChatChannel(
-				Channel.AdminChat = new Channel("§cADMIN§f", Color.Red, "a", s -> s.isOp() ? new RecipientTestResult(0)
+		TBMCChatAPI.RegisterChatChannel(Channel.AdminChat = new Channel("§cADMIN§f", Color.Red, "a",
+				s -> s.isOp() //
+						? new RecipientTestResult(0)
 						: new RecipientTestResult("You need to be an admin to use this channel.")));
 		TBMCChatAPI.RegisterChatChannel(Channel.ModChat = new Channel("§9MOD§f", Color.Blue, "mod",
 				s -> s.isOp() || (s instanceof Player && MainPlugin.permission.playerInGroup((Player) s, "mod"))

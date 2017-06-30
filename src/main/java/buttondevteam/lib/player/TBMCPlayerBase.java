@@ -38,7 +38,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	}
 
 	public PlayerData<String> PlayerName() {
-		return super.data();
+		return super.data(null);
 	}
 
 	/**
@@ -47,8 +47,8 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	 * @return A data object with methods to get and set
 	 */
 	@Override
-	protected <T> PlayerData<T> data() {
-		return super.data(pluginname);
+	protected <T> PlayerData<T> data(T def) {
+		return super.data(pluginname, def);
 	}
 
 	/**
@@ -57,8 +57,8 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	 * @return A data object with methods to get and set
 	 */
 	@Override
-	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(Class<T> cl) {
-		return super.dataEnum(pluginname, cl);
+	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(Class<T> cl, T def) {
+		return super.dataEnum(pluginname, cl, def);
 	}
 
 	/**
