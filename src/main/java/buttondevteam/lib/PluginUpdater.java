@@ -5,16 +5,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiConsumer;
-
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -99,31 +98,6 @@ public class PluginUpdater {
 		return false;
 	}
 
-	private boolean updatePluginLocal(CommandSender sender, String correctname, Optional<String> correctbranch) {
-		try {
-			ThrowingBiConsumer<String, String> runcmd = (cmd, err) -> {
-				if (Runtime.getRuntime().exec(cmd).waitFor() != 0)
-					throw new Exception(err);
-			};
-			if (!new File(correctname).isDirectory())
-				runcmd.accept("git clone https://github.com/TBMCPlugins/" + correctname + ".git " + correctname,
-						"Git clone failed!");
-			runcmd.accept("cd " + correctname + " && git checkout " + correctbranch.get(), "Git checkout failed!");
-			runcmd.accept("git pull " + correctbranch, "Git pull failed!");
-			runcmd.accept("../apache-maven-something/mvn clean install", "Error during Maven build!");
-			File source = new File("target/" + correctname + ".jar");
-			File target = new File(""); //TODO - TODOOOO
-		} catch (Exception e) {
-			error(sender, "Error while updating " + correctname + " locally: " + e);
-		}
-		return false;
-	}
-
-	@FunctionalInterface
-	private interface ThrowingBiConsumer<T, V> {
-		void accept(T t, V u) throws Exception;
-	}
-
 	/**
 	 * Checks if pom.xml is present for the project.
 	 * 
@@ -194,5 +168,28 @@ public class PluginUpdater {
 			e.printStackTrace();
 		}
 		return ret;
+	}
+
+	public static class UpdatedEvent extends Event {
+		private static final HandlerList handlers = new HandlerList();
+
+		private JsonObject data;
+
+		public UpdatedEvent(JsonObject data) {
+			this.data = data;
+		}
+
+		public JsonObject getData() {
+			return data;
+		}
+
+		@Override
+		public HandlerList getHandlers() {
+			return handlers;
+		}
+
+		public static HandlerList getHandlerList() {
+			return handlers;
+		}
 	}
 }
