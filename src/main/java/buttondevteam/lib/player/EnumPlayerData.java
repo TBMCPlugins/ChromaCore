@@ -5,25 +5,22 @@ import org.bukkit.configuration.file.YamlConfiguration;
 public class EnumPlayerData<T extends Enum<T>> {
 	private PlayerData<String> data;
 	private Class<T> cl;
+	private T def;
 
-	public EnumPlayerData(String name, YamlConfiguration yaml, Class<T> cl) {
-		data = new PlayerData<String>(name, yaml);
+	public EnumPlayerData(String name, YamlConfiguration yaml, Class<T> cl, T def) {
+		data = new PlayerData<String>(name, yaml, "");
 		this.cl = cl;
+		this.def = def;
 	}
 
 	public T get() {
 		String str = data.get();
-		if (str == null || str.equals(""))
-			return null;
+		if (str.isEmpty())
+			return def;
 		return Enum.valueOf(cl, str);
 	}
 
 	public void set(T value) {
 		data.set(value.toString());
-	}
-
-	public T getOrDefault(T def) {
-		T value = get();
-		return value == null ? def : value;
 	}
 }

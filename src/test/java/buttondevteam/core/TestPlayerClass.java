@@ -8,7 +8,7 @@ import buttondevteam.lib.player.TBMCPlayerBase;
 @PlayerClass(pluginname = "TestPlugin")
 public class TestPlayerClass extends TBMCPlayerBase {
 	public EnumPlayerData<TestEnum> testenum() {
-		return dataEnum(TestEnum.class);
+		return dataEnum(TestEnum.class, TestEnum.A);
 	}
 
 	public enum TestEnum {
@@ -16,10 +16,10 @@ public class TestPlayerClass extends TBMCPlayerBase {
 	}
 
 	public PlayerData<Short> TestShort() {
-		return data();
+		return data((short) 0);
 	}
 
 	public PlayerData<Boolean> TestBool() {
-		return data();
+		return data(false);
 	}
 }

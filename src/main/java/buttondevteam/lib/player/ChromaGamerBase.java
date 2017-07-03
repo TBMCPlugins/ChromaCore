@@ -205,11 +205,11 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 * @return A data object with methods to get and set
 	 */
 	@SuppressWarnings("unchecked")
-	protected <T> PlayerData<T> data(String sectionname) {
+	protected <T> PlayerData<T> data(String sectionname, T def) {
 		ThrowIfNoUser();
 		String mname = sectionname + "." + new Exception().getStackTrace()[2].getMethodName();
 		if (!datamap.containsKey(mname))
-			datamap.put(mname, new PlayerData<T>(mname, plugindata));
+			datamap.put(mname, new PlayerData<T>(mname, plugindata, def));
 		return datamap.get(mname);
 	}
 
@@ -219,11 +219,11 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 * @return A data object with methods to get and set
 	 */
 	@SuppressWarnings("unchecked")
-	protected <T> PlayerData<T> data() {
+	protected <T> PlayerData<T> data(T def) {
 		ThrowIfNoUser();
 		String mname = new Exception().getStackTrace()[1].getMethodName();
 		if (!datamap.containsKey(mname))
-			datamap.put(mname, new PlayerData<T>(mname, plugindata));
+			datamap.put(mname, new PlayerData<T>(mname, plugindata, def));
 		return datamap.get(mname);
 	}
 
@@ -236,11 +236,11 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 * @return A data object with methods to get and set
 	 */
 	@SuppressWarnings("unchecked")
-	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(String sectionname, Class<T> cl) {
+	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(String sectionname, Class<T> cl, T def) {
 		ThrowIfNoUser();
 		String mname = sectionname + "." + new Exception().getStackTrace()[2].getMethodName();
 		if (!dataenummap.containsKey(mname))
-			dataenummap.put(mname, new EnumPlayerData<T>(mname, plugindata, cl));
+			dataenummap.put(mname, new EnumPlayerData<T>(mname, plugindata, cl, def));
 		return dataenummap.get(mname);
 	}
 
@@ -250,11 +250,11 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 * @return A data object with methods to get and set
 	 */
 	@SuppressWarnings("unchecked")
-	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(Class<T> cl) {
+	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(Class<T> cl, T def) {
 		ThrowIfNoUser();
 		String mname = new Exception().getStackTrace()[1].getMethodName();
 		if (!dataenummap.containsKey(mname))
-			dataenummap.put(mname, new EnumPlayerData<T>(mname, plugindata, cl));
+			dataenummap.put(mname, new EnumPlayerData<T>(mname, plugindata, cl, def));
 		return dataenummap.get(mname);
 	}
 
