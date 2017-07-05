@@ -13,7 +13,7 @@ import net.minecraft.server.v1_12_R1.WorldBorder;
 
 public class Main extends JavaPlugin
 {
-	private final int 		radius = 300; //set how far apart the five teleport positions are
+	private final int 		radius = 70; //set how far apart the five teleport positions are
 	
 	private CraftWorld		world;
 	private WorldBorder 	border;
