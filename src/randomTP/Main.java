@@ -13,7 +13,7 @@ import net.minecraft.server.v1_12_R1.WorldBorder;
 
 public class Main extends JavaPlugin
 {
-	private final int 		radius = 70; //set how far apart the five teleport positions are
+	private final int 		radius = 300; //set how far apart the five teleport positions are
 	
 	private CraftWorld		world;
 	private WorldBorder 	border;
@@ -65,7 +65,11 @@ public class Main extends JavaPlugin
 		
 	public boolean onCommand(CommandSender sender, Command label, String command, String[] args)
 	{
-		if (sender.isOp()) return rtp(Bukkit.getPlayer(args[0])); else return false;
+		if (args.length == 0) 	return false;
+		
+		if (sender.isOp()) 		return rtp(Bukkit.getPlayer(args[0]));
+		
+		else 					return false;
 	}
 	
 	/*================================================================================================*/
@@ -84,7 +88,7 @@ public class Main extends JavaPlugin
 			
 			&& !newLocation()) 
 		{
-			//message player and return false if unable to find new location
+			//if unable to find new location, message player and return false
 			player.sendMessage("§c could not find a location in 10,000 attempts");
 			player.sendMessage("§c (sorry bud... I did try!)");
 			return false;
