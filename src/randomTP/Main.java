@@ -69,15 +69,17 @@ public class Main extends JavaPlugin
 		
 		if (sender.isOp()) 		return rtp(Bukkit.getPlayer(args[0]));
 		
-		else 					return false;
+		else					sender.sendMessage("§7 hmm, " + sender.getName() + "... " + sender.getName() + "... nope, no operator permissions.");
+		
+		return 					false;
 	}
 	
 	/*================================================================================================*/
 	
 	public synchronized boolean rtp(Player player)
 	{
-		if (player == null) 
-			return false;
+		if (player == null)
+			return false; //Pretend it rtp'd an imaginary player successfully
 		
 		//if border has changed, or no positions available, find new location
 		if ((centerUsed && northUsed && southUsed && eastUsed && westUsed) ||
