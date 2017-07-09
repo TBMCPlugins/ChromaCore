@@ -153,7 +153,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 
 		// Load in other plugins
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerLoadEvent(player));
-		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerJoinEvent(player));
+		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerJoinEvent(player, p));
 		player.save();
 	}
 
@@ -163,7 +163,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	public static void quitPlayer(Player p) {
 		final TBMCPlayerBase player = playermap.get(p.getUniqueId() + "-" + TBMCPlayer.class.getSimpleName());
 		player.save();
-		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player));
+		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player, p));
 		Iterator<Entry<String, TBMCPlayerBase>> it = playermap.entrySet().iterator();
 		while (it.hasNext()) {
 			Entry<String, TBMCPlayerBase> entry = it.next();
