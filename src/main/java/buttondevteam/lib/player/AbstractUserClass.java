@@ -24,5 +24,5 @@ public @interface AbstractUserClass {
 	/**
 	 * Indicates the class to create when connecting accounts.
 	 */
-	Class<?> prototype();
+	Class<? extends ChromaGamerBase> prototype();
 }

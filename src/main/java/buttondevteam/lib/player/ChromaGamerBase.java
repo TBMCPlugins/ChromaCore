@@ -16,7 +16,7 @@ import buttondevteam.lib.TBMCCoreAPI;
 public abstract class ChromaGamerBase implements AutoCloseable {
 	public static final String TBMC_PLAYERS_DIR = "TBMC/players/";
 
-	private static final HashBiMap<Class<?>, String> playerTypes = HashBiMap.create();
+	private static final HashBiMap<Class<? extends ChromaGamerBase>, String> playerTypes = HashBiMap.create();
 
 	/**
 	 * Used for connecting with every type of user ({@link #connectWith(ChromaGamerBase)})
@@ -55,7 +55,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 *            The folder to get the class from (like "minecraft")
 	 * @return The type for the given folder name or null if not found
 	 */
-	public static Class<?> getTypeForFolder(String foldername) {
+	public static Class<? extends ChromaGamerBase> getTypeForFolder(String foldername) {
 		return playerTypes.inverse().get(foldername);
 	}
 
@@ -131,16 +131,15 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		Consumer<YamlConfiguration> sync = sourcedata -> {
 			final String sourcefolder = sourcedata == plugindata ? ownFolder : userFolder;
 			final String id = sourcedata.getString(sourcefolder + "_id");
-			for (Entry<Class<?>, String> entry : playerTypes.entrySet()) { // Set our ID in all files we can find, both from our connections and the new ones
+			for (Entry<Class<? extends ChromaGamerBase>, String> entry : playerTypes.entrySet()) { // Set our ID in all files we can find, both from our connections and the new ones
 				if (entry.getKey() == getClass() || entry.getKey() == user.getClass())
 					continue;
 				final String otherid = sourcedata.getString(entry.getValue() + "_id");
 				if (otherid == null)
 					continue;
-				try (@SuppressWarnings("unchecked")
-				ChromaGamerBase cg = getUser(otherid, (Class<T>) entry.getKey())) {
+				try (ChromaGamerBase cg = getUser(otherid, entry.getKey())) {
 					cg.plugindata.set(sourcefolder + "_id", id); // Set new IDs
-					for (Entry<Class<?>, String> item : playerTypes.entrySet())
+					for (Entry<Class<? extends ChromaGamerBase>, String> item : playerTypes.entrySet())
 						if (sourcedata.contains(item.getValue() + "_id"))
 							cg.plugindata.set(item.getValue() + "_id", sourcedata.getString(item.getValue() + "_id")); // Set all existing IDs
 				} catch (Exception e) {
