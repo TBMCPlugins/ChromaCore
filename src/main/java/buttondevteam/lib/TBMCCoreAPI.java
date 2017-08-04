@@ -127,7 +127,7 @@ public class TBMCCoreAPI {
 	}
 
 	/**
-	 * Registers Bukkit events, handling the exceptions occuring in those events
+	 * Registers Bukkit events, handling the exceptions occurring in those events
 	 * 
 	 * @param listener
 	 *            The class that handles the events

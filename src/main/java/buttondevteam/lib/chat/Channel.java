@@ -6,6 +6,9 @@ import java.util.function.Function;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import buttondevteam.core.MainPlugin;
 
 public class Channel {
 	public final String DisplayName;
@@ -41,6 +44,22 @@ public class Channel {
 
 	public static List<Channel> getChannels() {
 		return channels;
+	}
+
+	/**
+	 * Convenience method for the function parameter of {@link #Channel(String, Color, String, Function)}. It checks if the sender is OP or optionally has the specified group. The error message is
+	 * generated automatically.
+	 * 
+	 * @param permgroup
+	 *            The group that can access the channel or <b>null</b> to only allow OPs.
+	 * @return
+	 */
+	public static Function<CommandSender, RecipientTestResult> filteranderrormsg(String permgroup) {
+		return s -> s.isOp() || (permgroup != null
+				? s instanceof Player && MainPlugin.permission.playerInGroup((Player) s, permgroup) : false)
+						? new RecipientTestResult(0) //
+						: new RecipientTestResult("You need to be a(n) " + (permgroup != null ? permgroup : "OP")
+								+ " to use this channel.");
 	}
 
 	public static Channel GlobalChat;
