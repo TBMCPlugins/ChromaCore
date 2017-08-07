@@ -1,9 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.github.TBMCPlugins</groupId>
+        <artifactId>ButtonCore</artifactId>
+        <version>master-SNAPSHOT</version>
+    </parent>
 	<groupId>com.github.TBMCPlugins.ButtonCore</groupId>
 	<artifactId>ButtonCore</artifactId>
-	<version>master-SNAPSHOT</version>
 	<name>ButtonCore</name>
 	<description>ButtonCore</description>
 	<build>
@@ -24,7 +28,6 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.3</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
@@ -145,10 +148,10 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.github.TBMCPlugins</groupId>
+			<groupId>com.github.TBMCPlugins.ButtonCore</groupId>
 			<artifactId>ButtonProcessor</artifactId>
 			<version>master-SNAPSHOT</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 	<organization>
