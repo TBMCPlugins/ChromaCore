@@ -22,6 +22,7 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCChatEvent;
 import buttondevteam.lib.TBMCChatPreprocessEvent;
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.TBMCSystemChatEvent;
 import buttondevteam.lib.chat.Channel.RecipientTestResult;
 
 public class TBMCChatAPI {
@@ -223,20 +224,46 @@ public class TBMCChatAPI {
 		Bukkit.getPluginManager().callEvent(eventPre);
 		if (eventPre.isCancelled())
 			return true;
+		int score = getScoreOrSendError(channel, sender);
+		if (score == -1)
+			return true;
+		TBMCChatEvent event = new TBMCChatEvent(sender, channel, eventPre.getMessage(), score);
+		Bukkit.getPluginManager().callEvent(event);
+		return event.isCancelled();
+	}
+
+	/**
+	 * Sends a regular message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.
+	 * 
+	 * @param channel
+	 *            The channel to send to
+	 * @param score
+	 *            The score to use to find the group - use 0 if the channel doesn't have scores
+	 * @param message
+	 *            The message to send
+	 * @return The event cancelled state
+	 */
+	public static boolean SendSystemMessage(Channel channel, int score, String message) {
+		if (!Channel.getChannels().contains(channel))
+			throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
+		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, score);
+		Bukkit.getPluginManager().callEvent(event);
+		return event.isCancelled();
+	}
+
+	private static int getScoreOrSendError(Channel channel, CommandSender sender) {
 		int score;
 		if (channel.filteranderrormsg == null)
-			score = -1;
+			score = 0;
 		else {
 			RecipientTestResult result = channel.filteranderrormsg.apply(sender);
 			if (result.errormessage != null) {
 				sender.sendMessage("§c" + result.errormessage);
-				return true;
+				return -1;
 			}
 			score = result.score;
 		}
-		TBMCChatEvent event = new TBMCChatEvent(sender, channel, eventPre.getMessage(), score);
-		Bukkit.getPluginManager().callEvent(event);
-		return event.isCancelled();
+		return score;
 	}
 
 	/**

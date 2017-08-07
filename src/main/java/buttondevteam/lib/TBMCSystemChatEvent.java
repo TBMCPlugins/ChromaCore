@@ -13,16 +13,18 @@ import lombok.Getter;
  *
  */
 @Getter
-public class TBMCChatEvent extends TBMCChatEventBase {
-	public TBMCChatEvent(CommandSender sender, Channel channel, String message, int score) {
+public class TBMCSystemChatEvent extends TBMCChatEventBase {
+	private boolean handled;
+
+	public void setHandled() {
+		handled = true;
+	}
+
+	public TBMCSystemChatEvent(Channel channel, String message, int score) { // TODO: RIch message
 		super(channel, message, score);
-		this.sender = sender;
 	}
 
 	private static final HandlerList handlers = new HandlerList();
-
-	private CommandSender sender;
-	// TODO: Message object with data?
 
 	@Override
 	public HandlerList getHandlers() {

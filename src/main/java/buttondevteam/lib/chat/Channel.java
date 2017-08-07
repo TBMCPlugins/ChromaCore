@@ -2,7 +2,10 @@ package buttondevteam.lib.chat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -25,7 +28,7 @@ public class Channel {
 	 * Creates a channel.
 	 * 
 	 * @param displayname
-	 *            The name that should appear at the start of the message
+	 *            The name that should appear at the start of the message. <b>A chat color is expected at the beginning (§9).</b>
 	 * @param color
 	 *            The default color of the messages sent in the channel
 	 * @param command
@@ -42,6 +45,20 @@ public class Channel {
 		this.filteranderrormsg = filteranderrormsg;
 	}
 
+	/**
+	 * Must be only called from a subclass - otherwise it'll throw an exception.
+	 * 
+	 * @see Channel#Channel(String, Color, String, Function)
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T extends Channel> Channel(String displayname, Color color, String command,
+			BiFunction<T, CommandSender, RecipientTestResult> filteranderrormsg) {
+		DisplayName = displayname;
+		this.color = color;
+		ID = command;
+		this.filteranderrormsg = s -> filteranderrormsg.apply((T) this, s);
+	}
+
 	public static List<Channel> getChannels() {
 		return channels;
 	}
@@ -54,12 +71,21 @@ public class Channel {
 	 *            The group that can access the channel or <b>null</b> to only allow OPs.
 	 * @return
 	 */
-	public static Function<CommandSender, RecipientTestResult> filteranderrormsg(String permgroup) {
-		return s -> s.isOp() || (permgroup != null
-				? s instanceof Player && MainPlugin.permission.playerInGroup((Player) s, permgroup) : false)
-						? new RecipientTestResult(0) //
-						: new RecipientTestResult("You need to be a(n) " + (permgroup != null ? permgroup : "OP")
-								+ " to use this channel.");
+	public static Function<CommandSender, RecipientTestResult> inGroupFilter(String permgroup) {
+		return noScoreResult(
+				s -> s.isOp() || (permgroup != null
+						? s instanceof Player && MainPlugin.permission.playerInGroup((Player) s, permgroup) : false),
+				"You need to be a(n) " + (permgroup != null ? permgroup : "OP") + " to use this channel.");
+	}
+
+	public static Function<CommandSender, RecipientTestResult> noScoreResult(Predicate<CommandSender> filter,
+			String errormsg) {
+		return s -> filter.test(s) ? new RecipientTestResult(0) : new RecipientTestResult(errormsg);
+	}
+
+	public static <T extends Channel> BiFunction<T, CommandSender, RecipientTestResult> noScoreResult(
+			BiPredicate<T, CommandSender> filter, String errormsg) {
+		return (this_, s) -> filter.test(this_, s) ? new RecipientTestResult(0) : new RecipientTestResult(errormsg);
 	}
 
 	public static Channel GlobalChat;

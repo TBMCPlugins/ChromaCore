@@ -2,7 +2,6 @@ package buttondevteam.lib.player;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import org.bukkit.Bukkit;
@@ -11,6 +10,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import com.google.common.collect.HashBiMap;
 
 import buttondevteam.lib.TBMCCoreAPI;
+import lombok.val;
 
 @ChromaGamerEnforcer
 public abstract class ChromaGamerBase implements AutoCloseable {
@@ -131,7 +131,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		Consumer<YamlConfiguration> sync = sourcedata -> {
 			final String sourcefolder = sourcedata == plugindata ? ownFolder : userFolder;
 			final String id = sourcedata.getString(sourcefolder + "_id");
-			for (Entry<Class<? extends ChromaGamerBase>, String> entry : playerTypes.entrySet()) { // Set our ID in all files we can find, both from our connections and the new ones
+			for (val entry : playerTypes.entrySet()) { // Set our ID in all files we can find, both from our connections and the new ones
 				if (entry.getKey() == getClass() || entry.getKey() == user.getClass())
 					continue;
 				final String otherid = sourcedata.getString(entry.getValue() + "_id");
@@ -139,7 +139,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 					continue;
 				try (ChromaGamerBase cg = getUser(otherid, entry.getKey())) {
 					cg.plugindata.set(sourcefolder + "_id", id); // Set new IDs
-					for (Entry<Class<? extends ChromaGamerBase>, String> item : playerTypes.entrySet())
+					for (val item : playerTypes.entrySet())
 						if (sourcedata.contains(item.getValue() + "_id"))
 							cg.plugindata.set(item.getValue() + "_id", sourcedata.getString(item.getValue() + "_id")); // Set all existing IDs
 				} catch (Exception e) {

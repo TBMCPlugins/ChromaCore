@@ -3,6 +3,9 @@ package buttondevteam.lib;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 /**
  * <p>
  * This event gets called (ideally) each time an exception occurs in a TBMC plugin. To call it, use {@link TBMCCoreAPI#SendException(String, Exception)}.
@@ -11,50 +14,17 @@ import org.bukkit.event.HandlerList;
  * @author Norbi
  *
  */
+@Getter
+@RequiredArgsConstructor
 public class TBMCExceptionEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-	private String sourcemsg;
-	private Throwable exception;
+	private final String sourceMessage;
+	private final Throwable exception;
 	private boolean handled;
 
-	TBMCExceptionEvent(String sourcemsg, Throwable exception) {
-		this.sourcemsg = sourcemsg;
-		this.exception = exception;
-	}
-
-	/**
-	 * Gets the source message (where did this exception occur, etc.)
-	 * 
-	 * @return The message
-	 */
-	public String getSourceMessage() {
-		return sourcemsg;
-	}
-
-	/**
-	 * Gets the exception
-	 * 
-	 * @return The exception
-	 */
-	public Throwable getException() {
-		return exception;
-	}
-
-	/**
-	 * Gets if this event was handled
-	 * 
-	 * @return True if it was handled
-	 */
-	public boolean isHandled() {
-		return handled;
-	}
-
-	/**
-	 * Flags the event as handled
-	 */
 	public void setHandled() {
-		this.handled = true;
+		handled = true;
 	}
 
 	@Override
