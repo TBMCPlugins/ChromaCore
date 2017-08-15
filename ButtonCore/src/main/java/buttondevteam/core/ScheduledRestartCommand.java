@@ -47,7 +47,7 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 			if (restartcounter % 200 == 0)
 				Bukkit.broadcastMessage("§c-- The server is restarting in " + restartcounter / 20 + " seconds!");
 			restartbar.setProgress(restartcounter / (double) restarttime);
-			restartbar.setTitle(String.format("Server restart in %f.2", restartcounter / 20f));
+			restartbar.setTitle(String.format("Server restart in %.2f", restartcounter / 20f));
 			restartcounter--;
 		}, 1, 1);
 		return true;

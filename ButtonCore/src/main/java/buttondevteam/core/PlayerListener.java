@@ -12,7 +12,7 @@ import buttondevteam.lib.player.TBMCPlayerBase;
 
 public class PlayerListener implements Listener {
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void OnPlayerJoin(PlayerJoinEvent event) {
 		TBMCPlayerBase.joinPlayer(event.getPlayer());
 	}
