@@ -45,9 +45,6 @@
 						</goals>
 						<configuration>
 							<artifactSet>
-								<includes>
-									<include>org.reflections:reflections</include>
-								</includes>
 							</artifactSet>
 							<pluginExecution>
 								<action>
