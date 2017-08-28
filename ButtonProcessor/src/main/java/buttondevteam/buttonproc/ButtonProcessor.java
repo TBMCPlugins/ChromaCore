@@ -2,6 +2,8 @@ package buttondevteam.buttonproc;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
+
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
@@ -9,21 +11,32 @@ import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
+import javax.tools.Diagnostic.Kind;
 
-/** * A simple session bean type annotation processor. The implementation * is based on the standard annotation processing API in Java 6. */
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes("buttondevteam.*")
 public class ButtonProcessor extends AbstractProcessor {
-	/** * Check if both @Stateful and @Stateless are present in an * session bean. If so, emits a warning message. */
 	@Override
-	public boolean process(Set<? extends TypeElement> typeElements, RoundEnvironment roundEnv) { // TODO: SEparate JAR
-		for (TypeElement te : typeElements) {
-			Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(te);
-			for (Element element : elements) {
-				System.out.println("Processing " + element);
-				List<? extends AnnotationMirror> annotationMirrors = element.getAnnotationMirrors();
+	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+		for (TypeElement te : annotations) {
+			Set<? extends Element> classes = roundEnv.getElementsAnnotatedWith(te);
+			for (Element targetcl : classes) {
+				System.out.println("Processing " + targetcl);
+				List<? extends AnnotationMirror> annotationMirrors = processingEnv.getElementUtils()
+						.getAllAnnotationMirrors(targetcl);
 				System.out.println("Annotations: " + annotationMirrors);
+				Function<String, Boolean> hasAnnotation = ann -> annotationMirrors.stream()
+						.anyMatch(am -> am.getAnnotationType().toString().contains(ann));
+				if (hasAnnotation.apply("ChromaGamerEnforcer") && !hasAnnotation.apply("UserClass")
+						&& !targetcl.getModifiers().contains(Modifier.ABSTRACT))
+					processingEnv.getMessager().printMessage(Kind.ERROR,
+							"No UserClass annotation found for " + targetcl.getSimpleName(), targetcl);
+				if (hasAnnotation.apply("TBMCPlayerEnforcer") && !hasAnnotation.apply("PlayerClass")
+						&& !targetcl.getModifiers().contains(Modifier.ABSTRACT))
+					processingEnv.getMessager().printMessage(Kind.ERROR,
+							"No PlayerClass annotation found for " + targetcl.getSimpleName(), targetcl);
 				for (AnnotationMirror annotation : annotationMirrors) {
 					String type = annotation.getAnnotationType().toString();
 					System.out.println("Type: " + type);
@@ -31,5 +44,10 @@ public class ButtonProcessor extends AbstractProcessor {
 			}
 		}
 		return true; // claim the annotations
+	}
+
+	@Override
+	public SourceVersion getSupportedSourceVersion() {
+		return SourceVersion.latestSupported();
 	}
 }

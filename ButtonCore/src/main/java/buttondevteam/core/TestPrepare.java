@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.scheduler.BukkitScheduler;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -29,6 +30,8 @@ public class TestPrepare {
 					return Mockito.mock(PluginManager.class);
 				if (returns(invocation, Collection.class))
 					return Collections.EMPTY_LIST;
+				if (returns(invocation, BukkitScheduler.class))
+					return Mockito.mock(BukkitScheduler.class);
 				return null;
 			}
 

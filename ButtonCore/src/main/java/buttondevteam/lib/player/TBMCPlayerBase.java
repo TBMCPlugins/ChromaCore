@@ -19,6 +19,7 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
 import buttondevteam.lib.TBMCCoreAPI;
 
 @AbstractUserClass(foldername = "minecraft", prototype = TBMCPlayer.class)
+@TBMCPlayerEnforcer
 public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	protected UUID uuid;
 

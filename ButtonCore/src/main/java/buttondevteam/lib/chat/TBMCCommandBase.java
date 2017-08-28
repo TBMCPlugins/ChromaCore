@@ -14,6 +14,7 @@ import javassist.Modifier;
  * @author Norbi
  *
  */
+@TBMCCommandEnforcer
 public abstract class TBMCCommandBase {
 
 	public TBMCCommandBase() {

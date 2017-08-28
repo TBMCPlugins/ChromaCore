@@ -99,8 +99,8 @@ public class Channel {
 	}
 
 	public static class RecipientTestResult {
-		public String errormessage;
-		public int score;
+		public String errormessage = null;
+		public int score = -1; // Anything below 0 is "never send"
 
 		/**
 		 * Creates a result that indicates an <b>error</b>
