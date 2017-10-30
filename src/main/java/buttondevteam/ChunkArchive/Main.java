@@ -35,7 +35,7 @@ public class Main extends JavaPlugin implements Listener
 																 ExceptionWorldConflict
 	{
 		if (event.getWorld().getName().equals("world"))
-			chunkRegionLoader.a(((CraftWorld) event.getWorld()).getHandle(),
+			chunkRegionLoader.saveChunk(((CraftWorld) event.getWorld()).getHandle(),
 								((CraftChunk) event.getChunk()).getHandle());
 	}
 }
