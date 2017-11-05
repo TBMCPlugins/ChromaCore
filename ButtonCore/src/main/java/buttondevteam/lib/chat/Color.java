@@ -1,5 +1,10 @@
 package buttondevteam.lib.chat;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+@Getter
 public enum Color implements TellrawSerializableEnum {
 	Black("black", 0, 0, 0), DarkBlue("dark_blue", 0, 0, 170), DarkGreen("dark_green", 0, 170, 0), DarkAqua("dark_aqua",
 			0, 170, 170), DarkRed("dark_red", 170, 0, 0), DarkPurple("dark_purple", 0, 170, 0), Gold("gold", 255, 170,
@@ -12,28 +17,4 @@ public enum Color implements TellrawSerializableEnum {
 	private final int red;
 	private final int green;
 	private final int blue;
-
-	Color(String name, int red, int green, int blue) {
-		this.name = name;
-		this.red = red;
-		this.green = green;
-		this.blue = blue;
-	}
-
-	@Override
-	public String getName() {
-		return name;
-	}
-
-	public int getRed() {
-		return red;
-	}
-
-	public int getGreen() {
-		return green;
-	}
-
-	public int getBlue() {
-		return blue;
-	}
 }

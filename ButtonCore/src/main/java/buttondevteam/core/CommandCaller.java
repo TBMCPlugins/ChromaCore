@@ -33,8 +33,11 @@ public class CommandCaller implements CommandExecutor {
 			if (pc == null)
 				throw new Exception("Top level command " + topcmd + " not registered in plugin.yml for plugin: "
 						+ cmd.getPlugin().getName());
-			else
+			else {
 				pc.setExecutor(instance);
+				String[] helptext = cmd.GetHelpText(topcmd);
+				pc.setUsage(helptext.length > 1 ? helptext[1] : helptext[0]);
+			}
 		}
 	}
 

@@ -56,7 +56,7 @@ public abstract class TBMCCommandBase {
 			if (!cl.isAnnotationPresent(CommandClass.class)
 					|| (newpath = cl.getAnnotation(CommandClass.class).path()).length() == 0
 					|| newpath.equals(prevpath)) {
-				if (Modifier.isAbstract(cl.getModifiers()) && (!cl.isAnnotationPresent(CommandClass.class))
+				if ((Modifier.isAbstract(cl.getModifiers()) && !cl.isAnnotationPresent(CommandClass.class))
 						|| cl.getAnnotation(CommandClass.class).excludeFromPath()) // <--
 					continue;
 				newpath = getFromClass.apply(cl);
