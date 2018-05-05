@@ -1,14 +1,14 @@
 package buttondevteam.lib;
 
+import buttondevteam.lib.chat.Channel;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-import buttondevteam.lib.chat.Channel;
-
 /**
  * Can be used to change messages before it's sent.
+ * <b>Only called before sending messages with SendChatMessage.</b>
  * 
  * @author NorbiPeti
  *

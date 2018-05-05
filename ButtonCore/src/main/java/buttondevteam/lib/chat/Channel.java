@@ -1,5 +1,11 @@
 package buttondevteam.lib.chat;
 
+import buttondevteam.core.MainPlugin;
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -7,16 +13,12 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-
-import buttondevteam.core.MainPlugin;
-
 public class Channel {
 	public final String DisplayName;
 	public final Color color;
 	public final String ID;
+	public @Nullable
+	String[] IDs;
 	/**
 	 * Filters both the sender and the targets
 	 */
