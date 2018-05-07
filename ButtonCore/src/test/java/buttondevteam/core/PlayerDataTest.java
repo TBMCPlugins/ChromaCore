@@ -1,16 +1,15 @@
 package buttondevteam.core;
 
-import java.io.File;
-import java.util.UUID;
-
-import org.apache.commons.io.FileUtils;
-
 import buttondevteam.core.TestPlayerClass.TestEnum;
 import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.player.TBMCPlayerBase;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.apache.commons.io.FileUtils;
+
+import java.io.File;
+import java.util.UUID;
 
 public class PlayerDataTest extends TestCase {
 	public PlayerDataTest() {

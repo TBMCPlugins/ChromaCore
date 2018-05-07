@@ -1,9 +1,8 @@
 package buttondevteam.core;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.logging.Logger;
-
+import buttondevteam.lib.chat.Channel;
+import buttondevteam.lib.chat.Color;
+import buttondevteam.lib.chat.TBMCChatAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.plugin.PluginManager;
@@ -11,9 +10,9 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import buttondevteam.lib.chat.Channel;
-import buttondevteam.lib.chat.Color;
-import buttondevteam.lib.chat.TBMCChatAPI;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.logging.Logger;
 
 public class TestPrepare {
 	public static void PrepareServer() {

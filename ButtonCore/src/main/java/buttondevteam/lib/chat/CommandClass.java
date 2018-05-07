@@ -1,10 +1,6 @@
 package buttondevteam.lib.chat;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * <b>Abstract classes with no {@link CommandClass} annotations will be ignored.</b> Classes that are not abstract or have the annotation will be included in the command path unless

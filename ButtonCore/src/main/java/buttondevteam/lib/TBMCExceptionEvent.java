@@ -1,10 +1,9 @@
 package buttondevteam.lib;
 
-import org.bukkit.event.Event;
-import org.bukkit.event.HandlerList;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
 
 /**
  * <p>

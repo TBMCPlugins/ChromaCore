@@ -1,13 +1,12 @@
 package buttondevteam.lib.chat;
 
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.function.Consumer;
-
+import buttondevteam.core.CommandCaller;
+import buttondevteam.core.MainPlugin;
+import buttondevteam.lib.TBMCChatEvent;
+import buttondevteam.lib.TBMCChatPreprocessEvent;
+import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.TBMCSystemChatEvent;
+import buttondevteam.lib.chat.Channel.RecipientTestResult;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -17,13 +16,13 @@ import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
-import buttondevteam.core.CommandCaller;
-import buttondevteam.core.MainPlugin;
-import buttondevteam.lib.TBMCChatEvent;
-import buttondevteam.lib.TBMCChatPreprocessEvent;
-import buttondevteam.lib.TBMCCoreAPI;
-import buttondevteam.lib.TBMCSystemChatEvent;
-import buttondevteam.lib.chat.Channel.RecipientTestResult;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.Consumer;
 
 public class TBMCChatAPI {
 
@@ -119,7 +118,7 @@ public class TBMCChatAPI {
 					continue;
 				TBMCCommandBase c = cmd.newInstance();
 				c.plugin = plugin;
-				if (!CheckForNulls(plugin, c))
+				if (HasNulls(plugin, c))
 					continue;
 				commands.put(c.GetCommandPath(), c);
 				CommandCaller.RegisterCommand(c);
@@ -155,7 +154,7 @@ public class TBMCChatAPI {
 			else
 				c = thecmdclass.newInstance();
 			c.plugin = plugin;
-			if (!CheckForNulls(plugin, c))
+			if (HasNulls(plugin, c))
 				return;
 			commands.put(c.GetCommandPath(), c);
 			CommandCaller.RegisterCommand(c);
@@ -181,7 +180,7 @@ public class TBMCChatAPI {
 	 *            The command to add
 	 */
 	public static void AddCommand(JavaPlugin plugin, TBMCCommandBase cmd) {
-		if (!CheckForNulls(plugin, cmd))
+		if (HasNulls(plugin, cmd))
 			return;
 		// plugin.getLogger().info("Registering command /" + cmd.GetCommandPath() + " for " + plugin.getName());
 		try {
@@ -193,22 +192,22 @@ public class TBMCChatAPI {
 		}
 	}
 
-	private static boolean CheckForNulls(JavaPlugin plugin, TBMCCommandBase cmd) {
+	private static boolean HasNulls(JavaPlugin plugin, TBMCCommandBase cmd) {
 		if (cmd == null) {
 			TBMCCoreAPI.SendException("An error occured while registering a command for plugin " + plugin.getName(),
 					new Exception("The command is null!"));
-			return false;
+			return true;
 		} else if (cmd.GetCommandPath() == null) {
 			TBMCCoreAPI.SendException("An error occured while registering command " + cmd.getClass().getSimpleName()
 					+ " for plugin " + plugin.getName(), new Exception("The command path is null!"));
-			return false;
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	/**
 	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.
-	 * 
+	 *
 	 * @param channel
 	 *            The channel to send to
 	 * @param sender
@@ -218,6 +217,19 @@ public class TBMCChatAPI {
 	 * @return The event cancelled state
 	 */
 	public static boolean SendChatMessage(Channel channel, CommandSender sender, String message) {
+		return SendChatMessage(channel, sender, message, false);
+	}
+
+	/**
+	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.
+	 *
+	 * @param channel     The channel to send to
+	 * @param sender      The sender to send from
+	 * @param message     The message to send
+	 * @param fromcommand Whether this message comes from running a command, used to determine whether to delete Discord messages for example
+	 * @return The event cancelled state
+	 */
+	public static boolean SendChatMessage(Channel channel, CommandSender sender, String message, boolean fromcommand) {
 		if (!Channel.getChannels().contains(channel))
 			throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
 		TBMCChatPreprocessEvent eventPre = new TBMCChatPreprocessEvent(sender, channel, message);
@@ -227,7 +239,7 @@ public class TBMCChatAPI {
 		int score = getScoreOrSendError(channel, sender);
 		if (score == -1)
 			return true;
-		TBMCChatEvent event = new TBMCChatEvent(sender, channel, eventPre.getMessage(), score);
+		TBMCChatEvent event = new TBMCChatEvent(sender, channel, eventPre.getMessage(), score, fromcommand);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
 	}

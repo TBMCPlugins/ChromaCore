@@ -1,14 +1,14 @@
 package buttondevteam.lib;
 
-import org.bukkit.command.CommandSender;
-import org.bukkit.event.Cancellable;
-import org.bukkit.event.Event;
 import buttondevteam.lib.chat.Channel;
 import buttondevteam.lib.chat.Channel.RecipientTestResult;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.bukkit.command.CommandSender;
+import org.bukkit.event.Cancellable;
+import org.bukkit.event.Event;
 
 @Getter
 @RequiredArgsConstructor

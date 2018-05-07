@@ -1,7 +1,5 @@
 package buttondevteam.buttonproc;
 
-import java.util.List;
-import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
@@ -10,6 +8,8 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import java.util.List;
+import java.util.Set;
 
 /** * A simple session bean type annotation processor. The implementation * is based on the standard annotation processing API in Java 6. */
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
