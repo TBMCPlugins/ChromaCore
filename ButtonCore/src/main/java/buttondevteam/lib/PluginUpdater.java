@@ -14,8 +14,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,11 +22,15 @@ public class PluginUpdater {
 	private PluginUpdater() {
 	}
 
-	private static final File updatedir = new File("updateplugins");
+	public static final File updatedir = new File("TBMC", "pluginupdates");
 	/**
 	 * See {@link TBMCCoreAPI#UpdatePlugin(String, CommandSender, String)}
 	 */
 	public static boolean UpdatePlugin(String name, CommandSender sender, String branch) {
+		if (!updatedir.exists() && !updatedir.mkdirs()) {
+			error(sender, "Failed to create update directory!");
+			return false;
+		}
 		info(sender, "Checking plugin name...");
 		List<String> plugins = GetPluginNames();
 		String correctname = null;
@@ -64,9 +66,7 @@ public class PluginUpdater {
 	private static boolean updatePluginJitPack(CommandSender sender, String correctname,
 											   String correctbranch) {
 		URL url;
-		final boolean isWindows = System.getProperty("os.name").contains("Windows");
-		File result = new File("plugins/" + correctname + (isWindows ? ".jar" : ".jar_tmp"));
-		File finalresult = new File("plugins/" + correctname + ".jar");
+		File result = new File(updatedir, correctname + ".jar");
 		try {
 			url = new URL("https://jitpack.io/com/github/TBMCPlugins/"
 					+ (correctname.equals("ButtonCore") ? "ButtonCore/ButtonCore" : correctname) + "/"
@@ -78,8 +78,6 @@ public class PluginUpdater {
 						+ " is too small (smnaller than 25 bytes). Am I downloading from the right place?");
 				return false;
 			} else {
-				if (!isWindows)
-					Files.move(result.toPath(), finalresult.toPath(), StandardCopyOption.REPLACE_EXISTING);
 				info(sender, "Updating plugin " + correctname + " from " + correctbranch + " done!");
 				return true;
 			}

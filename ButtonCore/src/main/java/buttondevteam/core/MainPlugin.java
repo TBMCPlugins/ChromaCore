@@ -1,5 +1,6 @@
 package buttondevteam.core;
 
+import buttondevteam.lib.PluginUpdater;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.Channel;
 import buttondevteam.lib.chat.ChatRoom;
@@ -11,6 +12,10 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.logging.Logger;
 
 public class MainPlugin extends JavaPlugin {
@@ -55,6 +60,20 @@ public class MainPlugin extends JavaPlugin {
 		logger.info("Saving player data...");
 		TBMCPlayerBase.savePlayers();
 		logger.info("Player data saved.");
+		new Thread(() -> {
+			File[] files = PluginUpdater.updatedir.listFiles();
+			if (files == null)
+				return;
+			System.out.println("Updating " + files.length + " plugins...");
+			for (File file : files) {
+				try {
+					Files.move(file.toPath(), new File("plugins").toPath(), StandardCopyOption.REPLACE_EXISTING)
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			System.out.println("Update complete!");
+		});
 	}
 
 	private boolean setupPermissions() {

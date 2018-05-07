@@ -7,10 +7,12 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="BuildConfigUpdater" />
         <module name="ButtonCore (1) (com.github.TBMCPlugins.ButtonCore)" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="BuildConfigUpdater" target="1.8" />
       <module name="ButtonCore" target="1.5" />
       <module name="ButtonCore (1) (com.github.TBMCPlugins.ButtonCore)" target="1.8" />
       <module name="ButtonProcessor" target="1.8" />
