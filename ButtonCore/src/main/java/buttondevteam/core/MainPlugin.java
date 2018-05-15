@@ -8,6 +8,7 @@ import buttondevteam.lib.chat.Color;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.player.TBMCPlayerBase;
 import net.milkbowl.vault.permission.Permission;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -16,7 +17,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class MainPlugin extends JavaPlugin {
 	public static MainPlugin Instance;
@@ -52,6 +55,11 @@ public class MainPlugin extends JavaPlugin {
 		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§aGREEN", Color.Green, "green"));
 		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§bBLUE", Color.Blue, "blue"));
 		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§5PURPLE", Color.DarkPurple, "purple"));
+        try {
+            Files.write(new File("plugins", "plugins.txt").toPath(), Arrays.stream(Bukkit.getPluginManager().getPlugins()).map(p -> (CharSequence) p.getDataFolder().getName())::iterator);
+        } catch (IOException e) {
+            TBMCCoreAPI.SendException("Failed to write plugin list!", e);
+        }
 		logger.info(pdfFile.getName() + " has been Enabled (V." + pdfFile.getVersion() + ") Test: " + Test + ".");
 	}
 
@@ -67,13 +75,14 @@ public class MainPlugin extends JavaPlugin {
 			System.out.println("Updating " + files.length + " plugins...");
 			for (File file : files) {
 				try {
-					Files.move(file.toPath(), new File("plugins").toPath(), StandardCopyOption.REPLACE_EXISTING)
+                    Files.move(file.toPath(), new File("plugins", file.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    System.out.println("Updated " + file.getName());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 			System.out.println("Update complete!");
-		});
+        }).start();
 	}
 
 	private boolean setupPermissions() {
