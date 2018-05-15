@@ -1,16 +1,14 @@
 package buttondevteam.lib.player;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.function.Consumer;
-
+import buttondevteam.lib.TBMCCoreAPI;
+import com.google.common.collect.HashBiMap;
+import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import com.google.common.collect.HashBiMap;
-
-import buttondevteam.lib.TBMCCoreAPI;
-import lombok.val;
+import java.io.File;
+import java.util.HashMap;
+import java.util.function.Consumer;
 
 @ChromaGamerEnforcer
 public abstract class ChromaGamerBase implements AutoCloseable {

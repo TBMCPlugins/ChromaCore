@@ -1,9 +1,8 @@
 package buttondevteam.lib.chat;
 
+import buttondevteam.lib.TBMCCoreAPI;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-
-import buttondevteam.lib.TBMCCoreAPI;
 
 public abstract class OptionallyPlayerCommandBase extends TBMCCommandBase {
 	public boolean OnCommand(Player player, String alias, String[] args) {

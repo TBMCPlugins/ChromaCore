@@ -1,14 +1,15 @@
 package buttondevteam.core;
 
-import java.util.Arrays;
+import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.chat.TBMCChatAPI;
+import buttondevteam.lib.chat.TBMCCommandBase;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
-import buttondevteam.lib.TBMCCoreAPI;
-import buttondevteam.lib.chat.TBMCChatAPI;
-import buttondevteam.lib.chat.TBMCCommandBase;
+
+import java.util.Arrays;
 
 public class CommandCaller implements CommandExecutor {
 

@@ -13,6 +13,7 @@
     <modules>
         <module>ButtonCore</module>
         <module>ButtonProcessor</module>
+        <module>BuildConfigUpdater</module>
     </modules>
 
     <build>

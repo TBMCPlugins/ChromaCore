@@ -1,13 +1,12 @@
 package buttondevteam.lib.player;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
+import buttondevteam.lib.player.ChromaGamerBase.InfoTarget;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-import buttondevteam.lib.player.ChromaGamerBase.InfoTarget;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>

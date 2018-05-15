@@ -1,33 +1,36 @@
 package buttondevteam.lib;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class PluginUpdater {
 	private PluginUpdater() {
 	}
 
+	public static final File updatedir = new File("TBMC", "pluginupdates");
 	/**
 	 * See {@link TBMCCoreAPI#UpdatePlugin(String, CommandSender, String)}
 	 */
 	public static boolean UpdatePlugin(String name, CommandSender sender, String branch) {
+		if (!updatedir.exists() && !updatedir.mkdirs()) {
+			error(sender, "Failed to create update directory!");
+			return false;
+		}
 		info(sender, "Checking plugin name...");
 		List<String> plugins = GetPluginNames();
 		String correctname = null;
@@ -57,36 +60,32 @@ public class PluginUpdater {
 			return false;
 		}
 		info(sender, "Updating TBMC plugin: " + correctname + " from " + correctbranch.get());
-		return updatePluginJitPack(sender, correctname, correctbranch);
+		return updatePluginJitPack(sender, correctname, correctbranch.get());
 	}
 
 	private static boolean updatePluginJitPack(CommandSender sender, String correctname,
-			Optional<String> correctbranch) {
+											   String correctbranch) {
 		URL url;
-		final boolean isWindows = System.getProperty("os.name").contains("Windows");
-		File result = new File("plugins/" + correctname + (isWindows ? ".jar" : ".jar_tmp"));
-		File finalresult = new File("plugins/" + correctname + ".jar");
+		File result = new File(updatedir, correctname + ".jar");
 		try {
 			url = new URL("https://jitpack.io/com/github/TBMCPlugins/"
 					+ (correctname.equals("ButtonCore") ? "ButtonCore/ButtonCore" : correctname) + "/"
-					+ correctbranch.get() + "-SNAPSHOT/" + correctname + "-" + correctbranch.get() + "-SNAPSHOT.jar"); // ButtonCore exception required since it hosts Towny as well
+					+ correctbranch + "-SNAPSHOT/" + correctname + "-" + correctbranch + "-SNAPSHOT.jar"); // ButtonCore exception required since it hosts Towny as well
 			FileUtils.copyURLToFile(url, result);
 			if (!result.exists() || result.length() < 25) {
 				result.delete();
-				error(sender, "The downloaded JAR for " + correctname + " from " + correctbranch.get()
+				error(sender, "The downloaded JAR for " + correctname + " from " + correctbranch
 						+ " is too small (smnaller than 25 bytes). Am I downloading from the right place?");
 				return false;
 			} else {
-				if (!isWindows)
-					Files.move(result.toPath(), finalresult.toPath(), StandardCopyOption.REPLACE_EXISTING);
-				info(sender, "Updating plugin " + correctname + " from " + correctbranch.get() + " done!");
+				info(sender, "Updating plugin " + correctname + " from " + correctbranch + " done!");
 				return true;
 			}
 		} catch (FileNotFoundException e) {
 			error(sender,
-					"Can't find JAR for " + correctname + " from " + correctbranch.get()
+					"Can't find JAR for " + correctname + " from " + correctbranch
 							+ ", the build probably failed. Build log (scroll to bottom):" + "\n"
-							+ "https://jitpack.io/com/github/TBMCPlugins/" + correctname + "/" + correctbranch.get()
+							+ "https://jitpack.io/com/github/TBMCPlugins/" + correctname + "/" + correctbranch
 							+ "-SNAPSHOT/build.log\nIf you'd like to rebuild the same commit, go to:\nhttps://jitpack.io/#TBMCPlugins/"
 							+ correctname + "\nAnd delete the newest build.");
 		} catch (IOException e) {

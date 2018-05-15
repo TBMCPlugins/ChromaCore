@@ -1,8 +1,9 @@
 package buttondevteam.lib.chat;
 
+import org.bukkit.command.CommandSender;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.bukkit.command.CommandSender;
 
 public class ChatRoom extends Channel {
 	private List<CommandSender> usersInRoom = new ArrayList<>();

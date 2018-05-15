@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/BuildConfigUpdater/BuildConfigUpdater.iml" filepath="$PROJECT_DIR$/BuildConfigUpdater/BuildConfigUpdater.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ButtonCore/ButtonCore (1) (com.github.TBMCPlugins.ButtonCore).iml" filepath="$PROJECT_DIR$/ButtonCore/ButtonCore (1) (com.github.TBMCPlugins.ButtonCore).iml" />
+      <module fileurl="file://$PROJECT_DIR$/ButtonProcessor/ButtonProcessor.iml" filepath="$PROJECT_DIR$/ButtonProcessor/ButtonProcessor.iml" />
+    </modules>
+  </component>
+</project>

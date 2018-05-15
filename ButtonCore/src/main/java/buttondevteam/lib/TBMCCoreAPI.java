@@ -1,10 +1,8 @@
 package buttondevteam.lib;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.Map.Entry;
-
+import buttondevteam.core.MainPlugin;
+import buttondevteam.lib.player.ChromaGamerBase;
+import buttondevteam.lib.potato.DebugPotato;
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -12,9 +10,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
-import buttondevteam.core.MainPlugin;
-import buttondevteam.lib.player.ChromaGamerBase;
-import buttondevteam.lib.potato.DebugPotato;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map.Entry;
 
 public class TBMCCoreAPI {
 	static List<String> coders = new ArrayList<String>() {
@@ -67,8 +71,8 @@ public class TBMCCoreAPI {
 		return body;
 	}
 
-	private static HashMap<String, Throwable> exceptionsToSend = new HashMap<>();
-	private static List<String> debugMessagesToSend = new ArrayList<>();
+	private static final HashMap<String, Throwable> exceptionsToSend = new HashMap<>();
+	private static final List<String> debugMessagesToSend = new ArrayList<>();
 
 	/**
 	 * Send exception to the {@link TBMCExceptionEvent}.

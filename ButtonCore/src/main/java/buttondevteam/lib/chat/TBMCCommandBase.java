@@ -1,11 +1,10 @@
 package buttondevteam.lib.chat;
 
-import java.util.function.Function;
-
+import javassist.Modifier;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
-import javassist.Modifier;
+import java.util.function.Function;
 
 /**
  * Extend this class to create new TBMCCommand and use {@link TBMCChatAPI#AddCommand(org.bukkit.plugin.java.JavaPlugin, TBMCCommandBase)} to add it. <u><b>Note:</b></u> The command path (command name

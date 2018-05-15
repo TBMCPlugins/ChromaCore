@@ -1,12 +1,11 @@
 package buttondevteam.core;
 
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
-
 import buttondevteam.lib.PluginUpdater;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.TBMCCommandBase;
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 
 @CommandClass(modOnly = true)
 public class UpdatePluginCommand extends TBMCCommandBase {

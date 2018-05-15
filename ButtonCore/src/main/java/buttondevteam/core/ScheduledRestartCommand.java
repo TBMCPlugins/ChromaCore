@@ -1,5 +1,8 @@
 package buttondevteam.core;
 
+import buttondevteam.lib.ScheduledServerRestartEvent;
+import buttondevteam.lib.chat.CommandClass;
+import buttondevteam.lib.chat.TBMCCommandBase;
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarFlag;
@@ -7,10 +10,6 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.command.CommandSender;
 import org.bukkit.scheduler.BukkitTask;
-
-import buttondevteam.lib.ScheduledServerRestartEvent;
-import buttondevteam.lib.chat.CommandClass;
-import buttondevteam.lib.chat.TBMCCommandBase;
 
 @CommandClass(modOnly = true, path = "schrestart")
 public class ScheduledRestartCommand extends TBMCCommandBase {

@@ -1,10 +1,9 @@
 package buttondevteam.lib;
 
-import org.bukkit.command.CommandSender;
-import org.bukkit.event.HandlerList;
-
 import buttondevteam.lib.chat.Channel;
 import lombok.Getter;
+import org.bukkit.command.CommandSender;
+import org.bukkit.event.HandlerList;
 
 /**
  * Make sure to only send the message to users who {@link #shouldSendTo(CommandSender)} returns true.
