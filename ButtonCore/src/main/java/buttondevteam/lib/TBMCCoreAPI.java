@@ -71,8 +71,8 @@ public class TBMCCoreAPI {
 		return body;
 	}
 
-	private static final HashMap<String, Throwable> exceptionsToSend = new HashMap<>();
-	private static final List<String> debugMessagesToSend = new ArrayList<>();
+    private static final HashMap<String, Throwable> exceptionsToSend = new HashMap<>();
+    private static final List<String> debugMessagesToSend = new ArrayList<>();
 
 	/**
 	 * Send exception to the {@link TBMCExceptionEvent}.

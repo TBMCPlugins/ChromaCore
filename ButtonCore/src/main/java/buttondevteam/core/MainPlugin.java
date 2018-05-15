@@ -19,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class MainPlugin extends JavaPlugin {
 	public static MainPlugin Instance;
@@ -42,19 +41,19 @@ public class MainPlugin extends JavaPlugin {
 		TBMCChatAPI.AddCommand(this, ScheduledRestartCommand.class);
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
-		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fOOC§f", Color.White, "ooc", null));
-		Channel.GlobalChat.IDs = new String[]{"g"}; //Support /g as well
+        TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fOOC§f", Color.White, "ooc", null));
+        Channel.GlobalChat.IDs = new String[]{"g"}; //Support /g as well
 		TBMCChatAPI.RegisterChatChannel(
 				Channel.AdminChat = new Channel("§cADMIN§f", Color.Red, "a", Channel.inGroupFilter(null)));
 		TBMCChatAPI.RegisterChatChannel(
 				Channel.ModChat = new Channel("§9MOD§f", Color.Blue, "mod", Channel.inGroupFilter("mod")));
 		TBMCChatAPI.RegisterChatChannel(new Channel("§6DEV§", Color.Gold, "dev", Channel.inGroupFilter("developer")));
 		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§cRED", Color.DarkRed, "red"));
-		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§6ORANGE", Color.Gold, "orange"));
-		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§eYELLOW", Color.Yellow, "yellow"));
-		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§aGREEN", Color.Green, "green"));
-		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§bBLUE", Color.Blue, "blue"));
-		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§5PURPLE", Color.DarkPurple, "purple"));
+        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§6ORANGE", Color.Gold, "orange"));
+        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§eYELLOW", Color.Yellow, "yellow"));
+        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§aGREEN", Color.Green, "green"));
+        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§bBLUE", Color.Blue, "blue"));
+        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§5PURPLE", Color.DarkPurple, "purple"));
         try {
             Files.write(new File("plugins", "plugins.txt").toPath(), Arrays.stream(Bukkit.getPluginManager().getPlugins()).map(p -> (CharSequence) p.getDataFolder().getName())::iterator);
         } catch (IOException e) {
@@ -68,20 +67,20 @@ public class MainPlugin extends JavaPlugin {
 		logger.info("Saving player data...");
 		TBMCPlayerBase.savePlayers();
 		logger.info("Player data saved.");
-		new Thread(() -> {
-			File[] files = PluginUpdater.updatedir.listFiles();
-			if (files == null)
-				return;
-			System.out.println("Updating " + files.length + " plugins...");
-			for (File file : files) {
-				try {
+        new Thread(() -> {
+            File[] files = PluginUpdater.updatedir.listFiles();
+            if (files == null)
+                return;
+            System.out.println("Updating " + files.length + " plugins...");
+            for (File file : files) {
+                try {
                     Files.move(file.toPath(), new File("plugins", file.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
                     System.out.println("Updated " + file.getName());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			System.out.println("Update complete!");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            System.out.println("Update complete!");
         }).start();
 	}
 

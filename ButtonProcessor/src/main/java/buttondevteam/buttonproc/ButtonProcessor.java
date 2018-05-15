@@ -1,20 +1,17 @@
 package buttondevteam.buttonproc;
 
-import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
-
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic.Kind;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 
 @SupportedAnnotationTypes("buttondevteam.*")
 public class ButtonProcessor extends AbstractProcessor {

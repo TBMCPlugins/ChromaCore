@@ -56,7 +56,7 @@ public class CommandCaller implements CommandExecutor {
 			cmd = TBMCChatAPI.GetCommands().get(path);
 		}
 		if (cmd == null) {
-			if (subcmds == null || subcmds.length > 0)
+			if (subcmds.length > 0) //Subcmds will always have value here (see assignment above)
 				sender.sendMessage(subcmds);
 			else {
 				final String errormsg = "§cYou don't have access to any of this command's subcommands or it doesn't have any.";

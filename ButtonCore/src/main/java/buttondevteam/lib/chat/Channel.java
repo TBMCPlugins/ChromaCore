@@ -91,7 +91,7 @@ public class Channel {
 
     static void RegisterChannel(Channel channel) {
         channels.add(channel);
-        Bukkit.getScheduler().runTask(Bukkit.getPluginManager().callEvent(new ChatChannelRegisterEvent(channel))); // Wait for server start
+        Bukkit.getScheduler().runTask(MainPlugin.Instance, () -> Bukkit.getPluginManager().callEvent(new ChatChannelRegisterEvent(channel))); // Wait for server start
     }
 
     public static class RecipientTestResult {

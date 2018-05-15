@@ -46,11 +46,6 @@
 						<configuration>
 							<artifactSet>
 							</artifactSet>
-							<pluginExecution>
-								<action>
-									<execute />
-								</action>
-							</pluginExecution>
 						</configuration>
 					</execution>
 				</executions>

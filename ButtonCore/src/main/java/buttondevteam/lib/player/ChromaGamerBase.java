@@ -66,7 +66,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	}
 
 	/**
-	 * Use {@link #data()} or {@link #data(String)} where possible; the 'id' must be always set
+     * Use {@link #data(Object)} or {@link #data(String, Object)} where possible; the 'id' must be always set
 	 */
 	protected YamlConfiguration plugindata;
 

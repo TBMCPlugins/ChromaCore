@@ -22,15 +22,15 @@ public class PluginUpdater {
 	private PluginUpdater() {
 	}
 
-	public static final File updatedir = new File("TBMC", "pluginupdates");
+    public static final File updatedir = new File("TBMC", "pluginupdates");
 	/**
 	 * See {@link TBMCCoreAPI#UpdatePlugin(String, CommandSender, String)}
 	 */
 	public static boolean UpdatePlugin(String name, CommandSender sender, String branch) {
-		if (!updatedir.exists() && !updatedir.mkdirs()) {
-			error(sender, "Failed to create update directory!");
-			return false;
-		}
+        if (!updatedir.exists() && !updatedir.mkdirs()) {
+            error(sender, "Failed to create update directory!");
+            return false;
+        }
 		info(sender, "Checking plugin name...");
 		List<String> plugins = GetPluginNames();
 		String correctname = null;
@@ -60,32 +60,32 @@ public class PluginUpdater {
 			return false;
 		}
 		info(sender, "Updating TBMC plugin: " + correctname + " from " + correctbranch.get());
-		return updatePluginJitPack(sender, correctname, correctbranch.get());
+        return updatePluginJitPack(sender, correctname, correctbranch.get());
 	}
 
 	private static boolean updatePluginJitPack(CommandSender sender, String correctname,
-											   String correctbranch) {
+                                               String correctbranch) {
 		URL url;
-		File result = new File(updatedir, correctname + ".jar");
+        File result = new File(updatedir, correctname + ".jar");
 		try {
 			url = new URL("https://jitpack.io/com/github/TBMCPlugins/"
 					+ (correctname.equals("ButtonCore") ? "ButtonCore/ButtonCore" : correctname) + "/"
-					+ correctbranch + "-SNAPSHOT/" + correctname + "-" + correctbranch + "-SNAPSHOT.jar"); // ButtonCore exception required since it hosts Towny as well
+                    + correctbranch + "-SNAPSHOT/" + correctname + "-" + correctbranch + "-SNAPSHOT.jar"); // ButtonCore exception required since it hosts Towny as well
 			FileUtils.copyURLToFile(url, result);
 			if (!result.exists() || result.length() < 25) {
 				result.delete();
-				error(sender, "The downloaded JAR for " + correctname + " from " + correctbranch
+                error(sender, "The downloaded JAR for " + correctname + " from " + correctbranch
 						+ " is too small (smnaller than 25 bytes). Am I downloading from the right place?");
 				return false;
 			} else {
-				info(sender, "Updating plugin " + correctname + " from " + correctbranch + " done!");
+                info(sender, "Updating plugin " + correctname + " from " + correctbranch + " done!");
 				return true;
 			}
 		} catch (FileNotFoundException e) {
 			error(sender,
-					"Can't find JAR for " + correctname + " from " + correctbranch
+                    "Can't find JAR for " + correctname + " from " + correctbranch
 							+ ", the build probably failed. Build log (scroll to bottom):" + "\n"
-							+ "https://jitpack.io/com/github/TBMCPlugins/" + correctname + "/" + correctbranch
+                            + "https://jitpack.io/com/github/TBMCPlugins/" + correctname + "/" + correctbranch
 							+ "-SNAPSHOT/build.log\nIf you'd like to rebuild the same commit, go to:\nhttps://jitpack.io/#TBMCPlugins/"
 							+ correctname + "\nAnd delete the newest build.");
 		} catch (IOException e) {

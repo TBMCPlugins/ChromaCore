@@ -7,7 +7,7 @@ import org.bukkit.event.HandlerList;
 
 /**
  * <p>
- * This event gets called (ideally) each time an exception occurs in a TBMC plugin. To call it, use {@link TBMCCoreAPI#SendException(String, Exception)}.
+ * This event gets called (ideally) each time an exception occurs in a TBMC plugin. To call it, use {@link TBMCCoreAPI#SendException(String, Throwable)}.
  * </p>
  * 
  * @author Norbi
