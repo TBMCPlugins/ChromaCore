@@ -10,8 +10,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-import java.util.Iterator;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -130,16 +128,16 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 		} else if (!p.getName().equals(player.PlayerName().get())) {
 			Bukkit.getLogger().info("Renaming " + player.PlayerName().get() + " to " + p.getName());
 			TownyUniverse tu = Towny.getPlugin(Towny.class).getTownyUniverse();
-			Resident resident = tu.getResidentMap().get(player.PlayerName().get());
+            Resident resident = tu.getResidentMap().get(player.PlayerName().get().toLowerCase()); //The map keys are lowercase
 			if (resident == null) {
 				Bukkit.getLogger().warning("Resident not found - couldn't rename in Towny.");
 				TBMCCoreAPI.sendDebugMessage("Resident not found - couldn't rename in Towny.");
-			} else if (tu.getResidentMap().contains(p.getName())) {
+            } else if (tu.getResidentMap().contains(p.getName().toLowerCase())) {
 				Bukkit.getLogger().warning("Target resident name is already in use."); // TODO: Handle
 				TBMCCoreAPI.sendDebugMessage("Target resident name is already in use.");
 			} else
 				try {
-					TownyUniverse.getDataSource().renamePlayer(resident, p.getName());
+                    TownyUniverse.getDataSource().renamePlayer(resident, p.getName()); //Fixed in Towny 0.91.1.2
 				} catch (AlreadyRegisteredException e) {
 					TBMCCoreAPI.SendException("Failed to rename resident, there's already one with this name.", e);
 				} catch (NotRegisteredException e) {
@@ -163,16 +161,11 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 		final TBMCPlayerBase player = playermap.get(p.getUniqueId() + "-" + TBMCPlayer.class.getSimpleName());
 		player.save();
 		Bukkit.getServer().getPluginManager().callEvent(new TBMCPlayerQuitEvent(player, p));
-		Iterator<Entry<String, TBMCPlayerBase>> it = playermap.entrySet().iterator();
-		while (it.hasNext()) {
-			Entry<String, TBMCPlayerBase> entry = it.next();
-			if (entry.getKey().startsWith(p.getUniqueId().toString()))
-				it.remove();
-		}
+        playermap.entrySet().removeIf(entry -> entry.getKey().startsWith(p.getUniqueId().toString()));
 	}
 
 	public static void savePlayers() {
-		playermap.values().stream().forEach(p -> {
+        playermap.values().forEach(p -> {
 			try {
 				p.close();
 			} catch (Exception e) {
@@ -213,4 +206,119 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 		if (keys.size() > 1) // PlayerName is always saved, but we don't need a file for just that
 			super.close();
 	}
+
+	/*private static void renameInTowny(TBMCPlayerBase player, Resident resident, String newName, TownyDatabaseHandler tdh) throws Exception {
+		val field=TownyDataSource.class.getDeclaredField("lock"); //TODO: Remove
+		field.setAccessible(true);
+		Lock lock=(Lock)field.get(tdh);
+				lock.lock(); //From Towny, removed the economy part, as that works by UUIDs
+		String oldName = resident.getName();
+
+		try {
+			String filteredName;
+			try {
+				filteredName = NameValidation.checkAndFilterName(newName);
+			} catch (InvalidNameException var39) {
+				throw new NotRegisteredException(var39.getMessage());
+			}
+
+			double balance = 0.0D;
+			Town town = null;
+			long registered = 0L;
+			long lastOnline = 0L;
+			boolean isMayor = false;
+			boolean isJailed = false;
+			int JailSpawn = 0;
+ 			//Don't do anything with economy balance as that works based on UUIDs
+			List<Resident> friends = resident.getFriends();
+			List<String> nationRanks = resident.getNationRanks();
+			TownyPermission permissions = resident.getPermissions();
+			String surname = resident.getSurname();
+			String title = resident.getTitle();
+			if (resident.hasTown()) {
+				town = resident.getTown();
+			}
+
+			List<TownBlock> townBlocks = resident.getTownBlocks();
+			List<String> townRanks = resident.getTownRanks();
+			registered = resident.getRegistered();
+			lastOnline = resident.getLastOnline();
+			isMayor = resident.isMayor();
+			isJailed = resident.isJailed();
+			int JailSpawn = resident.getJailSpawn();
+			this.deleteResident(resident);
+			this.universe.getResidentMap().remove(oldName.toLowerCase());
+			resident.setName(filteredName);
+			this.universe.getResidentMap().put(filteredName.toLowerCase(), resident);
+			if (transferBalance && TownySettings.isUsingEconomy()) {
+				try {
+					resident.setBalance(balance, "Rename Player - Transfer to new account");
+				} catch (EconomyException var37) {
+					var37.printStackTrace();
+				}
+			}
+
+			resident.setFriends(friends);
+			resident.setNationRanks(nationRanks);
+			resident.setPermissions(permissions.toString());
+			resident.setSurname(surname);
+			resident.setTitle(title);
+			resident.setTown(town);
+			resident.setTownblocks(townBlocks);
+			resident.setTownRanks(townRanks);
+			resident.setRegistered(registered);
+			resident.setLastOnline(lastOnline);
+			if (isMayor) {
+				try {
+					town.setMayor(resident);
+				} catch (TownyException var36) {
+					;
+				}
+			}
+
+			resident.setJailed(isJailed);
+			resident.setJailSpawn(JailSpawn);
+			this.saveResidentList();
+			this.saveResident(resident);
+			if (town != null) {
+				this.saveTown(town);
+			}
+
+			Iterator i$ = townBlocks.iterator();
+
+			while(i$.hasNext()) {
+				TownBlock tb = (TownBlock)i$.next();
+				this.saveTownBlock(tb);
+			}
+
+			Resident oldResident = new Resident(oldName);
+			List<Resident> toSaveResident = new ArrayList(this.getResidents());
+			Iterator i$ = toSaveResident.iterator();
+
+			Resident toCheck;
+			while(i$.hasNext()) {
+				toCheck = (Resident)i$.next();
+				if (toCheck.hasFriend(oldResident)) {
+					try {
+						toCheck.removeFriend(oldResident);
+						toCheck.addFriend(resident);
+					} catch (NotRegisteredException var35) {
+						var35.printStackTrace();
+					}
+				}
+			}
+
+			i$ = toSaveResident.iterator();
+
+			while(i$.hasNext()) {
+				toCheck = (Resident)i$.next();
+				this.saveResident(toCheck);
+			}
+		} finally {
+			this.lock.unlock();
+		}
+
+		BukkitTools.getPluginManager().callEvent(new RenameResidentEvent(oldName, resident));
+		this.universe.setChangedNotify(TownyObservableType.RENAME_RESIDENT);
+	}*/
 }
