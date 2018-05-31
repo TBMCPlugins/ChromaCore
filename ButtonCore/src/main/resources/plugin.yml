@@ -7,3 +7,5 @@ commands:
     description: Update a TBMC plugin
   schrestart:
     description: Schedules a restart for a given time.
+  primerestart:
+    description: Restarts the server as soon as nobody is online.

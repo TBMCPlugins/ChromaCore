@@ -39,6 +39,7 @@ public class MainPlugin extends JavaPlugin {
 		saveConfig();
 		TBMCChatAPI.AddCommand(this, UpdatePluginCommand.class);
 		TBMCChatAPI.AddCommand(this, ScheduledRestartCommand.class);
+		TBMCChatAPI.AddCommand(this, PrimeRestartCommand.class);
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
         TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fOOC§f", Color.White, "ooc", null));

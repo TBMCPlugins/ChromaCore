@@ -19,6 +19,10 @@ public class PlayerListener implements Listener {
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void OnPlayerLeave(PlayerQuitEvent event) {
 		TBMCPlayerBase.quitPlayer(event.getPlayer());
+		if (PrimeRestartCommand.isPlsrestart() && Bukkit.getOnlinePlayers().size() <= 1) {
+			Bukkit.broadcastMessage("§cNobody is online anymore. Restarting.");
+			Bukkit.spigot().restart();
+		}
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
