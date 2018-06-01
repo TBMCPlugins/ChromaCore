@@ -7,12 +7,14 @@ import buttondevteam.lib.chat.ChatRoom;
 import buttondevteam.lib.chat.Color;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.player.TBMCPlayerBase;
+import com.earth2me.essentials.Essentials;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,8 +24,10 @@ import java.util.logging.Logger;
 
 public class MainPlugin extends JavaPlugin {
 	public static MainPlugin Instance;
-	public static Permission permission;
+    @Nullable
+    public static Permission permission;
 	public static boolean Test;
+    public static Essentials ess;
 
 	private PluginDescriptionFile pdfFile;
 	private Logger logger;
@@ -60,6 +64,7 @@ public class MainPlugin extends JavaPlugin {
         } catch (IOException e) {
             TBMCCoreAPI.SendException("Failed to write plugin list!", e);
         }
+        ess = Essentials.getPlugin(Essentials.class);
 		logger.info(pdfFile.getName() + " has been Enabled (V." + pdfFile.getVersion() + ") Test: " + Test + ".");
 	}
 

@@ -37,6 +37,8 @@ public class CommandCaller implements CommandExecutor {
 			else {
 				pc.setExecutor(instance);
 				String[] helptext = cmd.GetHelpText(topcmd);
+                if (helptext == null || helptext.length == 0)
+                    throw new Exception("Command " + cmd.GetCommandPath() + " has no help text!");
 				pc.setUsage(helptext.length > 1 ? helptext[1] : helptext[0]);
 			}
 		}
@@ -64,7 +66,7 @@ public class CommandCaller implements CommandExecutor {
 			}
 			return true;
 		}
-		if (cmd.isModOnly() && !MainPlugin.permission.has(sender, "tbmc.admin")) {
+        if (cmd.isModOnly() && (MainPlugin.permission != null ? !MainPlugin.permission.has(sender, "tbmc.admin") : !sender.isOp())) {
 			sender.sendMessage("§cYou need to be a mod to use this command.");
 			return true;
 		}

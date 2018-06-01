@@ -28,6 +28,9 @@ public class PrimeRestartCommand extends TBMCCommandBase {
 
     @Override
     public String[] GetHelpText(String alias) {
-        return new String[0];
+        return new String[]{ //
+                "§6---- Prime restart ----", //
+                "Restarts the server as soon as nobody is online." //
+        };
     }
 }

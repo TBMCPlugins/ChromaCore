@@ -71,7 +71,7 @@ public class Channel {
     public static Function<CommandSender, RecipientTestResult> inGroupFilter(String permgroup) {
         return noScoreResult(
                 s -> s.isOp() || (permgroup != null
-                        ? s instanceof Player && MainPlugin.permission.playerInGroup((Player) s, permgroup) : false),
+                        ? s instanceof Player && MainPlugin.permission != null && MainPlugin.permission.playerInGroup((Player) s, permgroup) : false),
                 "You need to be a(n) " + (permgroup != null ? permgroup : "OP") + " to use this channel.");
     }
 

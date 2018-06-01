@@ -87,6 +87,10 @@
 			<id>vault-repo</id>
 			<url>http://nexus.hc.to/content/repositories/pub_releases</url>
 		</repository>
+		<repository>
+			<id>ess-repo</id>
+			<url>http://repo.ess3.net/content/repositories/essrel/</url>
+		</repository>
 	</repositories>
 	<dependencies>
 		<dependency>
@@ -143,6 +147,12 @@
 			<groupId>com.github.TBMCPlugins.ButtonCore</groupId>
 			<artifactId>ButtonProcessor</artifactId>
 			<version>master-SNAPSHOT</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.ess3</groupId>
+			<artifactId>Essentials</artifactId>
+			<version>2.13.1</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
