@@ -1,8 +1,10 @@
 package buttondevteam.core;
 
 import buttondevteam.lib.TBMCSystemChatEvent;
+import buttondevteam.lib.chat.IDiscordSender;
 import buttondevteam.lib.player.TBMCPlayerBase;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Statistic;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -26,15 +28,24 @@ public class PlayerListener implements Listener {
                 || event.getPlayer().getStatistic(Statistic.PLAY_ONE_TICK) > 20 * 3600 * 12)) {
             permission.playerAddGroup(null, event.getPlayer(), "member");
             event.getPlayer().sendMessage("§bYou are a member now. YEEHAW");
+            MainPlugin.Instance.getLogger().info("Added " + event.getPlayer().getName() + " as a member.");
         }
 	}
 
+    private long lasttime = 0;
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void OnPlayerLeave(PlayerQuitEvent event) {
 		TBMCPlayerBase.quitPlayer(event.getPlayer());
-		if (PrimeRestartCommand.isPlsrestart() && Bukkit.getOnlinePlayers().size() <= 1) {
-			Bukkit.broadcastMessage("§cNobody is online anymore. Restarting.");
-			Bukkit.spigot().restart();
+        if (PrimeRestartCommand.isPlsrestart()
+                && !event.getQuitMessage().equalsIgnoreCase("Server closed")
+                && !event.getQuitMessage().equalsIgnoreCase("Server is restarting")) {
+            if (Bukkit.getOnlinePlayers().size() <= 1) {
+                Bukkit.broadcastMessage("§cNobody is online anymore. Restarting.");
+                Bukkit.spigot().restart();
+            } else if (!(event.getPlayer() instanceof IDiscordSender) && System.nanoTime() - 10 * 1000000000L - lasttime > 0) { //Ten seconds passed since last reminder
+                lasttime = System.nanoTime();
+                Bukkit.broadcastMessage(ChatColor.DARK_RED + "The server will restart as soon as nobody is online.");
+            }
 		}
 	}
 
