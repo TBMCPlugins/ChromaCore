@@ -13,8 +13,8 @@ import org.bukkit.event.HandlerList;
  */
 @Getter
 public class TBMCChatEvent extends TBMCChatEventBase {
-	public TBMCChatEvent(CommandSender sender, Channel channel, String message, int score, boolean fromcmd) {
-		super(channel, message, score);
+	public TBMCChatEvent(CommandSender sender, Channel channel, String message, int score, boolean fromcmd, String groupid) {
+		super(channel, message, score, groupid);
 		this.sender = sender;
 		this.fromcmd = fromcmd;
 	}

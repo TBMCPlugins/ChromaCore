@@ -51,9 +51,9 @@ public class PlayerListener implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onSystemChat(TBMCSystemChatEvent event) {
-		if (event.isHandled())
-			return; // Only handle here if ButtonChat couldn't
-		Bukkit.getOnlinePlayers().stream().filter(p -> event.shouldSendTo(p))
-				.forEach(p -> p.sendMessage(event.getChannel().DisplayName.substring(0, 2) + event.getMessage()));
-	}
+        if (event.isHandled())
+            return; // Only handle here if ButtonChat couldn't
+        Bukkit.getOnlinePlayers().stream().filter(p -> event.shouldSendTo(p))
+                .forEach(p -> p.sendMessage(event.getChannel().DisplayName.substring(0, 2) + event.getMessage()));
+    }
 }

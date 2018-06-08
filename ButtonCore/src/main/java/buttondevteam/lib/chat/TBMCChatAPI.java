@@ -221,7 +221,8 @@ public class TBMCChatAPI {
 	}
 
 	/**
-	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.
+	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.<br>
+	 *     This will also send the error message to the sender, if they can't send the message.
 	 *
 	 * @param channel     The channel to send to
 	 * @param sender      The sender to send from
@@ -236,10 +237,11 @@ public class TBMCChatAPI {
 		Bukkit.getPluginManager().callEvent(eventPre);
 		if (eventPre.isCancelled())
 			return true;
-		int score = getScoreOrSendError(channel, sender);
-		if (score == -1)
+		RecipientTestResult rtr = getScoreOrSendError(channel, sender);
+		int score = rtr.score;
+		if (score == -1 || rtr.groupID == null)
 			return true;
-		TBMCChatEvent event = new TBMCChatEvent(sender, channel, eventPre.getMessage(), score, fromcommand);
+		TBMCChatEvent event = new TBMCChatEvent(sender, channel, eventPre.getMessage(), score, fromcommand, rtr.groupID);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
 	}
@@ -255,27 +257,23 @@ public class TBMCChatAPI {
 	 *            The message to send
 	 * @return The event cancelled state
 	 */
-	public static boolean SendSystemMessage(Channel channel, int score, String message) {
+	public static boolean SendSystemMessage(Channel channel, int score, String groupid, String message) {
 		if (!Channel.getChannels().contains(channel))
 			throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
-		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, score);
+		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, score, groupid);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
 	}
 
-	private static int getScoreOrSendError(Channel channel, CommandSender sender) {
-		int score;
+	private static RecipientTestResult getScoreOrSendError(Channel channel, CommandSender sender) {
 		if (channel.filteranderrormsg == null)
-			score = 0;
+			return new RecipientTestResult(0, "everyone");
 		else {
 			RecipientTestResult result = channel.filteranderrormsg.apply(sender);
-			if (result.errormessage != null) {
+			if (result.errormessage != null)
 				sender.sendMessage("§c" + result.errormessage);
-				return -1;
-			}
-			score = result.score;
+			return result;
 		}
-		return score;
 	}
 
 	/**

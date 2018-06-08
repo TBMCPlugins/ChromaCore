@@ -77,12 +77,12 @@ public class Channel {
 
     public static Function<CommandSender, RecipientTestResult> noScoreResult(Predicate<CommandSender> filter,
                                                                              String errormsg) {
-        return s -> filter.test(s) ? new RecipientTestResult(0) : new RecipientTestResult(errormsg);
+        return s -> filter.test(s) ? new RecipientTestResult(0, "everyone") : new RecipientTestResult(errormsg);
     }
 
     public static <T extends Channel> BiFunction<T, CommandSender, RecipientTestResult> noScoreResult(
             BiPredicate<T, CommandSender> filter, String errormsg) {
-        return (this_, s) -> filter.test(this_, s) ? new RecipientTestResult(0) : new RecipientTestResult(errormsg);
+        return (this_, s) -> filter.test(this_, s) ? new RecipientTestResult(0, "everyone") : new RecipientTestResult(errormsg);
     }
 
     public static Channel GlobalChat;
@@ -97,6 +97,7 @@ public class Channel {
     public static class RecipientTestResult {
         public String errormessage = null;
         public int score = -1; // Anything below 0 is "never send"
+        public String groupID = null;
 
         /**
          * Creates a result that indicates an <b>error</b>
@@ -111,9 +112,11 @@ public class Channel {
          * Creates a result that indicates a <b>success</b>
          *
          * @param score The score that identifies the target group. For example, the index of the town or nation to send to.
+         * @param groupID The ID of the target group.
          */
-        public RecipientTestResult(int score) {
+        public RecipientTestResult(int score, String groupID) {
             this.score = score;
+            this.groupID = groupID;
         }
     }
 }
