@@ -48,12 +48,14 @@ public abstract class TBMCChatEventBase extends Event implements Cancellable {
     }
 
     /**
-     * Note: Errors are sent to the sender automatically
+     * Note: Errors are sent to the sender automatically<br>
+     *
+     * Null means don't send
      */
     @Nullable
     public String getGroupID(CommandSender sender) {
         if (channel.filteranderrormsg == null)
-            return null;
+            return "everyone";
         RecipientTestResult result = channel.filteranderrormsg.apply(sender);
         return result.errormessage == null ? result.groupID : null;
     }

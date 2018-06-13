@@ -231,19 +231,42 @@ public class TBMCChatAPI {
 	 * @return The event cancelled state
 	 */
 	public static boolean SendChatMessage(Channel channel, CommandSender sender, String message, boolean fromcommand) {
+		return sendChatMessageInternal(channel, sender, message, fromcommand, sender);
+	}
+
+	private static boolean sendChatMessageInternal(Channel channel, CommandSender sender, String message, boolean fromcommand, CommandSender permcheck) {
 		if (!Channel.getChannels().contains(channel))
 			throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
+		RecipientTestResult rtr = getScoreOrSendError(channel, permcheck);
+		int score = rtr.score;
+		if (score == -1 || rtr.groupID == null)
+			return true;
 		TBMCChatPreprocessEvent eventPre = new TBMCChatPreprocessEvent(sender, channel, message);
 		Bukkit.getPluginManager().callEvent(eventPre);
 		if (eventPre.isCancelled())
 			return true;
-		RecipientTestResult rtr = getScoreOrSendError(channel, sender);
-		int score = rtr.score;
-		if (score == -1 || rtr.groupID == null)
-			return true;
-		TBMCChatEvent event = new TBMCChatEvent(sender, channel, eventPre.getMessage(), score, fromcommand, rtr.groupID);
+		TBMCChatEvent event;
+		if (permcheck == sender)
+			event = new TBMCChatEvent(sender, channel, eventPre.getMessage(), score, fromcommand, rtr.groupID);
+		else
+			event = new TBMCChatEvent(sender, channel, eventPre.getMessage(), score, fromcommand, rtr.groupID, true);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
+	}
+
+	/**
+	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.<br>
+	 * This will not check if the sender has permission.
+	 *
+	 * @param channel     The channel to send to
+	 * @param sender      The sender to send from
+	 * @param message     The message to send
+	 * @param fromcommand Whether this message comes from running a command, used to determine whether to delete Discord messages for example
+	 * @param permcheck   The sender to check permissions
+	 * @return The event cancelled state
+	 */
+	public static boolean SendChatMessageDontCheckSender(Channel channel, CommandSender sender, String message, boolean fromcommand, CommandSender permcheck) {
+		return sendChatMessageInternal(channel, sender, message, fromcommand, permcheck);
 	}
 
 	/**
