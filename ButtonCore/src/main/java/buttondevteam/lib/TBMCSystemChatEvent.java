@@ -19,8 +19,8 @@ public class TBMCSystemChatEvent extends TBMCChatEventBase {
 		handled = true;
 	}
 
-	public TBMCSystemChatEvent(Channel channel, String message, int score) { // TODO: RIch message
-		super(channel, message, score);
+	public TBMCSystemChatEvent(Channel channel, String message, int score, String groupid) { // TODO: Rich message
+		super(channel, message, score, groupid);
 	}
 
 	private static final HandlerList handlers = new HandlerList();
