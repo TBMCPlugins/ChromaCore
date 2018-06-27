@@ -1,22 +1,21 @@
-package randomTP;
+package buttondevteam.core;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.command.Command;
+import buttondevteam.lib.chat.CommandClass;
+import buttondevteam.lib.chat.TBMCChatAPI;
+import buttondevteam.lib.chat.TBMCCommandBase;
+import org.bukkit.*;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_12_R1.CraftWorld;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import net.minecraft.server.v1_12_R1.WorldBorder;
-
-public class Main extends JavaPlugin
+// @formatter:off
+@CommandClass
+public class RandomTP extends TBMCCommandBase
 {
 	private final int 		radius = 70; //set how far apart the five teleport positions are
 	
-	private CraftWorld		world;
-	private WorldBorder 	border;
+	private World			world;
+	private WorldBorder		border;
 	private double 			size, 
 							usableSize,
 							borderCenterX,
@@ -49,21 +48,32 @@ public class Main extends JavaPlugin
 	private StringBuilder	availableDirections = new StringBuilder(5);
 	private char[]			chars = {1,2,3,4,5};
 	private int 			dir;
-	
+
 	/*================================================================================================*/
-	
-	public void onEnable()
+
+	public void onEnable(JavaPlugin plugin)
 	{
-		getCommand("randomtp").setExecutor(this);
-		
-		world = (CraftWorld) Bukkit.getWorld("World");
-		border = world.getHandle().getWorldBorder();
+		TBMCChatAPI.AddCommand(plugin, this);
+
+		world = Bukkit.getWorld("World");
+		border = world.getWorldBorder();
 		newLocation();
+	}
+
+	/*================================================================================================*/
+
+	public String[] GetHelpText(String alias)
+	{
+		return new String[]
+				{
+						"§6---- Random Teleport ----",
+						"Teleport player to random location within world border. Every five players teleport to the same general area, and then a new general area is randomly selected for the next five players."
+				};
 	}
 	
 	/*================================================================================================*/
 		
-	public boolean onCommand(CommandSender sender, Command label, String command, String[] args)
+	public boolean OnCommand(CommandSender sender, String command, String[] args)
 	{
 		if (args.length == 0) 	return false;
 		
@@ -84,8 +94,8 @@ public class Main extends JavaPlugin
 		//if border has changed, or no positions available, find new location
 		if ((centerUsed && northUsed && southUsed && eastUsed && westUsed) ||
 			
-			(borderCenterX != border.getCenterX() ||  
-			 borderCenterZ != border.getCenterZ() ||
+			(borderCenterX != border.getCenter().getX() ||
+			 borderCenterZ != border.getCenter().getZ() ||
 			 size          != border.getSize())
 			
 			&& !newLocation()) 
@@ -123,15 +133,15 @@ public class Main extends JavaPlugin
 	{
 		size          = border.getSize();
 		usableSize    = size - (radius * 2);
-		borderCenterX = border.getCenterX();
-		borderCenterZ = border.getCenterZ();
+		borderCenterX = border.getCenter().getX();
+		borderCenterZ = border.getCenter().getZ();
 		
 		//maximum ten thousand attempts
 		for (int i = 0; i < 10000; i++)
 		{
 			//choose an x and z inside the current world border, allowing a margin for the outer positions
-			centerX = (int) (Math.floor((Math.random() - 0.5) * usableSize) + border.getCenterX());
-			centerZ = (int) (Math.floor((Math.random() - 0.5) * usableSize) + border.getCenterZ());
+			centerX = (int) (Math.floor((Math.random() - 0.5) * usableSize) + border.getCenter().getX());
+			centerZ = (int) (Math.floor((Math.random() - 0.5) * usableSize) + border.getCenter().getZ());
 			
 			//get center of block
 			x = centerX + .5;

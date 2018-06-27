@@ -65,6 +65,7 @@ public class MainPlugin extends JavaPlugin {
             TBMCCoreAPI.SendException("Failed to write plugin list!", e);
         }
         ess = Essentials.getPlugin(Essentials.class);
+		new RandomTP().onEnable(this); //It registers it's command
 		logger.info(pdfFile.getName() + " has been Enabled (V." + pdfFile.getVersion() + ") Test: " + Test + ".");
 	}
 
