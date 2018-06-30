@@ -16,6 +16,8 @@
       <module name="ButtonCore" target="1.5" />
       <module name="ButtonCore (1) (com.github.TBMCPlugins.ButtonCore)" target="1.8" />
       <module name="ButtonProcessor" target="1.8" />
+      <module name="ChunkArchive" target="1.8" />
+      <module name="RandomTeleport" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
