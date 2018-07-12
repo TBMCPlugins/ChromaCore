@@ -40,7 +40,7 @@ public abstract class TBMCCommandBase {
 		return path;
 	}
 
-	private final String getcmdpath() {
+    private String getcmdpath() {
 		if (!getClass().isAnnotationPresent(CommandClass.class))
 			throw new RuntimeException(
 					"No @CommandClass annotation on command class " + getClass().getSimpleName() + "!");
@@ -72,11 +72,10 @@ public abstract class TBMCCommandBase {
 	}
 
 	public final boolean isPlayerOnly() {
-		return this instanceof PlayerCommandBase ? true
-				: this instanceof OptionallyPlayerCommandBase
-						? getClass().isAnnotationPresent(OptionallyPlayerCommandClass.class)
-								? getClass().getAnnotation(OptionallyPlayerCommandClass.class).playerOnly() : true
-						: false;
+        return this instanceof PlayerCommandBase ||
+                (this instanceof OptionallyPlayerCommandBase &&
+                        (!getClass().isAnnotationPresent(OptionallyPlayerCommandClass.class)
+                                || getClass().getAnnotation(OptionallyPlayerCommandClass.class).playerOnly()));
 	}
 
 	private final boolean modonly;
@@ -88,7 +87,7 @@ public abstract class TBMCCommandBase {
 		return modonly;
 	}
 
-	private final boolean ismodonly() {
+    private boolean ismodonly() {
 		if (!getClass().isAnnotationPresent(CommandClass.class))
 			throw new RuntimeException(
 					"No @CommandClass annotation on command class " + getClass().getSimpleName() + "!");

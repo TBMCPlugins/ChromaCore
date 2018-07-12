@@ -24,7 +24,7 @@ public class Channel {
      */
     public final Function<CommandSender, RecipientTestResult> filteranderrormsg;
 
-    private static List<Channel> channels = new ArrayList<>();
+    private static final List<Channel> channels = new ArrayList<>();
 
     /**
      * Creates a channel.
@@ -66,12 +66,11 @@ public class Channel {
      * generated automatically.
      *
      * @param permgroup The group that can access the channel or <b>null</b> to only allow OPs.
-     * @return
+     * @return If has access
      */
     public static Function<CommandSender, RecipientTestResult> inGroupFilter(String permgroup) {
         return noScoreResult(
-                s -> s.isOp() || (permgroup != null
-                        ? s instanceof Player && MainPlugin.permission != null && MainPlugin.permission.playerInGroup((Player) s, permgroup) : false),
+                s -> s.isOp() || (permgroup != null && (s instanceof Player && MainPlugin.permission != null && MainPlugin.permission.playerInGroup((Player) s, permgroup))),
                 "You need to be a(n) " + (permgroup != null ? permgroup : "OP") + " to use this channel.");
     }
 

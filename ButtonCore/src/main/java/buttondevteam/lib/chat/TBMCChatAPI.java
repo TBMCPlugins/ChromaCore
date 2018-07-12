@@ -7,6 +7,7 @@ import buttondevteam.lib.TBMCChatPreprocessEvent;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.TBMCSystemChatEvent;
 import buttondevteam.lib.chat.Channel.RecipientTestResult;
+import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -26,7 +27,7 @@ import java.util.function.Consumer;
 
 public class TBMCChatAPI {
 
-	private static HashMap<String, TBMCCommandBase> commands = new HashMap<String, TBMCCommandBase>();
+    private static final HashMap<String, TBMCCommandBase> commands = new HashMap<>();
 
 	public static HashMap<String, TBMCCommandBase> GetCommands() {
 		return commands;
@@ -77,7 +78,7 @@ public class TBMCChatAPI {
 					addToCmds.accept("/" + cmd.getKey());
 			}
 		}
-		return cmds.toArray(new String[cmds.size()]);
+        return cmds.toArray(new String[0]); //Apparently it's faster to use an empty array in modern Java
 	}
 
 	/**
@@ -149,7 +150,7 @@ public class TBMCChatAPI {
 		try {
 			TBMCCommandBase c;
 			if (params.length > 0)
-				c = thecmdclass.getConstructor(Arrays.stream(params).map(p -> p.getClass()).toArray(Class[]::new))
+                c = thecmdclass.getConstructor(Arrays.stream(params).map(Object::getClass).toArray(Class[]::new))
 						.newInstance(params);
 			else
 				c = thecmdclass.newInstance();
@@ -206,67 +207,28 @@ public class TBMCChatAPI {
 	}
 
 	/**
-	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.
-	 *
-	 * @param channel
-	 *            The channel to send to
-	 * @param sender
-	 *            The sender to send from
-	 * @param message
-	 *            The message to send
-	 * @return The event cancelled state
-	 */
-	public static boolean SendChatMessage(Channel channel, CommandSender sender, String message) {
-		return SendChatMessage(channel, sender, message, false);
-	}
-
-	/**
 	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.<br>
 	 *     This will also send the error message to the sender, if they can't send the message.
 	 *
-	 * @param channel     The channel to send to
-	 * @param sender      The sender to send from
-	 * @param message     The message to send
-	 * @param fromcommand Whether this message comes from running a command, used to determine whether to delete Discord messages for example
+     * @param cm The message to send
 	 * @return The event cancelled state
 	 */
-	public static boolean SendChatMessage(Channel channel, CommandSender sender, String message, boolean fromcommand) {
-		return sendChatMessageInternal(channel, sender, message, fromcommand, sender);
-	}
-
-	private static boolean sendChatMessageInternal(Channel channel, CommandSender sender, String message, boolean fromcommand, CommandSender permcheck) {
-		if (!Channel.getChannels().contains(channel))
-			throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
-		RecipientTestResult rtr = getScoreOrSendError(channel, permcheck);
+    public static boolean SendChatMessage(ChatMessage cm) {
+        if (!Channel.getChannels().contains(cm.getChannel()))
+            throw new RuntimeException("Channel " + cm.getChannel().DisplayName + " not registered!");
+        val permcheck = cm.getPermCheck() == null ? cm.getSender() : cm.getPermCheck();
+        RecipientTestResult rtr = getScoreOrSendError(cm.getChannel(), permcheck);
 		int score = rtr.score;
 		if (score == -1 || rtr.groupID == null)
 			return true;
-		TBMCChatPreprocessEvent eventPre = new TBMCChatPreprocessEvent(sender, channel, message);
+        TBMCChatPreprocessEvent eventPre = new TBMCChatPreprocessEvent(cm.getSender(), cm.getChannel(), cm.getMessage());
 		Bukkit.getPluginManager().callEvent(eventPre);
 		if (eventPre.isCancelled())
 			return true;
 		TBMCChatEvent event;
-		if (permcheck == sender)
-			event = new TBMCChatEvent(sender, channel, eventPre.getMessage(), score, fromcommand, rtr.groupID);
-		else
-			event = new TBMCChatEvent(sender, channel, eventPre.getMessage(), score, fromcommand, rtr.groupID, true);
+        event = new TBMCChatEvent(cm.getSender(), cm.getUser(), cm.getChannel(), eventPre.getMessage(), score, cm.isFromCommand(), rtr.groupID, permcheck != cm.getSender());
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
-	}
-
-	/**
-	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.<br>
-	 * This will not check if the sender has permission.
-	 *
-	 * @param channel     The channel to send to
-	 * @param sender      The sender to send from
-	 * @param message     The message to send
-	 * @param fromcommand Whether this message comes from running a command, used to determine whether to delete Discord messages for example
-	 * @param permcheck   The sender to check permissions
-	 * @return The event cancelled state
-	 */
-	public static boolean SendChatMessageDontCheckSender(Channel channel, CommandSender sender, String message, boolean fromcommand, CommandSender permcheck) {
-		return sendChatMessageInternal(channel, sender, message, fromcommand, permcheck);
 	}
 
 	/**

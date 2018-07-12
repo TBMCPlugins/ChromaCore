@@ -1,6 +1,7 @@
 package buttondevteam.lib;
 
 import buttondevteam.lib.chat.Channel;
+import buttondevteam.lib.player.ChromaGamerBase;
 import lombok.Getter;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
@@ -15,25 +16,28 @@ import javax.annotation.Nullable;
  */
 @Getter
 public class TBMCChatEvent extends TBMCChatEventBase {
-	public TBMCChatEvent(CommandSender sender, Channel channel, String message, int score, boolean fromcmd, String groupid) {
+    public TBMCChatEvent(CommandSender sender, ChromaGamerBase user, Channel channel, String message, int score, boolean fromcmd, String groupid) {
 		super(channel, message, score, groupid);
 		this.sender = sender;
 		this.fromcmd = fromcmd;
         this.ignoreSenderPermissions = false;
+        this.user = user;
     }
 
-    public TBMCChatEvent(CommandSender sender, Channel channel, String message, int score, boolean fromcmd, String groupid, boolean ignoreSenderPermissions) {
+    public TBMCChatEvent(CommandSender sender, ChromaGamerBase user, Channel channel, String message, int score, boolean fromcmd, String groupid, boolean ignoreSenderPermissions) {
         super(channel, message, score, groupid);
         this.sender = sender;
+        this.user = user;
         this.fromcmd = fromcmd;
         this.ignoreSenderPermissions = ignoreSenderPermissions;
     }
 
 	private static final HandlerList handlers = new HandlerList();
 
-	private CommandSender sender;
-	private boolean fromcmd;
+    private final CommandSender sender;
+    private final boolean fromcmd;
     private final boolean ignoreSenderPermissions;
+    private final ChromaGamerBase user;
 	// TODO: Message object with data?
 
     /**

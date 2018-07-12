@@ -6,7 +6,7 @@ import org.bukkit.event.HandlerList;
 public class ChatChannelRegisterEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-	private Channel channel;
+    private final Channel channel;
 
 	public ChatChannelRegisterEvent(Channel channel) {
 		this.channel = channel;

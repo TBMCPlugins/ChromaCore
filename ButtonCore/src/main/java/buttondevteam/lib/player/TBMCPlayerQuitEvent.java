@@ -7,8 +7,8 @@ import org.bukkit.event.HandlerList;
 public class TBMCPlayerQuitEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-	private TBMCPlayerBase player;
-	private Player player_;
+	private final TBMCPlayerBase player;
+	private final Player player_;
 
 	public TBMCPlayerQuitEvent(TBMCPlayerBase player, Player player_) {
 		this.player = player;

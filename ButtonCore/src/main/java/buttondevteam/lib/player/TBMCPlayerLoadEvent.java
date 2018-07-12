@@ -6,7 +6,7 @@ import org.bukkit.event.HandlerList;
 public class TBMCPlayerLoadEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-	private TBMCPlayerBase player;
+    private final TBMCPlayerBase player;
 
 	public TBMCPlayerLoadEvent(TBMCPlayerBase player) {
 		this.player = player;

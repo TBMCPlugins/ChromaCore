@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChatRoom extends Channel {
-	private List<CommandSender> usersInRoom = new ArrayList<>();
+    private final List<CommandSender> usersInRoom = new ArrayList<>();
 
 	public ChatRoom(String displayname, Color color, String command) {
 		<ChatRoom>super(displayname, color, command, noScoreResult((this_, s) -> this_.usersInRoom.contains(s),

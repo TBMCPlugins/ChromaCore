@@ -19,9 +19,9 @@ import java.util.stream.Collectors;
 public class TBMCPlayerGetInfoEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-	private ChromaGamerBase player;
-	private List<String> infolines;
-	private InfoTarget target;
+	private final ChromaGamerBase player;
+	private final List<String> infolines;
+	private final InfoTarget target;
 
 	TBMCPlayerGetInfoEvent(ChromaGamerBase player, InfoTarget target) {
 		this.player = player;

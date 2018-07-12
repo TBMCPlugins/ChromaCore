@@ -20,7 +20,7 @@ public @interface CommandClass {
 	 * 
 	 * @return If the command is mod only
 	 */
-	public boolean modOnly() default false;
+    boolean modOnly() default false;
 
 	/**
 	 * The command's path, or name if top-level command.<br>
@@ -30,10 +30,10 @@ public @interface CommandClass {
 	 * 
 	 * @return The command path, <i>which is the command class name by default</i> (removing any "command" from it)
 	 */
-	public String path() default "";
+    String path() default "";
 
 	/**
 	 * Exclude this class from the path. Useful if more commands share some property but aren't subcommands of a common command. See {@link CommandClass} for more details.
 	 */
-	public boolean excludeFromPath() default false;
+    boolean excludeFromPath() default false;
 }

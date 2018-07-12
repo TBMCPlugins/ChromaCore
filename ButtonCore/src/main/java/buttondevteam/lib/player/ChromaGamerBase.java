@@ -72,10 +72,10 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	/***
 	 * Loads a user from disk and returns the user object. Make sure to use the subclasses' methods, where possible, like {@link TBMCPlayerBase#getPlayer(java.util.UUID, Class)}
-	 * 
-	 * @param fname
-	 * @param cl
-	 * @return
+	 *
+     * @param fname Filename without .yml, usually UUID
+     * @param cl User class
+     * @return The user object
 	 */
 	public static <T extends ChromaGamerBase> T getUser(String fname, Class<T> cl) {
 		try {
@@ -194,7 +194,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	}
 
 	@SuppressWarnings("rawtypes")
-	private HashMap<String, PlayerData> datamap = new HashMap<>();
+    private final HashMap<String, PlayerData> datamap = new HashMap<>();
 
 	/**
 	 * Use from a data() method, which is in a method with the name of the key. For example, use flair() for the enclosing method of the outer data() to save to and load from "flair"
@@ -225,7 +225,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	}
 
 	@SuppressWarnings("rawtypes")
-	private HashMap<String, EnumPlayerData> dataenummap = new HashMap<>();
+    private final HashMap<String, EnumPlayerData> dataenummap = new HashMap<>();
 
 	/**
 	 * Use from a data() method, which is in a method with the name of the key. For example, use flair() for the enclosing method of the outer data() to save to and load from "flair"
