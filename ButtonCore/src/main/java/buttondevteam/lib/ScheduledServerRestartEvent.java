@@ -6,7 +6,7 @@ import org.bukkit.event.HandlerList;
 public class ScheduledServerRestartEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-	private int restartticks;
+    private final int restartticks;
 
 	public ScheduledServerRestartEvent(int restartticks) {
 		this.restartticks = restartticks;

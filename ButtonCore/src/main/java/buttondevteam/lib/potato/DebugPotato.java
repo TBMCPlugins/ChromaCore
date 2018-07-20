@@ -49,9 +49,7 @@ public class DebugPotato {
 			List<String> tempList = new ArrayList<String>();
 			for(String line: message){
 				tempList = WordWrap(line.toString());
-				for (String s: tempList){
-					outputList.add(s);
-				}
+                outputList.addAll(tempList);
 			}
 			this.message = outputList;
 		}

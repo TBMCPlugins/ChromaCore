@@ -11,23 +11,22 @@ import org.bukkit.command.CommandSender;
 public class UpdatePluginCommand extends TBMCCommandBase {
 	@Override
 	public boolean OnCommand(CommandSender sender, String alias, String[] args) {
-		if (args.length == 0) {
-			sender.sendMessage("Downloading plugin names...");
-			boolean first = true;
-			for (String plugin : PluginUpdater.GetPluginNames()) {
-				if (first) {
-					sender.sendMessage("§6---- Plugin names ----");
-					first = false;
-				}
-				sender.sendMessage("- " + plugin);
-			}
-			return true;
-		} else {
-			Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, () -> {
-				TBMCCoreAPI.UpdatePlugin(args[0], sender, args.length == 1 ? "master" : args[1]);
-			});
-			return true;
-		}
+        Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, () -> {
+            if (args.length == 0) {
+                sender.sendMessage("Downloading plugin names...");
+                boolean first = true;
+                for (String plugin : PluginUpdater.GetPluginNames()) {
+                    if (first) {
+                        sender.sendMessage("§6---- Plugin names ----");
+                        first = false;
+                    }
+                    sender.sendMessage("- " + plugin);
+                }
+            } else {
+                TBMCCoreAPI.UpdatePlugin(args[0], sender, args.length == 1 ? "master" : args[1]);
+            }
+        });
+        return true;
 	}
 
 	@Override

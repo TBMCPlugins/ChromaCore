@@ -20,7 +20,7 @@ public class TestPrepare {
 		Bukkit.setServer(Mockito.mock(Server.class, new Answer<Object>() {
 
 			@Override
-			public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
 				if (returns(invocation, String.class))
 					return "test";
 				if (returns(invocation, Logger.class))

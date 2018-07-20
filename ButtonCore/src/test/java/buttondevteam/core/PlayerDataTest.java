@@ -32,13 +32,13 @@ public class PlayerDataTest extends TestCase {
 			assertEquals("Test", p.PlayerName().get());
 			assertEquals(TestEnum.A, p.testenum().get());
 			assertEquals((short) 0, (short) p.TestShort().get());
-			assertEquals(false, (boolean) p.TestBool().get());
+            assertFalse(p.TestBool().get());
 			p.testenum().set(TestEnum.B);
 			assertEquals(TestEnum.B, p.testenum().get());
 			p.TestShort().set((short) 5);
 			assertEquals((short) 5, (short) p.TestShort().get());
 			p.TestBool().set(true);
-			assertEquals(true, (boolean) p.TestBool().get());
+            assertTrue(p.TestBool().get());
 		} catch (Exception e) {
 			throw e;
 		}
@@ -46,7 +46,7 @@ public class PlayerDataTest extends TestCase {
 			assertEquals("Test", p.PlayerName().get());
 			assertEquals(TestEnum.B, p.testenum().get());
 			assertEquals((short) 5, (short) p.TestShort().get());
-			assertEquals(true, (boolean) p.TestBool().get());
+            assertTrue(p.TestBool().get());
 		} catch (Exception e) {
 			throw e;
 		}

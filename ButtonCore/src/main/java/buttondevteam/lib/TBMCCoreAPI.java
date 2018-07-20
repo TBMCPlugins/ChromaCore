@@ -12,7 +12,6 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -21,7 +20,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 public class TBMCCoreAPI {
-	static List<String> coders = new ArrayList<String>() {
+    static final List<String> coders = new ArrayList<String>() {
 		private static final long serialVersionUID = -4462159250738367334L;
 		{
 			add("Alisolarflare");
@@ -59,7 +58,7 @@ public class TBMCCoreAPI {
 		return PluginUpdater.UpdatePlugin(name, sender, branch);
 	}
 
-	public static String DownloadString(String urlstr) throws MalformedURLException, IOException {
+    public static String DownloadString(String urlstr) throws IOException {
 		URL url = new URL(urlstr);
 		URLConnection con = url.openConnection();
 		con.setRequestProperty("User-Agent", "TBMCPlugins");

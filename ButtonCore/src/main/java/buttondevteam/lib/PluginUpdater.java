@@ -55,7 +55,7 @@ public class PluginUpdater {
 			error(sender, "Can't find branch \"" + branch + "\" for plugin \"" + correctname + "\"");
 			return false;
 		}
-		if (!isMaven(correctname, correctbranch.get())) {
+        if (isNotMaven(correctname, correctbranch.get())) {
 			error(sender, "The plugin doesn't appear to have a pom.xml. Make sure it's a Maven project.");
 			return false;
 		}
@@ -98,21 +98,21 @@ public class PluginUpdater {
 	}
 
 	/**
-	 * Checks if pom.xml is present for the project.
+     * Checks if pom.xml is not present for the project.
 	 * 
 	 * @param pluginname
 	 *            Does not have to match case
 	 * @param branch
 	 *            Does not have to match case
 	 */
-	public static boolean isMaven(String pluginname, String branch) {
+    public static boolean isNotMaven(String pluginname, String branch) {
 		try {
-			return !TBMCCoreAPI
+            return TBMCCoreAPI
 					.DownloadString(
 							"https://raw.githubusercontent.com/TBMCPlugins/" + pluginname + "/" + branch + "/pom.xml")
 					.equals("404: Not Found\n");
 		} catch (IOException e1) {
-			return false;
+            return true;
 		}
 	}
 
@@ -172,7 +172,7 @@ public class PluginUpdater {
 	public static class UpdatedEvent extends Event {
 		private static final HandlerList handlers = new HandlerList();
 
-		private JsonObject data;
+        private final JsonObject data;
 
 		public UpdatedEvent(JsonObject data) {
 			this.data = data;

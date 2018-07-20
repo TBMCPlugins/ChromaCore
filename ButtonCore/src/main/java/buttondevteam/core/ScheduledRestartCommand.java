@@ -24,6 +24,8 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 			if (args.length > 0)
 				ticks = Integer.parseInt(args[0]);
 		} catch (NumberFormatException e) {
+            sender.sendMessage("§cError: Ticks must be a number.");
+            return false;
 		}
 		if (ticks < 20) {
 			sender.sendMessage("§cError: Ticks must be more than 20.");
@@ -33,14 +35,14 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 		restartbar = Bukkit.createBossBar("Server restart in " + ticks / 20f, BarColor.RED, BarStyle.SOLID,
 				BarFlag.DARKEN_SKY);
 		restartbar.setProgress(1);
-		Bukkit.getOnlinePlayers().stream().forEach(p -> restartbar.addPlayer(p));
+        Bukkit.getOnlinePlayers().forEach(p -> restartbar.addPlayer(p));
 		sender.sendMessage("Scheduled restart in " + ticks / 20f);
 		ScheduledServerRestartEvent e = new ScheduledServerRestartEvent(ticks);
 		Bukkit.getPluginManager().callEvent(e);
 		restarttask = Bukkit.getScheduler().runTaskTimer(MainPlugin.Instance, () -> {
 			if (restartcounter < 0) {
 				restarttask.cancel();
-				restartbar.getPlayers().stream().forEach(p -> restartbar.removePlayer(p));
+                restartbar.getPlayers().forEach(p -> restartbar.removePlayer(p));
 				Bukkit.spigot().restart();
 			}
 			if (restartcounter % 200 == 0)

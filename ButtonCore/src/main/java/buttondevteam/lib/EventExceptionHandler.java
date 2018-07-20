@@ -22,11 +22,8 @@ abstract class EventExceptionHandler { // https://gist.github.com/aadnk/5430459
          * Represents an event executor that does nothing. This is not really necessary in the current
          * implementation of CraftBukkit, but we will take no chances.
          */
-        private static EventExecutor NULL_EXECUTOR = new EventExecutor() {
-            @Override
-            public void execute(Listener listener, Event event) throws EventException {
-                // Do nothing
-            }
+        private static final EventExecutor NULL_EXECUTOR = (listener, event) -> {
+            // Do nothing
         };
             
         private final RegisteredListener delegate;

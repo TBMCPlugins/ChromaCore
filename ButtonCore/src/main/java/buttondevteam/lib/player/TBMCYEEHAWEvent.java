@@ -6,7 +6,7 @@ import org.bukkit.event.HandlerList;
 
 public class TBMCYEEHAWEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
-	private CommandSender sender;
+    private final CommandSender sender;
 
 	public TBMCYEEHAWEvent(CommandSender sender) {
 		this.sender = sender;

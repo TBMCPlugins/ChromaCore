@@ -5,7 +5,7 @@ import org.bukkit.event.HandlerList;
 
 public class TBMCDebugMessageEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
-	private String message;
+    private final String message;
 	private boolean sent;
 
 	public TBMCDebugMessageEvent(String message) {

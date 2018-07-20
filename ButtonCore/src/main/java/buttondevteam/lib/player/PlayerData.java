@@ -3,9 +3,9 @@ package buttondevteam.lib.player;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 public class PlayerData<T> {
-	private String name;
-	private YamlConfiguration yaml;
-	private T def;
+	private final String name;
+	private final YamlConfiguration yaml;
+	private final T def;
 
 	public PlayerData(String name, YamlConfiguration yaml, T def) {
 		this.name = name;

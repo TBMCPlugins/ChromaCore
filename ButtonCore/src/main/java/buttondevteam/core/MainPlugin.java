@@ -29,14 +29,13 @@ public class MainPlugin extends JavaPlugin {
 	public static boolean Test;
     public static Essentials ess;
 
-	private PluginDescriptionFile pdfFile;
 	private Logger logger;
 
 	@Override
 	public void onEnable() {
 		// Logs "Plugin Enabled", registers commands
 		Instance = this;
-		pdfFile = getDescription();
+        PluginDescriptionFile pdf = getDescription();
 		logger = getLogger();
 		setupPermissions();
 		Test = getConfig().getBoolean("test", true);
@@ -66,7 +65,7 @@ public class MainPlugin extends JavaPlugin {
         }
         ess = Essentials.getPlugin(Essentials.class);
 		new RandomTP().onEnable(this); //It registers it's command
-		logger.info(pdfFile.getName() + " has been Enabled (V." + pdfFile.getVersion() + ") Test: " + Test + ".");
+        logger.info(pdf.getName() + " has been Enabled (V." + pdf.getVersion() + ") Test: " + Test + ".");
 	}
 
 	@Override
