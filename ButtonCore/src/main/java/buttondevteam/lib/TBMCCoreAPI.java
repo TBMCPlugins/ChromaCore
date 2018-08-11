@@ -16,6 +16,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -154,11 +155,12 @@ public class TBMCCoreAPI {
 				exceptionsToSend.clear(); // Don't call more and more events if all the handler plugins are unloaded
 				Bukkit.getLogger().warning("Unhandled exception list is over 20! Clearing!");
 			}
-			for (Entry<String, Throwable> entry : exceptionsToSend.entrySet()) {
+			for (Iterator<Entry<String, Throwable>> iterator = exceptionsToSend.entrySet().iterator(); iterator.hasNext(); ) {
+				Entry<String, Throwable> entry = iterator.next();
 				TBMCExceptionEvent event = new TBMCExceptionEvent(entry.getKey(), entry.getValue());
 				Bukkit.getPluginManager().callEvent(event);
 				if (event.isHandled())
-					exceptionsToSend.remove(entry.getKey());
+					iterator.remove();
 			}
 		}
 	}
@@ -169,11 +171,12 @@ public class TBMCCoreAPI {
 				debugMessagesToSend.clear(); // Don't call more and more DebugMessages if all the handler plugins are unloaded
 				Bukkit.getLogger().warning("Unhandled Debug Message list is over 20! Clearing!");
 			}
-			for (String message : debugMessagesToSend) {
+			for (Iterator<String> iterator = debugMessagesToSend.iterator(); iterator.hasNext(); ) {
+				String message = iterator.next();
 				TBMCDebugMessageEvent event = new TBMCDebugMessageEvent(message);
 				Bukkit.getPluginManager().callEvent(event);
 				if (event.isSent())
-					debugMessagesToSend.remove(message);
+					iterator.remove();
 			}
 		}
 	}
