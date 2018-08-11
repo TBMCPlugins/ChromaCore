@@ -51,13 +51,13 @@ public class MainPlugin extends JavaPlugin {
 				Channel.AdminChat = new Channel("§cADMIN§f", Color.Red, "a", Channel.inGroupFilter(null)));
 		TBMCChatAPI.RegisterChatChannel(
 				Channel.ModChat = new Channel("§9MOD§f", Color.Blue, "mod", Channel.inGroupFilter("mod")));
-		TBMCChatAPI.RegisterChatChannel(new Channel("§6DEV§", Color.Gold, "dev", Channel.inGroupFilter("developer")));
-		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§cRED", Color.DarkRed, "red"));
-        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§6ORANGE", Color.Gold, "orange"));
-        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§eYELLOW", Color.Yellow, "yellow"));
-        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§aGREEN", Color.Green, "green"));
-        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§bBLUE", Color.Blue, "blue"));
-        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§5PURPLE", Color.DarkPurple, "purple"));
+        TBMCChatAPI.RegisterChatChannel(new Channel("§6DEV§f", Color.Gold, "dev", Channel.inGroupFilter("developer")));
+        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§cRED§f", Color.DarkRed, "red"));
+        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§6ORANGE§f", Color.Gold, "orange"));
+        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§eYELLOW§f", Color.Yellow, "yellow"));
+        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§aGREEN§f", Color.Green, "green"));
+        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§bBLUE§f", Color.Blue, "blue"));
+        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§5PURPLE§f", Color.DarkPurple, "purple"));
         try {
             Files.write(new File("plugins", "plugins.txt").toPath(), Arrays.stream(Bukkit.getPluginManager().getPlugins()).map(p -> (CharSequence) p.getDataFolder().getName())::iterator);
         } catch (IOException e) {
