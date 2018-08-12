@@ -40,11 +40,13 @@ public class PlayerListener implements Listener {
                 && !event.getQuitMessage().equalsIgnoreCase("Server closed")
                 && !event.getQuitMessage().equalsIgnoreCase("Server is restarting")) {
             if (Bukkit.getOnlinePlayers().size() <= 1) {
-                Bukkit.broadcastMessage("§cNobody is online anymore. Restarting.");
+	            if (PrimeRestartCommand.isLoud())
+		            Bukkit.broadcastMessage("§cNobody is online anymore. Restarting.");
                 Bukkit.spigot().restart();
             } else if (!(event.getPlayer() instanceof IDiscordSender) && System.nanoTime() - 10 * 1000000000L - lasttime > 0) { //Ten seconds passed since last reminder
                 lasttime = System.nanoTime();
-                Bukkit.broadcastMessage(ChatColor.DARK_RED + "The server will restart as soon as nobody is online.");
+	            if (PrimeRestartCommand.isLoud())
+		            Bukkit.broadcastMessage(ChatColor.DARK_RED + "The server will restart as soon as nobody is online.");
             }
 		}
 	}
