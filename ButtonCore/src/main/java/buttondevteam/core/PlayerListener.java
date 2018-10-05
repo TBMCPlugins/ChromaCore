@@ -1,7 +1,7 @@
 package buttondevteam.core;
 
 import buttondevteam.lib.TBMCSystemChatEvent;
-import buttondevteam.lib.chat.IDiscordSender;
+import buttondevteam.lib.chat.IFakePlayer;
 import buttondevteam.lib.player.TBMCPlayerBase;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -43,7 +43,7 @@ public class PlayerListener implements Listener {
 	            if (PrimeRestartCommand.isLoud())
 		            Bukkit.broadcastMessage("§cNobody is online anymore. Restarting.");
                 Bukkit.spigot().restart();
-            } else if (!(event.getPlayer() instanceof IDiscordSender) && System.nanoTime() - 10 * 1000000000L - lasttime > 0) { //Ten seconds passed since last reminder
+            } else if (!(event.getPlayer() instanceof IFakePlayer) && System.nanoTime() - 10 * 1000000000L - lasttime > 0) { //Ten seconds passed since last reminder
                 lasttime = System.nanoTime();
 	            if (PrimeRestartCommand.isLoud())
 		            Bukkit.broadcastMessage(ChatColor.DARK_RED + "The server will restart as soon as nobody is online.");

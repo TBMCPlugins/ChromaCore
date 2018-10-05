@@ -76,6 +76,14 @@ public abstract class Component {
 	public abstract void register(JavaPlugin plugin);
 
 	/**
+	 * Unregisters the module, when called by the JavaPlugin class. Do
+	 * any cleanups needed within this method.
+	 *
+	 * @param plugin Plugin class called to register commands and listeners
+	 */
+	public abstract void unregister(JavaPlugin plugin);
+
+	/**
 	 * Registers a TBMCCommand to the plugin. Make sure to add it to plugin.yml and use {@link buttondevteam.lib.chat.CommandClass}.
 	 *
 	 * @param plugin      Main plugin responsible for stuff

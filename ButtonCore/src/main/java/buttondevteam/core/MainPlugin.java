@@ -1,6 +1,6 @@
 package buttondevteam.core;
 
-import buttondevteam.lib.PluginUpdater;
+import buttondevteam.component.updater.PluginUpdater;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.Channel;
 import buttondevteam.lib.chat.ChatRoom;
@@ -40,9 +40,6 @@ public class MainPlugin extends JavaPlugin {
 		setupPermissions();
 		Test = getConfig().getBoolean("test", true);
 		saveConfig();
-		TBMCChatAPI.AddCommand(this, UpdatePluginCommand.class);
-		TBMCChatAPI.AddCommand(this, ScheduledRestartCommand.class);
-		TBMCChatAPI.AddCommand(this, PrimeRestartCommand.class);
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
         TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fOOC§f", Color.White, "ooc", null));

@@ -7,6 +7,6 @@ import org.bukkit.command.CommandSender;
  * @author Norbi
  *
  */
-public interface IDiscordSender extends CommandSender {
+public interface IFakePlayer extends CommandSender {
 
 }
