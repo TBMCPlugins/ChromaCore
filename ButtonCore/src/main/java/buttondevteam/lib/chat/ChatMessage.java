@@ -10,10 +10,6 @@ import org.bukkit.command.CommandSender;
 @Getter
 public class ChatMessage {
     /**
-     * The MC channel to send the message to.
-     */
-    private final Channel channel;
-    /**
      * The sender which sends the message.
      */
     private final CommandSender sender;
@@ -39,8 +35,8 @@ public class ChatMessage {
     }
 
     @NonNull
-    public static ChatMessageBuilder builder(Channel channel, CommandSender sender, ChromaGamerBase user, String message) {
-        return builder().channel(channel).sender(sender).user(user).message(message);
+    public static ChatMessageBuilder builder(CommandSender sender, ChromaGamerBase user, String message) {
+        return builder().sender(sender).user(user).message(message);
     }
 
 }

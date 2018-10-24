@@ -1,14 +1,19 @@
 package buttondevteam.lib.player;
 
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.chat.Channel;
 import com.google.common.collect.HashBiMap;
 import lombok.val;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 @ChromaGamerEnforcer
 public abstract class ChromaGamerBase implements AutoCloseable {
@@ -92,6 +97,32 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		return null;
 	}
 
+	private static ArrayList<Function<CommandSender, ? extends Optional<? extends ChromaGamerBase>>> senderConverters = new ArrayList<>();
+
+	/**
+	 * Adds a converter to the start of the list.
+	 *
+	 * @param converter The converter that returns an object corresponding to the sender or null, if it's not the right type.
+	 */
+	public static <T extends ChromaGamerBase> void addConverter(Function<CommandSender, Optional<T>> converter) {
+		senderConverters.add(0, converter);
+	}
+
+	/**
+	 * Get from the given sender. May be null,.but shouldn't be.
+	 *
+	 * @param sender The sender to use
+	 * @return A user as returned by a converter or null if none can supply it
+	 */
+	public static ChromaGamerBase getFromSender(CommandSender sender) {
+		for (val converter : senderConverters) {
+			val ocg = converter.apply(sender);
+			if (ocg.isPresent())
+				return ocg.get();
+		}
+		return null;
+	}
+
 	/**
 	 * Saves the player. It'll pass all exceptions to the caller. To automatically handle the exception, use {@link #save()} instead.
 	 */
@@ -123,8 +154,10 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		if (!playerTypes.containsKey(getClass()))
 			throw new RuntimeException("Class not registered as a user class! Use TBMCCoreAPI.RegisterUserClass");
 		final String ownFolder = getFolder();
-		user.plugindata.set(ownFolder + "_id", plugindata.getString(ownFolder + "_id"));
 		final String userFolder = user.getFolder();
+		if (ownFolder.equalsIgnoreCase(userFolder))
+			throw new RuntimeException("Do not connect two accounts of the same type! Type: "+ownFolder);
+		user.plugindata.set(ownFolder + "_id", plugindata.getString(ownFolder + "_id"));
 		plugindata.set(userFolder + "_id", user.plugindata.getString(userFolder + "_id"));
 		Consumer<YamlConfiguration> sync = sourcedata -> {
 			final String sourcefolder = sourcedata == plugindata ? ownFolder : userFolder;
@@ -270,5 +303,11 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	public enum InfoTarget {
 		MCHover, MCCommand, Discord
+	}
+
+	//-----------------------------------------------------------------
+
+	public PlayerData<Channel> channel() {
+		return data(Channel.GlobalChat);
 	}
 }
