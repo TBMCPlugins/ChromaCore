@@ -214,7 +214,18 @@ public class TBMCChatAPI {
 	 * @return The event cancelled state
 	 */
     public static boolean SendChatMessage(ChatMessage cm) {
-	    val channel = cm.getUser().channel().get();
+	    return SendChatMessage(cm, cm.getUser().channel().get());
+    }
+
+	/**
+	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.<br>
+	 * This will also send the error message to the sender, if they can't send the message.
+	 *
+	 * @param cm      The message to send
+	 * @param channel The MC channel to send in
+	 * @return The event cancelled state
+	 */
+	public static boolean SendChatMessage(ChatMessage cm, Channel channel) {
 	    if (!Channel.getChannels().contains(channel))
 		    throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
         val permcheck = cm.getPermCheck() == null ? cm.getSender() : cm.getPermCheck();

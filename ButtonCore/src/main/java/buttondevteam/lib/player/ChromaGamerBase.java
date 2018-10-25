@@ -112,13 +112,15 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 * Get from the given sender. May be null,.but shouldn't be.
 	 *
 	 * @param sender The sender to use
+	 * @param cl The type of the requested user object - subclasses of  {@link TBMCPlayerBase} don't work, use {@link TBMCPlayer}
 	 * @return A user as returned by a converter or null if none can supply it
 	 */
-	public static ChromaGamerBase getFromSender(CommandSender sender) {
+	@SuppressWarnings("unchecked")
+	public static <T extends ChromaGamerBase> T getFromSender(CommandSender sender, Class<T> cl) {
 		for (val converter : senderConverters) {
-			val ocg = converter.apply(sender);
+			val ocg = converter.apply(sender).filter(cg -> cl.isAssignableFrom(cg.getClass()));
 			if (ocg.isPresent())
-				return ocg.get();
+				return (T) ocg.get();
 		}
 		return null;
 	}
