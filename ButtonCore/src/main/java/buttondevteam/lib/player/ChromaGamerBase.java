@@ -109,18 +109,16 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	}
 
 	/**
-	 * Get from the given sender. May be null,.but shouldn't be.
+	 * Get from the given sender. the object's type will depend on the sender's type. May be null, but shouldn't be.
 	 *
 	 * @param sender The sender to use
-	 * @param cl The type of the requested user object - subclasses of  {@link TBMCPlayerBase} don't work, use {@link TBMCPlayer}
 	 * @return A user as returned by a converter or null if none can supply it
 	 */
-	@SuppressWarnings("unchecked")
-	public static <T extends ChromaGamerBase> T getFromSender(CommandSender sender, Class<T> cl) {
+	public static ChromaGamerBase getFromSender(CommandSender sender) {
 		for (val converter : senderConverters) {
-			val ocg = converter.apply(sender).filter(cg -> cl.isAssignableFrom(cg.getClass()));
+			val ocg = converter.apply(sender);
 			if (ocg.isPresent())
-				return (T) ocg.get();
+				return ocg.get();
 		}
 		return null;
 	}
@@ -260,7 +258,8 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	}
 
 	@SuppressWarnings("rawtypes")
-    private final HashMap<String, EnumPlayerData> dataenummap = new HashMap<>();
+	private final HashMap<String, EnumPlayerData> dataenummap = new HashMap<>();
+	private ChannelPlayerData datachannel;
 
 	/**
 	 * Use from a data() method, which is in a method with the name of the key. For example, use flair() for the enclosing method of the outer data() to save to and load from "flair"
@@ -278,7 +277,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	/**
 	 * Use from a method with the name of the key. For example, use flair() for the enclosing method to save to and load from "flair"
-	 * 
+	 *
 	 * @return A data object with methods to get and set
 	 */
 	@SuppressWarnings("unchecked")
@@ -288,6 +287,19 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		if (!dataenummap.containsKey(mname))
 			dataenummap.put(mname, new EnumPlayerData<T>(mname, plugindata, cl, def));
 		return dataenummap.get(mname);
+	}
+
+	/**
+	 * Channel
+	 *
+	 * @return A data object with methods to get and set
+	 */
+	@SuppressWarnings("unchecked")
+	protected ChannelPlayerData dataChannel(Channel def) { //TODO: Make interface with fromString() method and require use of that for player data types
+		ThrowIfNoUser();
+		if (datachannel == null)
+			datachannel = new ChannelPlayerData("channel", plugindata, def);
+		return datachannel;
 	}
 
 	/**
@@ -309,7 +321,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	//-----------------------------------------------------------------
 
-	public PlayerData<Channel> channel() {
-		return data(Channel.GlobalChat);
+	public ChannelPlayerData channel() {
+		return dataChannel(Channel.GlobalChat);
 	}
 }
