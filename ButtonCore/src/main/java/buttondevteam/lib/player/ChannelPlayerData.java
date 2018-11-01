@@ -20,6 +20,6 @@ public class ChannelPlayerData { //I just want this to work
 	}
 
 	public void set(Channel value) {
-		data.set(value.toString());
+		data.set(value.ID);
 	}
 }

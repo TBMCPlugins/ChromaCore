@@ -28,6 +28,12 @@
                         <target>1.8</target>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <useSystemClassLoader>false</useSystemClassLoader> <!-- https://stackoverflow.com/a/53012553/2703239 -->
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>

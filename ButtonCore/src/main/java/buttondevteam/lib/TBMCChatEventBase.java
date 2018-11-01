@@ -1,7 +1,6 @@
 package buttondevteam.lib;
 
 import buttondevteam.lib.chat.Channel;
-import buttondevteam.lib.chat.Channel.RecipientTestResult;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -31,20 +30,14 @@ public abstract class TBMCChatEventBase extends Event implements Cancellable {
 	 * Note: Errors are sent to the sender automatically
 	 */
 	public boolean shouldSendTo(CommandSender sender) {
-		if (channel.filteranderrormsg == null)
-			return true;
-		RecipientTestResult result = channel.filteranderrormsg.apply(sender);
-		return result.errormessage == null && score == result.score;
+		return channel.shouldSendTo(sender, score);
 	}
 
 	/**
 	 * Note: Errors are sent to the sender automatically
 	 */
     public int getMCScore(CommandSender sender) {
-        if (channel.filteranderrormsg == null)
-            return 0;
-        RecipientTestResult result = channel.filteranderrormsg.apply(sender);
-        return result.errormessage == null ? result.score : -1;
+	    return channel.getMCScore(sender);
     }
 
     /**
@@ -54,9 +47,6 @@ public abstract class TBMCChatEventBase extends Event implements Cancellable {
      */
     @Nullable
     public String getGroupID(CommandSender sender) {
-        if (channel.filteranderrormsg == null)
-            return "everyone";
-        RecipientTestResult result = channel.filteranderrormsg.apply(sender);
-        return result.errormessage == null ? result.groupID : null;
+	    return channel.getGroupID(sender); //TODO: Performance-wise it'd be much better to use serialization for player data - it's only converted once
     }
 }
