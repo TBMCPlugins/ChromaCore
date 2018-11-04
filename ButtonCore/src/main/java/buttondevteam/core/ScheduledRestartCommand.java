@@ -32,7 +32,7 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 			return false;
 		}
 		final int restarttime = restartcounter = ticks;
-		restartbar = Bukkit.createBossBar("Server restart in " + ticks / 20f, BarColor.RED, BarStyle.SOLID,
+		restartbar = Bukkit.createBossBar("Server restart in " + ticks / 20f + "s", BarColor.RED, BarStyle.SOLID,
 				BarFlag.DARKEN_SKY);
 		restartbar.setProgress(1);
         Bukkit.getOnlinePlayers().forEach(p -> restartbar.addPlayer(p));

@@ -6,10 +6,15 @@ import buttondevteam.lib.chat.Channel;
 import buttondevteam.lib.chat.ChatRoom;
 import buttondevteam.lib.chat.Color;
 import buttondevteam.lib.chat.TBMCChatAPI;
+import buttondevteam.lib.player.ChromaGamerBase;
+import buttondevteam.lib.player.TBMCPlayer;
 import buttondevteam.lib.player.TBMCPlayerBase;
 import com.earth2me.essentials.Essentials;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
+import org.bukkit.command.BlockCommandSender;
+import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,6 +25,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 public class MainPlugin extends JavaPlugin {
@@ -45,6 +52,10 @@ public class MainPlugin extends JavaPlugin {
 		TBMCChatAPI.AddCommand(this, PrimeRestartCommand.class);
 		TBMCChatAPI.AddCommand(this, MemberCommand.class);
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
+		ChromaGamerBase.addConverter(commandSender -> Optional.ofNullable(commandSender instanceof ConsoleCommandSender || commandSender instanceof BlockCommandSender
+				? TBMCPlayer.getPlayer(new UUID(0, 0), TBMCPlayer.class) : null)); //Console & cmdblocks
+		ChromaGamerBase.addConverter(sender -> Optional.ofNullable(sender instanceof Player
+				? TBMCPlayer.getPlayer(((Player) sender).getUniqueId(), TBMCPlayer.class) : null)); //Players, has higher priority
 		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
         TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fOOC§f", Color.White, "ooc", null));
         Channel.GlobalChat.IDs = new String[]{"g"}; //Support /g as well
