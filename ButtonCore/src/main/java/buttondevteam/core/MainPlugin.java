@@ -40,6 +40,7 @@ public class MainPlugin extends JavaPlugin {
 		setupPermissions();
 		Test = getConfig().getBoolean("test", true);
 		saveConfig();
+		ComponentManager.enableComponents();
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
         TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fOOC§f", Color.White, "ooc", null));
@@ -67,6 +68,7 @@ public class MainPlugin extends JavaPlugin {
 
 	@Override
 	public void onDisable() {
+		ComponentManager.disableComponents();
 		logger.info("Saving player data...");
 		TBMCPlayerBase.savePlayers();
 		logger.info("Player data saved.");
