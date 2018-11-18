@@ -144,20 +144,23 @@ public abstract class Component {
 	}
 
 	/**
-	 * Registers the module, when called by the JavaPlugin class. Call
-	 * registerCommand() and registerListener() within this method.
+	 * Registers the module, when called by the JavaPlugin class.
+	 * This gets fired when the plugin is enabled. Use {@link #enable()} to register commands and such.
 	 *
-	 * @param plugin Plugin class called to register commands and listeners
+	 * @param plugin Plugin object
 	 */
-	protected abstract void register(JavaPlugin plugin);
+	protected void register(JavaPlugin plugin) {
+	}
 
 	/**
-	 * Unregisters the module, when called by the JavaPlugin class. Do
-	 * any cleanups needed within this method.
+	 * Unregisters the module, when called by the JavaPlugin class.
+	 * This gets fired when the plugin is disabled.
+	 * Do any cleanups needed within this method.
 	 *
-	 * @param plugin Plugin class called to register commands and listeners
+	 * @param plugin Plugin object
 	 */
-	protected abstract void unregister(JavaPlugin plugin);
+	protected void unregister(JavaPlugin plugin) {
+	}
 
 	/**
 	 * Enables the module, when called by the JavaPlugin class. Call

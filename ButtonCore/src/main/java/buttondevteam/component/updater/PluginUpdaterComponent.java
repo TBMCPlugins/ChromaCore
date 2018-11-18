@@ -2,16 +2,15 @@ package buttondevteam.component.updater;
 
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.TBMCChatAPI;
-import org.bukkit.plugin.java.JavaPlugin;
 
 public class PluginUpdaterComponent extends Component {
 	@Override
-	public void register(JavaPlugin plugin) {
-		TBMCChatAPI.AddCommand(plugin, UpdatePluginCommand.class);
+	public void enable() {
+		TBMCChatAPI.AddCommand(getPlugin(), UpdatePluginCommand.class);
 	}
 
 	@Override
-	public void unregister(JavaPlugin plugin) {
+	public void disable() { //TODO: Unregister commands and such
 
 	}
 }

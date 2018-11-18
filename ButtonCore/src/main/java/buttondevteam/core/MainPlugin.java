@@ -1,7 +1,10 @@
 package buttondevteam.core;
 
+import buttondevteam.component.restart.RestartComponent;
 import buttondevteam.component.updater.PluginUpdater;
+import buttondevteam.component.updater.PluginUpdaterComponent;
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.Channel;
 import buttondevteam.lib.chat.ChatRoom;
 import buttondevteam.lib.chat.Color;
@@ -40,6 +43,8 @@ public class MainPlugin extends JavaPlugin {
 		setupPermissions();
 		Test = getConfig().getBoolean("test", true);
 		saveConfig();
+		Component.registerComponent(this, new PluginUpdaterComponent());
+		Component.registerComponent(this, new RestartComponent());
 		ComponentManager.enableComponents();
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
