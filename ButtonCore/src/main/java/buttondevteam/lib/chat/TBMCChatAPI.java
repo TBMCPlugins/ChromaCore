@@ -35,7 +35,7 @@ public class TBMCChatAPI {
 
 	/**
 	 * Returns messages formatted for Minecraft chat listing the subcommands of the command.
-	 * 
+	 *
 	 * @param command
 	 *            The command which we want the subcommands of
 	 * @param sender
@@ -49,7 +49,7 @@ public class TBMCChatAPI {
 	/**
 	 * Returns messages formatted for Minecraft chat listing the subcommands of the command.<br>
 	 * Returns a header if subcommands were found, otherwise returns an empty array.
-	 * 
+	 *
 	 * @param command
 	 *            The command which we want the subcommands of
 	 * @param sender
