@@ -14,6 +14,18 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class Channel {
+    /**
+     * Specifies a score that means it's OK to send - but it does not define any groups, only send or not send. See {@link #GROUP_EVERYONE}
+     */
+    public static final int SCORE_SEND_OK = 0;
+    /**
+     * Specifies a score that means the user doesn't have permission to see or send the message. Any negative value has the same effect.
+     */
+    public static final int SCORE_SEND_NOPE = -1;
+    /**
+     * Send the message to everyone <i>who has access to the channel</i> - this does not necessarily mean all players
+     */
+    public static final String GROUP_EVERYONE = "everyone";
     public final String DisplayName;
     public final Color color;
     public final String ID;
@@ -57,6 +69,43 @@ public class Channel {
         this.filteranderrormsg = s -> filteranderrormsg.apply((T) this, s);
     }
 
+    public boolean isGlobal() {
+        return filteranderrormsg == null;
+    }
+
+    /**
+     * Note: Errors are sent to the sender automatically
+     *
+     * @param sender The user we're sending to
+     * @param score  The (source) score to compare with the user's
+     */
+    public boolean shouldSendTo(CommandSender sender, int score) {
+        return score == getMCScore(sender); //If there's any error, the score won't be equal
+    }
+
+    /**
+     * Note: Errors are sent to the sender automatically
+     */
+    public int getMCScore(CommandSender sender) {
+        if (filteranderrormsg == null)
+            return SCORE_SEND_OK;
+        RecipientTestResult result = filteranderrormsg.apply(sender);
+        return result.errormessage == null ? result.score : SCORE_SEND_NOPE;
+    }
+
+    /**
+     * Note: Errors are sent to the sender automatically<br>
+     * <p>
+     * Null means don't send
+     */
+    @Nullable
+    public String getGroupID(CommandSender sender) {
+        if (filteranderrormsg == null)
+            return GROUP_EVERYONE;
+        RecipientTestResult result = filteranderrormsg.apply(sender);
+        return result.errormessage == null ? result.groupID : null;
+    }
+
     public static List<Channel> getChannels() {
         return channels;
     }
@@ -76,12 +125,12 @@ public class Channel {
 
     public static Function<CommandSender, RecipientTestResult> noScoreResult(Predicate<CommandSender> filter,
                                                                              String errormsg) {
-        return s -> filter.test(s) ? new RecipientTestResult(0, "everyone") : new RecipientTestResult(errormsg);
+        return s -> filter.test(s) ? new RecipientTestResult(SCORE_SEND_OK, GROUP_EVERYONE) : new RecipientTestResult(errormsg);
     }
 
     public static <T extends Channel> BiFunction<T, CommandSender, RecipientTestResult> noScoreResult(
             BiPredicate<T, CommandSender> filter, String errormsg) {
-        return (this_, s) -> filter.test(this_, s) ? new RecipientTestResult(0, "everyone") : new RecipientTestResult(errormsg);
+        return (this_, s) -> filter.test(this_, s) ? new RecipientTestResult(SCORE_SEND_OK, GROUP_EVERYONE) : new RecipientTestResult(errormsg);
     }
 
     public static Channel GlobalChat;
@@ -95,7 +144,7 @@ public class Channel {
 
     public static class RecipientTestResult {
         public String errormessage = null;
-        public int score = -1; // Anything below 0 is "never send"
+        public int score = SCORE_SEND_NOPE; // Anything below 0 is "never send"
         public String groupID = null;
 
         /**
@@ -110,7 +159,7 @@ public class Channel {
         /**
          * Creates a result that indicates a <b>success</b>
          *
-         * @param score The score that identifies the target group. For example, the index of the town or nation to send to.
+         * @param score The score that identifies the target group. <b>Must be non-negative.</b> For example, the index of the town or nation to send to.
          * @param groupID The ID of the target group.
          */
         public RecipientTestResult(int score, String groupID) {

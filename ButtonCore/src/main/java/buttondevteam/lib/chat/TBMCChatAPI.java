@@ -214,19 +214,31 @@ public class TBMCChatAPI {
 	 * @return The event cancelled state
 	 */
     public static boolean SendChatMessage(ChatMessage cm) {
-        if (!Channel.getChannels().contains(cm.getChannel()))
-            throw new RuntimeException("Channel " + cm.getChannel().DisplayName + " not registered!");
+	    return SendChatMessage(cm, cm.getUser().channel().get());
+    }
+
+	/**
+	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.<br>
+	 * This will also send the error message to the sender, if they can't send the message.
+	 *
+	 * @param cm      The message to send
+	 * @param channel The MC channel to send in
+	 * @return The event cancelled state
+	 */
+	public static boolean SendChatMessage(ChatMessage cm, Channel channel) {
+	    if (!Channel.getChannels().contains(channel))
+		    throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
         val permcheck = cm.getPermCheck() == null ? cm.getSender() : cm.getPermCheck();
-        RecipientTestResult rtr = getScoreOrSendError(cm.getChannel(), permcheck);
+	    RecipientTestResult rtr = getScoreOrSendError(channel, permcheck);
 		int score = rtr.score;
 		if (score == -1 || rtr.groupID == null)
 			return true;
-        TBMCChatPreprocessEvent eventPre = new TBMCChatPreprocessEvent(cm.getSender(), cm.getChannel(), cm.getMessage());
+	    TBMCChatPreprocessEvent eventPre = new TBMCChatPreprocessEvent(cm.getSender(), channel, cm.getMessage());
 		Bukkit.getPluginManager().callEvent(eventPre);
 		if (eventPre.isCancelled())
 			return true;
 		TBMCChatEvent event;
-        event = new TBMCChatEvent(cm.getSender(), cm.getUser(), cm.getChannel(), eventPre.getMessage(), score, cm.isFromCommand(), rtr.groupID, permcheck != cm.getSender());
+	    event = new TBMCChatEvent(cm.getSender(), cm.getUser(), channel, eventPre.getMessage(), score, cm.isFromCommand(), rtr.groupID, permcheck != cm.getSender());
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
 	}
