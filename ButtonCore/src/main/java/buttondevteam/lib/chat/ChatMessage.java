@@ -30,7 +30,8 @@ public class ChatMessage {
 	 */
 	private CommandSender permCheck;
 	/**
-	 * The origin of the message, "minecraft" or "discord" for example.
+	 * The origin of the message, "Minecraft" or "Discord" for example. May be displayed to the user.<br>
+	 *     <b>This is the user class capitalized folder name.</b>
 	 */
 	private final String origin;
 
@@ -39,7 +40,7 @@ public class ChatMessage {
 	}
 
 	@NonNull
-	public static ChatMessageBuilder builder(Channel channel, CommandSender sender, ChromaGamerBase user, String message) {
-		return builder().sender(sender).user(user).message(message);
+	public static ChatMessageBuilder builder(CommandSender sender, ChromaGamerBase user, String message) {
+		return builder().sender(sender).user(user).message(message).origin(user.getFolder().substring(0, 1).toUpperCase() + user.getFolder().substring(1));
 	}
 }

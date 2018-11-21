@@ -16,20 +16,13 @@ import javax.annotation.Nullable;
  */
 @Getter
 public class TBMCChatEvent extends TBMCChatEventBase {
-    public TBMCChatEvent(CommandSender sender, ChromaGamerBase user, Channel channel, String message, int score, boolean fromcmd, String groupid) {
-		super(channel, message, score, groupid);
-		this.sender = sender;
-		this.fromcmd = fromcmd;
-        this.ignoreSenderPermissions = false;
-        this.user = user;
-    }
-
-    public TBMCChatEvent(CommandSender sender, ChromaGamerBase user, Channel channel, String message, int score, boolean fromcmd, String groupid, boolean ignoreSenderPermissions) {
+	public TBMCChatEvent(CommandSender sender, ChromaGamerBase user, Channel channel, String message, int score, boolean fromcmd, String groupid, boolean ignoreSenderPermissions, String origin) {
         super(channel, message, score, groupid);
         this.sender = sender;
         this.user = user;
         this.fromcmd = fromcmd;
         this.ignoreSenderPermissions = ignoreSenderPermissions;
+		this.origin = origin;
     }
 
 	private static final HandlerList handlers = new HandlerList();
@@ -37,7 +30,8 @@ public class TBMCChatEvent extends TBMCChatEventBase {
     private final CommandSender sender;
     private final boolean fromcmd;
     private final boolean ignoreSenderPermissions;
-    private final ChromaGamerBase user;
+	private final ChromaGamerBase user;
+	private final String origin;
 	// TODO: Message object with data?
 
     /**

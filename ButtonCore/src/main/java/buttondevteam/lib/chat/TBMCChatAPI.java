@@ -238,7 +238,7 @@ public class TBMCChatAPI {
 		if (eventPre.isCancelled())
 			return true;
 		TBMCChatEvent event;
-	    event = new TBMCChatEvent(cm.getSender(), cm.getUser(), channel, eventPre.getMessage(), score, cm.isFromCommand(), rtr.groupID, permcheck != cm.getSender());
+		event = new TBMCChatEvent(cm.getSender(), cm.getUser(), channel, eventPre.getMessage(), score, cm.isFromCommand(), rtr.groupID, permcheck != cm.getSender(), cm.getOrigin());
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
 	}

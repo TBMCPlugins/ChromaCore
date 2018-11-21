@@ -13,7 +13,7 @@ import java.lang.annotation.*;
 @Inherited
 public @interface UserClass {
 	/**
-	 * Indicates which folder should the player files be saved in.
+	 * Indicates which folder should the player files be saved in. Must be lowercase.
 	 */
 	String foldername();
 }
