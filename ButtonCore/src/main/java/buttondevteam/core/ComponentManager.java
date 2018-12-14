@@ -2,12 +2,21 @@ package buttondevteam.core;
 
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException;
+import lombok.val;
 
 public final class ComponentManager {
 	private ComponentManager() {}
 
+	private static boolean componentsEnabled = false;
+
 	/**
-	 * Enables components based on a configuration
+	 * This flag is used to enable components registered after the others were enabled.
+	 * @return Whether already registered components have been enabled
+	 */
+	public static boolean areComponentsEnabled() { return componentsEnabled; }
+
+	/**
+	 * Enables components based on a configuration - any component registered afterwards will be also enabled
 	 */
 	public static void enableComponents() {
 		//Component.getComponents().values().stream().filter(c->cs.getConfigurationSection(c.getClass().getSimpleName()).getBoolean("enabled")).forEach(c-> {
@@ -17,6 +26,7 @@ public final class ComponentManager {
 			} catch (UnregisteredComponentException ignored) { //This *should* never happen
 			}
 		});
+		componentsEnabled = true;
 	}
 
 	/**
@@ -29,5 +39,17 @@ public final class ComponentManager {
 			} catch (UnregisteredComponentException ignored) { //This *should* never happen
 			}
 		});
+		componentsEnabled = false;
+	}
+
+	/**
+	 * Will also return false if the component is not registered.
+	 *
+	 * @param cl The component class
+	 * @return Whether the component is registered and enabled
+	 */
+	public static boolean isEnabled(Class<? extends Component> cl) {
+		val c = Component.getComponents().get(cl);
+		return c != null && c.isEnabled();
 	}
 }

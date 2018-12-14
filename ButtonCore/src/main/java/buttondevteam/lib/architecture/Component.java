@@ -1,5 +1,6 @@
 package buttondevteam.lib.architecture;
 
+import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException;
 import buttondevteam.lib.chat.TBMCChatAPI;
@@ -73,7 +74,8 @@ public abstract class Component {
 
 	/**
 	 * Registers a component checking it's dependencies and calling {@link #register(JavaPlugin)}.<br>
-	 * Make sure to register the dependencies first.
+	 * Make sure to register the dependencies first.<br>
+	 * The component will be enabled automatically, regardless of when it was registered.
 	 *
 	 * @param component The component to register
 	 */
@@ -113,7 +115,17 @@ public abstract class Component {
 			if (component.config == null) component.config = compconf.createSection(component.getClassName());
 			component.register(plugin);
 			components.put(component.getClass(), component);
+			if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled().get()) {
+				try { //Enable components registered after the previous ones getting enabled
+					setComponentEnabled(component, true);
+				} catch (UnregisteredComponentException ignored) {
+				}
+			}
 		} else {
+			if (component.enabled) {
+				component.disable();
+				component.enabled = false;
+			}
 			component.unregister(plugin);
 			components.remove(component.getClass());
 		}
