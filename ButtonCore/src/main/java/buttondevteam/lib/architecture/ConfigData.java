@@ -1,5 +1,6 @@
 package buttondevteam.lib.architecture;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.configuration.ConfigurationSection;
@@ -8,10 +9,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.util.function.Function;
 
 /**
- * Use the getter/setter constructor if {@link T} isn't a primitive type or String.
+ * Use the getter/setter constructor if {@link T} isn't a primitive type or String.<br>
+ *     Use {@link Component#getData(String, Object)} or {@link ButtonPlugin#getData(String, Object)} to get an instance.
  */
-@RequiredArgsConstructor
-@AllArgsConstructor
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class ConfigData<T> { //TODO: Save after a while
 	private final ConfigurationSection config;
 	private final String path;

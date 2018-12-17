@@ -231,7 +231,7 @@ public class TBMCChatAPI {
         val permcheck = cm.getPermCheck() == null ? cm.getSender() : cm.getPermCheck();
 	    RecipientTestResult rtr = getScoreOrSendError(channel, permcheck);
 		int score = rtr.score;
-		if (score == -1 || rtr.groupID == null)
+		if (score == Channel.SCORE_SEND_NOPE || rtr.groupID == null)
 			return true;
 	    TBMCChatPreprocessEvent eventPre = new TBMCChatPreprocessEvent(cm.getSender(), channel, cm.getMessage());
 		Bukkit.getPluginManager().callEvent(eventPre);
@@ -248,29 +248,25 @@ public class TBMCChatAPI {
 	 * 
 	 * @param channel
 	 *            The channel to send to
-	 * @param score
-	 *            The score to use to find the group - use 0 if the channel doesn't have scores
+	 * @param rtr
+	 *            The score&group to use to find the group - use {@link RecipientTestResult#ALL} if the channel doesn't have scores
 	 * @param message
 	 *            The message to send
 	 * @return The event cancelled state
 	 */
-	public static boolean SendSystemMessage(Channel channel, int score, String groupid, String message) {
+	public static boolean SendSystemMessage(Channel channel, RecipientTestResult rtr, String message) {
 		if (!Channel.getChannels().contains(channel))
 			throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
-		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, score, groupid);
+		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
 	}
 
 	private static RecipientTestResult getScoreOrSendError(Channel channel, CommandSender sender) {
-		if (channel.filteranderrormsg == null)
-			return new RecipientTestResult(0, "everyone");
-		else {
-			RecipientTestResult result = channel.filteranderrormsg.apply(sender);
-			if (result.errormessage != null)
-				sender.sendMessage("§c" + result.errormessage);
-			return result;
-		}
+		RecipientTestResult result = channel.getRTR(sender);
+		if (result.errormessage != null)
+			sender.sendMessage("§c" + result.errormessage);
+		return result;
 	}
 
 	/**

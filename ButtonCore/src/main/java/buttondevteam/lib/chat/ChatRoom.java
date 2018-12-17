@@ -15,11 +15,11 @@ public class ChatRoom extends Channel {
 
 	public void joinRoom(CommandSender sender) {
 		usersInRoom.add(sender);
-		TBMCChatAPI.SendSystemMessage(this, 0, "everyone", sender.getName() + " joined the room");
+		TBMCChatAPI.SendSystemMessage(this, RecipientTestResult.ALL, sender.getName() + " joined the room");
 	}
 
 	public void leaveRoom(CommandSender sender) {
 		usersInRoom.remove(sender);
-		TBMCChatAPI.SendSystemMessage(this, 0, "everyone", sender.getName() + " left the room");
+		TBMCChatAPI.SendSystemMessage(this, RecipientTestResult.ALL, sender.getName() + " left the room");
 	}
 }

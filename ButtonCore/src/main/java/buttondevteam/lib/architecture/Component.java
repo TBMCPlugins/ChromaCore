@@ -11,7 +11,6 @@ import lombok.NonNull;
 import lombok.experimental.var;
 import lombok.val;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -41,35 +40,17 @@ public abstract class Component {
 	private HashMap<String, ConfigData<?>> datamap = new HashMap<>();
 
 	/**
-	 * This method overload should only be used with primitves or String.
-	 *
-	 * @param path The path in config to use
-	 * @param def  The value to use by default
-	 * @param <T>  The type of this variable (only use primitives or String)
-	 * @return The data object that can be used to get or set the value
+	 * @see IHaveConfig#getData(Map, ConfigurationSection, String, Object)
 	 */
-	@SuppressWarnings("unchecked")
 	protected <T> ConfigData<T> getData(String path, T def) {
-		ConfigData<?> data = datamap.get(path);
-		if (data == null) datamap.put(path, data = new ConfigData<>(config, path, def));
-		return (ConfigData<T>) data;
+		return IHaveConfig.getData(datamap, config, path, def);
 	}
 
 	/**
-	 * This method overload may be used with any class.
-	 *
-	 * @param path   The path in config to use
-	 * @param def    The value to use by default
-	 * @param getter A function that converts a primitive representation to the correct value
-	 * @param setter A function that converts a value to a primitive representation
-	 * @param <T>    The type of this variable (can be any class)
-	 * @return The data object that can be used to get or set the value
+	 * @see IHaveConfig#getData(Map, ConfigurationSection, String, Object, Function, Function)
 	 */
-	@SuppressWarnings("unchecked")
 	protected <T> ConfigData<T> getData(String path, T def, Function<Object, T> getter, Function<T, Object> setter) {
-		ConfigData<?> data = datamap.get(path);
-		if (data == null) datamap.put(path, data = new ConfigData<>(config, path, def, getter, setter));
-		return (ConfigData<T>) data;
+		return IHaveConfig.getData(datamap, config, path, def, getter, setter);
 	}
 
 	/**
@@ -208,14 +189,6 @@ public abstract class Component {
 	protected Listener registerListener(JavaPlugin plugin, Listener listener) {
 		TBMCCoreAPI.RegisterEventsForExceptions(listener, plugin);
 		return listener;
-	}
-
-	public void saveData(FileConfiguration config, String pathToData, Object data) {
-		config.set("moduledata." + this.getClassName() + "." + pathToData, data);
-	}
-
-	public Object getData(FileConfiguration config, String pathToData, Object data) {
-		return config.get("moduledata." + this.getClassName() + "." + pathToData, data);
 	}
 
 	private String getClassName() {
