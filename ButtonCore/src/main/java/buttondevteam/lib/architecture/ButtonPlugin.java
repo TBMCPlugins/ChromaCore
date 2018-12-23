@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 public abstract class ButtonPlugin extends JavaPlugin {
-	private HashMap<String, ConfigData<?>> datamap = new HashMap<>();
+	private final HashMap<String, ConfigData<?>> datamap = new HashMap<>();
 	private ConfigurationSection section;
 
 	protected abstract void pluginEnable();
@@ -19,7 +19,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	@Override
 	public void onEnable() {
 		section = getConfig().getConfigurationSection("global");
-		if (section == null) getConfig().createSection("global");
+		if (section == null) section = getConfig().createSection("global");
 		try {
 			pluginEnable();
 		} catch (Exception e) {
