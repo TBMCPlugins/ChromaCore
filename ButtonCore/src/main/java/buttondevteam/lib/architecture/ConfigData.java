@@ -30,8 +30,11 @@ public class ConfigData<T> { //TODO: Save after a while
 	@SuppressWarnings("unchecked")
 	public T get() {
 		Object val = config.get(path, def);
-		if (getter != null)
-			return getter.apply(val);
+		if (getter != null) {
+			T hmm = getter.apply(val);
+			if (hmm == null) hmm = def; //Set if the getter returned null
+			return hmm;
+		}
 		return (T) val;
 	}
 

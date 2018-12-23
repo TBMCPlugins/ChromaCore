@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -203,6 +204,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 * @return The player as a {@link T} object or null if not having an account there
 	 */
 	@SuppressWarnings("unchecked")
+	@Nullable
 	public <T extends ChromaGamerBase> T getAs(Class<T> cl) { // TODO: Provide a way to use TBMCPlayerBase's loaded players
 		if (cl.getSimpleName().equals(getClass().getSimpleName()))
 			return (T) this;
