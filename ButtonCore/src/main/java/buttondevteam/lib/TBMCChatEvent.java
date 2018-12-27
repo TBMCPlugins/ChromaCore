@@ -1,8 +1,9 @@
 package buttondevteam.lib;
 
 import buttondevteam.lib.chat.Channel;
-import buttondevteam.lib.player.ChromaGamerBase;
+import buttondevteam.lib.chat.ChatMessage;
 import lombok.Getter;
+import lombok.experimental.Delegate;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
 
@@ -16,22 +17,19 @@ import javax.annotation.Nullable;
  */
 @Getter
 public class TBMCChatEvent extends TBMCChatEventBase {
-	public TBMCChatEvent(CommandSender sender, ChromaGamerBase user, Channel channel, String message, int score, boolean fromcmd, String groupid, boolean ignoreSenderPermissions, String origin) {
-        super(channel, message, score, groupid);
-        this.sender = sender;
-        this.user = user;
-        this.fromcmd = fromcmd;
-        this.ignoreSenderPermissions = ignoreSenderPermissions;
-		this.origin = origin;
+	public TBMCChatEvent(Channel channel, ChatMessage cm, Channel.RecipientTestResult rtr) {
+		super(channel, cm.getMessage(), rtr.score, rtr.groupID);
+		this.cm = cm;
     }
 
 	private static final HandlerList handlers = new HandlerList();
 
-    private final CommandSender sender;
-    private final boolean fromcmd;
-    private final boolean ignoreSenderPermissions;
-	private final ChromaGamerBase user;
-	private final String origin;
+	@Delegate //<-- Backwards compatibility
+	private ChatMessage cm;
+
+	private boolean isIgnoreSenderPermissions() {
+		return cm.getPermCheck() != cm.getSender();
+	}
 	// TODO: Message object with data?
 
     /**
@@ -39,7 +37,7 @@ public class TBMCChatEvent extends TBMCChatEventBase {
      */
     @Override
     public boolean shouldSendTo(CommandSender sender) {
-        if (isIgnoreSenderPermissions() && sender.equals(this.sender))
+	    if (isIgnoreSenderPermissions() && sender.equals(this.cm.getSender()))
             return true; //Allow sending the message no matter what
         return super.shouldSendTo(sender);
     }
@@ -49,7 +47,7 @@ public class TBMCChatEvent extends TBMCChatEventBase {
      */
     @Override
     public int getMCScore(CommandSender sender) {
-        if (isIgnoreSenderPermissions() && sender.equals(this.sender))
+	    if (isIgnoreSenderPermissions() && sender.equals(this.cm.getSender()))
             return getScore(); //Send in the correct group no matter what
         return super.getMCScore(sender);
     }
@@ -60,7 +58,7 @@ public class TBMCChatEvent extends TBMCChatEventBase {
     @Nullable
     @Override
     public String getGroupID(CommandSender sender) {
-        if (isIgnoreSenderPermissions() && sender.equals(this.sender))
+	    if (isIgnoreSenderPermissions() && sender.equals(this.cm.getSender()))
             return getGroupID(); //Send in the correct group no matter what
         return super.getGroupID(sender);
     }

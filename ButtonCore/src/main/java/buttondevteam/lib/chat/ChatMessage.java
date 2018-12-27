@@ -4,6 +4,7 @@ import buttondevteam.lib.player.ChromaGamerBase;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import org.bukkit.command.CommandSender;
 
 @Builder
@@ -20,7 +21,8 @@ public class ChatMessage {
 	/**
 	 * The message to send as the user.
 	 */
-	private final String message;
+	@Setter
+	private String message;
 	/**
 	 * Indicates whether the message comes from running a command (like /tableflip). Implemented to be used from Discord.
 	 */
@@ -34,6 +36,15 @@ public class ChatMessage {
 	 *     <b>This is the user class capitalized folder name.</b>
 	 */
 	private final String origin;
+
+	/**
+	 * The sender which we should check for permissions. Same as {@link #sender} by default.
+	 *
+	 * @return The perm check or the sender
+	 */
+	public CommandSender getPermCheck() {
+		return permCheck == null ? sender : permCheck;
+	}
 
 	private static ChatMessageBuilder builder() {
 		return new ChatMessageBuilder();

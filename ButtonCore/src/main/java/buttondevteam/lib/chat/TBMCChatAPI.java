@@ -228,7 +228,7 @@ public class TBMCChatAPI {
 	public static boolean SendChatMessage(ChatMessage cm, Channel channel) {
 	    if (!Channel.getChannels().contains(channel))
 		    throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
-        val permcheck = cm.getPermCheck() == null ? cm.getSender() : cm.getPermCheck();
+		val permcheck = cm.getPermCheck();
 	    RecipientTestResult rtr = getScoreOrSendError(channel, permcheck);
 		int score = rtr.score;
 		if (score == Channel.SCORE_SEND_NOPE || rtr.groupID == null)
@@ -237,8 +237,9 @@ public class TBMCChatAPI {
 		Bukkit.getPluginManager().callEvent(eventPre);
 		if (eventPre.isCancelled())
 			return true;
+		cm.setMessage(eventPre.getMessage());
 		TBMCChatEvent event;
-		event = new TBMCChatEvent(cm.getSender(), cm.getUser(), channel, eventPre.getMessage(), score, cm.isFromCommand(), rtr.groupID, permcheck != cm.getSender(), cm.getOrigin());
+		event = new TBMCChatEvent(channel, cm, rtr);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
 	}
