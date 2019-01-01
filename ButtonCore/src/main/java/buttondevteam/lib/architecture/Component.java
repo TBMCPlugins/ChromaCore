@@ -59,9 +59,10 @@ public abstract class Component {
 	 * The component will be enabled automatically, regardless of when it was registered.
 	 *
 	 * @param component The component to register
+	 * @return Whether the component is registered successfully (it may have failed to enable)
 	 */
-	public static void registerComponent(JavaPlugin plugin, Component component) {
-		registerUnregisterComponent(plugin, component, true);
+	public static boolean registerComponent(JavaPlugin plugin, Component component) {
+		return registerUnregisterComponent(plugin, component, true);
 	}
 
 	/**
@@ -69,46 +70,62 @@ public abstract class Component {
 	 * Make sure to unregister the dependencies last.
 	 *
 	 * @param componentClass The component class to unregister
+	 * @return Whether the component is unregistered successfully (it also got disabled)
 	 */
-	public static void unregisterComponent(JavaPlugin plugin, Class<? extends Component> componentClass) {
+	public static boolean unregisterComponent(JavaPlugin plugin, Class<? extends Component> componentClass) {
 		val component = components.get(componentClass);
 		if (component == null)
-			return; //Failed to load
-		registerUnregisterComponent(plugin, component, false);
+			return false; //Failed to load
+		return registerUnregisterComponent(plugin, component, false);
 	}
 
-	public static void registerUnregisterComponent(JavaPlugin plugin, Component component, boolean register) {
-		val metaAnn = component.getClass().getAnnotation(ComponentMetadata.class);
-		if (metaAnn != null) {
-			Class<? extends Component>[] dependencies = metaAnn.depends();
-			for (val dep : dependencies) {
-				if (!components.containsKey(dep)) {
-					plugin.getLogger().warning("Failed to " + (register ? "" : "un") + "register component " + component.getClassName() + " as a required dependency is missing/disabled: " + dep.getSimpleName());
-					return;
+	public static boolean registerUnregisterComponent(JavaPlugin plugin, Component component, boolean register) {
+		try {
+			val metaAnn = component.getClass().getAnnotation(ComponentMetadata.class);
+			if (metaAnn != null) {
+				Class<? extends Component>[] dependencies = metaAnn.depends();
+				for (val dep : dependencies) {
+					if (!components.containsKey(dep)) {
+						plugin.getLogger().warning("Failed to " + (register ? "" : "un") + "register component " + component.getClassName() + " as a required dependency is missing/disabled: " + dep.getSimpleName());
+						return false;
+					}
 				}
 			}
-		}
-		if (register) {
-			component.plugin = plugin;
-			var compconf = plugin.getConfig().getConfigurationSection("components");
-			if (compconf == null) compconf = plugin.getConfig().createSection("components");
-			component.config = compconf.getConfigurationSection(component.getClassName());
-			if (component.config == null) component.config = compconf.createSection(component.getClassName());
-			component.register(plugin);
-			components.put(component.getClass(), component);
-			if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled().get()) {
-				try { //Enable components registered after the previous ones getting enabled
-					setComponentEnabled(component, true);
-				} catch (UnregisteredComponentException ignored) {
+			if (register) {
+				component.plugin = plugin;
+				var compconf = plugin.getConfig().getConfigurationSection("components");
+				if (compconf == null) compconf = plugin.getConfig().createSection("components");
+				component.config = compconf.getConfigurationSection(component.getClassName());
+				if (component.config == null) component.config = compconf.createSection(component.getClassName());
+				component.register(plugin);
+				components.put(component.getClass(), component);
+				if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled().get()) {
+					try { //Enable components registered after the previous ones getting enabled
+						setComponentEnabled(component, true);
+						return true;
+					} catch (Exception | NoClassDefFoundError e) {
+						TBMCCoreAPI.SendException("Failed to enable component " + component.getClassName() + "!", e);
+						return true;
+					}
 				}
+				return true;
+			} else {
+				if (component.enabled) {
+					try {
+						component.disable();
+						component.enabled = false;
+					} catch (Exception | NoClassDefFoundError e) {
+						TBMCCoreAPI.SendException("Failed to disable component " + component.getClassName() + "!", e);
+						return false; //If failed to disable, won't unregister either
+					}
+				}
+				component.unregister(plugin);
+				components.remove(component.getClass());
+				return true;
 			}
-		} else {
-			if (component.enabled) {
-				component.disable();
-				component.enabled = false;
-			}
-			component.unregister(plugin);
-			components.remove(component.getClass());
+		} catch (Exception e) {
+			TBMCCoreAPI.SendException("Failed to " + (register ? "" : "un") + "register component " + component.getClassName() + "!", e);
+			return false;
 		}
 	}
 

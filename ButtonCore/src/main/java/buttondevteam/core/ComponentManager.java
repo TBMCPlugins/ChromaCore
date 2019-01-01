@@ -1,7 +1,7 @@
 package buttondevteam.core;
 
+import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.Component;
-import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException;
 import lombok.val;
 
 public final class ComponentManager {
@@ -23,7 +23,8 @@ public final class ComponentManager {
 		Component.getComponents().values().stream().filter(c -> c.shouldBeEnabled().get()).forEach(c -> {
 			try {
 				Component.setComponentEnabled(c, true);
-			} catch (UnregisteredComponentException ignored) { //This *should* never happen
+			} catch (Exception e) {
+				TBMCCoreAPI.SendException("Failed to enable one of the components: " + c.getClass().getSimpleName(), e);
 			}
 		});
 		componentsEnabled = true;
@@ -36,7 +37,8 @@ public final class ComponentManager {
 		Component.getComponents().values().stream().filter(Component::isEnabled).forEach(c -> {
 			try {
 				Component.setComponentEnabled(c, false);
-			} catch (UnregisteredComponentException ignored) { //This *should* never happen
+			} catch (Exception e) {
+				TBMCCoreAPI.SendException("Failed to disable one of the components: " + c.getClass().getSimpleName(), e);
 			}
 		});
 		componentsEnabled = false;
