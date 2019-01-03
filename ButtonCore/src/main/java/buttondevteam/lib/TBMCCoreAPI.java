@@ -1,5 +1,6 @@
 package buttondevteam.lib;
 
+import buttondevteam.component.updater.PluginUpdater;
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.potato.DebugPotato;

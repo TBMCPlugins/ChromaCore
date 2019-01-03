@@ -34,7 +34,7 @@ public class Channel {
     /**
      * Filters both the sender and the targets
      */
-    public final Function<CommandSender, RecipientTestResult> filteranderrormsg;
+    private final Function<CommandSender, RecipientTestResult> filteranderrormsg;
 
     private static final List<Channel> channels = new ArrayList<>();
 
@@ -87,10 +87,7 @@ public class Channel {
      * Note: Errors are sent to the sender automatically
      */
     public int getMCScore(CommandSender sender) {
-        if (filteranderrormsg == null)
-            return SCORE_SEND_OK;
-        RecipientTestResult result = filteranderrormsg.apply(sender);
-        return result.errormessage == null ? result.score : SCORE_SEND_NOPE;
+        return getRTR(sender).score; //No need to check if there was an error
     }
 
     /**
@@ -100,10 +97,13 @@ public class Channel {
      */
     @Nullable
     public String getGroupID(CommandSender sender) {
+        return getRTR(sender).groupID; //No need to check if there was an error
+    }
+
+    public RecipientTestResult getRTR(CommandSender sender) {
         if (filteranderrormsg == null)
-            return GROUP_EVERYONE;
-        RecipientTestResult result = filteranderrormsg.apply(sender);
-        return result.errormessage == null ? result.groupID : null;
+            return new RecipientTestResult(SCORE_SEND_OK, GROUP_EVERYONE);
+        return filteranderrormsg.apply(sender);
     }
 
     public static List<Channel> getChannels() {
@@ -143,9 +143,10 @@ public class Channel {
     }
 
     public static class RecipientTestResult {
-        public String errormessage = null;
-        public int score = SCORE_SEND_NOPE; // Anything below 0 is "never send"
-        public String groupID = null;
+        public final String errormessage;
+        public final int score; // Anything below 0 is "never send"
+        public final String groupID;
+        public static final RecipientTestResult ALL = new RecipientTestResult(SCORE_SEND_OK, GROUP_EVERYONE);
 
         /**
          * Creates a result that indicates an <b>error</b>
@@ -154,6 +155,8 @@ public class Channel {
          */
         public RecipientTestResult(String errormessage) {
             this.errormessage = errormessage;
+            this.score = SCORE_SEND_NOPE;
+            this.groupID = null;
         }
 
         /**
@@ -163,8 +166,10 @@ public class Channel {
          * @param groupID The ID of the target group.
          */
         public RecipientTestResult(int score, String groupID) {
+            if (score < 0) throw new IllegalArgumentException("Score must be non-negative!");
             this.score = score;
             this.groupID = groupID;
+            this.errormessage = null;
         }
     }
 }

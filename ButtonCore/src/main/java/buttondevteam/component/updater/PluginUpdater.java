@@ -1,5 +1,6 @@
-package buttondevteam.lib;
+package buttondevteam.component.updater;
 
+import buttondevteam.lib.TBMCCoreAPI;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -136,7 +137,7 @@ public class PluginUpdater {
 	public static List<String> GetPluginNames() {
 		List<String> ret = new ArrayList<>();
 		try {
-			String resp = TBMCCoreAPI.DownloadString("https://api.github.com/orgs/TBMCPlugins/repos");
+			String resp = TBMCCoreAPI.DownloadString("https://api.github.com/orgs/" + "TBMCPlugins" + "/repos"); //TODO: PluginUpdater
 			JsonArray arr = new JsonParser().parse(resp).getAsJsonArray();
 			for (JsonElement obj : arr) {
 				JsonObject jobj = obj.getAsJsonObject();

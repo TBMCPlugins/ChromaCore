@@ -1,6 +1,6 @@
-package buttondevteam.core;
+package buttondevteam.component.updater;
 
-import buttondevteam.lib.PluginUpdater;
+import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.TBMCCommandBase;

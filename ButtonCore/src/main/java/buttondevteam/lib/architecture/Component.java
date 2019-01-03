@@ -1,0 +1,221 @@
+package buttondevteam.lib.architecture;
+
+import buttondevteam.core.ComponentManager;
+import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException;
+import buttondevteam.lib.chat.TBMCChatAPI;
+import buttondevteam.lib.chat.TBMCCommandBase;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.experimental.var;
+import lombok.val;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.event.Listener;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
+/**
+ * Configuration is based on class name
+ */
+public abstract class Component {
+	private static HashMap<Class<? extends Component>, Component> components = new HashMap<>();
+
+	@Getter
+	private boolean enabled = false;
+	@Getter(value = AccessLevel.PROTECTED)
+	@NonNull
+	private JavaPlugin plugin;
+	@NonNull
+	private ConfigurationSection config;
+
+	public ConfigData<Boolean> shouldBeEnabled() {
+		return getData("enabled", true);
+	}
+
+	private HashMap<String, ConfigData<?>> datamap = new HashMap<>();
+
+	/**
+	 * @see IHaveConfig#getData(Map, ConfigurationSection, String, Object)
+	 */
+	protected <T> ConfigData<T> getData(String path, T def) {
+		return IHaveConfig.getData(datamap, config, path, def);
+	}
+
+	/**
+	 * @see IHaveConfig#getData(Map, ConfigurationSection, String, Object, Function, Function)
+	 */
+	protected <T> ConfigData<T> getData(String path, T def, Function<Object, T> getter, Function<T, Object> setter) {
+		return IHaveConfig.getData(datamap, config, path, def, getter, setter);
+	}
+
+	/**
+	 * Registers a component checking it's dependencies and calling {@link #register(JavaPlugin)}.<br>
+	 * Make sure to register the dependencies first.<br>
+	 * The component will be enabled automatically, regardless of when it was registered.
+	 *
+	 * @param component The component to register
+	 * @return Whether the component is registered successfully (it may have failed to enable)
+	 */
+	public static boolean registerComponent(JavaPlugin plugin, Component component) {
+		return registerUnregisterComponent(plugin, component, true);
+	}
+
+	/**
+	 * Unregisters a component by calling {@link #unregister(JavaPlugin)}.<br>
+	 * Make sure to unregister the dependencies last.
+	 *
+	 * @param componentClass The component class to unregister
+	 * @return Whether the component is unregistered successfully (it also got disabled)
+	 */
+	public static boolean unregisterComponent(JavaPlugin plugin, Class<? extends Component> componentClass) {
+		val component = components.get(componentClass);
+		if (component == null)
+			return false; //Failed to load
+		return registerUnregisterComponent(plugin, component, false);
+	}
+
+	public static boolean registerUnregisterComponent(JavaPlugin plugin, Component component, boolean register) {
+		try {
+			val metaAnn = component.getClass().getAnnotation(ComponentMetadata.class);
+			if (metaAnn != null) {
+				Class<? extends Component>[] dependencies = metaAnn.depends();
+				for (val dep : dependencies) {
+					if (!components.containsKey(dep)) {
+						plugin.getLogger().warning("Failed to " + (register ? "" : "un") + "register component " + component.getClassName() + " as a required dependency is missing/disabled: " + dep.getSimpleName());
+						return false;
+					}
+				}
+			}
+			if (register) {
+				component.plugin = plugin;
+				var compconf = plugin.getConfig().getConfigurationSection("components");
+				if (compconf == null) compconf = plugin.getConfig().createSection("components");
+				component.config = compconf.getConfigurationSection(component.getClassName());
+				if (component.config == null) component.config = compconf.createSection(component.getClassName());
+				component.register(plugin);
+				components.put(component.getClass(), component);
+				if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled().get()) {
+					try { //Enable components registered after the previous ones getting enabled
+						setComponentEnabled(component, true);
+						return true;
+					} catch (Exception | NoClassDefFoundError e) {
+						TBMCCoreAPI.SendException("Failed to enable component " + component.getClassName() + "!", e);
+						return true;
+					}
+				}
+				return true;
+			} else {
+				if (component.enabled) {
+					try {
+						component.disable();
+						component.enabled = false;
+					} catch (Exception | NoClassDefFoundError e) {
+						TBMCCoreAPI.SendException("Failed to disable component " + component.getClassName() + "!", e);
+						return false; //If failed to disable, won't unregister either
+					}
+				}
+				component.unregister(plugin);
+				components.remove(component.getClass());
+				return true;
+			}
+		} catch (Exception e) {
+			TBMCCoreAPI.SendException("Failed to " + (register ? "" : "un") + "register component " + component.getClassName() + "!", e);
+			return false;
+		}
+	}
+
+	/**
+	 * Registers a component checking it's dependencies and calling {@link #register(JavaPlugin)}.<br>
+	 * Make sure to register the dependencies first.
+	 *
+	 * @param component The component to register
+	 */
+	public static void setComponentEnabled(Component component, boolean enabled) throws UnregisteredComponentException {
+		if (!components.containsKey(component.getClass()))
+			throw new UnregisteredComponentException(component);
+		if (component.enabled = enabled)
+			component.enable();
+		else
+			component.disable();
+	}
+
+	/**
+	 * Returns the currently registered components<br>
+	 *
+	 * @return The currently registered components
+	 */
+	public static Map<Class<? extends Component>, Component> getComponents() {
+		return Collections.unmodifiableMap(components);
+	}
+
+	/**
+	 * Registers the module, when called by the JavaPlugin class.
+	 * This gets fired when the plugin is enabled. Use {@link #enable()} to register commands and such.
+	 *
+	 * @param plugin Plugin object
+	 */
+	protected void register(JavaPlugin plugin) {
+	}
+
+	/**
+	 * Unregisters the module, when called by the JavaPlugin class.
+	 * This gets fired when the plugin is disabled.
+	 * Do any cleanups needed within this method.
+	 *
+	 * @param plugin Plugin object
+	 */
+	protected void unregister(JavaPlugin plugin) {
+	}
+
+	/**
+	 * Enables the module, when called by the JavaPlugin class. Call
+	 * registerCommand() and registerListener() within this method.<br>
+	 * To access the plugin, use {@link #getPlugin()}.
+	 */
+	protected abstract void enable();
+
+	/**
+	 * Disables the module, when called by the JavaPlugin class. Do
+	 * any cleanups needed within this method.
+	 *     To access the plugin, use {@link #getPlugin()}.
+	 */
+	protected abstract void disable();
+
+	/**
+	 * Registers a TBMCCommand to the plugin. Make sure to add it to plugin.yml and use {@link buttondevteam.lib.chat.CommandClass}.
+	 *
+	 * @param plugin      Main plugin responsible for stuff
+	 * @param commandBase Custom coded command class
+	 */
+	protected void registerCommand(JavaPlugin plugin, TBMCCommandBase commandBase) {
+		TBMCChatAPI.AddCommand(plugin, commandBase);
+	}
+
+	/**
+	 * Registers a Listener to this plugin
+	 *
+	 * @param plugin   Main plugin responsible for stuff
+	 * @param listener The event listener to register
+	 * @return The provided listener
+	 */
+	protected Listener registerListener(JavaPlugin plugin, Listener listener) {
+		TBMCCoreAPI.RegisterEventsForExceptions(listener, plugin);
+		return listener;
+	}
+
+	private String getClassName() {
+		Class<?> enclosingClass = getClass().getEnclosingClass();
+		String className;
+		if (enclosingClass != null) {
+			className = (enclosingClass.getName());
+		} else {
+			className = (getClass().getName());
+		}
+		return className;
+	}
+}
