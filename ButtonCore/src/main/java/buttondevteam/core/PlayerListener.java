@@ -14,6 +14,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Date;
 
 import static buttondevteam.core.MainPlugin.permission;
@@ -55,6 +56,8 @@ public class PlayerListener implements Listener {
 	public void onSystemChat(TBMCSystemChatEvent event) {
         if (event.isHandled())
             return; // Only handle here if ButtonChat couldn't
+		if (Arrays.stream(event.getExceptions()).anyMatch("Minecraft"::equalsIgnoreCase))
+			return;
         Bukkit.getOnlinePlayers().stream().filter(event::shouldSendTo)
                 .forEach(p -> p.sendMessage(event.getChannel().DisplayName.substring(0, 2) + event.getMessage()));
     }

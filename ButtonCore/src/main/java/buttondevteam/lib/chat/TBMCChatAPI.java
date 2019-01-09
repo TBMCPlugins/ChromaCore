@@ -253,12 +253,13 @@ public class TBMCChatAPI {
 	 *            The score&group to use to find the group - use {@link RecipientTestResult#ALL} if the channel doesn't have scores
 	 * @param message
 	 *            The message to send
+	 * @param exceptions Platforms where this message shouldn't be sent (same as {@link ChatMessage#getOrigin()}
 	 * @return The event cancelled state
 	 */
-	public static boolean SendSystemMessage(Channel channel, RecipientTestResult rtr, String message) {
+	public static boolean SendSystemMessage(Channel channel, RecipientTestResult rtr, String message, String... exceptions) {
 		if (!Channel.getChannels().contains(channel))
 			throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
-		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID);
+		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID, exceptions);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
 	}
