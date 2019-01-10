@@ -5,7 +5,6 @@ import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.chat.TBMCCommandBase;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.var;
@@ -26,7 +25,7 @@ public abstract class Component {
 
 	@Getter
 	private boolean enabled = false;
-	@Getter(value = AccessLevel.PROTECTED)
+	@Getter
 	@NonNull
 	private JavaPlugin plugin;
 	@NonNull
@@ -131,6 +130,7 @@ public abstract class Component {
 			component.disable();
 			component.plugin.saveConfig();
 			component.config.resetConfigurationCache();
+			TBMCChatAPI.RemoveCommands(component);
 		}
 	}
 

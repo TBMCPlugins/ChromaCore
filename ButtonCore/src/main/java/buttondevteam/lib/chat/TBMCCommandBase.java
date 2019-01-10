@@ -1,6 +1,8 @@
 package buttondevteam.lib.chat;
 
+import buttondevteam.lib.architecture.Component;
 import javassist.Modifier;
+import lombok.Getter;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
@@ -103,4 +105,7 @@ public abstract class TBMCCommandBase {
 		}
 		return modOnly;
 	}
+
+	@Getter
+	Component component; //May be null
 }

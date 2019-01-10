@@ -16,6 +16,8 @@ import com.earth2me.essentials.Essentials;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.command.BlockCommandSender;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -113,5 +115,11 @@ public class MainPlugin extends JavaPlugin {
 			permission = permissionProvider.getProvider();
 		}
 		return (permission != null);
+	}
+
+	@Override
+	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		sender.sendMessage("§cThis command isn't available."); //In theory, unregistered commands use this method
+		return true;
 	}
 }

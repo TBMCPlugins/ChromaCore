@@ -21,41 +21,27 @@ public class CommandCaller implements CommandExecutor {
 	public static void RegisterCommand(TBMCCommandBase cmd) throws Exception {
 		if (instance == null)
 			instance = new CommandCaller();
-		String topcmd = cmd.GetCommandPath();
-		if (topcmd == null)
-			throw new Exception("Command " + cmd.getClass().getSimpleName() + " has no command path!");
-		if (cmd.getPlugin() == null)
-			throw new Exception("Command " + cmd.GetCommandPath() + " has no plugin!");
-		int i;
-		if ((i = topcmd.indexOf(' ')) != -1) // Get top-level command
-			topcmd = topcmd.substring(0, i);
-		{
-			PluginCommand pc = ((JavaPlugin) cmd.getPlugin()).getCommand(topcmd);
-			if (pc == null)
-				throw new Exception("Top level command " + topcmd + " not registered in plugin.yml for plugin: "
-						+ cmd.getPlugin().getName());
-			else {
-				pc.setExecutor(instance);
-				String[] helptext = cmd.GetHelpText(topcmd);
-                if (helptext == null || helptext.length == 0)
-                    throw new Exception("Command " + cmd.GetCommandPath() + " has no help text!");
-				pc.setUsage(helptext.length > 1 ? helptext[1] : helptext[0]);
-			}
-		}
+		String[] topcmd = new String[1]; //Holds out param
+		PluginCommand pc = getPluginCommand(cmd, topcmd);
+		pc.setExecutor(instance);
+		String[] helptext = cmd.GetHelpText(topcmd[0]);
+		if (helptext == null || helptext.length == 0)
+			throw new Exception("Command " + cmd.GetCommandPath() + " has no help text!");
+		pc.setUsage(helptext.length > 1 ? helptext[1] : helptext[0]);
 	}
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
-		String path = command.getName().toLowerCase();
+		StringBuilder path = new StringBuilder(command.getName().toLowerCase());
 		for (String arg : args)
-			path += " " + arg;
-		TBMCCommandBase cmd = TBMCChatAPI.GetCommands().get(path);
+			path.append(" ").append(arg);
+		TBMCCommandBase cmd = TBMCChatAPI.GetCommands().get(path.toString());
 		int argc = 0;
 		String[] subcmds = null;
-		while (cmd == null && (subcmds = TBMCChatAPI.GetSubCommands(path, sender)).length == 0 && path.contains(" ")) {
-			path = path.substring(0, path.lastIndexOf(' '));
+		while (cmd == null && (subcmds = TBMCChatAPI.GetSubCommands(path.toString(), sender)).length == 0 && path.toString().contains(" ")) {
+			path = new StringBuilder(path.substring(0, path.toString().lastIndexOf(' ')));
 			argc++;
-			cmd = TBMCChatAPI.GetCommands().get(path);
+			cmd = TBMCChatAPI.GetCommands().get(path.toString());
 		}
 		if (cmd == null) {
 			if (subcmds.length > 0) //Subcmds will always have value here (see assignment above)
@@ -84,5 +70,38 @@ public class CommandCaller implements CommandExecutor {
 					+ Arrays.toString(cmdargs), e);
 		}
 		return true;
+	}
+
+	public static void UnregisterCommand(TBMCCommandBase cmd) throws Exception {
+		PluginCommand pc = getPluginCommand(cmd, null);
+		pc.setExecutor(null); //Sets the executor to this plugin
+	}
+
+	/**
+	 * Gets the plugin command from the TBMC command.
+	 *
+	 * @param cmd        The TBMC command
+	 * @param out_topcmd An array with at least 1 elements or null
+	 * @return The Bukkit plugin command - an exception is generated if null
+	 * @throws Exception If the command isn't set up properly (or a different error)
+	 */
+	public static PluginCommand getPluginCommand(TBMCCommandBase cmd, String[] out_topcmd) throws Exception {
+		String topcmd = cmd.GetCommandPath();
+		if (topcmd == null)
+			throw new Exception("Command " + cmd.getClass().getSimpleName() + " has no command path!");
+		if (cmd.getPlugin() == null)
+			throw new Exception("Command " + cmd.GetCommandPath() + " has no plugin!");
+		int i;
+		if ((i = topcmd.indexOf(' ')) != -1) // Get top-level command
+			topcmd = topcmd.substring(0, i);
+		if (out_topcmd != null && out_topcmd.length > 0)
+			out_topcmd[0] = topcmd;
+		{
+			PluginCommand pc = ((JavaPlugin) cmd.getPlugin()).getCommand(topcmd);
+			if (pc == null)
+				throw new Exception("Top level command " + topcmd + " not registered in plugin.yml for plugin: "
+					+ cmd.getPlugin().getName());
+			return pc;
+		}
 	}
 }

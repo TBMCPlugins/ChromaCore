@@ -1,6 +1,7 @@
 package buttondevteam.lib.architecture;
 
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.chat.TBMCChatAPI;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.var;
@@ -32,6 +33,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 			pluginDisable();
 			saveConfig();
 			iConfig.resetConfigurationCache();
+			TBMCChatAPI.RemoveCommands(this);
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Error while disabling plugin " + getName() + "!", e);
 		}
