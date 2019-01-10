@@ -17,7 +17,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * Configuration is based on class name
@@ -31,26 +30,13 @@ public abstract class Component {
 	@NonNull
 	private JavaPlugin plugin;
 	@NonNull
-	private ConfigurationSection config;
+	private ConfigurationSection configSect;
+	@NonNull
+	private @Getter
+	IHaveConfig config;
 
 	public ConfigData<Boolean> shouldBeEnabled() {
-		return getData("enabled", true);
-	}
-
-	private HashMap<String, ConfigData<?>> datamap = new HashMap<>();
-
-	/**
-	 * @see IHaveConfig#getData(Map, ConfigurationSection, String, Object)
-	 */
-	protected <T> ConfigData<T> getData(String path, T def) {
-		return IHaveConfig.getData(datamap, config, path, def);
-	}
-
-	/**
-	 * @see IHaveConfig#getData(Map, ConfigurationSection, String, Object, Function, Function)
-	 */
-	protected <T> ConfigData<T> getData(String path, T def, Function<Object, T> getter, Function<T, Object> setter) {
-		return IHaveConfig.getData(datamap, config, path, def, getter, setter);
+		return config.getData("enabled", true);
 	}
 
 	/**
@@ -95,8 +81,10 @@ public abstract class Component {
 				component.plugin = plugin;
 				var compconf = plugin.getConfig().getConfigurationSection("components");
 				if (compconf == null) compconf = plugin.getConfig().createSection("components");
-				component.config = compconf.getConfigurationSection(component.getClassName());
-				if (component.config == null) component.config = compconf.createSection(component.getClassName());
+				component.configSect = compconf.getConfigurationSection(component.getClassName());
+				if (component.configSect == null)
+					component.configSect = compconf.createSection(component.getClassName());
+				component.config = new IHaveConfig(component.configSect);
 				component.register(plugin);
 				components.put(component.getClass(), component);
 				if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled().get()) {
@@ -108,12 +96,11 @@ public abstract class Component {
 						return true;
 					}
 				}
-				return true;
+				return true; //Component shouldn't be enabled
 			} else {
 				if (component.enabled) {
 					try {
-						component.disable();
-						component.enabled = false;
+						setComponentEnabled(component, false);
 					} catch (Exception | NoClassDefFoundError e) {
 						TBMCCoreAPI.SendException("Failed to disable component " + component.getClassName() + "!", e);
 						return false; //If failed to disable, won't unregister either
@@ -140,8 +127,11 @@ public abstract class Component {
 			throw new UnregisteredComponentException(component);
 		if (component.enabled = enabled)
 			component.enable();
-		else
+		else {
 			component.disable();
+			component.plugin.saveConfig();
+			component.config.resetConfigurationCache();
+		}
 	}
 
 	/**
@@ -159,6 +149,7 @@ public abstract class Component {
 	 *
 	 * @param plugin Plugin object
 	 */
+	@SuppressWarnings({"unused", "WeakerAccess"})
 	protected void register(JavaPlugin plugin) {
 	}
 
@@ -169,6 +160,7 @@ public abstract class Component {
 	 *
 	 * @param plugin Plugin object
 	 */
+	@SuppressWarnings({"WeakerAccess", "unused"})
 	protected void unregister(JavaPlugin plugin) {
 	}
 
