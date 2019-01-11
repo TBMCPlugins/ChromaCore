@@ -9,8 +9,8 @@ public class RestartComponent extends Component {
 	@Override
 	public void enable() {
 		//TODO: Permissions for the commands
-		TBMCChatAPI.AddCommand(getPlugin(), ScheduledRestartCommand.class);
-		TBMCChatAPI.AddCommand(getPlugin(), PrimeRestartCommand.class);
+		TBMCChatAPI.AddCommand(this, new ScheduledRestartCommand());
+		TBMCChatAPI.AddCommand(this, new PrimeRestartCommand());
 	}
 
 	@Override

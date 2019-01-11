@@ -1,6 +1,8 @@
 package buttondevteam.core;
 
-import buttondevteam.lib.chat.Channel;
+import buttondevteam.component.channel.Channel;
+import buttondevteam.component.channel.ChannelComponent;
+import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.Color;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import org.bukkit.Bukkit;
@@ -38,6 +40,7 @@ public class TestPrepare {
 				return cl.isAssignableFrom(invocation.getMethod().getReturnType());
 			}
 		}));
+		Component.registerComponent(Mockito.mock(MainPlugin.class), new ChannelComponent());
 		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fg§f", Color.White, "g", null));
 	}
 }

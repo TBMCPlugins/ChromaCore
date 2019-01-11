@@ -1,5 +1,7 @@
 package buttondevteam.lib.chat;
 
+import buttondevteam.component.channel.Channel;
+import buttondevteam.component.channel.Channel.RecipientTestResult;
 import buttondevteam.core.CommandCaller;
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCChatEvent;
@@ -7,7 +9,6 @@ import buttondevteam.lib.TBMCChatPreprocessEvent;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.TBMCSystemChatEvent;
 import buttondevteam.lib.architecture.Component;
-import buttondevteam.lib.chat.Channel.RecipientTestResult;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -130,7 +131,7 @@ public class TBMCChatAPI {
 
 	/**
 	 * <p>
-	 * This method adds a plugin's command to help and sets it's executor.
+	 * This method adds a plugin's command to help and sets it's executor. They will be automatically unregistered on plugin disable.
 	 * </p>
 	 * <p>
 	 * The <u>command must be registered</u> in the caller plugin's plugin.yml. Otherwise the plugin will output a messsage to console.
@@ -163,7 +164,7 @@ public class TBMCChatAPI {
 
 	/**
 	 * <p>
-	 * This method adds a plugin's command to help and sets its executor.
+	 * This method adds a plugin's command to help and sets its executor. They will be automatically unregistered on plugin disable.
 	 * </p>
 	 * <p>
 	 * The <u>command must be registered</u> in the caller plugin's plugin.yml. Otherwise the plugin will output a message to console.
@@ -191,7 +192,7 @@ public class TBMCChatAPI {
 
 	/**
 	 * <p>
-	 * This method adds a plugin's command to help and sets its executor.
+	 * This method adds a plugin's command to help and sets its executor. They will be automatically unregistered on component disable.
 	 * </p>
 	 * <p>
 	 * The <u>command must be registered</u> in the caller plugin's plugin.yml. Otherwise the plugin will output a message to console.
@@ -277,7 +278,7 @@ public class TBMCChatAPI {
 	 */
 	public static boolean SendChatMessage(ChatMessage cm, Channel channel) {
 	    if (!Channel.getChannels().contains(channel))
-		    throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
+		    throw new RuntimeException("Channel " + channel.DisplayName().get() + " not registered!");
 		val permcheck = cm.getPermCheck();
 	    RecipientTestResult rtr = getScoreOrSendError(channel, permcheck);
 		int score = rtr.score;
@@ -308,7 +309,7 @@ public class TBMCChatAPI {
 	 */
 	public static boolean SendSystemMessage(Channel channel, RecipientTestResult rtr, String message, String... exceptions) {
 		if (!Channel.getChannels().contains(channel))
-			throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
+			throw new RuntimeException("Channel " + channel.DisplayName().get() + " not registered!");
 		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID, exceptions);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();

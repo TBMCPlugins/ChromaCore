@@ -1,6 +1,6 @@
 package buttondevteam.lib;
 
-import buttondevteam.lib.chat.Channel;
+import buttondevteam.component.channel.Channel;
 import buttondevteam.lib.chat.ChatMessage;
 import lombok.Getter;
 import lombok.experimental.Delegate;

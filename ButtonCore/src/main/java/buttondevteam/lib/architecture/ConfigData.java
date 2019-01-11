@@ -15,6 +15,9 @@ import java.util.function.Function;
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 //@AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class ConfigData<T> { //TODO: Save after a while
+	/**
+	 * May be null for testing
+	 */
 	private final ConfigurationSection config;
 	private final String path;
 	private @Nullable final T def;
@@ -46,14 +49,14 @@ public class ConfigData<T> { //TODO: Save after a while
 	@SuppressWarnings("unchecked")
 	public T get() {
 		if (value != null) return value; //Speed things up
-		Object val = config.get(path);
+		Object val = config == null ? null : config.get(path); //config==null: testing
 		if (val == null) {
 			val = primitiveDef;
 		}
 		if (val == primitiveDef && !saved) {
 			if (def != null)
 				set(def); //Save default value
-			else
+			else if (config != null) //config==null: testing
 				config.set(path, primitiveDef);
 			saved = true;
 		}
@@ -70,7 +73,8 @@ public class ConfigData<T> { //TODO: Save after a while
 		if (setter != null)
 			val = setter.apply(value);
 		else val = value;
-		config.set(path, val);
-		this.value =value;
+		if (config != null)
+			config.set(path, val);
+		this.value = value;
 	}
 }

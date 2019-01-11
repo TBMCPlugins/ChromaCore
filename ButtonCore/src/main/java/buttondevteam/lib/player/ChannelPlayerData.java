@@ -1,6 +1,6 @@
 package buttondevteam.lib.player;
 
-import buttondevteam.lib.chat.Channel;
+import buttondevteam.component.channel.Channel;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 public class ChannelPlayerData { //I just want this to work

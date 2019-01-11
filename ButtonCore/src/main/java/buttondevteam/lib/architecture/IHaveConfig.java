@@ -12,6 +12,11 @@ public final class IHaveConfig {
 	private final HashMap<String, ConfigData<?>> datamap = new HashMap<>();
 	private ConfigurationSection config;
 
+	/**
+	 * May be used in testing
+	 *
+	 * @param section May be null for testing
+	 */
 	IHaveConfig(ConfigurationSection section) {
 		config = section;
 	}

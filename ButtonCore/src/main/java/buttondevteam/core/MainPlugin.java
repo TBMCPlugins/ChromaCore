@@ -1,12 +1,13 @@
 package buttondevteam.core;
 
+import buttondevteam.component.channel.Channel;
+import buttondevteam.component.channel.ChannelComponent;
+import buttondevteam.component.channel.ChatRoom;
 import buttondevteam.component.restart.RestartComponent;
 import buttondevteam.component.updater.PluginUpdater;
 import buttondevteam.component.updater.PluginUpdaterComponent;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.Component;
-import buttondevteam.lib.chat.Channel;
-import buttondevteam.lib.chat.ChatRoom;
 import buttondevteam.lib.chat.Color;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.player.ChromaGamerBase;
@@ -54,6 +55,7 @@ public class MainPlugin extends JavaPlugin {
 		saveConfig();
 		Component.registerComponent(this, new PluginUpdaterComponent());
 		Component.registerComponent(this, new RestartComponent());
+		Component.registerComponent(this, new ChannelComponent());
 		ComponentManager.enableComponents();
 		TBMCChatAPI.AddCommand(this, MemberCommand.class);
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
@@ -62,8 +64,7 @@ public class MainPlugin extends JavaPlugin {
 		ChromaGamerBase.addConverter(sender -> Optional.ofNullable(sender instanceof Player
 				? TBMCPlayer.getPlayer(((Player) sender).getUniqueId(), TBMCPlayer.class) : null)); //Players, has higher priority
 		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
-        TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fOOC§f", Color.White, "ooc", null));
-        Channel.GlobalChat.IDs = new String[]{"g"}; //Support /g as well
+		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fOOC§f", Color.White, "g", null)); //The /ooc ID has moved to the config
 		TBMCChatAPI.RegisterChatChannel(
 				Channel.AdminChat = new Channel("§cADMIN§f", Color.Red, "a", Channel.inGroupFilter(null)));
 		TBMCChatAPI.RegisterChatChannel(

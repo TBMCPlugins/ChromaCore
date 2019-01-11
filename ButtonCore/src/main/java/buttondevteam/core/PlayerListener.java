@@ -59,6 +59,6 @@ public class PlayerListener implements Listener {
 		if (Arrays.stream(event.getExceptions()).anyMatch("Minecraft"::equalsIgnoreCase))
 			return;
         Bukkit.getOnlinePlayers().stream().filter(event::shouldSendTo)
-                .forEach(p -> p.sendMessage(event.getChannel().DisplayName.substring(0, 2) + event.getMessage()));
+	        .forEach(p -> p.sendMessage(event.getChannel().DisplayName().get().substring(0, 2) + event.getMessage()));
     }
 }

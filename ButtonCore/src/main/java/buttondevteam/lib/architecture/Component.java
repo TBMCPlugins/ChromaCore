@@ -34,7 +34,7 @@ public abstract class Component {
 	private @Getter
 	IHaveConfig config;
 
-	public ConfigData<Boolean> shouldBeEnabled() {
+	public final ConfigData<Boolean> shouldBeEnabled() {
 		return config.getData("enabled", true);
 	}
 
@@ -78,12 +78,15 @@ public abstract class Component {
 			}
 			if (register) {
 				component.plugin = plugin;
-				var compconf = plugin.getConfig().getConfigurationSection("components");
-				if (compconf == null) compconf = plugin.getConfig().createSection("components");
-				component.configSect = compconf.getConfigurationSection(component.getClassName());
-				if (component.configSect == null)
-					component.configSect = compconf.createSection(component.getClassName());
-				component.config = new IHaveConfig(component.configSect);
+				if (plugin.getConfig() != null) { //Production
+					var compconf = plugin.getConfig().getConfigurationSection("components");
+					if (compconf == null) compconf = plugin.getConfig().createSection("components");
+					component.configSect = compconf.getConfigurationSection(component.getClassName());
+					if (component.configSect == null)
+						component.configSect = compconf.createSection(component.getClassName());
+					component.config = new IHaveConfig(component.configSect);
+				} else //Testing
+					component.config = new IHaveConfig(null);
 				component.register(plugin);
 				components.put(component.getClass(), component);
 				if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled().get()) {
@@ -179,23 +182,21 @@ public abstract class Component {
 	protected abstract void disable();
 
 	/**
-	 * Registers a TBMCCommand to the plugin. Make sure to add it to plugin.yml and use {@link buttondevteam.lib.chat.CommandClass}.
+	 * Registers a TBMCCommand to the component. Make sure to add it to plugin.yml and use {@link buttondevteam.lib.chat.CommandClass}.
 	 *
-	 * @param plugin      Main plugin responsible for stuff
 	 * @param commandBase Custom coded command class
 	 */
-	protected void registerCommand(JavaPlugin plugin, TBMCCommandBase commandBase) {
-		TBMCChatAPI.AddCommand(plugin, commandBase);
+	protected final void registerCommand(TBMCCommandBase commandBase) {
+		TBMCChatAPI.AddCommand(this, commandBase);
 	}
 
 	/**
-	 * Registers a Listener to this plugin
+	 * Registers a Listener to this component
 	 *
-	 * @param plugin   Main plugin responsible for stuff
 	 * @param listener The event listener to register
 	 * @return The provided listener
 	 */
-	protected Listener registerListener(JavaPlugin plugin, Listener listener) {
+	protected final Listener registerListener(Listener listener) {
 		TBMCCoreAPI.RegisterEventsForExceptions(listener, plugin);
 		return listener;
 	}
