@@ -277,8 +277,12 @@ public class TBMCChatAPI {
 	 * @return The event cancelled state
 	 */
 	public static boolean SendChatMessage(ChatMessage cm, Channel channel) {
-	    if (!Channel.getChannels().contains(channel))
+		if (!Channel.getChannelList().contains(channel))
 		    throw new RuntimeException("Channel " + channel.DisplayName().get() + " not registered!");
+		if (!channel.Enabled().get()) {
+			cm.getSender().sendMessage("§cThe channel '" + channel.DisplayName().get() + "' is disabled!");
+			return true; //Cancel sending if channel is disabled
+		}
 		val permcheck = cm.getPermCheck();
 	    RecipientTestResult rtr = getScoreOrSendError(channel, permcheck);
 		int score = rtr.score;
@@ -308,8 +312,10 @@ public class TBMCChatAPI {
 	 * @return The event cancelled state
 	 */
 	public static boolean SendSystemMessage(Channel channel, RecipientTestResult rtr, String message, String... exceptions) {
-		if (!Channel.getChannels().contains(channel))
+		if (!Channel.getChannelList().contains(channel))
 			throw new RuntimeException("Channel " + channel.DisplayName().get() + " not registered!");
+		if (!channel.Enabled().get())
+			return true; //Cancel sending
 		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID, exceptions);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();

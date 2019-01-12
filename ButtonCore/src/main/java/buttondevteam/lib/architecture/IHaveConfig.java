@@ -74,7 +74,7 @@ public final class IHaveConfig {
 
 	/**
 	 * Deletes the config cache. Call this on component/plugin disable so that new values are read.
-	 */
+	 */ //Currently only the /component command reloads the config, otherwise this doesn't really have effect
 	public void resetConfigurationCache() {
 		datamap.clear();
 	}

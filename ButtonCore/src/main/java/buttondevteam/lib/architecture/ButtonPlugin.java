@@ -16,7 +16,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	protected abstract void pluginDisable();
 
 	@Override
-	public void onEnable() {
+	public final void onEnable() {
 		var section = super.getConfig().getConfigurationSection("global");
 		if (section == null) section = super.getConfig().createSection("global");
 		iConfig = new IHaveConfig(section);
@@ -28,7 +28,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	}
 
 	@Override
-	public void onDisable() {
+	public final void onDisable() {
 		try {
 			pluginDisable();
 			saveConfig();

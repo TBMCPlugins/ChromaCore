@@ -1,15 +1,15 @@
-package buttondevteam.core;
+package buttondevteam.component.randomtp;
 
+import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.chat.TBMCCommandBase;
 import org.bukkit.*;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 
 // @formatter:off
-@CommandClass
+@SuppressWarnings("FieldCanBeLocal")@CommandClass
 public class RandomTP extends TBMCCommandBase
 {
 	private final int 		radius = 70; //set how far apart the five teleport positions are
@@ -51,9 +51,9 @@ public class RandomTP extends TBMCCommandBase
 
 	/*================================================================================================*/
 
-	public void onEnable(JavaPlugin plugin)
+	public void onEnable(Component component)
 	{
-		TBMCChatAPI.AddCommand(plugin, this);
+		TBMCChatAPI.AddCommand(component, this);
 
 		world = Bukkit.getWorld("World");
 		border = world.getWorldBorder();

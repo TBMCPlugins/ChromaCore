@@ -1,5 +1,6 @@
-package buttondevteam.core;
+package buttondevteam.component.restart;
 
+import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.ScheduledServerRestartEvent;
 import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.TBMCCommandBase;

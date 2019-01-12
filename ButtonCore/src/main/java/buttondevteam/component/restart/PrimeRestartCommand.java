@@ -1,4 +1,4 @@
-package buttondevteam.core;
+package buttondevteam.component.restart;
 
 import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.TBMCCommandBase;

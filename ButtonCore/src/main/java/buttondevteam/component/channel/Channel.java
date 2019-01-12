@@ -12,11 +12,13 @@ import org.bukkit.entity.Player;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class Channel {
     /**
@@ -41,11 +43,14 @@ public class Channel {
 		if (component == null) throw new RuntimeException("Cannot access channel properties until registered!");
 	}
 
-	public final ConfigData<Boolean> Enabled() { //TODO: Implement in all plugins
+	public final ConfigData<Boolean> Enabled() {
 		throwGame();
 		return component.getConfig().getData(ID + ".enabled", true);
 	}
 
+	/**
+	 * Must start with a color code
+	 */
 	public final ConfigData<String> DisplayName() {
 		throwGame();
 		return component.getConfig().getData(ID + ".displayName", defDisplayName);
@@ -137,9 +142,23 @@ public class Channel {
         return filteranderrormsg.apply(sender);
     }
 
-    public static List<Channel> getChannels() {
-        return channels;
-    }
+	/**
+	 * Get a stream of the enabled channels
+	 *
+	 * @return Only the enabled channels
+	 */
+	public static Stream<Channel> getChannels() {
+		return channels.stream().filter(ch -> ch.Enabled().get());
+	}
+
+	/**
+	 * Return all channels whether they're enabled or not
+	 *
+	 * @return A list of all channels
+	 */
+	public static List<Channel> getChannelList() {
+		return Collections.unmodifiableList(channels);
+	}
 
     /**
      * Convenience method for the function parameter of {@link #Channel(String, Color, String, Function)}. It checks if the sender is OP or optionally has the specified group. The error message is

@@ -127,6 +127,7 @@ public abstract class Component {
 	public static void setComponentEnabled(Component component, boolean enabled) throws UnregisteredComponentException {
 		if (!components.containsKey(component.getClass()))
 			throw new UnregisteredComponentException(component);
+		if (component.enabled == enabled) return; //Don't do anything
 		if (component.enabled = enabled)
 			component.enable();
 		else {
@@ -202,13 +203,6 @@ public abstract class Component {
 	}
 
 	private String getClassName() {
-		Class<?> enclosingClass = getClass().getEnclosingClass();
-		String className;
-		if (enclosingClass != null) {
-			className = (enclosingClass.getName());
-		} else {
-			className = (getClass().getName());
-		}
-		return className;
+		return getClass().getSimpleName();
 	}
 }

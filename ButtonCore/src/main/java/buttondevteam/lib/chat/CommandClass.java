@@ -36,4 +36,11 @@ public @interface CommandClass {
 	 * Exclude this class from the path. Useful if more commands share some property but aren't subcommands of a common command. See {@link CommandClass} for more details.
 	 */
     boolean excludeFromPath() default false;
+
+	/**
+	 * The help text to show for the players.
+	 *
+	 * @return The help text
+	 */
+	String[] helpText() default {};
 }
