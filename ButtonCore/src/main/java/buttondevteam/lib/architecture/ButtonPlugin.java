@@ -32,7 +32,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 		try {
 			pluginDisable();
 			saveConfig();
-			iConfig.resetConfigurationCache();
+			iConfig = null; //Clearing the hashmap is not enough, we need to update the section as well
 			TBMCChatAPI.RemoveCommands(this);
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Error while disabling plugin " + getName() + "!", e);

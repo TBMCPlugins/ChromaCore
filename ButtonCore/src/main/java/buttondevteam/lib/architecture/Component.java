@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.var;
 import lombok.val;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -28,8 +27,6 @@ public abstract class Component {
 	@Getter
 	@NonNull
 	private JavaPlugin plugin;
-	@NonNull
-	private ConfigurationSection configSect;
 	@NonNull
 	private @Getter
 	IHaveConfig config;
@@ -78,15 +75,7 @@ public abstract class Component {
 			}
 			if (register) {
 				component.plugin = plugin;
-				if (plugin.getConfig() != null) { //Production
-					var compconf = plugin.getConfig().getConfigurationSection("components");
-					if (compconf == null) compconf = plugin.getConfig().createSection("components");
-					component.configSect = compconf.getConfigurationSection(component.getClassName());
-					if (component.configSect == null)
-						component.configSect = compconf.createSection(component.getClassName());
-					component.config = new IHaveConfig(component.configSect);
-				} else //Testing
-					component.config = new IHaveConfig(null);
+				updateConfig(plugin, component);
 				component.register(plugin);
 				components.put(component.getClass(), component);
 				if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled().get()) {
@@ -128,14 +117,26 @@ public abstract class Component {
 		if (!components.containsKey(component.getClass()))
 			throw new UnregisteredComponentException(component);
 		if (component.enabled == enabled) return; //Don't do anything
-		if (component.enabled = enabled)
+		if (component.enabled = enabled) {
+			updateConfig(component.getPlugin(), component);
 			component.enable();
-		else {
+		} else {
 			component.disable();
 			component.plugin.saveConfig();
-			component.config.resetConfigurationCache();
 			TBMCChatAPI.RemoveCommands(component);
 		}
+	}
+
+	private static void updateConfig(JavaPlugin plugin, Component component) {
+		if (plugin.getConfig() != null) { //Production
+			var compconf = plugin.getConfig().getConfigurationSection("components");
+			if (compconf == null) compconf = plugin.getConfig().createSection("components");
+			var configSect = compconf.getConfigurationSection(component.getClassName());
+			if (configSect == null)
+				configSect = compconf.createSection(component.getClassName());
+			component.config = new IHaveConfig(configSect);
+		} else //Testing
+			component.config = new IHaveConfig(null);
 	}
 
 	/**

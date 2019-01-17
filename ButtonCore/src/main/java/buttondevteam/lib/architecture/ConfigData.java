@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import javax.annotation.Nullable;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -20,7 +20,7 @@ public class ConfigData<T> { //TODO: Save after a while
 	 */
 	private final ConfigurationSection config;
 	private final String path;
-	private @Nullable final T def;
+	private final T def;
 	private final Object primitiveDef;
 	/**
 	 * The parameter is of a primitive type as returned by {@link YamlConfiguration#get(String)}
@@ -53,11 +53,8 @@ public class ConfigData<T> { //TODO: Save after a while
 		if (val == null) {
 			val = primitiveDef;
 		}
-		if (val == primitiveDef && !saved) {
-			if (def != null)
-				set(def); //Save default value
-			else if (config != null) //config==null: testing
-				config.set(path, primitiveDef);
+		if (!saved && Objects.equals(val, primitiveDef)) { //String needs .equals()
+			set(def); //Save default value - def is always set
 			saved = true;
 		}
 		if (getter != null) {
