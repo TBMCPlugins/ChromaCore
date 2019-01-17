@@ -66,7 +66,7 @@ public abstract class Component {
 			val metaAnn = component.getClass().getAnnotation(ComponentMetadata.class);
 			if (metaAnn != null) {
 				Class<? extends Component>[] dependencies = metaAnn.depends();
-				for (val dep : dependencies) {
+				for (val dep : dependencies) { //TODO: Support dependencies at enable/disable as well
 					if (!components.containsKey(dep)) {
 						plugin.getLogger().warning("Failed to " + (register ? "" : "un") + "register component " + component.getClassName() + " as a required dependency is missing/disabled: " + dep.getSimpleName());
 						return false;

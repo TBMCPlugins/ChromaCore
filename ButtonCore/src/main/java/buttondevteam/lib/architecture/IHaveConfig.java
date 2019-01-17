@@ -1,5 +1,6 @@
 package buttondevteam.lib.architecture;
 
+import lombok.Getter;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import java.util.function.Function;
  */
 public final class IHaveConfig {
 	private final HashMap<String, ConfigData<?>> datamap = new HashMap<>();
+	@Getter
 	private ConfigurationSection config;
 
 	/**
