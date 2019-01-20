@@ -1,11 +1,7 @@
 package buttondevteam.lib.player;
 
+import buttondevteam.component.towny.TownyComponent;
 import buttondevteam.lib.TBMCCoreAPI;
-import com.palmergames.bukkit.towny.Towny;
-import com.palmergames.bukkit.towny.exceptions.AlreadyRegisteredException;
-import com.palmergames.bukkit.towny.exceptions.NotRegisteredException;
-import com.palmergames.bukkit.towny.object.Resident;
-import com.palmergames.bukkit.towny.object.TownyUniverse;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -127,22 +123,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 			Bukkit.getLogger().info("Player name saved: " + player.PlayerName().get());
 		} else if (!p.getName().equals(player.PlayerName().get())) {
 			Bukkit.getLogger().info("Renaming " + player.PlayerName().get() + " to " + p.getName());
-			TownyUniverse tu = Towny.getPlugin(Towny.class).getTownyUniverse();
-            Resident resident = tu.getResidentMap().get(player.PlayerName().get().toLowerCase()); //The map keys are lowercase
-			if (resident == null) {
-				Bukkit.getLogger().warning("Resident not found - couldn't rename in Towny.");
-				TBMCCoreAPI.sendDebugMessage("Resident not found - couldn't rename in Towny.");
-            } else if (tu.getResidentMap().contains(p.getName().toLowerCase())) {
-				Bukkit.getLogger().warning("Target resident name is already in use."); // TODO: Handle
-				TBMCCoreAPI.sendDebugMessage("Target resident name is already in use.");
-			} else
-				try {
-                    TownyUniverse.getDataSource().renamePlayer(resident, p.getName()); //Fixed in Towny 0.91.1.2
-				} catch (AlreadyRegisteredException e) {
-					TBMCCoreAPI.SendException("Failed to rename resident, there's already one with this name.", e);
-				} catch (NotRegisteredException e) {
-					TBMCCoreAPI.SendException("Failed to rename resident, the resident isn't registered.", e);
-				}
+			TownyComponent.renameInTowny(player.PlayerName().get(), p.getName());
 			player.PlayerName().set(p.getName());
 			Bukkit.getLogger().info("Renaming done.");
 		}

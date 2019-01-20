@@ -1,5 +1,7 @@
-package buttondevteam.lib.chat;
+package buttondevteam.component.channel;
 
+import buttondevteam.lib.chat.Color;
+import buttondevteam.lib.chat.TBMCChatAPI;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;

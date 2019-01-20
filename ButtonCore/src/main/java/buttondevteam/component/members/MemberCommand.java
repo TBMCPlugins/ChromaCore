@@ -1,5 +1,6 @@
-package buttondevteam.core;
+package buttondevteam.component.members;
 
+import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.TBMCCommandBase;
 import lombok.val;

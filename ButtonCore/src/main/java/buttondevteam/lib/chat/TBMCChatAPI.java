@@ -1,12 +1,14 @@
 package buttondevteam.lib.chat;
 
+import buttondevteam.component.channel.Channel;
+import buttondevteam.component.channel.Channel.RecipientTestResult;
 import buttondevteam.core.CommandCaller;
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCChatEvent;
 import buttondevteam.lib.TBMCChatPreprocessEvent;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.TBMCSystemChatEvent;
-import buttondevteam.lib.chat.Channel.RecipientTestResult;
+import buttondevteam.lib.architecture.Component;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -119,10 +121,8 @@ public class TBMCChatAPI {
 					continue;
 				TBMCCommandBase c = cmd.newInstance();
 				c.plugin = plugin;
-				if (HasNulls(plugin, c))
-					continue;
+				CommandCaller.RegisterCommand(c); //Will check for nulls
 				commands.put(c.GetCommandPath(), c);
-				CommandCaller.RegisterCommand(c);
 			} catch (Exception e) {
 				TBMCCoreAPI.SendException("An error occured while registering command " + cmd.getName(), e);
 			}
@@ -131,7 +131,7 @@ public class TBMCChatAPI {
 
 	/**
 	 * <p>
-	 * This method adds a plugin's command to help and sets it's executor.
+	 * This method adds a plugin's command to help and sets it's executor. They will be automatically unregistered on plugin disable.
 	 * </p>
 	 * <p>
 	 * The <u>command must be registered</u> in the caller plugin's plugin.yml. Otherwise the plugin will output a messsage to console.
@@ -155,55 +155,106 @@ public class TBMCChatAPI {
 			else
 				c = thecmdclass.newInstance();
 			c.plugin = plugin;
-			if (HasNulls(plugin, c))
-				return;
+			CommandCaller.RegisterCommand(c); //Will check for nulls
 			commands.put(c.GetCommandPath(), c);
-			CommandCaller.RegisterCommand(c);
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("An error occured while registering command " + thecmdclass.getSimpleName(), e);
 		}
-	}
+	} //TODO: onCommand(CommandSender sender, String alias, int arg1, String arg2) (planned for a while)
 
 	/**
 	 * <p>
-	 * This method adds a plugin's command to help and sets it's executor.
+	 * This method adds a plugin's command to help and sets its executor. They will be automatically unregistered on plugin disable.
 	 * </p>
 	 * <p>
-	 * The <u>command must be registered</u> in the caller plugin's plugin.yml. Otherwise the plugin will output a messsage to console.
+	 * The <u>command must be registered</u> in the caller plugin's plugin.yml. Otherwise the plugin will output a message to console.
 	 * </p>
 	 * <p>
 	 * <i>Using this method after the server is done loading will have no effect.</i>
 	 * </p>
-	 * 
+	 *
 	 * @param plugin
 	 *            The caller plugin
 	 * @param cmd
 	 *            The command to add
 	 */
 	public static void AddCommand(JavaPlugin plugin, TBMCCommandBase cmd) {
-		if (HasNulls(plugin, cmd))
-			return;
-		// plugin.getLogger().info("Registering command /" + cmd.GetCommandPath() + " for " + plugin.getName());
 		try {
+			if (plugin == null) throw new IllegalArgumentException("The plugin is null!");
+			if (cmd == null) throw new IllegalArgumentException("The command is null!");
 			cmd.plugin = plugin;
+			CommandCaller.RegisterCommand(cmd); //Checks for other nulls
 			commands.put(cmd.GetCommandPath(), cmd);
-			CommandCaller.RegisterCommand(cmd);
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("An error occured while registering command " + cmd.GetCommandPath(), e);
+			TBMCCoreAPI.SendException("An error occured while registering command " + (cmd == null ? "n u l l" : cmd.GetCommandPath()), e);
 		}
 	}
 
-	private static boolean HasNulls(JavaPlugin plugin, TBMCCommandBase cmd) {
-		if (cmd == null) {
-			TBMCCoreAPI.SendException("An error occured while registering a command for plugin " + plugin.getName(),
-					new Exception("The command is null!"));
-			return true;
-		} else if (cmd.GetCommandPath() == null) {
-			TBMCCoreAPI.SendException("An error occured while registering command " + cmd.getClass().getSimpleName()
-					+ " for plugin " + plugin.getName(), new Exception("The command path is null!"));
-			return true;
+	/**
+	 * <p>
+	 * This method adds a plugin's command to help and sets its executor. They will be automatically unregistered on component disable.
+	 * </p>
+	 * <p>
+	 * The <u>command must be registered</u> in the caller plugin's plugin.yml. Otherwise the plugin will output a message to console.
+	 * </p>
+	 * <p>
+	 * <i>Using this method after the server is done loading will have no effect.</i>
+	 * </p>
+	 *
+	 * @param component The caller component
+	 * @param cmd       The command to add
+	 */
+	public static void AddCommand(Component component, TBMCCommandBase cmd) {
+		try {
+			if (component == null) throw new IllegalArgumentException("The component is null!");
+			if (cmd == null) throw new IllegalArgumentException("The command is null!");
+			cmd.plugin = component.getPlugin();
+			cmd.component = component;
+			CommandCaller.RegisterCommand(cmd); //Checks for other nulls
+			commands.put(cmd.GetCommandPath(), cmd);
+		} catch (Exception e) {
+			TBMCCoreAPI.SendException("An error occured while registering command " + (cmd == null ? "n u l l" : cmd.GetCommandPath()), e);
 		}
-		return false;
+	}
+
+	/**
+	 * Removes all commands from the plugin
+	 *
+	 * @param plugin The plugin to remove commands from
+	 */
+	public static void RemoveCommands(JavaPlugin plugin) {
+		commands.values().removeIf(c -> {
+			try {
+				if (c.plugin == plugin) {
+					CommandCaller.UnregisterCommand(c);
+					return true; //Remove
+				}
+				return false;
+			} catch (Exception e) {
+				TBMCCoreAPI.SendException("An error occured while unregistering commands for " + plugin.getName(), e);
+				return true; //Remove if it couldn't get the plugin command
+			}
+		});
+	}
+
+	/**
+	 * Removes all commands from the component
+	 *
+	 * @param component The component to remove commands from
+	 */
+	public static void RemoveCommands(Component component) {
+		commands.values().removeIf(c -> {
+			try {
+				if (c.component == component) {
+					CommandCaller.UnregisterCommand(c);
+					return true; //Remove
+				}
+				return false;
+			} catch (Exception e) {
+				TBMCCoreAPI.SendException("An error occured while unregistering commands for " + component.getClass().getSimpleName(), e);
+				return true; //Remove if it couldn't get the plugin command
+			}
+		});
 	}
 
 	/**
@@ -226,8 +277,12 @@ public class TBMCChatAPI {
 	 * @return The event cancelled state
 	 */
 	public static boolean SendChatMessage(ChatMessage cm, Channel channel) {
-	    if (!Channel.getChannels().contains(channel))
-		    throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
+		if (!Channel.getChannelList().contains(channel))
+		    throw new RuntimeException("Channel " + channel.DisplayName().get() + " not registered!");
+		if (!channel.Enabled().get()) {
+			cm.getSender().sendMessage("§cThe channel '" + channel.DisplayName().get() + "' is disabled!");
+			return true; //Cancel sending if channel is disabled
+		}
 		val permcheck = cm.getPermCheck();
 	    RecipientTestResult rtr = getScoreOrSendError(channel, permcheck);
 		int score = rtr.score;
@@ -253,12 +308,15 @@ public class TBMCChatAPI {
 	 *            The score&group to use to find the group - use {@link RecipientTestResult#ALL} if the channel doesn't have scores
 	 * @param message
 	 *            The message to send
+	 * @param exceptions Platforms where this message shouldn't be sent (same as {@link ChatMessage#getOrigin()}
 	 * @return The event cancelled state
 	 */
-	public static boolean SendSystemMessage(Channel channel, RecipientTestResult rtr, String message) {
-		if (!Channel.getChannels().contains(channel))
-			throw new RuntimeException("Channel " + channel.DisplayName + " not registered!");
-		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID);
+	public static boolean SendSystemMessage(Channel channel, RecipientTestResult rtr, String message, String... exceptions) {
+		if (!Channel.getChannelList().contains(channel))
+			throw new RuntimeException("Channel " + channel.DisplayName().get() + " not registered!");
+		if (!channel.Enabled().get())
+			return true; //Cancel sending
+		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID, exceptions);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
 	}

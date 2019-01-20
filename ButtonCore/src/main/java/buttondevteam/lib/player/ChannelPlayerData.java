@@ -1,6 +1,6 @@
 package buttondevteam.lib.player;
 
-import buttondevteam.lib.chat.Channel;
+import buttondevteam.component.channel.Channel;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 public class ChannelPlayerData { //I just want this to work
@@ -16,7 +16,7 @@ public class ChannelPlayerData { //I just want this to work
 		String str = data.get();
 		if (str.isEmpty())
 			return def;
-		return Channel.getChannels().stream().filter(c -> str.equals(c.ID)).findAny().orElse(def);
+		return Channel.getChannels().filter(c -> str.equals(c.ID)).findAny().orElse(def);
 	}
 
 	public void set(Channel value) {

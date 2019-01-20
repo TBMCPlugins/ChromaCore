@@ -1,7 +1,7 @@
 package buttondevteam.lib.player;
 
+import buttondevteam.component.channel.Channel;
 import buttondevteam.lib.TBMCCoreAPI;
-import buttondevteam.lib.chat.Channel;
 import com.google.common.collect.HashBiMap;
 import lombok.val;
 import org.bukkit.Bukkit;

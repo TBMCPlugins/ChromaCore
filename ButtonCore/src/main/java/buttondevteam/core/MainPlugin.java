@@ -1,12 +1,18 @@
 package buttondevteam.core;
 
+import buttondevteam.component.channel.Channel;
+import buttondevteam.component.channel.ChannelComponent;
+import buttondevteam.component.channel.ChatRoom;
+import buttondevteam.component.members.MemberComponent;
+import buttondevteam.component.randomtp.RandomTPComponent;
 import buttondevteam.component.restart.RestartComponent;
+import buttondevteam.component.towny.TownyComponent;
 import buttondevteam.component.updater.PluginUpdater;
 import buttondevteam.component.updater.PluginUpdaterComponent;
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
-import buttondevteam.lib.chat.Channel;
-import buttondevteam.lib.chat.ChatRoom;
+import buttondevteam.lib.architecture.ConfigData;
 import buttondevteam.lib.chat.Color;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.player.ChromaGamerBase;
@@ -16,11 +22,12 @@ import com.earth2me.essentials.Essentials;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.command.BlockCommandSender;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.RegisteredServiceProvider;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -32,7 +39,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-public class MainPlugin extends JavaPlugin {
+public class MainPlugin extends ButtonPlugin {
 	public static MainPlugin Instance;
     @Nullable
     public static Permission permission;
@@ -41,8 +48,12 @@ public class MainPlugin extends JavaPlugin {
 
 	private Logger logger;
 
+	private ConfigData<Boolean> writePluginList() {
+		return getIConfig().getData("writePluginList", false);
+	}
+
 	@Override
-	public void onEnable() {
+	public void pluginEnable() {
 		// Logs "Plugin Enabled", registers commands
 		Instance = this;
         PluginDescriptionFile pdf = getDescription();
@@ -52,16 +63,19 @@ public class MainPlugin extends JavaPlugin {
 		saveConfig();
 		Component.registerComponent(this, new PluginUpdaterComponent());
 		Component.registerComponent(this, new RestartComponent());
+		Component.registerComponent(this, new ChannelComponent());
+		Component.registerComponent(this, new RandomTPComponent());
+		Component.registerComponent(this, new MemberComponent());
+		Component.registerComponent(this, new TownyComponent());
 		ComponentManager.enableComponents();
-		TBMCChatAPI.AddCommand(this, MemberCommand.class);
+		TBMCChatAPI.AddCommand(this, ComponentCommand.class);
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		ChromaGamerBase.addConverter(commandSender -> Optional.ofNullable(commandSender instanceof ConsoleCommandSender || commandSender instanceof BlockCommandSender
 				? TBMCPlayer.getPlayer(new UUID(0, 0), TBMCPlayer.class) : null)); //Console & cmdblocks
 		ChromaGamerBase.addConverter(sender -> Optional.ofNullable(sender instanceof Player
 				? TBMCPlayer.getPlayer(((Player) sender).getUniqueId(), TBMCPlayer.class) : null)); //Players, has higher priority
 		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
-        TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fOOC§f", Color.White, "ooc", null));
-        Channel.GlobalChat.IDs = new String[]{"g"}; //Support /g as well
+		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fOOC§f", Color.White, "g", null)); //The /ooc ID has moved to the config
 		TBMCChatAPI.RegisterChatChannel(
 				Channel.AdminChat = new Channel("§cADMIN§f", Color.Red, "a", Channel.inGroupFilter(null)));
 		TBMCChatAPI.RegisterChatChannel(
@@ -73,18 +87,19 @@ public class MainPlugin extends JavaPlugin {
         TBMCChatAPI.RegisterChatChannel(new ChatRoom("§aGREEN§f", Color.Green, "green"));
         TBMCChatAPI.RegisterChatChannel(new ChatRoom("§bBLUE§f", Color.Blue, "blue"));
         TBMCChatAPI.RegisterChatChannel(new ChatRoom("§5PURPLE§f", Color.DarkPurple, "purple"));
-        try {
-            Files.write(new File("plugins", "plugins.txt").toPath(), Arrays.stream(Bukkit.getPluginManager().getPlugins()).map(p -> (CharSequence) p.getDataFolder().getName())::iterator);
-        } catch (IOException e) {
-            TBMCCoreAPI.SendException("Failed to write plugin list!", e);
+		if (writePluginList().get()) {
+			try {
+				Files.write(new File("plugins", "plugins.txt").toPath(), Arrays.stream(Bukkit.getPluginManager().getPlugins()).map(p -> (CharSequence) p.getDataFolder().getName())::iterator);
+			} catch (IOException e) {
+				TBMCCoreAPI.SendException("Failed to write plugin list!", e);
+			}
         }
         ess = Essentials.getPlugin(Essentials.class);
-		new RandomTP().onEnable(this); //It registers it's command
         logger.info(pdf.getName() + " has been Enabled (V." + pdf.getVersion() + ") Test: " + Test + ".");
 	}
 
 	@Override
-	public void onDisable() {
+	public void pluginDisable() {
 		ComponentManager.disableComponents();
 		logger.info("Saving player data...");
 		TBMCPlayerBase.savePlayers();
@@ -93,16 +108,16 @@ public class MainPlugin extends JavaPlugin {
             File[] files = PluginUpdater.updatedir.listFiles();
             if (files == null)
                 return;
-            System.out.println("Updating " + files.length + " plugins...");
+	        logger.info("Updating " + files.length + " plugins...");
             for (File file : files) {
                 try {
                     Files.move(file.toPath(), new File("plugins", file.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    System.out.println("Updated " + file.getName());
+	                logger.info("Updated " + file.getName());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            System.out.println("Update complete!");
+	        logger.info("Update complete!");
         }).start();
 	}
 
@@ -113,5 +128,11 @@ public class MainPlugin extends JavaPlugin {
 			permission = permissionProvider.getProvider();
 		}
 		return (permission != null);
+	}
+
+	@Override
+	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		sender.sendMessage("§cThis command isn't available."); //In theory, unregistered commands use this method
+		return true;
 	}
 }

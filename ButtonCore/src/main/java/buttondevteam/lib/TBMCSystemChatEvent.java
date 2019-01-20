@@ -1,6 +1,6 @@
 package buttondevteam.lib;
 
-import buttondevteam.lib.chat.Channel;
+import buttondevteam.component.channel.Channel;
 import lombok.Getter;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
@@ -13,14 +13,16 @@ import org.bukkit.event.HandlerList;
  */
 @Getter
 public class TBMCSystemChatEvent extends TBMCChatEventBase {
+	private final String[] exceptions;
 	private boolean handled;
 
 	public void setHandled() {
 		handled = true;
 	}
 
-	public TBMCSystemChatEvent(Channel channel, String message, int score, String groupid) { // TODO: Rich message
+	public TBMCSystemChatEvent(Channel channel, String message, int score, String groupid, String[] exceptions) { // TODO: Rich message
 		super(channel, message, score, groupid);
+		this.exceptions = exceptions;
 	}
 
 	private static final HandlerList handlers = new HandlerList();

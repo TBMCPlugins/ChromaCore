@@ -5,19 +5,16 @@ import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.chat.TBMCCommandBase;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.var;
 import lombok.val;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * Configuration is based on class name
@@ -27,30 +24,15 @@ public abstract class Component {
 
 	@Getter
 	private boolean enabled = false;
-	@Getter(value = AccessLevel.PROTECTED)
+	@Getter
 	@NonNull
 	private JavaPlugin plugin;
 	@NonNull
-	private ConfigurationSection config;
+	private @Getter
+	IHaveConfig config;
 
-	public ConfigData<Boolean> shouldBeEnabled() {
-		return getData("enabled", true);
-	}
-
-	private HashMap<String, ConfigData<?>> datamap = new HashMap<>();
-
-	/**
-	 * @see IHaveConfig#getData(Map, ConfigurationSection, String, Object)
-	 */
-	protected <T> ConfigData<T> getData(String path, T def) {
-		return IHaveConfig.getData(datamap, config, path, def);
-	}
-
-	/**
-	 * @see IHaveConfig#getData(Map, ConfigurationSection, String, Object, Function, Function)
-	 */
-	protected <T> ConfigData<T> getData(String path, T def, Function<Object, T> getter, Function<T, Object> setter) {
-		return IHaveConfig.getData(datamap, config, path, def, getter, setter);
+	public final ConfigData<Boolean> shouldBeEnabled() {
+		return config.getData("enabled", true);
 	}
 
 	/**
@@ -84,7 +66,7 @@ public abstract class Component {
 			val metaAnn = component.getClass().getAnnotation(ComponentMetadata.class);
 			if (metaAnn != null) {
 				Class<? extends Component>[] dependencies = metaAnn.depends();
-				for (val dep : dependencies) {
+				for (val dep : dependencies) { //TODO: Support dependencies at enable/disable as well
 					if (!components.containsKey(dep)) {
 						plugin.getLogger().warning("Failed to " + (register ? "" : "un") + "register component " + component.getClassName() + " as a required dependency is missing/disabled: " + dep.getSimpleName());
 						return false;
@@ -93,10 +75,7 @@ public abstract class Component {
 			}
 			if (register) {
 				component.plugin = plugin;
-				var compconf = plugin.getConfig().getConfigurationSection("components");
-				if (compconf == null) compconf = plugin.getConfig().createSection("components");
-				component.config = compconf.getConfigurationSection(component.getClassName());
-				if (component.config == null) component.config = compconf.createSection(component.getClassName());
+				updateConfig(plugin, component);
 				component.register(plugin);
 				components.put(component.getClass(), component);
 				if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled().get()) {
@@ -108,12 +87,11 @@ public abstract class Component {
 						return true;
 					}
 				}
-				return true;
+				return true; //Component shouldn't be enabled
 			} else {
 				if (component.enabled) {
 					try {
-						component.disable();
-						component.enabled = false;
+						setComponentEnabled(component, false);
 					} catch (Exception | NoClassDefFoundError e) {
 						TBMCCoreAPI.SendException("Failed to disable component " + component.getClassName() + "!", e);
 						return false; //If failed to disable, won't unregister either
@@ -138,10 +116,27 @@ public abstract class Component {
 	public static void setComponentEnabled(Component component, boolean enabled) throws UnregisteredComponentException {
 		if (!components.containsKey(component.getClass()))
 			throw new UnregisteredComponentException(component);
-		if (component.enabled = enabled)
+		if (component.enabled == enabled) return; //Don't do anything
+		if (component.enabled = enabled) {
+			updateConfig(component.getPlugin(), component);
 			component.enable();
-		else
+		} else {
 			component.disable();
+			component.plugin.saveConfig();
+			TBMCChatAPI.RemoveCommands(component);
+		}
+	}
+
+	private static void updateConfig(JavaPlugin plugin, Component component) {
+		if (plugin.getConfig() != null) { //Production
+			var compconf = plugin.getConfig().getConfigurationSection("components");
+			if (compconf == null) compconf = plugin.getConfig().createSection("components");
+			var configSect = compconf.getConfigurationSection(component.getClassName());
+			if (configSect == null)
+				configSect = compconf.createSection(component.getClassName());
+			component.config = new IHaveConfig(configSect);
+		} else //Testing
+			component.config = new IHaveConfig(null);
 	}
 
 	/**
@@ -159,6 +154,7 @@ public abstract class Component {
 	 *
 	 * @param plugin Plugin object
 	 */
+	@SuppressWarnings({"unused", "WeakerAccess"})
 	protected void register(JavaPlugin plugin) {
 	}
 
@@ -169,6 +165,7 @@ public abstract class Component {
 	 *
 	 * @param plugin Plugin object
 	 */
+	@SuppressWarnings({"WeakerAccess", "unused"})
 	protected void unregister(JavaPlugin plugin) {
 	}
 
@@ -187,35 +184,26 @@ public abstract class Component {
 	protected abstract void disable();
 
 	/**
-	 * Registers a TBMCCommand to the plugin. Make sure to add it to plugin.yml and use {@link buttondevteam.lib.chat.CommandClass}.
+	 * Registers a TBMCCommand to the component. Make sure to add it to plugin.yml and use {@link buttondevteam.lib.chat.CommandClass}.
 	 *
-	 * @param plugin      Main plugin responsible for stuff
 	 * @param commandBase Custom coded command class
 	 */
-	protected void registerCommand(JavaPlugin plugin, TBMCCommandBase commandBase) {
-		TBMCChatAPI.AddCommand(plugin, commandBase);
+	protected final void registerCommand(TBMCCommandBase commandBase) {
+		TBMCChatAPI.AddCommand(this, commandBase);
 	}
 
 	/**
-	 * Registers a Listener to this plugin
+	 * Registers a Listener to this component
 	 *
-	 * @param plugin   Main plugin responsible for stuff
 	 * @param listener The event listener to register
 	 * @return The provided listener
 	 */
-	protected Listener registerListener(JavaPlugin plugin, Listener listener) {
+	protected final Listener registerListener(Listener listener) {
 		TBMCCoreAPI.RegisterEventsForExceptions(listener, plugin);
 		return listener;
 	}
 
 	private String getClassName() {
-		Class<?> enclosingClass = getClass().getEnclosingClass();
-		String className;
-		if (enclosingClass != null) {
-			className = (enclosingClass.getName());
-		} else {
-			className = (getClass().getName());
-		}
-		return className;
+		return getClass().getSimpleName();
 	}
 }
