@@ -3,6 +3,7 @@ package buttondevteam.lib.architecture;
 import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException;
+import buttondevteam.lib.chat.Command2;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.chat.TBMCCommandBase;
 import lombok.Getter;
@@ -182,6 +183,16 @@ public abstract class Component {
 	 *     To access the plugin, use {@link #getPlugin()}.
 	 */
 	protected abstract void disable();
+
+	/**
+	 * Registers a TBMCCommand to the component. Make sure to use {@link buttondevteam.lib.chat.CommandClass} and {@link buttondevteam.lib.chat.Command2.Subcommand}.
+	 * You don't need to register the command in plugin.yml.
+	 *
+	 * @param commandBase Custom coded command class
+	 */
+	protected final void registerCommand(Command2 commandBase) {
+		Command2.registerCommand(commandBase);
+	}
 
 	/**
 	 * Registers a TBMCCommand to the component. Make sure to add it to plugin.yml and use {@link buttondevteam.lib.chat.CommandClass}.

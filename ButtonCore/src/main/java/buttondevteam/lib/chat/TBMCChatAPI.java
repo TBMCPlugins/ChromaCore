@@ -160,7 +160,7 @@ public class TBMCChatAPI {
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("An error occured while registering command " + thecmdclass.getSimpleName(), e);
 		}
-	} //TODO: onCommand(CommandSender sender, String alias, int arg1, String arg2) (planned for a while)
+	}
 
 	/**
 	 * <p>
