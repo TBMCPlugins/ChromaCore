@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.function.Function;
 
 /**
- * Members of this interface should be protected (access level)
+ * A config system
  */
 public final class IHaveConfig {
 	private final HashMap<String, ConfigData<?>> datamap = new HashMap<>();
@@ -15,7 +15,7 @@ public final class IHaveConfig {
 	private ConfigurationSection config;
 
 	/**
-	 * May be used in testing
+	 * May be used in testing.
 	 *
 	 * @param section May be null for testing
 	 */

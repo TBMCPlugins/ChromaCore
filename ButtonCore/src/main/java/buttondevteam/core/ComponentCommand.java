@@ -48,10 +48,10 @@ public class ComponentCommand extends TBMCCommandBase {
 
 	private Optional<Component> getComponentOrError(String arg, CommandSender sender) {
 		val oc = Component.getComponents().values().stream().filter(c -> c.getClass().getSimpleName().equalsIgnoreCase(arg)).findAny();
-		if (!oc.isPresent())
-			sender.sendMessage("§cComponent not found!");
-		return oc;
-	}
+		if (!oc.isPresent()) //TODO: There may be multiple components with the same name
+			sender.sendMessage("§cComponent not found!"); //^ Much simpler to solve in the new command system
+		return oc; //TODO: Offer overload options with clickable link (with all the plugins it found)
+	} //TODO: Tabcompletion for the new command system
 
 	@Override
 	public String[] GetHelpText(String alias) {
