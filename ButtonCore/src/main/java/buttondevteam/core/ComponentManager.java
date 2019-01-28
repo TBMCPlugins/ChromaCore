@@ -54,4 +54,16 @@ public final class ComponentManager {
 		val c = Component.getComponents().get(cl);
 		return c != null && c.isEnabled();
 	}
+
+	/**
+	 * Will also return false if the component is not registered.
+	 *
+	 * @param cl The component class
+	 * @return The component if it's registered and enabled
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T extends Component> T getIfEnabled(Class<T> cl) {
+		val c = Component.getComponents().get(cl);
+		return c != null && c.isEnabled() ? (T) c : null;
+	}
 }
