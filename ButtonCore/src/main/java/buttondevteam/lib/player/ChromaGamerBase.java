@@ -1,6 +1,6 @@
 package buttondevteam.lib.player;
 
-import buttondevteam.component.channel.Channel;
+import buttondevteam.core.component.channel.Channel;
 import buttondevteam.lib.TBMCCoreAPI;
 import com.google.common.collect.HashBiMap;
 import lombok.val;

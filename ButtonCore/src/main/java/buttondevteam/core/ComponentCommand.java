@@ -11,7 +11,10 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.Optional;
 
-@CommandClass(modOnly = true)
+@CommandClass(modOnly = true, helpText = {
+	"§6---- Component command ----",
+	"Can be used to enable/disable/list components"
+})
 public class ComponentCommand extends Command2 {
 	public ComponentCommand() {
 		addParamConverter(Plugin.class, arg -> Bukkit.getPluginManager().getPlugin(arg));
@@ -58,13 +61,6 @@ public class ComponentCommand extends Command2 {
 			.filter(c -> c.getClass().getSimpleName().equalsIgnoreCase(arg)).findAny();
 		if (!oc.isPresent())
 			sender.sendMessage("§cComponent not found!"); //^ Much simpler to solve in the new command system
-		return oc; //TODO: Offer overload options with clickable link (with all the plugins it found)
+		return oc;
 	} //TODO: Tabcompletion for the new command system
-
-	public String[] GetHelpText(String alias) { //TODO
-		return new String[]{
-			"§6---- Component command ----",
-			"Enable or disable or list components"
-		};
-	}
 }

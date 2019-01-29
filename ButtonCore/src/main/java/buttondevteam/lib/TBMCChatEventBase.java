@@ -1,6 +1,6 @@
 package buttondevteam.lib;
 
-import buttondevteam.component.channel.Channel;
+import buttondevteam.core.component.channel.Channel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;

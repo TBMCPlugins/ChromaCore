@@ -1,4 +1,4 @@
-package buttondevteam.component.towny;
+package buttondevteam.core.component.towny;
 
 import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;

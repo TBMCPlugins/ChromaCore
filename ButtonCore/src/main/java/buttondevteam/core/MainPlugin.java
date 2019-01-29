@@ -1,14 +1,14 @@
 package buttondevteam.core;
 
-import buttondevteam.component.channel.Channel;
-import buttondevteam.component.channel.ChannelComponent;
-import buttondevteam.component.channel.ChatRoom;
-import buttondevteam.component.members.MemberComponent;
-import buttondevteam.component.randomtp.RandomTPComponent;
-import buttondevteam.component.restart.RestartComponent;
-import buttondevteam.component.towny.TownyComponent;
-import buttondevteam.component.updater.PluginUpdater;
-import buttondevteam.component.updater.PluginUpdaterComponent;
+import buttondevteam.core.component.channel.Channel;
+import buttondevteam.core.component.channel.ChannelComponent;
+import buttondevteam.core.component.channel.ChatRoom;
+import buttondevteam.core.component.members.MemberComponent;
+import buttondevteam.core.component.randomtp.RandomTPComponent;
+import buttondevteam.core.component.restart.RestartComponent;
+import buttondevteam.core.component.towny.TownyComponent;
+import buttondevteam.core.component.updater.PluginUpdater;
+import buttondevteam.core.component.updater.PluginUpdaterComponent;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;

@@ -1,4 +1,4 @@
-package buttondevteam.component.restart;
+package buttondevteam.core.component.restart;
 
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.IFakePlayer;

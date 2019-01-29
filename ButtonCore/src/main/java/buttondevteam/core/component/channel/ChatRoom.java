@@ -1,4 +1,4 @@
-package buttondevteam.component.channel;
+package buttondevteam.core.component.channel;
 
 import buttondevteam.lib.chat.Color;
 import buttondevteam.lib.chat.TBMCChatAPI;

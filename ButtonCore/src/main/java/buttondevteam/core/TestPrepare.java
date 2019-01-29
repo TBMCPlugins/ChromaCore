@@ -1,7 +1,7 @@
 package buttondevteam.core;
 
-import buttondevteam.component.channel.Channel;
-import buttondevteam.component.channel.ChannelComponent;
+import buttondevteam.core.component.channel.Channel;
+import buttondevteam.core.component.channel.ChannelComponent;
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.Color;
 import buttondevteam.lib.chat.TBMCChatAPI;

@@ -1,9 +1,11 @@
-package buttondevteam.component.restart;
+package buttondevteam.core.component.restart;
 
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.ScheduledServerRestartEvent;
 import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.TBMCCommandBase;
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarFlag;
@@ -14,43 +16,45 @@ import org.bukkit.scheduler.BukkitTask;
 
 @CommandClass(modOnly = true, path = "schrestart")
 public class ScheduledRestartCommand extends TBMCCommandBase {
-	private static volatile int restartcounter;
-	private static volatile BukkitTask restarttask;
-	private static volatile BossBar restartbar;
+	@Getter
+	@Setter
+	private int restartCounter;
+	private BukkitTask restarttask;
+	private volatile BossBar restartbar;
 
 	@Override
 	public boolean OnCommand(CommandSender sender, String alias, String[] args) {
-		int ticks = 20 * 60;
+		int secs = 60;
 		try {
 			if (args.length > 0)
-				ticks = Integer.parseInt(args[0]);
+				secs = Integer.parseInt(args[0]);
 		} catch (NumberFormatException e) {
-            sender.sendMessage("§cError: Ticks must be a number.");
+			sender.sendMessage("§cError: Seconds must be a number.");
             return false;
 		}
-		if (ticks < 20) {
-			sender.sendMessage("§cError: Ticks must be more than 20.");
+		if (secs < 10) {
+			sender.sendMessage("§cError: Seconds must be at least 10.");
 			return false;
 		}
-		final int restarttime = restartcounter = ticks;
-		restartbar = Bukkit.createBossBar("Server restart in " + ticks / 20f + "s", BarColor.RED, BarStyle.SOLID,
+		final int restarttime = restartCounter = secs * 20;
+		restartbar = Bukkit.createBossBar("Server restart in " + secs + "s", BarColor.RED, BarStyle.SOLID,
 				BarFlag.DARKEN_SKY);
 		restartbar.setProgress(1);
         Bukkit.getOnlinePlayers().forEach(p -> restartbar.addPlayer(p));
-		sender.sendMessage("Scheduled restart in " + ticks / 20f);
-		ScheduledServerRestartEvent e = new ScheduledServerRestartEvent(ticks);
+		sender.sendMessage("Scheduled restart in " + secs);
+		ScheduledServerRestartEvent e = new ScheduledServerRestartEvent(restarttime, this);
 		Bukkit.getPluginManager().callEvent(e);
 		restarttask = Bukkit.getScheduler().runTaskTimer(MainPlugin.Instance, () -> {
-			if (restartcounter < 0) {
+			if (restartCounter < 0) {
 				restarttask.cancel();
                 restartbar.getPlayers().forEach(p -> restartbar.removePlayer(p));
 				Bukkit.spigot().restart();
 			}
-			if (restartcounter % 200 == 0)
-				Bukkit.broadcastMessage("§c-- The server is restarting in " + restartcounter / 20 + " seconds!");
-			restartbar.setProgress(restartcounter / (double) restarttime);
-			restartbar.setTitle(String.format("Server restart in %.2f", restartcounter / 20f));
-			restartcounter--;
+			if (restartCounter % 200 == 0)
+				Bukkit.broadcastMessage("§c-- The server is restarting in " + restartCounter / 20 + " seconds! (/press)");
+			restartbar.setProgress(restartCounter / (double) restarttime);
+			restartbar.setTitle(String.format("Server restart in %.2f", restartCounter / 20f));
+			restartCounter--;
 		}, 1, 1);
 		return true;
 	}

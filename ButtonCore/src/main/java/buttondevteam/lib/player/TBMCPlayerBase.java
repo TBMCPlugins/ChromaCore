@@ -1,6 +1,6 @@
 package buttondevteam.lib.player;
 
-import buttondevteam.component.towny.TownyComponent;
+import buttondevteam.core.component.towny.TownyComponent;
 import buttondevteam.lib.TBMCCoreAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;

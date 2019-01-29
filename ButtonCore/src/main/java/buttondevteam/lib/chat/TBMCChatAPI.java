@@ -1,9 +1,9 @@
 package buttondevteam.lib.chat;
 
-import buttondevteam.component.channel.Channel;
-import buttondevteam.component.channel.Channel.RecipientTestResult;
 import buttondevteam.core.CommandCaller;
 import buttondevteam.core.MainPlugin;
+import buttondevteam.core.component.channel.Channel;
+import buttondevteam.core.component.channel.Channel.RecipientTestResult;
 import buttondevteam.lib.TBMCChatEvent;
 import buttondevteam.lib.TBMCChatPreprocessEvent;
 import buttondevteam.lib.TBMCCoreAPI;
