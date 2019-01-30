@@ -8,6 +8,7 @@ import buttondevteam.lib.chat.TBMCChatAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -40,7 +41,7 @@ public class TestPrepare {
 				return cl.isAssignableFrom(invocation.getMethod().getReturnType());
 			}
 		}));
-		Component.registerComponent(Mockito.mock(MainPlugin.class), new ChannelComponent());
+		Component.registerComponent(Mockito.mock(JavaPlugin.class), new ChannelComponent());
 		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fg§f", Color.White, "g", null));
 	}
 }

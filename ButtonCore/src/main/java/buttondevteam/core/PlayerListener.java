@@ -3,7 +3,7 @@ package buttondevteam.core;
 import buttondevteam.lib.TBMCCommandPreprocessEvent;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.TBMCSystemChatEvent;
-import buttondevteam.lib.chat.Command2;
+import buttondevteam.lib.chat.Command2MC;
 import buttondevteam.lib.player.TBMCPlayerBase;
 import lombok.val;
 import org.bukkit.Bukkit;
@@ -64,7 +64,7 @@ public class PlayerListener implements Listener {
 	public void onTBMCPreprocess(TBMCCommandPreprocessEvent event) {
 		if (event.isCancelled()) return;
 		try {
-			event.setCancelled(Command2.handleCommand(event.getSender(), event.getMessage()));
+			event.setCancelled(Command2MC.handleCommand(event.getSender(), event.getMessage()));
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Command processing failed for sender '" + event.getSender() + "' and message '" + event.getMessage() + "'", e);
 		}

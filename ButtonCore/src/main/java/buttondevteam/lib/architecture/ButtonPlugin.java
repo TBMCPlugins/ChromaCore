@@ -1,5 +1,6 @@
 package buttondevteam.lib.architecture;
 
+import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import lombok.AccessLevel;
@@ -7,9 +8,16 @@ import lombok.Getter;
 import lombok.experimental.var;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Stack;
+
 public abstract class ButtonPlugin extends JavaPlugin {
 	@Getter(AccessLevel.PROTECTED)
 	private IHaveConfig iConfig;
+	/**
+	 * Used to unregister components in the right order
+	 */
+	@Getter
+	private Stack<Component> componentStack = new Stack<>();
 
 	protected abstract void pluginEnable();
 
@@ -30,6 +38,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	@Override
 	public final void onDisable() {
 		try {
+			ComponentManager.unregComponents(this);
 			pluginDisable();
 			saveConfig();
 			iConfig = null; //Clearing the hashmap is not enough, we need to update the section as well

@@ -1,6 +1,7 @@
 package buttondevteam.core;
 
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
 import lombok.val;
 
@@ -31,16 +32,11 @@ public final class ComponentManager {
 	}
 
 	/**
-	 * Disables all components that are enabled
+	 * Unregister all components of a plugin that are enabled - called on {@link ButtonPlugin} disable
 	 */
-	public static void disableComponents() {
-		Component.getComponents().values().stream().filter(Component::isEnabled).forEach(c -> {
-			try {
-				Component.setComponentEnabled(c, false);
-			} catch (Exception e) {
-				TBMCCoreAPI.SendException("Failed to disable one of the components: " + c.getClass().getSimpleName(), e);
-			}
-		});
+	public static void unregComponents(ButtonPlugin plugin) {
+		while (!plugin.getComponentStack().empty()) //Unregister in reverse order
+			Component.unregisterComponent(plugin, plugin.getComponentStack().pop()); //Components are pushed on register
 		componentsEnabled = false;
 	}
 
@@ -56,7 +52,7 @@ public final class ComponentManager {
 	}
 
 	/**
-	 * Will also return false if the component is not registered.
+	 * Will also return null if the component is not registered.
 	 *
 	 * @param cl The component class
 	 * @return The component if it's registered and enabled

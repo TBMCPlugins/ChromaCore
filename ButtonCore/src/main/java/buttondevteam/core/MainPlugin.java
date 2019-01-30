@@ -14,7 +14,7 @@ import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.architecture.ConfigData;
 import buttondevteam.lib.chat.Color;
-import buttondevteam.lib.chat.Command2;
+import buttondevteam.lib.chat.Command2MC;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.player.TBMCPlayer;
@@ -69,7 +69,7 @@ public class MainPlugin extends ButtonPlugin {
 		Component.registerComponent(this, new MemberComponent());
 		Component.registerComponent(this, new TownyComponent());
 		ComponentManager.enableComponents();
-		Command2.registerCommand(new ComponentCommand());
+		Command2MC.registerCommand(new ComponentCommand());
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		ChromaGamerBase.addConverter(commandSender -> Optional.ofNullable(commandSender instanceof ConsoleCommandSender || commandSender instanceof BlockCommandSender
 				? TBMCPlayer.getPlayer(new UUID(0, 0), TBMCPlayer.class) : null)); //Console & cmdblocks
@@ -101,7 +101,6 @@ public class MainPlugin extends ButtonPlugin {
 
 	@Override
 	public void pluginDisable() {
-		ComponentManager.disableComponents();
 		logger.info("Saving player data...");
 		TBMCPlayerBase.savePlayers();
 		logger.info("Player data saved.");

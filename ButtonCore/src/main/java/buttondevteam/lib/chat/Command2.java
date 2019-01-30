@@ -70,14 +70,11 @@ public abstract class Command2 {
 	}
 
 	@RequiredArgsConstructor
-	private static class SubcommandData {
+	protected static class SubcommandData<T extends Command2> {
 		public final Method method;
-		public final Command2 command;
+		public final T command;
 		public final String[] helpText;
 	}
-
-	private static HashMap<String, SubcommandData> subcommands = new HashMap<>();
-	private static HashMap<Class<?>, Function<String, ?>> paramConverters = new HashMap<>();
 
 	public Command2() {
 		path = getcmdpath();
@@ -91,18 +88,16 @@ public abstract class Command2 {
 	 * @param converter The converter to use
 	 * @param <T>       The type of the result
 	 */
-	public static <T> void addParamConverter(Class<T> cl, Function<String, T> converter) {
-		paramConverters.put(cl, converter);
+	protected static <T> void addParamConverter(Class<T> cl, Function<String, T> converter, HashMap<Class<?>, Function<String, ?>> map) {
+		map.put(cl, converter);
 	}
 
-	public static boolean handleCommand(CommandSender sender, String commandline) throws Exception {
+	protected static <T extends Command2> boolean handleCommand(CommandSender sender, String commandline,
+	                                                            HashMap<String, SubcommandData<T>> subcommands, HashMap<Class<?>, Function<String, ?>> paramConverters) throws Exception {
 		for (int i = commandline.length(); i != -1; i = commandline.lastIndexOf(' ', i - 1)) {
 			String subcommand = commandline.substring(0, i).toLowerCase();
-			//System.out.println("Subcommand: "+subcommand);
-			//System.out.println("Subcmds: "+subcommands.toString());
 			SubcommandData sd = subcommands.get(subcommand); //O(1)
 			if (sd == null) continue; //TODO: This will run each time someone runs any command
-			//System.out.println("sd.method: "+sd.method); //TODO: Rename in Maven
 			val params = new ArrayList<Object>(sd.method.getParameterCount());
 			int j = subcommand.length(), pj;
 			Class<?>[] parameterTypes = sd.method.getParameterTypes();
@@ -152,27 +147,28 @@ public abstract class Command2 {
 		return false; //Didn't handle
 	} //TODO: Add to the help
 
-	public static void registerCommand(Command2 command) {
+	protected static <T extends Command2> void registerCommand(T command, HashMap<String, SubcommandData<T>> subcommands, char commandChar) {
+		val path = command.getCommandPath();
 		try { //Register the default handler first so it can be reliably overwritten
 			val method = command.getClass().getMethod("def", CommandSender.class, String.class);
 			val cc = command.getClass().getAnnotation(CommandClass.class);
 			var ht = cc == null ? new String[0] : cc.helpText();
 			String[] both = Arrays.copyOf(ht, ht.length + 1);
-			both[ht.length] = "Usage: /" + command.path; //TODO: Print subcommands
+			both[ht.length] = "Usage: " + commandChar + path; //TODO: Print subcommands
 			ht = both;
-			subcommands.put("/" + command.path, new SubcommandData(method, command, ht)); //TODO: Disable components when the plugin is disabled
+			subcommands.put(commandChar + path, new SubcommandData<>(method, command, ht)); //TODO: Disable components when the plugin is disabled
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Could not register default handler for command /" + command.path, e);
+			TBMCCoreAPI.SendException("Could not register default handler for command /" + path, e);
 		} //Continue on
 		for (val method : command.getClass().getMethods()) {
 			val ann = method.getAnnotation(Subcommand.class);
 			if (ann != null) {
 				val cc = command.getClass().getAnnotation(CommandClass.class);
 				var ht = ann.helpText().length != 0 || cc == null ? ann.helpText() : cc.helpText(); //If cc is null then it's empty array
-				val subcommand = "/" + command.path + //Add command path (class name by default)
+				val subcommand = commandChar + path + //Add command path (class name by default)
 					(method.getName().equals("def") ? "" : " " + method.getName().replace('_', ' ').toLowerCase()); //Add method name, unless it's 'def'
 				ht = getHelpText(method, ht, subcommand);
-				subcommands.put(subcommand, new SubcommandData(method, command, ht)); //Result of the above (def) is that it will show the help text
+				subcommands.put(subcommand, new SubcommandData<>(method, command, ht)); //Result of the above (def) is that it will show the help text
 			}
 		}
 	}
@@ -211,11 +207,10 @@ public abstract class Command2 {
 	 * For example:<br>
 	 * "u admin updateplugin" or "u" for the top level one<br>
 	 * <u>The path must be lowercase!</u><br>
-	 * <b>Abstract classes with no {@link CommandClass} annotations will be ignored.</b>
 	 *
 	 * @return The command path, <i>which is the command class name by default</i> (removing any "command" from it) - Change via the {@link CommandClass} annotation
 	 */
-	public final String GetCommandPath() {
+	public final String getCommandPath() {
 		return path;
 	}
 
