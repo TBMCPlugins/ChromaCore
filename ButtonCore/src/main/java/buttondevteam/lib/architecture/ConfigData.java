@@ -62,6 +62,18 @@ public class ConfigData<T> { //TODO: Save after a while
 			if (hmm == null) hmm = def; //Set if the getter returned null
 			return hmm;
 		}
+		if (val instanceof Number) {
+			if (def instanceof Long)
+				val = ((Number) val).longValue();
+			else if (def instanceof Short)
+				val = ((Number) val).shortValue();
+			else if (def instanceof Byte)
+				val = ((Number) val).byteValue();
+			else if (def instanceof Float)
+				val = ((Number) val).floatValue();
+			else if (def instanceof Double)
+				val = ((Number) val).doubleValue();
+		}
 		return (T) val;
 	}
 

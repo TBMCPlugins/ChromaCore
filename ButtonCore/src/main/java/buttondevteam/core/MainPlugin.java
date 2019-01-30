@@ -132,6 +132,7 @@ public class MainPlugin extends ButtonPlugin {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		if (command.getName().equals("dontrunthiscmd")) return true; //Used in chat preprocess for console
 		sender.sendMessage("§cThis command isn't available."); //In theory, unregistered commands use this method
 		return true;
 	}

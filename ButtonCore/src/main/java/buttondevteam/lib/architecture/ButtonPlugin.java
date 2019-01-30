@@ -21,7 +21,16 @@ public abstract class ButtonPlugin extends JavaPlugin {
 
 	protected abstract void pluginEnable();
 
+	/**
+	 * Called after the components are unregistered
+	 */
 	protected abstract void pluginDisable();
+
+	/**
+	 * Called before the components are unregistered
+	 */
+	protected void pluginPreDisable() {
+	}
 
 	@Override
 	public final void onEnable() {
@@ -38,6 +47,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	@Override
 	public final void onDisable() {
 		try {
+			pluginPreDisable();
 			ComponentManager.unregComponents(this);
 			pluginDisable();
 			saveConfig();
