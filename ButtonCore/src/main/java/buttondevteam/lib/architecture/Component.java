@@ -3,6 +3,7 @@ package buttondevteam.lib.architecture;
 import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException;
+import buttondevteam.lib.chat.Command2MC;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.chat.TBMCCommandBase;
 import lombok.Getter;
@@ -38,7 +39,8 @@ public abstract class Component {
 	/**
 	 * Registers a component checking it's dependencies and calling {@link #register(JavaPlugin)}.<br>
 	 * Make sure to register the dependencies first.<br>
-	 * The component will be enabled automatically, regardless of when it was registered.
+	 * The component will be enabled automatically, regardless of when it was registered.<br>
+	 *     <b>If not using {@link ButtonPlugin}, call {@link ComponentManager#unregComponents(ButtonPlugin)} on plugin disable.</b>
 	 *
 	 * @param component The component to register
 	 * @return Whether the component is registered successfully (it may have failed to enable)
@@ -49,15 +51,13 @@ public abstract class Component {
 
 	/**
 	 * Unregisters a component by calling {@link #unregister(JavaPlugin)}.<br>
-	 * Make sure to unregister the dependencies last.
+	 * Make sure to unregister the dependencies last.<br>
+	 *     <b>Components will be unregistered in opposite order of registering by default by {@link ButtonPlugin} or {@link ComponentManager#unregComponents(ButtonPlugin)}.</b>
 	 *
-	 * @param componentClass The component class to unregister
+	 * @param component The component to unregister
 	 * @return Whether the component is unregistered successfully (it also got disabled)
 	 */
-	public static boolean unregisterComponent(JavaPlugin plugin, Class<? extends Component> componentClass) {
-		val component = components.get(componentClass);
-		if (component == null)
-			return false; //Failed to load
+	public static boolean unregisterComponent(JavaPlugin plugin, Component component) {
 		return registerUnregisterComponent(plugin, component, false);
 	}
 
@@ -74,10 +74,16 @@ public abstract class Component {
 				}
 			}
 			if (register) {
+				if (components.containsKey(component.getClass())) {
+					TBMCCoreAPI.SendException("Failed to register component " + component.getClassName(), new IllegalArgumentException("The component is already registered!"));
+					return false;
+				}
 				component.plugin = plugin;
 				updateConfig(plugin, component);
 				component.register(plugin);
 				components.put(component.getClass(), component);
+				if (plugin instanceof ButtonPlugin)
+					((ButtonPlugin) plugin).getComponentStack().push(component);
 				if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled().get()) {
 					try { //Enable components registered after the previous ones getting enabled
 						setComponentEnabled(component, true);
@@ -89,6 +95,8 @@ public abstract class Component {
 				}
 				return true; //Component shouldn't be enabled
 			} else {
+				if (!components.containsKey(component.getClass()))
+					return true; //Already unregistered
 				if (component.enabled) {
 					try {
 						setComponentEnabled(component, false);
@@ -182,6 +190,16 @@ public abstract class Component {
 	 *     To access the plugin, use {@link #getPlugin()}.
 	 */
 	protected abstract void disable();
+
+	/**
+	 * Registers a TBMCCommand to the component. Make sure to use {@link buttondevteam.lib.chat.CommandClass} and {@link buttondevteam.lib.chat.Command2.Subcommand}.
+	 * You don't need to register the command in plugin.yml.
+	 *
+	 * @param commandBase Custom coded command class
+	 */
+	protected final void registerCommand(Command2MC commandBase) {
+		Command2MC.registerCommand(commandBase);
+	}
 
 	/**
 	 * Registers a TBMCCommand to the component. Make sure to add it to plugin.yml and use {@link buttondevteam.lib.chat.CommandClass}.

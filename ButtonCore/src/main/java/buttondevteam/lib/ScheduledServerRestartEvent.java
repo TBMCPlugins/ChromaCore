@@ -1,20 +1,18 @@
 package buttondevteam.lib;
 
+import buttondevteam.core.component.restart.ScheduledRestartCommand;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+@Getter
+@RequiredArgsConstructor
 public class ScheduledServerRestartEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
-    private final int restartticks;
-
-	public ScheduledServerRestartEvent(int restartticks) {
-		this.restartticks = restartticks;
-	}
-
-	public int getRestartTicks() {
-		return restartticks;
-	}
+	private final int restartTicks;
+	private final ScheduledRestartCommand command;
 
 	@Override
 	public HandlerList getHandlers() {

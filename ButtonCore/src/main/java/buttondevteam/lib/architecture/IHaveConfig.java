@@ -1,13 +1,15 @@
 package buttondevteam.lib.architecture;
 
 import lombok.Getter;
+import lombok.val;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.HashMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
- * Members of this interface should be protected (access level)
+ * A config system
  */
 public final class IHaveConfig {
 	private final HashMap<String, ConfigData<?>> datamap = new HashMap<>();
@@ -15,7 +17,7 @@ public final class IHaveConfig {
 	private ConfigurationSection config;
 
 	/**
-	 * May be used in testing
+	 * May be used in testing.
 	 *
 	 * @param section May be null for testing
 	 */
@@ -71,6 +73,44 @@ public final class IHaveConfig {
 		ConfigData<?> data = datamap.get(path);
 		if (data == null)
 			datamap.put(path, data = new ConfigData<>(config, path, getter.apply(primitiveDef), primitiveDef, getter, setter));
+		return (ConfigData<T>) data;
+	}
+
+	/**
+	 * This method overload should only be used with primitves or String.
+	 *
+	 * @param path The path in config to use
+	 * @param def  The value to use by default
+	 * @param <T>  The type of this variable (only use primitives or String)
+	 * @return The data object that can be used to get or set the value
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> ConfigData<T> getData(String path, Supplier<T> def) {
+		ConfigData<?> data = datamap.get(path);
+		if (data == null) {
+			val defval = def.get();
+			datamap.put(path, data = new ConfigData<>(config, path, defval, defval));
+		}
+		return (ConfigData<T>) data;
+	}
+
+	/**
+	 * This method overload may be used with any class.
+	 *
+	 * @param path   The path in config to use
+	 * @param def    The value to use by default
+	 * @param getter A function that converts a primitive representation to the correct value
+	 * @param setter A function that converts a value to a primitive representation
+	 * @param <T>    The type of this variable (can be any class)
+	 * @return The data object that can be used to get or set the value
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> ConfigData<T> getData(String path, Supplier<T> def, Function<Object, T> getter, Function<T, Object> setter) {
+		ConfigData<?> data = datamap.get(path);
+		if (data == null) {
+			val defval = def.get();
+			datamap.put(path, data = new ConfigData<>(config, path, defval, setter.apply(defval), getter, setter));
+		}
 		return (ConfigData<T>) data;
 	}
 }

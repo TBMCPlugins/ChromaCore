@@ -1,4 +1,4 @@
-package buttondevteam.component.channel;
+package buttondevteam.core.component.channel;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;

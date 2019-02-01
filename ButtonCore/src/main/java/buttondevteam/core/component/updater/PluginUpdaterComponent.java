@@ -1,4 +1,4 @@
-package buttondevteam.component.updater;
+package buttondevteam.core.component.updater;
 
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.TBMCChatAPI;

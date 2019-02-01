@@ -1,19 +1,20 @@
 package buttondevteam.core;
 
-import buttondevteam.component.channel.Channel;
-import buttondevteam.component.channel.ChannelComponent;
-import buttondevteam.component.channel.ChatRoom;
-import buttondevteam.component.members.MemberComponent;
-import buttondevteam.component.randomtp.RandomTPComponent;
-import buttondevteam.component.restart.RestartComponent;
-import buttondevteam.component.towny.TownyComponent;
-import buttondevteam.component.updater.PluginUpdater;
-import buttondevteam.component.updater.PluginUpdaterComponent;
+import buttondevteam.core.component.channel.Channel;
+import buttondevteam.core.component.channel.ChannelComponent;
+import buttondevteam.core.component.channel.ChatRoom;
+import buttondevteam.core.component.members.MemberComponent;
+import buttondevteam.core.component.randomtp.RandomTPComponent;
+import buttondevteam.core.component.restart.RestartComponent;
+import buttondevteam.core.component.towny.TownyComponent;
+import buttondevteam.core.component.updater.PluginUpdater;
+import buttondevteam.core.component.updater.PluginUpdaterComponent;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.architecture.ConfigData;
 import buttondevteam.lib.chat.Color;
+import buttondevteam.lib.chat.Command2MC;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.player.TBMCPlayer;
@@ -68,7 +69,7 @@ public class MainPlugin extends ButtonPlugin {
 		Component.registerComponent(this, new MemberComponent());
 		Component.registerComponent(this, new TownyComponent());
 		ComponentManager.enableComponents();
-		TBMCChatAPI.AddCommand(this, ComponentCommand.class);
+		Command2MC.registerCommand(new ComponentCommand());
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		ChromaGamerBase.addConverter(commandSender -> Optional.ofNullable(commandSender instanceof ConsoleCommandSender || commandSender instanceof BlockCommandSender
 				? TBMCPlayer.getPlayer(new UUID(0, 0), TBMCPlayer.class) : null)); //Console & cmdblocks
@@ -100,7 +101,6 @@ public class MainPlugin extends ButtonPlugin {
 
 	@Override
 	public void pluginDisable() {
-		ComponentManager.disableComponents();
 		logger.info("Saving player data...");
 		TBMCPlayerBase.savePlayers();
 		logger.info("Player data saved.");
@@ -132,6 +132,7 @@ public class MainPlugin extends ButtonPlugin {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		if (command.getName().equals("dontrunthiscmd")) return true; //Used in chat preprocess for console
 		sender.sendMessage("§cThis command isn't available."); //In theory, unregistered commands use this method
 		return true;
 	}

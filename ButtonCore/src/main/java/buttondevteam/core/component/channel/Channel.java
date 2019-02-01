@@ -1,4 +1,4 @@
-package buttondevteam.component.channel;
+package buttondevteam.core.component.channel;
 
 import buttondevteam.core.ComponentManager;
 import buttondevteam.core.MainPlugin;

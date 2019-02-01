@@ -1,4 +1,4 @@
-package buttondevteam.component.members;
+package buttondevteam.core.component.members;
 
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.chat.CommandClass;

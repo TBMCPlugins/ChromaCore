@@ -167,7 +167,7 @@
 			<groupId>com.github.TBMCPlugins.ButtonCore</groupId>
 			<artifactId>ButtonProcessor</artifactId>
 			<version>master-SNAPSHOT</version>
-			<scope>provided</scope>
+            <scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>net.ess3</groupId>

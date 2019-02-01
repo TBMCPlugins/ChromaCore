@@ -1,4 +1,4 @@
-package buttondevteam.component.randomtp;
+package buttondevteam.core.component.randomtp;
 
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.CommandClass;

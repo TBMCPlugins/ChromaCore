@@ -2,62 +2,65 @@ package buttondevteam.core;
 
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.Component;
+import buttondevteam.lib.chat.Command2MC;
 import buttondevteam.lib.chat.CommandClass;
-import buttondevteam.lib.chat.TBMCCommandBase;
 import lombok.val;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 
 import java.util.Optional;
 
-@CommandClass(modOnly = true)
-public class ComponentCommand extends TBMCCommandBase {
-	@Override
-	public boolean OnCommand(CommandSender sender, String alias, String[] args) {
-		if (args.length < 1)
-			return false;
-		boolean enable = true;
+@CommandClass(modOnly = true, helpText = {
+	"§6---- Component command ----",
+	"Can be used to enable/disable/list components"
+})
+public class ComponentCommand extends Command2MC {
+	public ComponentCommand() {
+		addParamConverter(Plugin.class, arg -> Bukkit.getPluginManager().getPlugin(arg));
+
+	}
+
+	@Subcommand
+	public boolean enable(CommandSender sender, Plugin plugin, String component) {
+		if (plugin == null) return respond(sender, "§cPlugin not found!");
+		plugin.reloadConfig(); //Reload config so the new config values are read - All changes are saved to disk on disable
+		return enable_disable(sender, plugin, component, true);
+	}
+
+	@Subcommand
+	public boolean disable(CommandSender sender, Plugin plugin, String component) {
+		if (plugin == null) return respond(sender, "§cPlugin not found!");
+		return enable_disable(sender, plugin, component, false);
+	}
+
+	@Subcommand
+	public boolean list(CommandSender sender, String plugin) {
+		sender.sendMessage("§6List of components:");
+		Component.getComponents().values().stream().filter(c -> plugin == null || c.getPlugin().getName().equalsIgnoreCase(plugin)) //If plugin is null, don't check
+			.map(c -> c.getPlugin().getName() + " - " + c.getClass().getSimpleName() + " - " + (c.isEnabled() ? "en" : "dis") + "abled").forEach(sender::sendMessage);
+		return true;
+	}
+
+	private boolean enable_disable(CommandSender sender, Plugin plugin, String component, boolean enable) {
 		try {
-			switch (args[0]) {
-				case "enable":
-					enable = true;
-					break;
-				case "disable":
-					enable = false;
-					break;
-				case "list":
-					sender.sendMessage("§6List of components:");
-					Component.getComponents().values().stream().map(c -> c.getPlugin().getName() + " - " + c.getClass().getSimpleName() + " - " + (c.isEnabled() ? "en" : "dis") + "abled").forEach(sender::sendMessage);
-					return true;
-				default:
-					return false;
-			}
-			if (args.length < 2)
-				return false;
-			val oc = getComponentOrError(args[1], sender);
+			val oc = getComponentOrError(plugin, component, sender);
 			if (!oc.isPresent())
 				return true;
-			if (enable) //Reload config so the new config values are read
-				getPlugin().reloadConfig(); //All changes are saved to disk on disable
 			Component.setComponentEnabled(oc.get(), enable);
 			sender.sendMessage(oc.get().getClass().getSimpleName() + " " + (enable ? "en" : "dis") + "abled.");
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Couldn't " + (enable ? "en" : "dis") + "able component " + args[0] + "!", e);
+			TBMCCoreAPI.SendException("Couldn't " + (enable ? "en" : "dis") + "able component " + component + "!", e);
 		}
 		return true;
 	}
 
-	private Optional<Component> getComponentOrError(String arg, CommandSender sender) {
-		val oc = Component.getComponents().values().stream().filter(c -> c.getClass().getSimpleName().equalsIgnoreCase(arg)).findAny();
+	private Optional<Component> getComponentOrError(Plugin plugin, String arg, CommandSender sender) {
+		val oc = Component.getComponents().values().stream()
+			.filter(c -> plugin.getName().equals(c.getPlugin().getName()))
+			.filter(c -> c.getClass().getSimpleName().equalsIgnoreCase(arg)).findAny();
 		if (!oc.isPresent())
-			sender.sendMessage("§cComponent not found!");
+			sender.sendMessage("§cComponent not found!"); //^ Much simpler to solve in the new command system
 		return oc;
-	}
-
-	@Override
-	public String[] GetHelpText(String alias) {
-		return new String[]{
-			"§6---- Component command ----",
-			"Enable or disable or list components"
-		};
-	}
+	} //TODO: Tabcompletion for the new command system
 }

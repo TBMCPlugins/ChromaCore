@@ -1,4 +1,4 @@
-import buttondevteam.component.updater.PluginUpdater;
+import buttondevteam.core.component.updater.PluginUpdater;
 
 import java.util.List;
 import java.util.stream.Collectors;

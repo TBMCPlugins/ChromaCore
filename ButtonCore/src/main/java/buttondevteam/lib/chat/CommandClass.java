@@ -38,7 +38,7 @@ public @interface CommandClass {
     boolean excludeFromPath() default false;
 
 	/**
-	 * The help text to show for the players.
+	 * The help text to show for the players. A usage message will be also shown below it.
 	 *
 	 * @return The help text
 	 */

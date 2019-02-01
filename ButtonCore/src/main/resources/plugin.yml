@@ -1,4 +1,4 @@
-name: ButtonCore
+name: ThorpeCore
 main: buttondevteam.core.MainPlugin
 version: 1.0
 author: TBMCPlugins
@@ -15,3 +15,4 @@ commands:
     description: Add or remove a member
   component:
     description: Enable or disable or list components
+  dontrunthiscmd:

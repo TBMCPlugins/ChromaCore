@@ -1,9 +1,9 @@
 package buttondevteam.lib.chat;
 
-import buttondevteam.component.channel.Channel;
-import buttondevteam.component.channel.Channel.RecipientTestResult;
 import buttondevteam.core.CommandCaller;
 import buttondevteam.core.MainPlugin;
+import buttondevteam.core.component.channel.Channel;
+import buttondevteam.core.component.channel.Channel.RecipientTestResult;
 import buttondevteam.lib.TBMCChatEvent;
 import buttondevteam.lib.TBMCChatPreprocessEvent;
 import buttondevteam.lib.TBMCCoreAPI;
@@ -160,7 +160,7 @@ public class TBMCChatAPI {
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("An error occured while registering command " + thecmdclass.getSimpleName(), e);
 		}
-	} //TODO: onCommand(CommandSender sender, String alias, int arg1, String arg2) (planned for a while)
+	}
 
 	/**
 	 * <p>
