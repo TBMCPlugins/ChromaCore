@@ -2,8 +2,9 @@ package buttondevteam.core;
 
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.Component;
-import buttondevteam.lib.chat.Command2MC;
+import buttondevteam.lib.chat.Command2.Subcommand;
 import buttondevteam.lib.chat.CommandClass;
+import buttondevteam.lib.chat.ICommand2MC;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -15,10 +16,9 @@ import java.util.Optional;
 	"§6---- Component command ----",
 	"Can be used to enable/disable/list components"
 })
-public class ComponentCommand extends Command2MC {
+public class ComponentCommand extends ICommand2MC {
 	public ComponentCommand() {
-		addParamConverter(Plugin.class, arg -> Bukkit.getPluginManager().getPlugin(arg));
-
+		getManager().addParamConverter(Plugin.class, arg -> Bukkit.getPluginManager().getPlugin(arg));
 	}
 
 	@Subcommand

@@ -26,29 +26,6 @@ import java.util.stream.Collectors;
  */
 public abstract class Command2 {
 	/**
-	 * Default handler for commands, can be used to copy the args too.
-	 *
-	 * @param sender  The sender which ran the command
-	 * @param args    All of the arguments passed as is
-	 * @return The success of the command
-	 */
-	public boolean def(CommandSender sender, @TextArg String args) {
-		return false;
-	}
-
-	/**
-	 * Convenience method. Return with this.
-	 *
-	 * @param sender  The sender of the command
-	 * @param message The message to send to the sender
-	 * @return Always true so that the usage isn't shown
-	 */
-	protected boolean respond(CommandSender sender, String message) {
-		sender.sendMessage(message);
-		return true;
-	}
-
-	/**
 	 * TODO: @CommandClass(helpText=...)
 	 * Parameters annotated with this receive all of the remaining arguments
 	 */
@@ -70,16 +47,11 @@ public abstract class Command2 {
 	}
 
 	@RequiredArgsConstructor
-	protected static class SubcommandData<T extends Command2> {
+	protected static class SubcommandData<T extends ICommand2> {
 		public final Method method;
 		public final T command;
 		public final String[] helpText;
 	}
-
-	public Command2() {
-		path = getcmdpath();
-	}
-
 	/**
 	 * Adds a param converter that obtains a specific object from a string parameter.
 	 * The converter may return null.
@@ -88,11 +60,15 @@ public abstract class Command2 {
 	 * @param converter The converter to use
 	 * @param <T>       The type of the result
 	 */
-	protected static <T> void addParamConverter(Class<T> cl, Function<String, T> converter, HashMap<Class<?>, Function<String, ?>> map) {
+	public abstract <T> void addParamConverter(Class<T> cl, Function<String, T> converter);
+
+	protected <T> void addParamConverter(Class<T> cl, Function<String, T> converter, HashMap<Class<?>, Function<String, ?>> map) {
 		map.put(cl, converter);
 	}
 
-	protected static <T extends Command2> boolean handleCommand(CommandSender sender, String commandline,
+	public abstract boolean handleCommand(CommandSender sender, String commandLine) throws Exception;
+
+	protected <T extends ICommand2> boolean handleCommand(CommandSender sender, String commandline,
 	                                                            HashMap<String, SubcommandData<T>> subcommands, HashMap<Class<?>, Function<String, ?>> paramConverters) throws Exception {
 		for (int i = commandline.length(); i != -1; i = commandline.lastIndexOf(' ', i - 1)) {
 			String subcommand = commandline.substring(0, i).toLowerCase();
@@ -147,7 +123,9 @@ public abstract class Command2 {
 		return false; //Didn't handle
 	} //TODO: Add to the help
 
-	protected static <T extends Command2> void registerCommand(T command, HashMap<String, SubcommandData<T>> subcommands, char commandChar) {
+	public abstract void registerCommand(ICommand2 command);
+
+	protected <T extends ICommand2> void registerCommand(T command, HashMap<String, SubcommandData<T>> subcommands, char commandChar) {
 		val path = command.getCommandPath();
 		try { //Register the default handler first so it can be reliably overwritten
 			val method = command.getClass().getMethod("def", CommandSender.class, String.class);
@@ -200,28 +178,5 @@ public abstract class Command2 {
 		return ht;
 	}
 
-	private final String path;
-
-	/**
-	 * The command's path, or name if top-level command.<br>
-	 * For example:<br>
-	 * "u admin updateplugin" or "u" for the top level one<br>
-	 * <u>The path must be lowercase!</u><br>
-	 *
-	 * @return The command path, <i>which is the command class name by default</i> (removing any "command" from it) - Change via the {@link CommandClass} annotation
-	 */
-	public final String getCommandPath() {
-		return path;
-	}
-
-	private String getcmdpath() {
-		if (!getClass().isAnnotationPresent(CommandClass.class))
-			throw new RuntimeException(
-				"No @CommandClass annotation on command class " + getClass().getSimpleName() + "!");
-		Function<Class<?>, String> getFromClass = cl -> cl.getSimpleName().toLowerCase().replace("commandbase", "") // <-- ...
-			.replace("command", "");
-		String path = getClass().getAnnotation(CommandClass.class).path();
-		path = path.length() == 0 ? getFromClass.apply(getClass()) : path;
-		return path;
-	}
+	public abstract boolean hasPermission(CommandSender sender, ICommand2 command);
 } //TODO: Test support of Player instead of CommandSender

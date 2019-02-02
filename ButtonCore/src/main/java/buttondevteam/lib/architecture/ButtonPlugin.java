@@ -2,6 +2,7 @@ package buttondevteam.lib.architecture;
 
 import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.chat.Command2MC;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -11,6 +12,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Stack;
 
 public abstract class ButtonPlugin extends JavaPlugin {
+	@Getter
+	private static Command2MC command2MC = new Command2MC();
 	@Getter(AccessLevel.PROTECTED)
 	private IHaveConfig iConfig;
 	/**
