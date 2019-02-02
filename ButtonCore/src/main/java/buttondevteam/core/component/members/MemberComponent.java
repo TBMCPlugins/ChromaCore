@@ -15,14 +15,14 @@ import java.util.Date;
 import static buttondevteam.core.MainPlugin.permission;
 
 public class MemberComponent extends Component implements Listener {
-	private ConfigData<String> memberGroup() {
+	ConfigData<String> memberGroup() {
 		return getConfig().getData("memberGroup", "member");
 	}
 
 	@Override
 	protected void enable() {
 		registerListener(this);
-		registerCommand(new MemberCommand());
+		registerCommand(new MemberCommand(this));
 	}
 
 	@Override

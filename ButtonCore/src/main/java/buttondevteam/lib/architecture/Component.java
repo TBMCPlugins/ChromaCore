@@ -3,7 +3,7 @@ package buttondevteam.lib.architecture;
 import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException;
-import buttondevteam.lib.chat.ICommand2;
+import buttondevteam.lib.chat.ICommand2MC;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.chat.TBMCCommandBase;
 import lombok.Getter;
@@ -197,7 +197,7 @@ public abstract class Component {
 	 *
 	 * @param commandBase Custom coded command class
 	 */
-	protected final void registerCommand(ICommand2 commandBase) {
+	protected final void registerCommand(ICommand2MC commandBase) {
 		ButtonPlugin.getCommand2MC().registerCommand(commandBase);
 	}
 

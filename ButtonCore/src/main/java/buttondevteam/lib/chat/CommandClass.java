@@ -38,7 +38,8 @@ public @interface CommandClass {
     boolean excludeFromPath() default false;
 
 	/**
-	 * The help text to show for the players. A usage message will be also shown below it.
+	 * The help text to show for the players. A usage message will be also shown below it.<br>
+	 *     <b>The fist line will be converted to a header.</b>
 	 *
 	 * @return The help text
 	 */
