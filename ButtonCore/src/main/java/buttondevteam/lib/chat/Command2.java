@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  * The method name is the subcommand, use underlines (_) to add further subcommands.
  * The args may be null if the conversion failed and it's optional.
  */
-public abstract class Command2<TC extends ICommand2> {
+public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> {
 	protected Command2() {
 	}
 
@@ -80,9 +80,9 @@ public abstract class Command2<TC extends ICommand2> {
 		map.put(cl, new ParamConverter<>(converter, errormsg));
 	}
 
-	public abstract boolean handleCommand(CommandSender sender, String commandLine) throws Exception;
+	public abstract boolean handleCommand(TP sender, String commandLine) throws Exception;
 
-	protected boolean handleCommand(CommandSender sender, String commandline,
+	protected boolean handleCommand(TP sender, String commandline,
 	                                HashMap<String, SubcommandData<TC>> subcommands,
 	                                HashMap<Class<?>, ParamConverter<?>> paramConverters) throws Exception {
 		for (int i = commandline.length(); i != -1; i = commandline.lastIndexOf(' ', i - 1)) {
@@ -107,7 +107,8 @@ public abstract class Command2<TC extends ICommand2> {
 			if (sendertype.isAssignableFrom(sender.getClass()))
 				params.add(sender); //The command either expects a CommandSender or it is a Player, or some other expected type
 			else if (ChromaGamerBase.class.isAssignableFrom(sendertype)
-				&& (cg = ChromaGamerBase.getFromSender(sender)) != null
+				&& sender instanceof Command2MCSender
+				&& (cg = ChromaGamerBase.getFromSender(((Command2MCSender) sender).getSender())) != null
 				&& cg.getClass() == sendertype) //The command expects a user of our system
 				params.add(cg);
 			else {
@@ -224,5 +225,5 @@ public abstract class Command2<TC extends ICommand2> {
 		return ht;
 	}
 
-	public abstract boolean hasPermission(CommandSender sender, TC command);
+	public abstract boolean hasPermission(TP sender, TC command);
 } //TODO: Test support of Player instead of CommandSender

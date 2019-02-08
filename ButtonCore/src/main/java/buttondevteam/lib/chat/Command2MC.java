@@ -1,17 +1,16 @@
 package buttondevteam.lib.chat;
 
 import buttondevteam.core.MainPlugin;
-import org.bukkit.command.CommandSender;
 
 import java.util.HashMap;
 import java.util.function.Function;
 
-public class Command2MC extends Command2<ICommand2MC> {
+public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
 	private HashMap<String, SubcommandData<ICommand2MC>> subcommands = new HashMap<>();
 	private HashMap<Class<?>, ParamConverter<?>> paramConverters = new HashMap<>();
 
 	@Override
-	public boolean handleCommand(CommandSender sender, String commandLine) throws Exception {
+	public boolean handleCommand(Command2MCSender sender, String commandLine) throws Exception {
 		return handleCommand(sender, commandLine, subcommands, paramConverters);
 	}
 
@@ -21,8 +20,8 @@ public class Command2MC extends Command2<ICommand2MC> {
 	}
 
 	@Override
-	public boolean hasPermission(CommandSender sender, ICommand2MC command) {
-		return MainPlugin.permission.has(sender, "thorpe.command." + command.getCommandPath().replace(' ', '.'));
+	public boolean hasPermission(Command2MCSender sender, ICommand2MC command) {
+		return MainPlugin.permission.has(sender.getSender(), "thorpe.command." + command.getCommandPath().replace(' ', '.'));
 	}
 
 	/**
