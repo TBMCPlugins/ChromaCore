@@ -311,12 +311,12 @@ public class TBMCChatAPI {
 	 * @param exceptions Platforms where this message shouldn't be sent (same as {@link ChatMessage#getOrigin()}
 	 * @return The event cancelled state
 	 */
-	public static boolean SendSystemMessage(Channel channel, RecipientTestResult rtr, String message, String... exceptions) {
+	public static boolean SendSystemMessage(Channel channel, RecipientTestResult rtr, String message, TBMCSystemChatEvent.BroadcastTarget target, String... exceptions) {
 		if (!Channel.getChannelList().contains(channel))
 			throw new RuntimeException("Channel " + channel.DisplayName().get() + " not registered!");
 		if (!channel.Enabled().get())
 			return true; //Cancel sending
-		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID, exceptions);
+		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID, exceptions, target);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
 	}
