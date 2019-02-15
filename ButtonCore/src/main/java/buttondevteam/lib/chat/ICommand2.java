@@ -1,11 +1,10 @@
 package buttondevteam.lib.chat;
 
 import lombok.Getter;
-import org.bukkit.command.CommandSender;
 
 import java.util.function.Function;
 
-public abstract class ICommand2 {
+public abstract class ICommand2<TP extends Command2Sender> {
 	/**
 	 * Default handler for commands, can be used to copy the args too.
 	 *
@@ -13,7 +12,7 @@ public abstract class ICommand2 {
 	 * @param args   All of the arguments passed as is
 	 * @return The success of the command
 	 */
-	public boolean def(CommandSender sender, @Command2.TextArg String args) {
+	public boolean def(TP sender, @Command2.TextArg String args) {
 		return false;
 	}
 
@@ -24,16 +23,16 @@ public abstract class ICommand2 {
 	 * @param message The message to send to the sender
 	 * @return Always true so that the usage isn't shown
 	 */
-	protected boolean respond(CommandSender sender, String message) {
+	protected boolean respond(TP sender, String message) {
 		sender.sendMessage(message);
 		return true;
 	}
 
 	private final String path;
 	@Getter
-	private final Command2<?, ?> manager; //TIL that if I use a raw type on a variable then none of the type args will work (including what's defined on a method, not on the type)
+	private final Command2<?, TP> manager; //TIL that if I use a raw type on a variable then none of the type args will work (including what's defined on a method, not on the type)
 
-	public <T extends ICommand2> ICommand2(Command2<T, ?> manager) {
+	public <T extends ICommand2> ICommand2(Command2<T, TP> manager) {
 		path = getcmdpath();
 		this.manager = manager;
 	}

@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * The method name is the subcommand, use underlines (_) to add further subcommands.
@@ -106,6 +105,8 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			final ChromaGamerBase cg;
 			if (sendertype.isAssignableFrom(sender.getClass()))
 				params.add(sender); //The command either expects a CommandSender or it is a Player, or some other expected type
+			else if (CommandSender.class.isAssignableFrom(sendertype) && sender instanceof Command2MCSender)
+				params.add(((Command2MCSender) sender).getSender());
 			else if (ChromaGamerBase.class.isAssignableFrom(sendertype)
 				&& sender instanceof Command2MCSender
 				&& (cg = ChromaGamerBase.getFromSender(((Command2MCSender) sender).getSender())) != null
@@ -167,8 +168,9 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		//var scmdmap = subcommandStrings.computeIfAbsent(mainPath, k -> new HashSet<>()); //Used to display subcommands
 		val scmdHelpList = new ArrayList<String>();
 		Method mainMethod = null;
+		boolean nosubs = true;
 		try { //Register the default handler first so it can be reliably overwritten
-			mainMethod = command.getClass().getMethod("def", CommandSender.class, String.class);
+			mainMethod = command.getClass().getMethod("def", Command2Sender.class, String.class);
 			val cc = command.getClass().getAnnotation(CommandClass.class);
 			var ht = cc == null ? new String[0] : cc.helpText();
 			if (ht.length > 0)
@@ -188,8 +190,11 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 				ht = getHelpText(method, ht, subcommand);
 				subcommands.put(subcommand, new SubcommandData<>(method, command, ht)); //Result of the above (def) is that it will show the help text
 				scmdHelpList.add(subcommand);
+				nosubs = false;
 			}
 		}
+		if (nosubs && scmdHelpList.size() > 0)
+			scmdHelpList.remove(scmdHelpList.size() - 1); //Remove Subcommands header
 		if (mainMethod != null && !subcommands.containsKey(commandChar + path)) //Command specified by the class
 			subcommands.put(commandChar + path, new SubcommandData<>(mainMethod, command, scmdHelpList.toArray(new String[0])));
 		if (mainMethod != null && !subcommands.containsKey(mainPath)) //Main command, typically the same as the above
@@ -210,8 +215,9 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 				if (cs != null) {
 					val mname = cs.getString("method");
 					val params = cs.getString("params");
-					val goodname = method.getName() + "(" + Arrays.stream(method.getParameterTypes()).map(cl -> cl.getCanonicalName()).collect(Collectors.joining(",")) + ")";
-					if (goodname.equals(mname) && params != null) {
+					//val goodname = method.getName() + "(" + Arrays.stream(method.getGenericParameterTypes()).map(cl -> cl.getTypeName()).collect(Collectors.joining(",")) + ")";
+					int i = mname.indexOf('('); //Check only the name - the whole method is still stored for backwards compatibility and in case it may be useful
+					if (i != -1 && method.getName().equals(mname.substring(0, i)) && params != null) {
 						String[] both = Arrays.copyOf(ht, ht.length + 1);
 						both[ht.length] = "§6Usage:§r " + subcommand + " " + params;
 						ht = both;
