@@ -181,10 +181,8 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			TBMCCoreAPI.SendException("Could not register default handler for command /" + path, e);
 		}
 		for (val method : command.getClass().getMethods()) {
-			val ann = method.getAnnotation(Subcommand.class);
-			if (ann != null) {
-				val cc = command.getClass().getAnnotation(CommandClass.class);
-				var ht = ann.helpText().length != 0 || cc == null ? ann.helpText() : cc.helpText(); //If cc is null then it's empty array
+			var ht = command.getHelpText(method);
+			if (ht != null) {
 				val subcommand = commandChar + path + //Add command path (class name by default)
 					(method.getName().equals("def") ? "" : " " + method.getName().replace('_', ' ').toLowerCase()); //Add method name, unless it's 'def'
 				ht = getHelpText(method, ht, subcommand);

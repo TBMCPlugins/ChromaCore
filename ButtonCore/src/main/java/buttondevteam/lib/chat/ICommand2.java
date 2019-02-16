@@ -1,7 +1,9 @@
 package buttondevteam.lib.chat;
 
 import lombok.Getter;
+import lombok.val;
 
+import java.lang.reflect.Method;
 import java.util.function.Function;
 
 public abstract class ICommand2<TP extends Command2Sender> {
@@ -26,6 +28,21 @@ public abstract class ICommand2<TP extends Command2Sender> {
 	protected boolean respond(TP sender, String message) {
 		sender.sendMessage(message);
 		return true;
+	}
+
+	/**
+	 * Return null to not add any help text, return an empty array to only print subcommands.<br>
+	 * By default, returns null if the Subcommand annotation is not present and returns an empty array if no help text can be found.
+	 *
+	 * @param method The method of the subcommand
+	 * @return The help text, empty array or null
+	 */
+	public String[] getHelpText(Method method) {
+		val ann = method.getAnnotation(Command2.Subcommand.class);
+		if (ann == null)
+			return null;
+		val cc = getClass().getAnnotation(CommandClass.class);
+		return ann.helpText().length != 0 || cc == null ? ann.helpText() : cc.helpText(); //If cc is null then it's empty array
 	}
 
 	private final String path;
