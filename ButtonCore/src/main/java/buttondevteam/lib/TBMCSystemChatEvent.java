@@ -64,7 +64,7 @@ public class TBMCSystemChatEvent extends TBMCChatEventBase {
 
 		@Nullable
 		public static BroadcastTarget get(String name) {
-			return targets.stream().filter(bt -> bt.name.equals(name)).findAny().orElse(null);
+			return targets.stream().filter(bt -> bt.name.equalsIgnoreCase(name)).findAny().orElse(null);
 		}
 
 		public static Stream<BroadcastTarget> stream() {

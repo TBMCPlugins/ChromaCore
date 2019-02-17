@@ -1,10 +1,13 @@
 package buttondevteam.core.component.restart;
 
 import buttondevteam.core.MainPlugin;
+import buttondevteam.core.component.channel.Channel;
 import buttondevteam.lib.ScheduledServerRestartEvent;
 import buttondevteam.lib.chat.CommandClass;
+import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.chat.TBMCCommandBase;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BarColor;
@@ -15,12 +18,14 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.scheduler.BukkitTask;
 
 @CommandClass(modOnly = true, path = "schrestart")
+@RequiredArgsConstructor
 public class ScheduledRestartCommand extends TBMCCommandBase {
 	@Getter
 	@Setter
 	private int restartCounter;
 	private BukkitTask restarttask;
 	private volatile BossBar restartbar;
+	private final RestartComponent component;
 
 	@Override
 	public boolean OnCommand(CommandSender sender, String alias, String[] args) {
@@ -51,7 +56,7 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 				Bukkit.spigot().restart();
 			}
 			if (restartCounter % 200 == 0)
-				Bukkit.broadcastMessage("§c-- The server is restarting in " + restartCounter / 20 + " seconds! (/press)");
+				TBMCChatAPI.SendSystemMessage(Channel.GlobalChat, Channel.RecipientTestResult.ALL, "§c-- The server is restarting in " + restartCounter / 20 + " seconds! (/press)", component.restartBroadcast);
 			restartbar.setProgress(restartCounter / (double) restarttime);
 			restartbar.setTitle(String.format("Server restart in %.2f", restartCounter / 20f));
 			restartCounter--;

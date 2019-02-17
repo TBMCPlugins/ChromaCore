@@ -37,10 +37,7 @@ public abstract class ICommand2<TP extends Command2Sender> {
 	 * @param method The method of the subcommand
 	 * @return The help text, empty array or null
 	 */
-	public String[] getHelpText(Method method) {
-		val ann = method.getAnnotation(Command2.Subcommand.class);
-		if (ann == null)
-			return null;
+	public String[] getHelpText(Method method, Command2.Subcommand ann) {
 		val cc = getClass().getAnnotation(CommandClass.class);
 		return ann.helpText().length != 0 || cc == null ? ann.helpText() : cc.helpText(); //If cc is null then it's empty array
 	}

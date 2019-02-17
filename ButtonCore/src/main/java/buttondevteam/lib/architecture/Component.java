@@ -31,6 +31,7 @@ public abstract class Component {
 	@NonNull
 	private @Getter
 	IHaveConfig config;
+	private @Getter IHaveConfig data; //TODO
 
 	public final ConfigData<Boolean> shouldBeEnabled() {
 		return config.getData("enabled", true);

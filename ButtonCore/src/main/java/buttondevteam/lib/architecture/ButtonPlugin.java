@@ -16,6 +16,8 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	private static Command2MC command2MC = new Command2MC();
 	@Getter(AccessLevel.PROTECTED)
 	private IHaveConfig iConfig;
+	@Getter(AccessLevel.PROTECTED)
+	private IHaveConfig data; //TODO
 	/**
 	 * Used to unregister components in the right order
 	 */
