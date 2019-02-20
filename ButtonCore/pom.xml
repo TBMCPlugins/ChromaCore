@@ -75,6 +75,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M3</version>
 				<configuration>
 					<useSystemClassLoader>false
 					</useSystemClassLoader> <!-- https://stackoverflow.com/a/53012553/2703239 -->
@@ -83,6 +84,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
