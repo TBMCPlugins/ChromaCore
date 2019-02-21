@@ -25,6 +25,7 @@ import java.util.function.Function;
  */
 public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> {
 	protected Command2() {
+		commandHelp.add("§6---- Commands ----");
 	}
 
 	/**
@@ -65,6 +66,11 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		public final String errormsg;
 	}
 
+	private HashMap<String, SubcommandData<TC>> subcommands = new HashMap<>();
+	private HashMap<Class<?>, ParamConverter<?>> paramConverters = new HashMap<>();
+
+	private ArrayList<String> commandHelp = new ArrayList<>(); //Mainly needed by Discord
+
 	/**
 	 * Adds a param converter that obtains a specific object from a string parameter.
 	 * The converter may return null.
@@ -73,17 +79,11 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 	 * @param converter The converter to use
 	 * @param <T>       The type of the result
 	 */
-	public abstract <T> void addParamConverter(Class<T> cl, Function<String, T> converter, String errormsg);
-
-	protected <T> void addParamConverter(Class<T> cl, Function<String, T> converter, String errormsg, HashMap<Class<?>, ParamConverter<?>> map) {
-		map.put(cl, new ParamConverter<>(converter, errormsg));
+	public <T> void addParamConverter(Class<T> cl, Function<String, T> converter, String errormsg) {
+		paramConverters.put(cl, new ParamConverter<>(converter, errormsg));
 	}
 
-	public abstract boolean handleCommand(TP sender, String commandLine) throws Exception;
-
-	protected boolean handleCommand(TP sender, String commandline,
-	                                HashMap<String, SubcommandData<TC>> subcommands,
-	                                HashMap<Class<?>, ParamConverter<?>> paramConverters) throws Exception {
+	public boolean handleCommand(TP sender, String commandline) throws Exception {
 		for (int i = commandline.length(); i != -1; i = commandline.lastIndexOf(' ', i - 1)) {
 			String subcommand = commandline.substring(0, i).toLowerCase();
 			SubcommandData<TC> sd = subcommands.get(subcommand); //O(1)
@@ -161,7 +161,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 
 	public abstract void registerCommand(TC command);
 
-	protected void registerCommand(TC command, HashMap<String, SubcommandData<TC>> subcommands, char commandChar) {
+	protected void registerCommand(TC command, char commandChar) {
 		val path = command.getCommandPath();
 		int x = path.indexOf(' ');
 		val mainPath = commandChar + path.substring(0, x == -1 ? path.length() : x);
@@ -177,6 +177,8 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 				ht[0] = "§6---- " + ht[0] + " ----";
 			scmdHelpList.addAll(Arrays.asList(ht));
 			scmdHelpList.add("§6Subcommands:");
+			if (!commandHelp.contains(mainPath))
+				commandHelp.add(mainPath);
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Could not register default handler for command /" + path, e);
 		}
@@ -232,4 +234,8 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 	}
 
 	public abstract boolean hasPermission(TP sender, TC command);
+
+	public String[] getCommandsText() {
+		return commandHelp.toArray(new String[0]);
+	}
 } //TODO: Test support of Player instead of CommandSender

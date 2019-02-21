@@ -54,7 +54,7 @@ public class ComponentCommand extends ICommand2MC {
 		return true;
 	}
 
-	private Optional<Component> getComponentOrError(Plugin plugin, String arg, CommandSender sender) {
+	private Optional<Component<?>> getComponentOrError(Plugin plugin, String arg, CommandSender sender) {
 		val oc = Component.getComponents().values().stream()
 			.filter(c -> plugin.getName().equals(c.getPlugin().getName()))
 			.filter(c -> c.getClass().getSimpleName().equalsIgnoreCase(arg)).findAny();

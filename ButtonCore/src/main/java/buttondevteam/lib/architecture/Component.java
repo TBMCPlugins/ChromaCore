@@ -20,14 +20,14 @@ import java.util.Map;
 /**
  * Configuration is based on class name
  */
-public abstract class Component {
-	private static HashMap<Class<? extends Component>, Component> components = new HashMap<>();
+public abstract class Component<TP extends JavaPlugin> {
+	private static HashMap<Class<? extends Component>, Component<? extends JavaPlugin>> components = new HashMap<>();
 
 	@Getter
 	private boolean enabled = false;
 	@Getter
 	@NonNull
-	private JavaPlugin plugin;
+	private TP plugin;
 	@NonNull
 	private @Getter
 	IHaveConfig config;
@@ -46,7 +46,7 @@ public abstract class Component {
 	 * @param component The component to register
 	 * @return Whether the component is registered successfully (it may have failed to enable)
 	 */
-	public static boolean registerComponent(JavaPlugin plugin, Component component) {
+	public static <T extends JavaPlugin> boolean registerComponent(T plugin, Component<T> component) {
 		return registerUnregisterComponent(plugin, component, true);
 	}
 
@@ -58,11 +58,11 @@ public abstract class Component {
 	 * @param component The component to unregister
 	 * @return Whether the component is unregistered successfully (it also got disabled)
 	 */
-	public static boolean unregisterComponent(JavaPlugin plugin, Component component) {
+	public static <T extends JavaPlugin> boolean unregisterComponent(T plugin, Component<T> component) {
 		return registerUnregisterComponent(plugin, component, false);
 	}
 
-	public static boolean registerUnregisterComponent(JavaPlugin plugin, Component component, boolean register) {
+	public static <T extends JavaPlugin> boolean registerUnregisterComponent(T plugin, Component<T> component, boolean register) {
 		try {
 			val metaAnn = component.getClass().getAnnotation(ComponentMetadata.class);
 			if (metaAnn != null) {
@@ -153,7 +153,7 @@ public abstract class Component {
 	 *
 	 * @return The currently registered components
 	 */
-	public static Map<Class<? extends Component>, Component> getComponents() {
+	public static Map<Class<? extends Component>, Component<? extends JavaPlugin>> getComponents() {
 		return Collections.unmodifiableMap(components);
 	}
 
