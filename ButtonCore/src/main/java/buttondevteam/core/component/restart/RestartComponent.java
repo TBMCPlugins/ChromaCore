@@ -5,6 +5,7 @@ import buttondevteam.lib.TBMCSystemChatEvent;
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.IFakePlayer;
 import buttondevteam.lib.chat.TBMCChatAPI;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
@@ -15,7 +16,7 @@ public class RestartComponent extends Component implements Listener {
 	@Override
 	public void enable() {
 		//TODO: Permissions for the commands
-		TBMCChatAPI.AddCommand(this, new ScheduledRestartCommand(this));
+		registerCommand(new ScheduledRestartCommand(this));
 		TBMCChatAPI.AddCommand(this, new PrimeRestartCommand(this));
 		registerListener(this);
 		restartBroadcast = TBMCSystemChatEvent.BroadcastTarget.add("restartCountdown");
@@ -27,7 +28,8 @@ public class RestartComponent extends Component implements Listener {
 	}
 
 	private long lasttime = 0;
-	TBMCSystemChatEvent.BroadcastTarget restartBroadcast;
+	@Getter
+	private TBMCSystemChatEvent.BroadcastTarget restartBroadcast;
 
 	@EventHandler
 	public void onPlayerLeave(PlayerQuitEvent event) {
