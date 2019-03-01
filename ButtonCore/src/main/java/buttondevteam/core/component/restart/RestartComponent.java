@@ -1,5 +1,6 @@
 package buttondevteam.core.component.restart;
 
+import buttondevteam.core.MainPlugin;
 import buttondevteam.core.component.channel.Channel;
 import buttondevteam.lib.TBMCSystemChatEvent;
 import buttondevteam.lib.architecture.Component;
@@ -12,7 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-public class RestartComponent extends Component implements Listener {
+public class RestartComponent extends Component<MainPlugin> implements Listener {
 	@Override
 	public void enable() {
 		//TODO: Permissions for the commands

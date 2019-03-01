@@ -9,6 +9,7 @@ import buttondevteam.core.component.restart.RestartComponent;
 import buttondevteam.core.component.towny.TownyComponent;
 import buttondevteam.core.component.updater.PluginUpdater;
 import buttondevteam.core.component.updater.PluginUpdaterComponent;
+import buttondevteam.core.component.votifier.VotifierComponent;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
@@ -19,6 +20,7 @@ import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.player.TBMCPlayer;
 import buttondevteam.lib.player.TBMCPlayerBase;
 import com.earth2me.essentials.Essentials;
+import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.command.BlockCommandSender;
@@ -29,6 +31,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,6 +48,8 @@ public class MainPlugin extends ButtonPlugin {
     public static Essentials ess;
 
 	private Logger logger;
+	@Nullable
+	private Economy economy;
 
 	private ConfigData<Boolean> writePluginList() {
 		return getIConfig().getData("writePluginList", false);
@@ -58,14 +63,20 @@ public class MainPlugin extends ButtonPlugin {
 		logger = getLogger();
 		if (!setupPermissions())
 			throw new NullPointerException("No permission plugin found!");
+		if (!setupEconomy()) //Though Essentials always provides economy so this shouldn't happen
+			getLogger().warning("No economy plugin found! Components using economy will not be registered.");
 		Test = getConfig().getBoolean("test", true);
 		saveConfig();
 		Component.registerComponent(this, new PluginUpdaterComponent());
 		Component.registerComponent(this, new RestartComponent());
+		//noinspection unchecked - needed for testing
 		Component.registerComponent(this, new ChannelComponent());
 		Component.registerComponent(this, new RandomTPComponent());
 		Component.registerComponent(this, new MemberComponent());
-		Component.registerComponent(this, new TownyComponent());
+		if (Bukkit.getPluginManager().isPluginEnabled("Towny")) //It fails to load the component class otherwise
+			Component.registerComponent(this, new TownyComponent());
+		if (Bukkit.getPluginManager().isPluginEnabled("Votifier") && economy != null)
+			Component.registerComponent(this, new VotifierComponent(economy));
 		ComponentManager.enableComponents();
 		getCommand2MC().registerCommand(new ComponentCommand());
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
@@ -74,7 +85,7 @@ public class MainPlugin extends ButtonPlugin {
 		ChromaGamerBase.addConverter(sender -> Optional.ofNullable(sender instanceof Player
 				? TBMCPlayer.getPlayer(((Player) sender).getUniqueId(), TBMCPlayer.class) : null)); //Players, has higher priority
 		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
-		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fOOC§f", Color.White, "g", null)); //The /ooc ID has moved to the config
+		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fg§f", Color.White, "g", null)); //The /ooc ID has moved to the config
 		TBMCChatAPI.RegisterChatChannel(
 				Channel.AdminChat = new Channel("§cADMIN§f", Color.Red, "a", Channel.inGroupFilter(null)));
 		TBMCChatAPI.RegisterChatChannel(
@@ -120,12 +131,21 @@ public class MainPlugin extends ButtonPlugin {
 	}
 
 	private boolean setupPermissions() {
-		RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager()
-				.getRegistration(Permission.class);
-		if (permissionProvider != null) {
-			permission = permissionProvider.getProvider();
-		}
+		permission = setupProvider(Permission.class);
 		return (permission != null);
+	}
+
+	private boolean setupEconomy() {
+		economy = setupProvider(Economy.class);
+		return (economy != null);
+	}
+
+	private <T> T setupProvider(Class<T> cl) {
+		RegisteredServiceProvider<T> provider = getServer().getServicesManager()
+			.getRegistration(cl);
+		if (provider != null)
+			return provider.getProvider();
+		return null;
 	}
 
 	@Override

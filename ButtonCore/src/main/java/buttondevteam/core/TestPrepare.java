@@ -41,6 +41,7 @@ public class TestPrepare {
 				return cl.isAssignableFrom(invocation.getMethod().getReturnType());
 			}
 		}));
+		//noinspection unchecked
 		Component.registerComponent(Mockito.mock(JavaPlugin.class), new ChannelComponent());
 		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fg§f", Color.White, "g", null));
 	}

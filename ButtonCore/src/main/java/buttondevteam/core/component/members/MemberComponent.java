@@ -14,7 +14,7 @@ import java.util.Date;
 
 import static buttondevteam.core.MainPlugin.permission;
 
-public class MemberComponent extends Component implements Listener {
+public class MemberComponent extends Component<MainPlugin> implements Listener {
 	ConfigData<String> memberGroup() {
 		return getConfig().getData("memberGroup", "member");
 	}
