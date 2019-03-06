@@ -10,12 +10,14 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.var;
 import lombok.val;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Configuration is based on class name
@@ -220,6 +222,19 @@ public abstract class Component<TP extends JavaPlugin> {
 	protected final Listener registerListener(Listener listener) {
 		TBMCCoreAPI.RegisterEventsForExceptions(listener, plugin);
 		return listener;
+	}
+
+	/**
+	 * Returns a map of configs that are under the given key.
+	 * @param key The key to use
+	 * @return A map containing configs
+	 */
+	protected Map<String, IHaveConfig> getConfigMap(String key) {
+		val c=getConfig().getConfig();
+		var cs=c.getConfigurationSection(key);
+		if(cs==null) cs=c.createSection(key);
+		return cs.getValues(false).entrySet().stream().filter(e->e.getValue() instanceof ConfigurationSection)
+			.collect(Collectors.toMap(Map.Entry::getKey, kv -> new IHaveConfig((ConfigurationSection) kv.getValue())));
 	}
 
 	private String getClassName() {
