@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import java.lang.reflect.Array;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -74,12 +76,14 @@ public class ConfigData<T> { //TODO: Save after a while
 			else if (def instanceof Double)
 				val = ((Number) val).doubleValue();
 		}
+		if (val instanceof List && def.getClass().isArray())
+			val = ((List<T>) val).toArray((T[]) Array.newInstance(def.getClass().getComponentType(), 0));
 		return (T) val;
 	}
 
 	public void set(T value) {
 		Object val;
-		if (setter != null)
+		if (setter != null && value != null)
 			val = setter.apply(value);
 		else val = value;
 		if (config != null)

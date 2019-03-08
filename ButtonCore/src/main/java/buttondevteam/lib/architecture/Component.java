@@ -17,6 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -227,14 +228,23 @@ public abstract class Component<TP extends JavaPlugin> {
 	/**
 	 * Returns a map of configs that are under the given key.
 	 * @param key The key to use
+	 * @param defaultProvider A mapping between config paths and config generators
 	 * @return A map containing configs
 	 */
-	protected Map<String, IHaveConfig> getConfigMap(String key) {
+	protected Map<String, IHaveConfig> getConfigMap(String key, Map<String, Consumer<IHaveConfig>> defaultProvider) {
 		val c=getConfig().getConfig();
 		var cs=c.getConfigurationSection(key);
 		if(cs==null) cs=c.createSection(key);
-		return cs.getValues(false).entrySet().stream().filter(e->e.getValue() instanceof ConfigurationSection)
+		val res = cs.getValues(false).entrySet().stream().filter(e -> e.getValue() instanceof ConfigurationSection)
 			.collect(Collectors.toMap(Map.Entry::getKey, kv -> new IHaveConfig((ConfigurationSection) kv.getValue())));
+		if (res.size() == 0) {
+			for (val entry : defaultProvider.entrySet()) {
+				val conf = new IHaveConfig(cs.createSection(entry.getKey()));
+				entry.getValue().accept(conf);
+				res.put(entry.getKey(), conf);
+			}
+		}
+		return res;
 	}
 
 	private String getClassName() {

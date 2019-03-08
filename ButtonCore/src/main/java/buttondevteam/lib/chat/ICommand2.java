@@ -59,7 +59,7 @@ public abstract class ICommand2<TP extends Command2Sender> {
 	 *
 	 * @return The command path, <i>which is the command class name by default</i> (removing any "command" from it) - Change via the {@link CommandClass} annotation
 	 */
-	public final String getCommandPath() {
+	public String getCommandPath() {
 		return path;
 	}
 

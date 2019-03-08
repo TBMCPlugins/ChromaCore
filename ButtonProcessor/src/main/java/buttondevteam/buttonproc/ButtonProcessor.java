@@ -78,7 +78,7 @@ public class ButtonProcessor extends AbstractProcessor {
 		cs.set("params", ((ExecutableElement) targetcl).getParameters().stream().skip(1).map(p -> {
 			//String tn=p.asType().toString();
 			//return tn.substring(tn.lastIndexOf('.')+1)+" "+p.getSimpleName();
-			boolean optional = p.getAnnotationMirrors().stream().anyMatch(am -> am.getAnnotationType().toString().endsWith("Optional"));
+			boolean optional = p.getAnnotationMirrors().stream().anyMatch(am -> am.getAnnotationType().toString().endsWith("OptionalArg"));
 			if (optional)
 				return "[" + p.getSimpleName() + "]";
 			return "<" + p.getSimpleName() + ">";

@@ -130,7 +130,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 					}
 				}
 				j = commandline.indexOf(' ', j + 1); //End index
-				if (j == -1) //Last parameter
+				if (j == -1 || paramArr[i1].isAnnotationPresent(TextArg.class)) //Last parameter
 					j = commandline.length();
 				String param = commandline.substring(pj, j);
 				if (cl == String.class) {
