@@ -20,6 +20,8 @@ import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.player.TBMCPlayer;
 import buttondevteam.lib.player.TBMCPlayerBase;
 import com.earth2me.essentials.Essentials;
+import lombok.Getter;
+import lombok.Setter;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
@@ -50,9 +52,21 @@ public class MainPlugin extends ButtonPlugin {
 	private Logger logger;
 	@Nullable
 	private Economy economy;
+	/**
+	 * Whether the Core's chat handler should be enabled.
+	 * Other chat plugins handling messages from other platforms should set this to false.
+	 */
+	@Getter
+	@Setter
+	private boolean chatHandlerEnabled = true;
 
 	private ConfigData<Boolean> writePluginList() {
 		return getIConfig().getData("writePluginList", false);
+	}
+
+	ConfigData<String> chatFormat() {
+		return getIConfig().getData("chatFormat", "[{origin}|" +
+			"{channel}] <{name}> {message}");
 	}
 
 	@Override

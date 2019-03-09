@@ -13,6 +13,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+/**
+ * Provides commands such as /schrestart (restart after a countdown) and /primerestart (restart when nobody is online)
+ */
 public class RestartComponent extends Component<MainPlugin> implements Listener {
 	@Override
 	public void enable() {

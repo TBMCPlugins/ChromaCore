@@ -14,9 +14,29 @@ import java.util.Date;
 
 import static buttondevteam.core.MainPlugin.permission;
 
+/**
+ * Allows giving a 'member' group over some time elapsed OR played.
+ */
 public class MemberComponent extends Component<MainPlugin> implements Listener {
+	/**
+	 * The permission group to give to the player
+	 */
 	ConfigData<String> memberGroup() {
 		return getConfig().getData("memberGroup", "member");
+	}
+
+	/**
+	 * The amount of hours needed to play before promotion
+	 */
+	private ConfigData<Integer> playedHours() {
+		return getConfig().getData("playedHours", 12);
+	}
+
+	/**
+	 * The amount of days passed since first login
+	 */
+	private ConfigData<Integer> registeredForDays() {
+		return getConfig().getData("registeredForDays", 7);
 	}
 
 	@Override
@@ -32,8 +52,8 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		if (permission != null && !permission.playerInGroup(event.getPlayer(), memberGroup().get())
-			&& (new Date(event.getPlayer().getFirstPlayed()).toInstant().plus(7, ChronoUnit.DAYS).isBefore(Instant.now())
-			|| event.getPlayer().getStatistic(Statistic.PLAY_ONE_TICK) > 20 * 3600 * 12)) {
+			&& (new Date(event.getPlayer().getFirstPlayed()).toInstant().plus(registeredForDays().get(), ChronoUnit.DAYS).isBefore(Instant.now())
+			|| event.getPlayer().getStatistic(Statistic.PLAY_ONE_TICK) > 20 * 3600 * playedHours().get())) {
 			permission.playerAddGroup(null, event.getPlayer(), memberGroup().get());
 			event.getPlayer().sendMessage("§bYou are a member now. YEEHAW");
 			MainPlugin.Instance.getLogger().info("Added " + event.getPlayer().getName() + " as a member.");

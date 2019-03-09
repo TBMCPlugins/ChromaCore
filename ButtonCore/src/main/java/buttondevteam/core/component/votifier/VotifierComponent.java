@@ -11,12 +11,15 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 
+/**
+ * Do not use (EULA)
+ */
 @RequiredArgsConstructor
 public class VotifierComponent extends Component<MainPlugin> {
 	private final Economy economy;
 
 	private ConfigData<Double> rewardAmount() {
-		return getConfig().getData("rewardAmount", 50.0);
+		return getConfig().getData("rewardAmount", 0.0);
 	}
 
 	@Override

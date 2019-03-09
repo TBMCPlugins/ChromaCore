@@ -4,8 +4,12 @@ import buttondevteam.lib.TBMCSystemChatEvent;
 import buttondevteam.lib.architecture.Component;
 import org.bukkit.plugin.java.JavaPlugin;
 
+/**
+ * Manages chat channels. If disabled, only global channels will be registered.
+ */
 public class ChannelComponent extends Component {
 	static TBMCSystemChatEvent.BroadcastTarget roomJoinLeave;
+
 	@Override
 	protected void register(JavaPlugin plugin) {
 		super.register(plugin);

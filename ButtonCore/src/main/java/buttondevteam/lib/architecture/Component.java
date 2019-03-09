@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 /**
  * Configuration is based on class name
  */
+@HasConfig //Used for obtaining javadoc
 public abstract class Component<TP extends JavaPlugin> {
 	private static HashMap<Class<? extends Component>, Component<? extends JavaPlugin>> components = new HashMap<>();
 

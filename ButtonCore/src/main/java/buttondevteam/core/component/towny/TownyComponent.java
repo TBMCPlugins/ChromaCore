@@ -11,6 +11,9 @@ import com.palmergames.bukkit.towny.object.Resident;
 import com.palmergames.bukkit.towny.object.TownyUniverse;
 import org.bukkit.Bukkit;
 
+/**
+ * Automatically renames Towny players if they changed their Minecraft name
+ */
 public class TownyComponent extends Component<MainPlugin> {
 	@Override
 	protected void enable() {

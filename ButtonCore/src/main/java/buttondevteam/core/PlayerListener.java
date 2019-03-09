@@ -1,8 +1,6 @@
 package buttondevteam.core;
 
-import buttondevteam.lib.TBMCCommandPreprocessEvent;
-import buttondevteam.lib.TBMCCoreAPI;
-import buttondevteam.lib.TBMCSystemChatEvent;
+import buttondevteam.lib.*;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.chat.ChatMessage;
 import buttondevteam.lib.chat.Command2MCSender;
@@ -12,6 +10,7 @@ import buttondevteam.lib.player.TBMCPlayerBase;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -83,5 +82,22 @@ public class PlayerListener implements Listener {
 		TBMCChatAPI.SendChatMessage(ChatMessage.builder(event.getPlayer(), cp, event.getMessage()).build());
 		//Not cancelling the original event here, it's cancelled in the chat plugin
 		//This way other plugins can deal with the MC formatting if the chat plugin isn't present, but other platforms still get the message
+	}
+
+	@EventHandler(priority = EventPriority.HIGH) //The one in the chat plugin is set to highest
+	public void onPlayerChat(TBMCChatEvent event) {
+		if (event.isCancelled())
+			return;
+		if (!MainPlugin.Instance.isChatHandlerEnabled()) return;
+		if (event.getOrigin().equals("Minecraft")) return; //Let other plugins handle MC messages
+		String msg = MainPlugin.Instance.chatFormat().get()
+			.replace("{channel}", event.getChannel().DisplayName().get())
+			.replace("{origin}", event.getOrigin().substring(0, 1))
+			.replace("{name}", ThorpeUtils.getDisplayName(event.getSender()))
+			.replace("{message}", event.getMessage());
+		for (Player player : Bukkit.getOnlinePlayers())
+			if (event.shouldSendTo(player))
+				player.sendMessage(msg);
+		Bukkit.getConsoleSender().sendMessage(msg);
 	}
 }

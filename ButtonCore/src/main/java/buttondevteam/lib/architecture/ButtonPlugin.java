@@ -11,6 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Stack;
 
+@HasConfig
 public abstract class ButtonPlugin extends JavaPlugin {
 	@Getter
 	private static Command2MC command2MC = new Command2MC();
