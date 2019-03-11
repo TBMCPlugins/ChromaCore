@@ -42,7 +42,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	public final void onEnable() {
 		var section = super.getConfig().getConfigurationSection("global");
 		if (section == null) section = super.getConfig().createSection("global");
-		iConfig = new IHaveConfig(section);
+		iConfig = new IHaveConfig(section, this::saveConfig);
 		try {
 			pluginEnable();
 		} catch (Exception e) {

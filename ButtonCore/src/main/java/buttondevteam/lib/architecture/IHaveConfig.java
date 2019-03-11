@@ -3,6 +3,8 @@ package buttondevteam.lib.architecture;
 import lombok.Getter;
 import lombok.val;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashMap;
 import java.util.function.Function;
@@ -15,14 +17,16 @@ public final class IHaveConfig {
 	private final HashMap<String, ConfigData<?>> datamap = new HashMap<>();
 	@Getter
 	private ConfigurationSection config;
+	private final Runnable saveAction;
 
 	/**
 	 * May be used in testing.
 	 *
 	 * @param section May be null for testing
 	 */
-	IHaveConfig(ConfigurationSection section) {
+	IHaveConfig(ConfigurationSection section, Runnable saveAction) {
 		config = section;
+		this.saveAction=saveAction;
 	}
 
 	/**
@@ -36,7 +40,7 @@ public final class IHaveConfig {
 	@SuppressWarnings("unchecked")
 	public <T> ConfigData<T> getData(String path, T def) {
 		ConfigData<?> data = datamap.get(path);
-		if (data == null) datamap.put(path, data = new ConfigData<>(config, path, def, def));
+		if (data == null) datamap.put(path, data = new ConfigData<>(config, path, def, def, saveAction));
 		return (ConfigData<T>) data;
 	}
 
@@ -54,7 +58,7 @@ public final class IHaveConfig {
 	public <T> ConfigData<T> getData(String path, T def, Function<Object, T> getter, Function<T, Object> setter) {
 		ConfigData<?> data = datamap.get(path);
 		if (data == null)
-			datamap.put(path, data = new ConfigData<>(config, path, def, setter.apply(def), getter, setter));
+			datamap.put(path, data = new ConfigData<>(config, path, def, setter.apply(def), getter, setter, saveAction));
 		return (ConfigData<T>) data;
 	}
 
@@ -72,7 +76,7 @@ public final class IHaveConfig {
 	public <T> ConfigData<T> getDataPrimDef(String path, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter) {
 		ConfigData<?> data = datamap.get(path);
 		if (data == null)
-			datamap.put(path, data = new ConfigData<>(config, path, getter.apply(primitiveDef), primitiveDef, getter, setter));
+			datamap.put(path, data = new ConfigData<>(config, path, getter.apply(primitiveDef), primitiveDef, getter, setter, saveAction));
 		return (ConfigData<T>) data;
 	}
 
@@ -89,7 +93,7 @@ public final class IHaveConfig {
 		ConfigData<?> data = datamap.get(path);
 		if (data == null) {
 			val defval = def.get();
-			datamap.put(path, data = new ConfigData<>(config, path, defval, defval));
+			datamap.put(path, data = new ConfigData<>(config, path, defval, defval, saveAction));
 		}
 		return (ConfigData<T>) data;
 	}
@@ -109,7 +113,7 @@ public final class IHaveConfig {
 		ConfigData<?> data = datamap.get(path);
 		if (data == null) {
 			val defval = def.get();
-			datamap.put(path, data = new ConfigData<>(config, path, defval, setter.apply(defval), getter, setter));
+			datamap.put(path, data = new ConfigData<>(config, path, defval, setter.apply(defval), getter, setter, saveAction));
 		}
 		return (ConfigData<T>) data;
 	}
