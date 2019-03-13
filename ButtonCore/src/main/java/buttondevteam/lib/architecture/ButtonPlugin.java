@@ -19,6 +19,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	private IHaveConfig iConfig;
 	@Getter(AccessLevel.PROTECTED)
 	private IHaveConfig data; //TODO
+	private boolean loaded = false;
 	/**
 	 * Used to unregister components in the right order - and to reload configs
 	 */
@@ -76,10 +77,11 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	}
 
 	public void justReload() {
-		if (ConfigData.saveNow(getConfig())) {
+		if (loaded && ConfigData.saveNow(getConfig())) {
 			getLogger().warning("Saved pending configuration changes to the file, didn't reload (try again).");
 			return;
 		}
 		super.reloadConfig();
+		loaded = true; //Needed because for the first time it uses reloadConfig() to load it
 	}
 }
