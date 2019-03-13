@@ -2,12 +2,12 @@ package buttondevteam.lib.architecture;
 
 import buttondevteam.core.MainPlugin;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.lang.reflect.Array;
@@ -23,7 +23,7 @@ import java.util.function.Function;
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 //@AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class ConfigData<T> {
-	private static final HashMap<Configuration, BukkitTask> saveTasks= new HashMap<>();
+	private static final HashMap<Configuration, SaveTask> saveTasks = new HashMap<>();
 	/**
 	 * May be null for testing
 	 */
@@ -45,8 +45,12 @@ public class ConfigData<T> {
 	 * The config value should not change outside this instance
 	 */
 	private T value;
+	/**
+	 * Whether the default value is saved in the yaml
+	 */
 	private boolean saved = false;
 
+	//This constructor is needed because it sets the getter and setter
 	public ConfigData(ConfigurationSection config, String path, T def, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter, Runnable saveAction) {
 		this.config = config;
 		this.path = path;
@@ -88,9 +92,9 @@ public class ConfigData<T> {
 			else if (def instanceof Double)
 				val = ((Number) val).doubleValue();
 		}
-		if (val instanceof List && def.getClass().isArray())
+		if (val instanceof List && def != null && def.getClass().isArray())
 			val = ((List<T>) val).toArray((T[]) Array.newInstance(def.getClass().getComponentType(), 0));
-		return (T) val;
+		return value = (T) val; //Always cache, if not cached yet
 	}
 
 	public void set(T value) {
@@ -102,15 +106,32 @@ public class ConfigData<T> {
 			config.set(path, val);
 			if(!saveTasks.containsKey(config.getRoot())) {
 				synchronized (saveTasks) {
-					saveTasks.put(config.getRoot(), Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, () -> {
+					saveTasks.put(config.getRoot(), new SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, () -> {
 						synchronized (saveTasks) {
 							saveTasks.remove(config.getRoot());
 							saveAction.run();
 						}
-					}, 100));
+					}, 100), saveAction));
 				}
 			}
 		}
 		this.value = value;
+	}
+
+	@AllArgsConstructor
+	private static class SaveTask {
+		BukkitTask task;
+		Runnable saveAction;
+	}
+
+	public static boolean saveNow(Configuration config) {
+		SaveTask st = saveTasks.get(config);
+		if (st != null) {
+			st.task.cancel();
+			saveTasks.remove(config);
+			st.saveAction.run();
+			return true;
+		}
+		return false;
 	}
 }

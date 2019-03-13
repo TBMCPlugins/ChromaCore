@@ -1,6 +1,7 @@
 package buttondevteam.core;
 
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.Command2;
 import buttondevteam.lib.chat.Command2.Subcommand;
@@ -24,7 +25,10 @@ public class ComponentCommand extends ICommand2MC {
 
 	@Subcommand
 	public boolean enable(CommandSender sender, Plugin plugin, String component) {
-		plugin.reloadConfig(); //Reload config so the new config values are read - All changes are saved to disk on disable
+		if (plugin instanceof ButtonPlugin)
+			((ButtonPlugin) plugin).justReload();
+		else
+			plugin.reloadConfig(); //Reload config so the new config values are read - All changes are saved to disk on disable
 		return enable_disable(sender, plugin, component, true);
 	}
 

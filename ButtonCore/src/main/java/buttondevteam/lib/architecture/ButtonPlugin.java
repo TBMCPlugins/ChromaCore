@@ -20,10 +20,10 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	@Getter(AccessLevel.PROTECTED)
 	private IHaveConfig data; //TODO
 	/**
-	 * Used to unregister components in the right order
+	 * Used to unregister components in the right order - and to reload configs
 	 */
 	@Getter
-	private Stack<Component> componentStack = new Stack<>();
+	private Stack<Component<?>> componentStack = new Stack<>();
 
 	protected abstract void pluginEnable();
 
@@ -40,14 +40,18 @@ public abstract class ButtonPlugin extends JavaPlugin {
 
 	@Override
 	public final void onEnable() {
-		var section = super.getConfig().getConfigurationSection("global");
-		if (section == null) section = super.getConfig().createSection("global");
-		iConfig = new IHaveConfig(section, this::saveConfig);
+		loadConfig();
 		try {
 			pluginEnable();
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Error while enabling plugin " + getName() + "!", e);
 		}
+	}
+
+	private void loadConfig() {
+		var section = super.getConfig().getConfigurationSection("global");
+		if (section == null) section = super.getConfig().createSection("global");
+		iConfig = new IHaveConfig(section, this::saveConfig);
 	}
 
 	@Override
@@ -62,5 +66,20 @@ public abstract class ButtonPlugin extends JavaPlugin {
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Error while disabling plugin " + getName() + "!", e);
 		}
+	}
+
+	@Override
+	public void reloadConfig() {
+		justReload();
+		loadConfig();
+		componentStack.forEach(c -> Component.updateConfig(this, c));
+	}
+
+	public void justReload() {
+		if (ConfigData.saveNow(getConfig())) {
+			getLogger().warning("Saved pending configuration changes to the file, didn't reload (try again).");
+			return;
+		}
+		super.reloadConfig();
 	}
 }

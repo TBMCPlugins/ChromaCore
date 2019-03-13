@@ -140,7 +140,7 @@ public abstract class Component<TP extends JavaPlugin> {
 		}
 	}
 
-	private static void updateConfig(JavaPlugin plugin, Component component) {
+	public static void updateConfig(JavaPlugin plugin, Component component) {
 		if (plugin.getConfig() != null) { //Production
 			var compconf = plugin.getConfig().getConfigurationSection("components");
 			if (compconf == null) compconf = plugin.getConfig().createSection("components");
@@ -237,10 +237,10 @@ public abstract class Component<TP extends JavaPlugin> {
 		var cs=c.getConfigurationSection(key);
 		if(cs==null) cs=c.createSection(key);
 		val res = cs.getValues(false).entrySet().stream().filter(e -> e.getValue() instanceof ConfigurationSection)
-			.collect(Collectors.toMap(Map.Entry::getKey, kv -> new IHaveConfig((ConfigurationSection) kv.getValue())));
+			.collect(Collectors.toMap(Map.Entry::getKey, kv -> new IHaveConfig((ConfigurationSection) kv.getValue(), getPlugin()::saveConfig)));
 		if (res.size() == 0) {
 			for (val entry : defaultProvider.entrySet()) {
-				val conf = new IHaveConfig(cs.createSection(entry.getKey()));
+				val conf = new IHaveConfig(cs.createSection(entry.getKey()), getPlugin()::saveConfig);
 				entry.getValue().accept(conf);
 				res.put(entry.getKey(), conf);
 			}

@@ -34,9 +34,10 @@ public final class ComponentManager {
 	/**
 	 * Unregister all components of a plugin that are enabled - called on {@link ButtonPlugin} disable
 	 */
-	public static void unregComponents(ButtonPlugin plugin) {
+	@SuppressWarnings("unchecked")
+	public static <T extends ButtonPlugin> void unregComponents(T plugin) {
 		while (!plugin.getComponentStack().empty()) //Unregister in reverse order
-			Component.unregisterComponent(plugin, plugin.getComponentStack().pop()); //Components are pushed on register
+			Component.unregisterComponent(plugin, (Component<T>) plugin.getComponentStack().pop()); //Components are pushed on register
 		componentsEnabled = false;
 	}
 
