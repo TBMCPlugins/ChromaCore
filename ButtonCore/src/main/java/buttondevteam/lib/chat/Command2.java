@@ -5,7 +5,6 @@ import buttondevteam.lib.player.ChromaGamerBase;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.var;
 import lombok.val;
-import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.InputStreamReader;
@@ -105,7 +104,8 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			final ChromaGamerBase cg;
 			if (sendertype.isAssignableFrom(sender.getClass()))
 				params.add(sender); //The command either expects a CommandSender or it is a Player, or some other expected type
-			else if (CommandSender.class.isAssignableFrom(sendertype) && sender instanceof Command2MCSender)
+			else if (sender instanceof Command2MCSender
+				&& sendertype.isAssignableFrom(((Command2MCSender) sender).getSender().getClass()))
 				params.add(((Command2MCSender) sender).getSender());
 			else if (ChromaGamerBase.class.isAssignableFrom(sendertype)
 				&& sender instanceof Command2MCSender
@@ -238,4 +238,4 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 	public String[] getCommandsText() {
 		return commandHelp.toArray(new String[0]);
 	}
-} //TODO: Test support of Player instead of CommandSender
+}

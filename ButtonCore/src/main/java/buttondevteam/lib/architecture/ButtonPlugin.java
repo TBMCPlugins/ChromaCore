@@ -71,17 +71,23 @@ public abstract class ButtonPlugin extends JavaPlugin {
 
 	@Override
 	public void reloadConfig() {
-		justReload();
-		loadConfig();
-		componentStack.forEach(c -> Component.updateConfig(this, c));
+		tryReloadConfig();
 	}
 
-	public void justReload() {
+	public boolean tryReloadConfig() {
+		if (!justReload()) return false;
+		loadConfig();
+		componentStack.forEach(c -> Component.updateConfig(this, c));
+		return true;
+	}
+
+	public boolean justReload() {
 		if (loaded && ConfigData.saveNow(getConfig())) {
 			getLogger().warning("Saved pending configuration changes to the file, didn't reload (try again).");
-			return;
+			return false;
 		}
 		super.reloadConfig();
 		loaded = true; //Needed because for the first time it uses reloadConfig() to load it
+		return true;
 	}
 }

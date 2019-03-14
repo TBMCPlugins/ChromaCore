@@ -12,7 +12,9 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
 
 	@Override
 	public boolean hasPermission(Command2MCSender sender, ICommand2MC command) {
-		return MainPlugin.permission.has(sender.getSender(), "thorpe.command." + command.getCommandPath().replace(' ', '.'));
+		return command.getClass().getAnnotation(CommandClass.class).modOnly()
+			? MainPlugin.permission.has(sender.getSender(), "tbmc.admin") //TODO: Change when groups are implemented
+			: MainPlugin.permission.has(sender.getSender(), "thorpe.command." + command.getCommandPath().replace(' ', '.'));
 	}
 
 	/**

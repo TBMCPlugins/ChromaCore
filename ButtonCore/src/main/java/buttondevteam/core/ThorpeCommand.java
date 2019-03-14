@@ -9,6 +9,9 @@ import org.bukkit.command.CommandSender;
 public class ThorpeCommand extends ICommand2MC {
 	@Command2.Subcommand //TODO: Main permissions (groups) like 'mod'
 	public void reload(CommandSender sender) {
-		MainPlugin.Instance.reloadConfig();
+		if (MainPlugin.Instance.tryReloadConfig())
+			sender.sendMessage("§bConfig reloaded.");
+		else
+			sender.sendMessage("§cFailed to reload config. Check console.");
 	}
 }
