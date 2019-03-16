@@ -39,6 +39,8 @@ public final class ThorpeUtils {
 	public static Number convertNumber(Number number, Class<? extends Number> targetcl) {
 		if (targetcl == long.class || Long.class.isAssignableFrom(targetcl))
 			return number.longValue();
+		else if (targetcl == int.class || Integer.class.isAssignableFrom(targetcl))
+			return number.intValue(); //Needed because the parser can get longs
 		else if (targetcl == short.class || Short.class.isAssignableFrom(targetcl))
 			return number.shortValue();
 		else if (targetcl == byte.class || Byte.class.isAssignableFrom(targetcl))

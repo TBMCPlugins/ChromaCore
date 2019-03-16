@@ -14,6 +14,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -133,6 +134,10 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 						return true;
 					}
 				}
+				if (paramArr[i1].isVarArgs()) {
+					params.add(commandline.substring(j + 1).split(" +"));
+					continue;
+				}
 				j = commandline.indexOf(' ', j + 1); //End index
 				if (j == -1 || paramArr[i1].isAnnotationPresent(TextArg.class)) //Last parameter
 					j = commandline.length();
@@ -142,8 +147,11 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 					continue;
 				} else if (Number.class.isAssignableFrom(cl) || cl.isPrimitive()) {
 					try {
+						//System.out.println("Converting "+param+" param to "+cl.getSimpleName());
 						//noinspection unchecked
-						params.add(ThorpeUtils.convertNumber(NumberFormat.getInstance().parse(param), (Class<? extends Number>) cl));
+						Number n = ThorpeUtils.convertNumber(NumberFormat.getInstance().parse(param), (Class<? extends Number>) cl);
+						//System.out.println(n.getClass().getSimpleName()+" with value "+n);
+						params.add(n);
 					} catch (ParseException e) {
 						sender.sendMessage("§c'" + param + "' is not a number.");
 						return true;
@@ -161,13 +169,17 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 				params.add(cparam);
 			}
 			//System.out.println("Our params: "+params);
-			val ret = sd.method.invoke(sd.command, params.toArray()); //I FORGOT TO TURN IT INTO AN ARRAY (for a long time)
-			if (ret instanceof Boolean) {
-				if (!(boolean) ret) //Show usage
-					sender.sendMessage(sd.helpText);
-			} else if (ret != null)
-				throw new Exception("Wrong return type! Must return a boolean or void. Return value: "+ret);
-			return true; //We found a method
+			try {
+				val ret = sd.method.invoke(sd.command, params.toArray()); //I FORGOT TO TURN IT INTO AN ARRAY (for a long time)
+				if (ret instanceof Boolean) {
+					if (!(boolean) ret) //Show usage
+						sender.sendMessage(sd.helpText);
+				} else if (ret != null)
+					throw new Exception("Wrong return type! Must return a boolean or void. Return value: " + ret);
+				return true; //We found a method
+			} catch (InvocationTargetException e) {
+				TBMCCoreAPI.SendException("An error occurred in a command handler!", e.getCause());
+			}
 		}
 		return false; //Didn't handle
 	} //TODO: Add to the help
