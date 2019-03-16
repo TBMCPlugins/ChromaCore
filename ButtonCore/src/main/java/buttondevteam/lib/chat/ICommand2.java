@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.val;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.function.Function;
 
 public abstract class ICommand2<TP extends Command2Sender> {
@@ -69,8 +70,22 @@ public abstract class ICommand2<TP extends Command2Sender> {
 				"No @CommandClass annotation on command class " + getClass().getSimpleName() + "!");
 		Function<Class<?>, String> getFromClass = cl -> cl.getSimpleName().toLowerCase().replace("commandbase", "") // <-- ...
 			.replace("command", "");
-		String path = getClass().getAnnotation(CommandClass.class).path();
-		path = path.length() == 0 ? getFromClass.apply(getClass()) : path;
+		String path = getClass().getAnnotation(CommandClass.class).path(),
+			prevpath = path = path.length() == 0 ? getFromClass.apply(getClass()) : path;
+		for (Class<?> cl = getClass().getSuperclass(); cl != null
+			&& !cl.getPackage().getName().equals(TBMCCommandBase.class.getPackage().getName()); cl = cl
+			.getSuperclass()) { //
+			String newpath;
+			if (!cl.isAnnotationPresent(CommandClass.class)
+				|| (newpath = cl.getAnnotation(CommandClass.class).path()).length() == 0
+				|| newpath.equals(prevpath)) {
+				if ((Modifier.isAbstract(cl.getModifiers()) && !cl.isAnnotationPresent(CommandClass.class))
+					|| cl.getAnnotation(CommandClass.class).excludeFromPath()) // <--
+					continue;
+				newpath = getFromClass.apply(cl);
+			}
+			path = (prevpath = newpath) + " " + path;
+		}
 		return path;
 	}
 }

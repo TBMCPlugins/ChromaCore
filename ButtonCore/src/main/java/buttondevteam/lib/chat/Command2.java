@@ -1,7 +1,9 @@
 package buttondevteam.lib.chat;
 
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.ThorpeUtils;
 import buttondevteam.lib.player.ChromaGamerBase;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.var;
 import lombok.val;
@@ -13,6 +15,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -52,11 +56,11 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 	public @interface OptionalArg {
 	}
 
-	@RequiredArgsConstructor
+	@AllArgsConstructor
 	protected static class SubcommandData<T extends ICommand2> {
 		public final Method method;
 		public final T command;
-		public final String[] helpText;
+		public String[] helpText;
 	}
 
 	@RequiredArgsConstructor
@@ -136,6 +140,15 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 				if (cl == String.class) {
 					params.add(param);
 					continue;
+				} else if (Number.class.isAssignableFrom(cl) || cl.isPrimitive()) {
+					try {
+						//noinspection unchecked
+						params.add(ThorpeUtils.convertNumber(NumberFormat.getInstance().parse(param), (Class<? extends Number>) cl));
+					} catch (ParseException e) {
+						sender.sendMessage("§c'" + param + "' is not a number.");
+						return true;
+					}
+					continue;
 				}
 				val conv = paramConverters.get(cl);
 				if (conv == null)
@@ -169,14 +182,16 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		val scmdHelpList = new ArrayList<String>();
 		Method mainMethod = null;
 		boolean nosubs = true;
+		boolean isSubcommand = x != -1;
 		try { //Register the default handler first so it can be reliably overwritten
 			mainMethod = command.getClass().getMethod("def", Command2Sender.class, String.class);
 			val cc = command.getClass().getAnnotation(CommandClass.class);
-			var ht = cc == null ? new String[0] : cc.helpText();
+			var ht = cc == null || isSubcommand ? new String[0] : cc.helpText(); //If it's not the main command, don't add it
 			if (ht.length > 0)
 				ht[0] = "§6---- " + ht[0] + " ----";
 			scmdHelpList.addAll(Arrays.asList(ht));
-			scmdHelpList.add("§6Subcommands:");
+			if (!isSubcommand)
+				scmdHelpList.add("§6Subcommands:");
 			if (!commandHelp.contains(mainPath))
 				commandHelp.add(mainPath);
 		} catch (Exception e) {
@@ -199,8 +214,16 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			scmdHelpList.remove(scmdHelpList.size() - 1); //Remove Subcommands header
 		if (mainMethod != null && !subcommands.containsKey(commandChar + path)) //Command specified by the class
 			subcommands.put(commandChar + path, new SubcommandData<>(mainMethod, command, scmdHelpList.toArray(new String[0])));
-		if (mainMethod != null && !subcommands.containsKey(mainPath)) //Main command, typically the same as the above
-			subcommands.put(mainPath, new SubcommandData<>(null, null, scmdHelpList.toArray(new String[0])));
+		if (mainMethod != null && !mainPath.equals(commandChar + path)) { //Main command, typically the same as the above
+			if (isSubcommand) { //The class itself is a subcommand
+				val scmd = subcommands.computeIfAbsent(mainPath, p -> new SubcommandData<>(null, null, new String[]{"§6---- Subcommands ----"}));
+				val scmdHelp = Arrays.copyOf(scmd.helpText, scmd.helpText.length + scmdHelpList.size());
+				for (int i = 0; i < scmdHelpList.size(); i++)
+					scmdHelp[scmd.helpText.length + i] = scmdHelpList.get(i);
+				scmd.helpText = scmdHelp;
+			} else if (!subcommands.containsKey(mainPath))
+				subcommands.put(mainPath, new SubcommandData<>(null, null, scmdHelpList.toArray(new String[0])));
+		}
 	}
 
 	private String[] getHelpText(Method method, String[] ht, String subcommand) {
@@ -237,5 +260,11 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 
 	public String[] getCommandsText() {
 		return commandHelp.toArray(new String[0]);
+	}
+
+	public String[] getHelpText(String path) {
+		val scmd = subcommands.get(path);
+		if (scmd == null) return null;
+		return scmd.helpText;
 	}
 }

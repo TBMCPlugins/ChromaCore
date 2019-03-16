@@ -1,6 +1,7 @@
 package buttondevteam.lib.architecture;
 
 import buttondevteam.core.MainPlugin;
+import buttondevteam.lib.ThorpeUtils;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -80,18 +81,9 @@ public class ConfigData<T> {
 			if (hmm == null) hmm = def; //Set if the getter returned null
 			return hmm;
 		}
-		if (val instanceof Number) {
-			if (def instanceof Long)
-				val = ((Number) val).longValue();
-			else if (def instanceof Short)
-				val = ((Number) val).shortValue();
-			else if (def instanceof Byte)
-				val = ((Number) val).byteValue();
-			else if (def instanceof Float)
-				val = ((Number) val).floatValue();
-			else if (def instanceof Double)
-				val = ((Number) val).doubleValue();
-		}
+		if (val instanceof Number && def != null)
+			val = ThorpeUtils.convertNumber((Number) val,
+				(Class<? extends Number>) def.getClass());
 		if (val instanceof List && def != null && def.getClass().isArray())
 			val = ((List<T>) val).toArray((T[]) Array.newInstance(def.getClass().getComponentType(), 0));
 		return value = (T) val; //Always cache, if not cached yet
