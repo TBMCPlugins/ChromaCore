@@ -3,34 +3,39 @@ package buttondevteam.lib.architecture;
 import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException;
-import buttondevteam.lib.chat.Command2MC;
+import buttondevteam.lib.chat.ICommand2MC;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.chat.TBMCCommandBase;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.var;
 import lombok.val;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Configuration is based on class name
  */
-public abstract class Component {
-	private static HashMap<Class<? extends Component>, Component> components = new HashMap<>();
+@HasConfig //Used for obtaining javadoc
+public abstract class Component<TP extends JavaPlugin> {
+	private static HashMap<Class<? extends Component>, Component<? extends JavaPlugin>> components = new HashMap<>();
 
 	@Getter
 	private boolean enabled = false;
 	@Getter
 	@NonNull
-	private JavaPlugin plugin;
+	private TP plugin;
 	@NonNull
 	private @Getter
 	IHaveConfig config;
+	private @Getter IHaveConfig data; //TODO
 
 	public final ConfigData<Boolean> shouldBeEnabled() {
 		return config.getData("enabled", true);
@@ -45,7 +50,7 @@ public abstract class Component {
 	 * @param component The component to register
 	 * @return Whether the component is registered successfully (it may have failed to enable)
 	 */
-	public static boolean registerComponent(JavaPlugin plugin, Component component) {
+	public static <T extends JavaPlugin> boolean registerComponent(T plugin, Component<T> component) {
 		return registerUnregisterComponent(plugin, component, true);
 	}
 
@@ -57,11 +62,11 @@ public abstract class Component {
 	 * @param component The component to unregister
 	 * @return Whether the component is unregistered successfully (it also got disabled)
 	 */
-	public static boolean unregisterComponent(JavaPlugin plugin, Component component) {
+	public static <T extends JavaPlugin> boolean unregisterComponent(T plugin, Component<T> component) {
 		return registerUnregisterComponent(plugin, component, false);
 	}
 
-	public static boolean registerUnregisterComponent(JavaPlugin plugin, Component component, boolean register) {
+	public static <T extends JavaPlugin> boolean registerUnregisterComponent(T plugin, Component<T> component, boolean register) {
 		try {
 			val metaAnn = component.getClass().getAnnotation(ComponentMetadata.class);
 			if (metaAnn != null) {
@@ -135,16 +140,16 @@ public abstract class Component {
 		}
 	}
 
-	private static void updateConfig(JavaPlugin plugin, Component component) {
+	public static void updateConfig(JavaPlugin plugin, Component component) {
 		if (plugin.getConfig() != null) { //Production
 			var compconf = plugin.getConfig().getConfigurationSection("components");
 			if (compconf == null) compconf = plugin.getConfig().createSection("components");
 			var configSect = compconf.getConfigurationSection(component.getClassName());
 			if (configSect == null)
 				configSect = compconf.createSection(component.getClassName());
-			component.config = new IHaveConfig(configSect);
+			component.config = new IHaveConfig(configSect, plugin::saveConfig);
 		} else //Testing
-			component.config = new IHaveConfig(null);
+			component.config = new IHaveConfig(null, plugin::saveConfig);
 	}
 
 	/**
@@ -152,7 +157,7 @@ public abstract class Component {
 	 *
 	 * @return The currently registered components
 	 */
-	public static Map<Class<? extends Component>, Component> getComponents() {
+	public static Map<Class<? extends Component>, Component<? extends JavaPlugin>> getComponents() {
 		return Collections.unmodifiableMap(components);
 	}
 
@@ -197,8 +202,8 @@ public abstract class Component {
 	 *
 	 * @param commandBase Custom coded command class
 	 */
-	protected final void registerCommand(Command2MC commandBase) {
-		Command2MC.registerCommand(commandBase);
+	protected final void registerCommand(ICommand2MC commandBase) {
+		ButtonPlugin.getCommand2MC().registerCommand(commandBase);
 	}
 
 	/**
@@ -219,6 +224,28 @@ public abstract class Component {
 	protected final Listener registerListener(Listener listener) {
 		TBMCCoreAPI.RegisterEventsForExceptions(listener, plugin);
 		return listener;
+	}
+
+	/**
+	 * Returns a map of configs that are under the given key.
+	 * @param key The key to use
+	 * @param defaultProvider A mapping between config paths and config generators
+	 * @return A map containing configs
+	 */
+	protected Map<String, IHaveConfig> getConfigMap(String key, Map<String, Consumer<IHaveConfig>> defaultProvider) {
+		val c=getConfig().getConfig();
+		var cs=c.getConfigurationSection(key);
+		if(cs==null) cs=c.createSection(key);
+		val res = cs.getValues(false).entrySet().stream().filter(e -> e.getValue() instanceof ConfigurationSection)
+			.collect(Collectors.toMap(Map.Entry::getKey, kv -> new IHaveConfig((ConfigurationSection) kv.getValue(), getPlugin()::saveConfig)));
+		if (res.size() == 0) {
+			for (val entry : defaultProvider.entrySet()) {
+				val conf = new IHaveConfig(cs.createSection(entry.getKey()), getPlugin()::saveConfig);
+				entry.getValue().accept(conf);
+				res.put(entry.getKey(), conf);
+			}
+		}
+		return res;
 	}
 
 	private String getClassName() {

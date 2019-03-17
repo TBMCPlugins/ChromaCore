@@ -1,10 +1,19 @@
 package buttondevteam.lib.architecture;
 
+import buttondevteam.core.MainPlugin;
+import buttondevteam.lib.ThorpeUtils;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.scheduler.BukkitTask;
 
+import java.lang.reflect.Array;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -14,7 +23,8 @@ import java.util.function.Function;
  */
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 //@AllArgsConstructor(access = AccessLevel.PACKAGE)
-public class ConfigData<T> { //TODO: Save after a while
+public class ConfigData<T> {
+	private static final HashMap<Configuration, SaveTask> saveTasks = new HashMap<>();
 	/**
 	 * May be null for testing
 	 */
@@ -22,6 +32,7 @@ public class ConfigData<T> { //TODO: Save after a while
 	private final String path;
 	private final T def;
 	private final Object primitiveDef;
+	private final Runnable saveAction;
 	/**
 	 * The parameter is of a primitive type as returned by {@link YamlConfiguration#get(String)}
 	 */
@@ -35,15 +46,20 @@ public class ConfigData<T> { //TODO: Save after a while
 	 * The config value should not change outside this instance
 	 */
 	private T value;
+	/**
+	 * Whether the default value is saved in the yaml
+	 */
 	private boolean saved = false;
 
-	public ConfigData(ConfigurationSection config, String path, T def, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter) {
+	//This constructor is needed because it sets the getter and setter
+	public ConfigData(ConfigurationSection config, String path, T def, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter, Runnable saveAction) {
 		this.config = config;
 		this.path = path;
 		this.def = def;
 		this.primitiveDef = primitiveDef;
 		this.getter = getter;
 		this.setter = setter;
+		this.saveAction=saveAction;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -54,7 +70,10 @@ public class ConfigData<T> { //TODO: Save after a while
 			val = primitiveDef;
 		}
 		if (!saved && Objects.equals(val, primitiveDef)) { //String needs .equals()
-			set(def); //Save default value - def is always set
+			if (def == null && config != null) //In Discord's case def may be null
+				config.set(path, primitiveDef);
+			else
+				set(def); //Save default value - def is always set
 			saved = true;
 		}
 		if (getter != null) {
@@ -62,28 +81,49 @@ public class ConfigData<T> { //TODO: Save after a while
 			if (hmm == null) hmm = def; //Set if the getter returned null
 			return hmm;
 		}
-		if (val instanceof Number) {
-			if (def instanceof Long)
-				val = ((Number) val).longValue();
-			else if (def instanceof Short)
-				val = ((Number) val).shortValue();
-			else if (def instanceof Byte)
-				val = ((Number) val).byteValue();
-			else if (def instanceof Float)
-				val = ((Number) val).floatValue();
-			else if (def instanceof Double)
-				val = ((Number) val).doubleValue();
-		}
-		return (T) val;
+		if (val instanceof Number && def != null)
+			val = ThorpeUtils.convertNumber((Number) val,
+				(Class<? extends Number>) def.getClass());
+		if (val instanceof List && def != null && def.getClass().isArray())
+			val = ((List<T>) val).toArray((T[]) Array.newInstance(def.getClass().getComponentType(), 0));
+		return value = (T) val; //Always cache, if not cached yet
 	}
 
 	public void set(T value) {
 		Object val;
-		if (setter != null)
+		if (setter != null && value != null)
 			val = setter.apply(value);
 		else val = value;
-		if (config != null)
+		if (config != null) {
 			config.set(path, val);
+			if(!saveTasks.containsKey(config.getRoot())) {
+				synchronized (saveTasks) {
+					saveTasks.put(config.getRoot(), new SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, () -> {
+						synchronized (saveTasks) {
+							saveTasks.remove(config.getRoot());
+							saveAction.run();
+						}
+					}, 100), saveAction));
+				}
+			}
+		}
 		this.value = value;
+	}
+
+	@AllArgsConstructor
+	private static class SaveTask {
+		BukkitTask task;
+		Runnable saveAction;
+	}
+
+	public static boolean saveNow(Configuration config) {
+		SaveTask st = saveTasks.get(config);
+		if (st != null) {
+			st.task.cancel();
+			saveTasks.remove(config);
+			st.saveAction.run();
+			return true;
+		}
+		return false;
 	}
 }

@@ -25,7 +25,7 @@ public class TBMCCommandPreprocessEvent extends Event implements Cancellable {
 
 	public TBMCCommandPreprocessEvent(CommandSender sender, String message) {
 		this.sender = sender;
-		this.message = message; //TODO: Actually call from Discord as well
+		this.message = message;
 	}
 
 	@Override

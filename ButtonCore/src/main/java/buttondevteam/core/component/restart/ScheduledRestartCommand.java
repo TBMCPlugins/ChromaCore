@@ -1,10 +1,14 @@
 package buttondevteam.core.component.restart;
 
 import buttondevteam.core.MainPlugin;
+import buttondevteam.core.component.channel.Channel;
 import buttondevteam.lib.ScheduledServerRestartEvent;
+import buttondevteam.lib.chat.Command2;
 import buttondevteam.lib.chat.CommandClass;
-import buttondevteam.lib.chat.TBMCCommandBase;
+import buttondevteam.lib.chat.ICommand2MC;
+import buttondevteam.lib.chat.TBMCChatAPI;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BarColor;
@@ -14,16 +18,23 @@ import org.bukkit.boss.BossBar;
 import org.bukkit.command.CommandSender;
 import org.bukkit.scheduler.BukkitTask;
 
-@CommandClass(modOnly = true, path = "schrestart")
-public class ScheduledRestartCommand extends TBMCCommandBase {
+@CommandClass(modOnly = true, path = "schrestart", helpText = {
+	"Scheduled restart", //
+	"This command restarts the server 1 minute after it's executed, warning players every 10 seconds.", //
+	"You can optionally set the amount of seconds to wait before the restart." //
+})
+@RequiredArgsConstructor
+public class ScheduledRestartCommand extends ICommand2MC {
 	@Getter
 	@Setter
 	private int restartCounter;
 	private BukkitTask restarttask;
 	private volatile BossBar restartbar;
+	@Getter
+	private final RestartComponent component;
 
-	@Override
-	public boolean OnCommand(CommandSender sender, String alias, String[] args) {
+	@Command2.Subcommand
+	public boolean def(CommandSender sender, String alias, String[] args) {
 		int secs = 60;
 		try {
 			if (args.length > 0)
@@ -51,20 +62,11 @@ public class ScheduledRestartCommand extends TBMCCommandBase {
 				Bukkit.spigot().restart();
 			}
 			if (restartCounter % 200 == 0)
-				Bukkit.broadcastMessage("§c-- The server is restarting in " + restartCounter / 20 + " seconds! (/press)");
+				TBMCChatAPI.SendSystemMessage(Channel.GlobalChat, Channel.RecipientTestResult.ALL, "§c-- The server is restarting in " + restartCounter / 20 + " seconds! (/press)", component.getRestartBroadcast());
 			restartbar.setProgress(restartCounter / (double) restarttime);
 			restartbar.setTitle(String.format("Server restart in %.2f", restartCounter / 20f));
 			restartCounter--;
 		}, 1, 1);
 		return true;
-	}
-
-	@Override
-	public String[] GetHelpText(String alias) {
-		return new String[] { //
-				"§6---- Scheduled restart ----", //
-				"This command restarts the server 1 minute after it's executed, warning players every 10 seconds.", //
-				"You can optionally set the amount of ticks to wait before the restart." //
-		};
 	}
 }

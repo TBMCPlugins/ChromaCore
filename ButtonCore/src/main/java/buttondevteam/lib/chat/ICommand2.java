@@ -1,0 +1,91 @@
+package buttondevteam.lib.chat;
+
+import lombok.Getter;
+import lombok.val;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.function.Function;
+
+public abstract class ICommand2<TP extends Command2Sender> {
+	/**
+	 * Default handler for commands, can be used to copy the args too.
+	 *
+	 * @param sender The sender which ran the command
+	 * @param args   All of the arguments passed as is
+	 * @return The success of the command
+	 */
+	public boolean def(TP sender, @Command2.TextArg String args) {
+		return false;
+	}
+
+	/**
+	 * Convenience method. Return with this.
+	 *
+	 * @param sender  The sender of the command
+	 * @param message The message to send to the sender
+	 * @return Always true so that the usage isn't shown
+	 */
+	protected boolean respond(TP sender, String message) {
+		sender.sendMessage(message);
+		return true;
+	}
+
+	/**
+	 * Return null to not add any help text, return an empty array to only print subcommands.<br>
+	 * By default, returns null if the Subcommand annotation is not present and returns an empty array if no help text can be found.
+	 *
+	 * @param method The method of the subcommand
+	 * @return The help text, empty array or null
+	 */
+	public String[] getHelpText(Method method, Command2.Subcommand ann) {
+		val cc = getClass().getAnnotation(CommandClass.class);
+		return ann.helpText().length != 0 || cc == null ? ann.helpText() : cc.helpText(); //If cc is null then it's empty array
+	}
+
+	private final String path;
+	@Getter
+	private final Command2<?, TP> manager; //TIL that if I use a raw type on a variable then none of the type args will work (including what's defined on a method, not on the type)
+
+	public <T extends ICommand2> ICommand2(Command2<T, TP> manager) {
+		path = getcmdpath();
+		this.manager = manager;
+	}
+
+	/**
+	 * The command's path, or name if top-level command.<br>
+	 * For example:<br>
+	 * "u admin updateplugin" or "u" for the top level one<br>
+	 * <u>The path must be lowercase!</u><br>
+	 *
+	 * @return The command path, <i>which is the command class name by default</i> (removing any "command" from it) - Change via the {@link CommandClass} annotation
+	 */
+	public String getCommandPath() {
+		return path;
+	}
+
+	private String getcmdpath() {
+		if (!getClass().isAnnotationPresent(CommandClass.class))
+			throw new RuntimeException(
+				"No @CommandClass annotation on command class " + getClass().getSimpleName() + "!");
+		Function<Class<?>, String> getFromClass = cl -> cl.getSimpleName().toLowerCase().replace("commandbase", "") // <-- ...
+			.replace("command", "");
+		String path = getClass().getAnnotation(CommandClass.class).path(),
+			prevpath = path = path.length() == 0 ? getFromClass.apply(getClass()) : path;
+		for (Class<?> cl = getClass().getSuperclass(); cl != null
+			&& !cl.getPackage().getName().equals(TBMCCommandBase.class.getPackage().getName()); cl = cl
+			.getSuperclass()) { //
+			String newpath;
+			if (!cl.isAnnotationPresent(CommandClass.class)
+				|| (newpath = cl.getAnnotation(CommandClass.class).path()).length() == 0
+				|| newpath.equals(prevpath)) {
+				if ((Modifier.isAbstract(cl.getModifiers()) && !cl.isAnnotationPresent(CommandClass.class))
+					|| cl.getAnnotation(CommandClass.class).excludeFromPath()) // <--
+					continue;
+				newpath = getFromClass.apply(cl);
+			}
+			path = (prevpath = newpath) + " " + path;
+		}
+		return path;
+	}
+}

@@ -2,6 +2,7 @@ package buttondevteam.lib.architecture;
 
 import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.chat.Command2MC;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -10,14 +11,20 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Stack;
 
+@HasConfig
 public abstract class ButtonPlugin extends JavaPlugin {
+	@Getter
+	private static Command2MC command2MC = new Command2MC();
 	@Getter(AccessLevel.PROTECTED)
 	private IHaveConfig iConfig;
+	@Getter(AccessLevel.PROTECTED)
+	private IHaveConfig data; //TODO
+	private boolean loaded = false;
 	/**
-	 * Used to unregister components in the right order
+	 * Used to unregister components in the right order - and to reload configs
 	 */
 	@Getter
-	private Stack<Component> componentStack = new Stack<>();
+	private Stack<Component<?>> componentStack = new Stack<>();
 
 	protected abstract void pluginEnable();
 
@@ -34,14 +41,18 @@ public abstract class ButtonPlugin extends JavaPlugin {
 
 	@Override
 	public final void onEnable() {
-		var section = super.getConfig().getConfigurationSection("global");
-		if (section == null) section = super.getConfig().createSection("global");
-		iConfig = new IHaveConfig(section);
+		loadConfig();
 		try {
 			pluginEnable();
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Error while enabling plugin " + getName() + "!", e);
 		}
+	}
+
+	private void loadConfig() {
+		var section = super.getConfig().getConfigurationSection("global");
+		if (section == null) section = super.getConfig().createSection("global");
+		iConfig = new IHaveConfig(section, this::saveConfig);
 	}
 
 	@Override
@@ -56,5 +67,27 @@ public abstract class ButtonPlugin extends JavaPlugin {
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Error while disabling plugin " + getName() + "!", e);
 		}
+	}
+
+	@Override
+	public void reloadConfig() {
+		tryReloadConfig();
+	}
+
+	public boolean tryReloadConfig() {
+		if (!justReload()) return false;
+		loadConfig();
+		componentStack.forEach(c -> Component.updateConfig(this, c));
+		return true;
+	}
+
+	public boolean justReload() {
+		if (loaded && ConfigData.saveNow(getConfig())) {
+			getLogger().warning("Saved pending configuration changes to the file, didn't reload (try again).");
+			return false;
+		}
+		super.reloadConfig();
+		loaded = true; //Needed because for the first time it uses reloadConfig() to load it
+		return true;
 	}
 }

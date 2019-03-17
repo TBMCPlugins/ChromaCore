@@ -1,26 +1,31 @@
 package buttondevteam.core.component.restart;
 
+import buttondevteam.core.component.channel.Channel;
 import buttondevteam.lib.chat.CommandClass;
+import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.chat.TBMCCommandBase;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
 @CommandClass(path = "primerestart", modOnly = true)
+@RequiredArgsConstructor
 public class PrimeRestartCommand extends TBMCCommandBase {
+	private final RestartComponent component;
     @Override
     public boolean OnCommand(CommandSender sender, String alias, String[] args) {
 	    loud = args.length > 0;
 	    if (Bukkit.getOnlinePlayers().size() > 0) {
 		    sender.sendMessage("§bPlayers online, restart delayed.");
 		    if (loud)
-			    Bukkit.broadcastMessage(ChatColor.DARK_RED + "The server will restart as soon as nobody is online.");
+				TBMCChatAPI.SendSystemMessage(Channel.GlobalChat, Channel.RecipientTestResult.ALL, ChatColor.DARK_RED + "The server will restart as soon as nobody is online.", component.getRestartBroadcast());
 		    plsrestart = true;
 	    } else {
 		    sender.sendMessage("§bNobody is online. Restarting now.");
 		    if (loud)
-			    Bukkit.broadcastMessage("§cNobody is online. Restarting server.");
+				TBMCChatAPI.SendSystemMessage(Channel.GlobalChat, Channel.RecipientTestResult.ALL, "§cNobody is online. Restarting server.", component.getRestartBroadcast());
 		    Bukkit.spigot().restart();
 	    }
 	    return true;

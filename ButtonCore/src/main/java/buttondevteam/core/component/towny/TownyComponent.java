@@ -1,6 +1,7 @@
 package buttondevteam.core.component.towny;
 
 import buttondevteam.core.ComponentManager;
+import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.Component;
 import com.palmergames.bukkit.towny.Towny;
@@ -10,7 +11,10 @@ import com.palmergames.bukkit.towny.object.Resident;
 import com.palmergames.bukkit.towny.object.TownyUniverse;
 import org.bukkit.Bukkit;
 
-public class TownyComponent extends Component {
+/**
+ * Automatically renames Towny players if they changed their Minecraft name
+ */
+public class TownyComponent extends Component<MainPlugin> {
 	@Override
 	protected void enable() {
 	}

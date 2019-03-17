@@ -9,17 +9,20 @@ import buttondevteam.core.component.restart.RestartComponent;
 import buttondevteam.core.component.towny.TownyComponent;
 import buttondevteam.core.component.updater.PluginUpdater;
 import buttondevteam.core.component.updater.PluginUpdaterComponent;
+import buttondevteam.core.component.votifier.VotifierComponent;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.architecture.ConfigData;
 import buttondevteam.lib.chat.Color;
-import buttondevteam.lib.chat.Command2MC;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.player.TBMCPlayer;
 import buttondevteam.lib.player.TBMCPlayerBase;
 import com.earth2me.essentials.Essentials;
+import lombok.Getter;
+import lombok.Setter;
+import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.command.BlockCommandSender;
@@ -42,15 +45,28 @@ import java.util.logging.Logger;
 
 public class MainPlugin extends ButtonPlugin {
 	public static MainPlugin Instance;
-    @Nullable
     public static Permission permission;
 	public static boolean Test;
     public static Essentials ess;
 
 	private Logger logger;
+	@Nullable
+	private Economy economy;
+	/**
+	 * Whether the Core's chat handler should be enabled.
+	 * Other chat plugins handling messages from other platforms should set this to false.
+	 */
+	@Getter
+	@Setter
+	private boolean chatHandlerEnabled = true;
 
 	private ConfigData<Boolean> writePluginList() {
 		return getIConfig().getData("writePluginList", false);
+	}
+
+	ConfigData<String> chatFormat() {
+		return getIConfig().getData("chatFormat", "[{origin}|" +
+			"{channel}] <{name}> {message}");
 	}
 
 	@Override
@@ -59,24 +75,32 @@ public class MainPlugin extends ButtonPlugin {
 		Instance = this;
         PluginDescriptionFile pdf = getDescription();
 		logger = getLogger();
-		setupPermissions();
+		if (!setupPermissions())
+			throw new NullPointerException("No permission plugin found!");
+		if (!setupEconomy()) //Though Essentials always provides economy so this shouldn't happen
+			getLogger().warning("No economy plugin found! Components using economy will not be registered.");
 		Test = getConfig().getBoolean("test", true);
 		saveConfig();
 		Component.registerComponent(this, new PluginUpdaterComponent());
 		Component.registerComponent(this, new RestartComponent());
+		//noinspection unchecked - needed for testing
 		Component.registerComponent(this, new ChannelComponent());
 		Component.registerComponent(this, new RandomTPComponent());
 		Component.registerComponent(this, new MemberComponent());
-		Component.registerComponent(this, new TownyComponent());
+		if (Bukkit.getPluginManager().isPluginEnabled("Towny")) //It fails to load the component class otherwise
+			Component.registerComponent(this, new TownyComponent());
+		if (Bukkit.getPluginManager().isPluginEnabled("Votifier") && economy != null)
+			Component.registerComponent(this, new VotifierComponent(economy));
 		ComponentManager.enableComponents();
-		Command2MC.registerCommand(new ComponentCommand());
+		getCommand2MC().registerCommand(new ComponentCommand());
+		getCommand2MC().registerCommand(new ThorpeCommand());
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		ChromaGamerBase.addConverter(commandSender -> Optional.ofNullable(commandSender instanceof ConsoleCommandSender || commandSender instanceof BlockCommandSender
 				? TBMCPlayer.getPlayer(new UUID(0, 0), TBMCPlayer.class) : null)); //Console & cmdblocks
 		ChromaGamerBase.addConverter(sender -> Optional.ofNullable(sender instanceof Player
 				? TBMCPlayer.getPlayer(((Player) sender).getUniqueId(), TBMCPlayer.class) : null)); //Players, has higher priority
 		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
-		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fOOC§f", Color.White, "g", null)); //The /ooc ID has moved to the config
+		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fg§f", Color.White, "g", null)); //The /ooc ID has moved to the config
 		TBMCChatAPI.RegisterChatChannel(
 				Channel.AdminChat = new Channel("§cADMIN§f", Color.Red, "a", Channel.inGroupFilter(null)));
 		TBMCChatAPI.RegisterChatChannel(
@@ -122,12 +146,21 @@ public class MainPlugin extends ButtonPlugin {
 	}
 
 	private boolean setupPermissions() {
-		RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager()
-				.getRegistration(Permission.class);
-		if (permissionProvider != null) {
-			permission = permissionProvider.getProvider();
-		}
+		permission = setupProvider(Permission.class);
 		return (permission != null);
+	}
+
+	private boolean setupEconomy() {
+		economy = setupProvider(Economy.class);
+		return (economy != null);
+	}
+
+	private <T> T setupProvider(Class<T> cl) {
+		RegisteredServiceProvider<T> provider = getServer().getServicesManager()
+			.getRegistration(cl);
+		if (provider != null)
+			return provider.getProvider();
+		return null;
 	}
 
 	@Override

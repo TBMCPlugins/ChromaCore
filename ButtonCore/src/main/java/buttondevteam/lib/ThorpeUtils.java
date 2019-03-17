@@ -35,4 +35,20 @@ public final class ThorpeUtils {
 		 */
 		String getFancyFullName();
 	}
+
+	public static Number convertNumber(Number number, Class<? extends Number> targetcl) {
+		if (targetcl == long.class || Long.class.isAssignableFrom(targetcl))
+			return number.longValue();
+		else if (targetcl == int.class || Integer.class.isAssignableFrom(targetcl))
+			return number.intValue(); //Needed because the parser can get longs
+		else if (targetcl == short.class || Short.class.isAssignableFrom(targetcl))
+			return number.shortValue();
+		else if (targetcl == byte.class || Byte.class.isAssignableFrom(targetcl))
+			return number.byteValue();
+		else if (targetcl == float.class || Float.class.isAssignableFrom(targetcl))
+			return number.floatValue();
+		else if (targetcl == double.class || Double.class.isAssignableFrom(targetcl))
+			return number.doubleValue();
+		return number;
+	}
 }

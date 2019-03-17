@@ -16,3 +16,8 @@ commands:
   component:
     description: Enable or disable or list components
   dontrunthiscmd:
+depend:
+  - Vault
+softdepend:
+  - Towny
+  - Votifier

@@ -8,14 +8,11 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
-import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.FileObject;
-import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -25,6 +22,8 @@ import java.util.stream.Collectors;
 public class ButtonProcessor extends AbstractProcessor {
 	@Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+		if (configProcessor == null)
+			configProcessor = new ConfigProcessor(processingEnv);
         for (TypeElement te : annotations) {
             Set<? extends Element> classes = roundEnv.getElementsAnnotatedWith(te);
             for (Element targetcl : classes) {
@@ -47,6 +46,8 @@ public class ButtonProcessor extends AbstractProcessor {
 	                //System.out.println("Type: " + type);
                 }
 	            processSubcommands(targetcl, annotationMirrors);
+	            if (hasAnnotation.apply("HasConfig"))
+		            configProcessor.process(targetcl);
             }
         }
 		try {
@@ -63,6 +64,7 @@ public class ButtonProcessor extends AbstractProcessor {
 
 	private YamlConfiguration yc = new YamlConfiguration();
 	private boolean found = false;
+	private ConfigProcessor configProcessor;
 
 	private void processSubcommands(Element targetcl, List<? extends AnnotationMirror> annotationMirrors) {
 		if (!(targetcl instanceof ExecutableElement))
@@ -78,7 +80,7 @@ public class ButtonProcessor extends AbstractProcessor {
 		cs.set("params", ((ExecutableElement) targetcl).getParameters().stream().skip(1).map(p -> {
 			//String tn=p.asType().toString();
 			//return tn.substring(tn.lastIndexOf('.')+1)+" "+p.getSimpleName();
-			boolean optional = p.getAnnotationMirrors().stream().anyMatch(am -> am.getAnnotationType().toString().endsWith("Optional"));
+			boolean optional = p.getAnnotationMirrors().stream().anyMatch(am -> am.getAnnotationType().toString().endsWith("OptionalArg"));
 			if (optional)
 				return "[" + p.getSimpleName() + "]";
 			return "<" + p.getSimpleName() + ">";
@@ -91,20 +93,4 @@ public class ButtonProcessor extends AbstractProcessor {
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latestSupported();
     }
-
-	private String fetchSourcePath() {
-		try {
-			JavaFileObject generationForPath = processingEnv.getFiler().createSourceFile("PathFor" + getClass().getSimpleName());
-			Writer writer = generationForPath.openWriter();
-			String sourcePath = generationForPath.toUri().getPath();
-			writer.close();
-			generationForPath.delete();
-
-			return sourcePath;
-		} catch (IOException e) {
-			processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, "Unable to determine source file path!");
-		}
-
-		return "";
-	}
 }

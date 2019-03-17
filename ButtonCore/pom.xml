@@ -75,6 +75,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M3</version>
 				<configuration>
 					<useSystemClassLoader>false
 					</useSystemClassLoader> <!-- https://stackoverflow.com/a/53012553/2703239 -->
@@ -83,6 +84,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -103,14 +105,18 @@
 			<id>jitpack.io</id>
 			<url>https://jitpack.io/</url>
 		</repository>
-		<repository>
-			<id>vault-repo</id>
-			<url>http://nexus.hc.to/content/repositories/pub_releases</url>
-		</repository>
+        <!-- <repository>
+            <id>vault-repo</id>
+            <url>http://nexus.hc.to/content/repositories/pub_releases</url>
+        </repository> -->
 		<repository>
 			<id>ess-repo</id>
 			<url>http://repo.ess3.net/content/repositories/essrel/</url>
 		</repository>
+        <repository>
+            <id>Votifier</id>
+            <url>https://dl.bintray.com/nuvotifier/maven/</url>
+        </repository>
 	</repositories>
 	<dependencies>
 		<dependency>
@@ -175,6 +181,12 @@
 			<version>2.13.1</version>
 			<scope>provided</scope>
 		</dependency>
+        <dependency>
+            <groupId>com.vexsoftware</groupId>
+            <artifactId>nuvotifier-universal</artifactId>
+            <version>2.3.4</version>
+            <scope>provided</scope>
+        </dependency>
 	</dependencies>
 	<organization>
 		<name>TBMCPlugins</name>
