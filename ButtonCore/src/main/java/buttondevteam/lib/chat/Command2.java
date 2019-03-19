@@ -3,6 +3,8 @@ package buttondevteam.lib.chat;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.ThorpeUtils;
 import buttondevteam.lib.player.ChromaGamerBase;
+import com.google.common.base.Defaults;
+import com.google.common.primitives.Primitives;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.var;
@@ -127,7 +129,13 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 				pj = j + 1; //Start index
 				if (pj == commandline.length() + 1) { //No param given
 					if (paramArr[i1].isAnnotationPresent(OptionalArg.class)) {
-						params.add(null);
+						if (cl.isPrimitive())
+							params.add(Defaults.defaultValue(cl));
+						else if (Number.class.isAssignableFrom(cl)
+							|| Number.class.isAssignableFrom(cl))
+							params.add(Defaults.defaultValue(Primitives.unwrap(cl)));
+						else
+							params.add(null);
 						continue; //Fill the remaining params with nulls
 					} else {
 						sender.sendMessage(sd.helpText); //Required param missing

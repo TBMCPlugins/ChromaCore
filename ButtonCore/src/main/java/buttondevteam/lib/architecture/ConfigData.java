@@ -62,6 +62,14 @@ public class ConfigData<T> {
 		this.saveAction=saveAction;
 	}
 
+	@Override
+	public String toString() {
+		return "ConfigData{" +
+			"path='" + path + '\'' +
+			", value=" + value +
+			'}';
+	}
+
 	@SuppressWarnings("unchecked")
 	public T get() {
 		if (value != null) return value; //Speed things up
