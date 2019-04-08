@@ -1,10 +1,10 @@
 package buttondevteam.lib.architecture;
 
+import buttondevteam.core.MainPlugin;
+import buttondevteam.lib.TBMCCoreAPI;
 import lombok.Getter;
 import lombok.val;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashMap;
 import java.util.function.Function;
@@ -116,5 +116,31 @@ public final class IHaveConfig {
 			datamap.put(path, data = new ConfigData<>(config, path, defval, setter.apply(defval), getter, setter, saveAction));
 		}
 		return (ConfigData<T>) data;
+	}
+
+	/**
+	 * Generates the config YAML.
+	 *
+	 * @param obj    The object which has config methods
+	 * @param config The config that holds the values
+	 */
+	public static void pregenConfig(Object obj, IHaveConfig config) {
+		val ms = obj.getClass().getDeclaredMethods();
+		for (val m : ms) {
+			if (!m.getReturnType().getName().equals(ConfigData.class.getName())) continue;
+			try {
+				if (m.getParameterCount() == 0) {
+					m.setAccessible(true);
+					ConfigData<?> c = (ConfigData<?>) m.invoke(obj);
+					if (!c.getPath().equals(m.getName()))
+						MainPlugin.Instance.getLogger().warning("Config name does not match: " + c.getPath() + " instead of " + m.getName()); //TODO: Set it here
+					c.get(); //Saves the default value if needed - also checks validity
+				} else if (m.getParameterCount() == 1) {
+					//TODO: Config map
+				}
+			} catch (Exception e) {
+				TBMCCoreAPI.SendException("Failed to pregenerate " + m.getName() + " for " + obj + "!", e);
+			}
+		}
 	}
 }

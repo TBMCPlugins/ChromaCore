@@ -4,6 +4,7 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.ThorpeUtils;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.Configuration;
@@ -29,6 +30,7 @@ public class ConfigData<T> {
 	 * May be null for testing
 	 */
 	private final ConfigurationSection config;
+	@Getter
 	private final String path;
 	private final T def;
 	private final Object primitiveDef;

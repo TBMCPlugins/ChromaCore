@@ -4,7 +4,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import java.io.File;
@@ -29,11 +33,29 @@ public class ConfigProcessor {
 
 	public void process(Element targetcl) {
 		if (targetcl.getModifiers().contains(Modifier.ABSTRACT)) return;
+		final String path = "components." + targetcl.getSimpleName();
+		for (Element e : targetcl.getEnclosedElements()) {
+			/*System.out.println("Element: "+e);
+			System.out.println("Type: "+e.getClass()+" - "+e.getKind());
+			if(e instanceof ExecutableElement)
+				System.out.println("METHOD!");*/
+			if (!(e instanceof ExecutableElement)) continue;
+			TypeMirror tm = ((ExecutableElement) e).getReturnType();
+			if (tm.getKind() != TypeKind.DECLARED) continue;
+			DeclaredType dt = (DeclaredType) tm;
+			if (!dt.asElement().getSimpleName().contentEquals("ConfigData")) return;
+			System.out.println("Config: " + e.getSimpleName());
+			System.out.println("Value: " + ((ExecutableElement) e).getDefaultValue());
+			String doc = procEnv.getElementUtils().getDocComment(e);
+			if (doc == null) continue;
+			System.out.println("DOC: " + doc);
+			yaml.set(path + "." + e.getSimpleName() + "_doc", doc); //methodName_doc
+		}
 		String javadoc = procEnv.getElementUtils().getDocComment(targetcl);
 		if (javadoc == null) return;
-		System.out.println("JAVADOC"); //TODO: Config methods
+		System.out.println("JAVADOC");
 		System.out.println(javadoc);
-		yaml.set("components." + targetcl.getSimpleName() + "._doc", javadoc);
+		yaml.set(path + "._doc", javadoc);
 		try {
 			yaml.save(file);
 		} catch (IOException e) {
