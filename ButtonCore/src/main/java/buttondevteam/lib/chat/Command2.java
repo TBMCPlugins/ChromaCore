@@ -46,10 +46,17 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 	@Target(ElementType.METHOD)
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface Subcommand {
+		String MOD_GROUP = "mod";
 		/**
 		 * Help text to show players. A usage message will be also shown below it.
 		 */
 		String[] helpText() default {};
+
+		/**
+		 * The main permission which allows using this command (individual access can be still granted with "thorpe.command.X").
+		 * Used to be "tbmc.admin"
+		 */
+		String permGroup() default ""; //TODO
 	}
 
 	@Target(ElementType.PARAMETER)
