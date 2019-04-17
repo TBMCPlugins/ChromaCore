@@ -54,7 +54,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 
 		/**
 		 * The main permission which allows using this command (individual access can be still granted with "thorpe.command.X").
-		 * Used to be "tbmc.admin"
+		 * Used to be "tbmc.admin". The {@link #MOD_GROUP} is provided to use with this.
 		 */
 		String permGroup() default ""; //TODO
 	}
