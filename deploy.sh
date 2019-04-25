@@ -1,5 +1,5 @@
 #!/bin/sh
-FILENAME=$(find ButtonCore/target/ -maxdepth 1 ! -name '*original*' -name '*.jar')
+FILENAME=$(find ButtonCore/target/ -maxdepth 1 ! -name '*original*' ! -name '*sources*' -name '*.jar')
 echo Found file: $FILENAME
 
 if [ $1 = 'production' ]; then

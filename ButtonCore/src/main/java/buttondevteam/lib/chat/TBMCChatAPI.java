@@ -316,6 +316,8 @@ public class TBMCChatAPI {
 			throw new RuntimeException("Channel " + channel.DisplayName().get() + " not registered!");
 		if (!channel.Enabled().get())
 			return true; //Cancel sending
+		if (!Arrays.asList(exceptions).contains("Minecraft"))
+			Bukkit.getConsoleSender().sendMessage("[" + channel.DisplayName().get() + "] " + message);
 		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID, exceptions, target);
 		Bukkit.getPluginManager().callEvent(event);
 		return event.isCancelled();
