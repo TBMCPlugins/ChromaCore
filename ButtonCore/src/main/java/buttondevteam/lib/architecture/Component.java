@@ -85,7 +85,7 @@ public abstract class Component<TP extends JavaPlugin> {
 				}
 				component.plugin = plugin;
 				updateConfig(plugin, component);
-				IHaveConfig.pregenConfig(component, component.config);
+				IHaveConfig.pregenConfig(component, null);
 				component.register(plugin);
 				components.put(component.getClass(), component);
 				if (plugin instanceof ButtonPlugin)

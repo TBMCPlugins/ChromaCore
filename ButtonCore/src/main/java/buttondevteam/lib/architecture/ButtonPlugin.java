@@ -42,7 +42,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	@Override
 	public final void onEnable() {
 		loadConfig();
-		IHaveConfig.pregenConfig(this, iConfig);
+		IHaveConfig.pregenConfig(this, null);
 		try {
 			pluginEnable();
 		} catch (Exception e) {
