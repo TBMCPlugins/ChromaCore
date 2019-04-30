@@ -9,6 +9,11 @@ import lombok.Getter;
 import lombok.experimental.var;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.Optional;
 import java.util.Stack;
 
 @HasConfig
@@ -42,12 +47,13 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	@Override
 	public final void onEnable() {
 		loadConfig();
-		IHaveConfig.pregenConfig(this, null);
 		try {
 			pluginEnable();
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Error while enabling plugin " + getName() + "!", e);
 		}
+		if (configGenAllowed(this)) //If it's not disabled (by default it's not)
+			IHaveConfig.pregenConfig(this, null);
 	}
 
 	private void loadConfig() {
@@ -90,5 +96,16 @@ public abstract class ButtonPlugin extends JavaPlugin {
 		super.reloadConfig();
 		loaded = true; //Needed because for the first time it uses reloadConfig() to load it
 		return true;
+	}
+
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.TYPE)
+	public @interface ConfigOpts {
+		boolean disableConfigGen() default false;
+	}
+
+	public static boolean configGenAllowed(Object obj) {
+		return !Optional.ofNullable(obj.getClass().getAnnotation(ConfigOpts.class))
+			.map(ConfigOpts::disableConfigGen).orElse(false);
 	}
 }

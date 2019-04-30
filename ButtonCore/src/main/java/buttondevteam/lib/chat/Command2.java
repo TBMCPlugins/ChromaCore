@@ -105,7 +105,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 				sender.sendMessage(sd.helpText);
 				return true;
 			}
-			if (!hasPermission(sender, sd.command)) {
+			if (!hasPermission(sender, sd.command, sd.method)) {
 				sender.sendMessage("§cYou don't have permission to use this command");
 				return true;
 			}
@@ -283,7 +283,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		return ht;
 	}
 
-	public abstract boolean hasPermission(TP sender, TC command);
+	public abstract boolean hasPermission(TP sender, TC command, Method subcommand);
 
 	public String[] getCommandsText() {
 		return commandHelp.toArray(new String[0]);

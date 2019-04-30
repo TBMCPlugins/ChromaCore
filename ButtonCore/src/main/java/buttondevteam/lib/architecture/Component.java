@@ -45,7 +45,7 @@ public abstract class Component<TP extends JavaPlugin> {
 	 * Registers a component checking it's dependencies and calling {@link #register(JavaPlugin)}.<br>
 	 * Make sure to register the dependencies first.<br>
 	 * The component will be enabled automatically, regardless of when it was registered.<br>
-	 *     <b>If not using {@link ButtonPlugin}, call {@link ComponentManager#unregComponents(ButtonPlugin)} on plugin disable.</b>
+	 * <b>If not using {@link ButtonPlugin}, call {@link ComponentManager#unregComponents(ButtonPlugin)} on plugin disable.</b>
 	 *
 	 * @param component The component to register
 	 * @return Whether the component is registered successfully (it may have failed to enable)
@@ -57,7 +57,7 @@ public abstract class Component<TP extends JavaPlugin> {
 	/**
 	 * Unregisters a component by calling {@link #unregister(JavaPlugin)}.<br>
 	 * Make sure to unregister the dependencies last.<br>
-	 *     <b>Components will be unregistered in opposite order of registering by default by {@link ButtonPlugin} or {@link ComponentManager#unregComponents(ButtonPlugin)}.</b>
+	 * <b>Components will be unregistered in opposite order of registering by default by {@link ButtonPlugin} or {@link ComponentManager#unregComponents(ButtonPlugin)}.</b>
 	 *
 	 * @param component The component to unregister
 	 * @return Whether the component is unregistered successfully (it also got disabled)
@@ -85,7 +85,6 @@ public abstract class Component<TP extends JavaPlugin> {
 				}
 				component.plugin = plugin;
 				updateConfig(plugin, component);
-				IHaveConfig.pregenConfig(component, null);
 				component.register(plugin);
 				components.put(component.getClass(), component);
 				if (plugin instanceof ButtonPlugin)
@@ -134,6 +133,8 @@ public abstract class Component<TP extends JavaPlugin> {
 		if (component.enabled = enabled) {
 			updateConfig(component.getPlugin(), component);
 			component.enable();
+			if (ButtonPlugin.configGenAllowed(component))
+				IHaveConfig.pregenConfig(component, null);
 		} else {
 			component.disable();
 			component.plugin.saveConfig();
@@ -193,7 +194,7 @@ public abstract class Component<TP extends JavaPlugin> {
 	/**
 	 * Disables the module, when called by the JavaPlugin class. Do
 	 * any cleanups needed within this method.
-	 *     To access the plugin, use {@link #getPlugin()}.
+	 * To access the plugin, use {@link #getPlugin()}.
 	 */
 	protected abstract void disable();
 
@@ -229,14 +230,15 @@ public abstract class Component<TP extends JavaPlugin> {
 
 	/**
 	 * Returns a map of configs that are under the given key.
-	 * @param key The key to use
+	 *
+	 * @param key             The key to use
 	 * @param defaultProvider A mapping between config paths and config generators
 	 * @return A map containing configs
 	 */
 	protected Map<String, IHaveConfig> getConfigMap(String key, Map<String, Consumer<IHaveConfig>> defaultProvider) {
-		val c=getConfig().getConfig();
-		var cs=c.getConfigurationSection(key);
-		if(cs==null) cs=c.createSection(key);
+		val c = getConfig().getConfig();
+		var cs = c.getConfigurationSection(key);
+		if (cs == null) cs = c.createSection(key);
 		val res = cs.getValues(false).entrySet().stream().filter(e -> e.getValue() instanceof ConfigurationSection)
 			.collect(Collectors.toMap(Map.Entry::getKey, kv -> new IHaveConfig((ConfigurationSection) kv.getValue(), getPlugin()::saveConfig)));
 		if (res.size() == 0) {
