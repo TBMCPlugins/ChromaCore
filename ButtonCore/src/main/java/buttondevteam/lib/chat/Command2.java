@@ -48,6 +48,9 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 	@Target(ElementType.METHOD)
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface Subcommand {
+		/**
+		 * Allowed for OPs only by default
+		 */
 		String MOD_GROUP = "mod";
 		/**
 		 * Help text to show players. A usage message will be also shown below it.

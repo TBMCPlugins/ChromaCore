@@ -109,6 +109,8 @@ public class ConfigData<T> {
 	}
 
 	public void set(T value) {
+		if (this instanceof ReadOnlyConfigData)
+			return; //Safety for Discord channel/role data
 		Object val;
 		if (setter != null && value != null)
 			val = setter.apply(value);

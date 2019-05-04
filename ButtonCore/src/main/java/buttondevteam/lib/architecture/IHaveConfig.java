@@ -84,6 +84,24 @@ public final class IHaveConfig {
 	}
 
 	/**
+	 * This method overload may be used with any class. The given default value will be run through the getter.
+	 *
+	 * @param path         The path in config to use
+	 * @param primitiveDef The <b>primitive</b> value to use by default
+	 * @param getter       A function that converts a primitive representation to the correct value
+	 * @param setter       A function that converts a value to a primitive representation
+	 * @param <T>          The type of this variable (can be any class)
+	 * @return The data object that can be used to get or set the value
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> ReadOnlyConfigData<T> getReadOnlyDataPrimDef(String path, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter) {
+		ConfigData<?> data = datamap.get(path);
+		if (data == null)
+			datamap.put(path, data = new ReadOnlyConfigData<>(config, path, getter.apply(primitiveDef), primitiveDef, getter, setter, saveAction));
+		return (ReadOnlyConfigData<T>) data;
+	}
+
+	/**
 	 * This method overload should only be used with primitves or String.
 	 *
 	 * @param path The path in config to use

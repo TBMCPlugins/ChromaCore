@@ -1,6 +1,7 @@
 package buttondevteam.lib.chat;
 
 import buttondevteam.core.MainPlugin;
+import lombok.experimental.var;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.permissions.Permission;
@@ -14,20 +15,39 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
 	@Override
 	public void registerCommand(ICommand2MC command) {
 		super.registerCommand(command, '/');
-		val perm = "thorpe.command." + command.getCommandPath().replace(' ', '.');
+		var perm = "thorpe.command." + command.getCommandPath().replace(' ', '.');
+		if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
+			System.out.println("Adding perm " + perm + " with default: "
+				+ (modOnly(command) ? PermissionDefault.OP : PermissionDefault.TRUE)); //Allow commands by default, unless it's mod only - TODO: Test
 		if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
 			Bukkit.getPluginManager().addPermission(new Permission(perm,
 				modOnly(command) ? PermissionDefault.OP : PermissionDefault.TRUE)); //Allow commands by default, unless it's mod only - TODO: Test
+		for (val method : command.getClass().getMethods()) {
+			if (!method.isAnnotationPresent(Subcommand.class)) continue;
+			String pg = permGroup(command, method);
+			if (pg == null) continue;
+			perm = "thorpe." + pg;
+			if (Bukkit.getPluginManager().getPermission(perm) == null) //It may occur multiple times
+				System.out.println("Adding perm " + perm + " with default: "
+					+ PermissionDefault.OP); //Do not allow any commands that belong to a group
+			if (Bukkit.getPluginManager().getPermission(perm) == null) //It may occur multiple times
+				Bukkit.getPluginManager().addPermission(new Permission(perm,
+					//pg.equals(Subcommand.MOD_GROUP) ? PermissionDefault.OP : PermissionDefault.TRUE)); //Allow commands by default, unless it's mod only
+					PermissionDefault.OP)); //Do not allow any commands that belong to a group
+		}
 	}
 
 	@Override
 	public boolean hasPermission(Command2MCSender sender, ICommand2MC command, Method method) {
 		String pg;
-		return modOnly(command)
-			? MainPlugin.permission.has(sender.getSender(), "tbmc.admin")
-			: (pg = permGroup(command, method)) != null
-			? MainPlugin.permission.has(sender.getSender(), pg)
-			: MainPlugin.permission.has(sender.getSender(), "thorpe.command." + command.getCommandPath().replace(' ', '.'));
+		String perm = modOnly(command)
+			? "tbmc.admin"
+			: (pg = permGroup(command, method)) != null //TODO: This way we can't grant specific perms if it has a perm group
+			? "thorpe." + pg
+			: "thorpe.command." + command.getCommandPath().replace(' ', '.');
+		//noinspection deprecation
+		System.out.println("Has permission " + perm + ": " + MainPlugin.permission.playerHas((String) null, sender.getSender().getName(), perm));
+		return MainPlugin.permission.playerHas((String) null, sender.getSender().getName(), perm);
 	}
 
 	/**
@@ -47,8 +67,13 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
 	 * @return The permission group for the subcommand or null
 	 */
 	private String permGroup(ICommand2MC command, Method method) {
+		//System.out.println("Perm group for command " + command.getClass().getSimpleName() + " and method " + method.getName());
 		val sc = method.getAnnotation(Subcommand.class);
-		if (sc != null && sc.permGroup().length() > 0) return sc.permGroup();
+		if (sc != null && sc.permGroup().length() > 0) {
+			//System.out.println("Returning sc.permGroup(): " + sc.permGroup());
+			return sc.permGroup();
+		}
+		//System.out.println("Returning getAnnForValue(" + command.getClass().getSimpleName() + ", ...): " + getAnnForValue(command.getClass(), CommandClass.class, CommandClass::permGroup, null));
 		return getAnnForValue(command.getClass(), CommandClass.class, CommandClass::permGroup, null);
 	}
 
