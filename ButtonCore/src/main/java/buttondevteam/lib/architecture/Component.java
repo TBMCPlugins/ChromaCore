@@ -132,10 +132,12 @@ public abstract class Component<TP extends JavaPlugin> {
 		if (component.enabled == enabled) return; //Don't do anything
 		if (component.enabled = enabled) {
 			updateConfig(component.getPlugin(), component);
+			System.out.println("Enabling component " + component.getClassName());
 			component.enable();
 			if (ButtonPlugin.configGenAllowed(component))
 				IHaveConfig.pregenConfig(component, null);
 		} else {
+			System.out.println("Disabling component " + component.getClassName());
 			component.disable();
 			component.plugin.saveConfig();
 			TBMCChatAPI.RemoveCommands(component);

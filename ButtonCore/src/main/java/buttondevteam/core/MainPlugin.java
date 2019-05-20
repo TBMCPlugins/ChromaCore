@@ -69,6 +69,13 @@ public class MainPlugin extends ButtonPlugin {
 			"{channel}] <{name}> {message}");
 	}
 
+	/**
+	 * The permission group for users that aren't online on the server. Currently this can happen for people using commands from Discord.
+	 */
+	public ConfigData<String> unconnPermGroup() {
+		return getIConfig().getData("unconnPermGroup", "unconnected");
+	}
+
 	@Override
 	public void pluginEnable() {
 		// Logs "Plugin Enabled", registers commands

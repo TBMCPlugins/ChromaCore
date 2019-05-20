@@ -4,6 +4,9 @@ import buttondevteam.core.MainPlugin;
 import lombok.experimental.var;
 import lombok.val;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 
@@ -25,7 +28,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
 		for (val method : command.getClass().getMethods()) {
 			if (!method.isAnnotationPresent(Subcommand.class)) continue;
 			String pg = permGroup(command, method);
-			if (pg == null) continue;
+			if (pg.length() == 0) continue;
 			perm = "thorpe." + pg;
 			if (Bukkit.getPluginManager().getPermission(perm) == null) //It may occur multiple times
 				System.out.println("Adding perm " + perm + " with default: "
@@ -39,15 +42,26 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
 
 	@Override
 	public boolean hasPermission(Command2MCSender sender, ICommand2MC command, Method method) {
+		if (sender.getSender() instanceof ConsoleCommandSender) return true; //Always allow the console
 		String pg;
-		String perm = modOnly(command)
-			? "tbmc.admin"
-			: (pg = permGroup(command, method)) != null //TODO: This way we can't grant specific perms if it has a perm group
-			? "thorpe." + pg
-			: "thorpe.command." + command.getCommandPath().replace(' ', '.');
-		//noinspection deprecation
-		System.out.println("Has permission " + perm + ": " + MainPlugin.permission.playerHas((String) null, sender.getSender().getName(), perm));
-		return MainPlugin.permission.playerHas((String) null, sender.getSender().getName(), perm);
+		boolean p = true;
+		String[] perms = {
+			"thorpe.command." + command.getCommandPath().replace(' ', '.'),
+			(pg = permGroup(command, method)).length() > 0 ? "thorpe." + pg : null,
+			modOnly(command) ? "tbmc.admin" : null
+		};
+		for (String perm : perms) {
+			if (perm != null) {
+				if (p) { //Use OfflinePlayer to avoid fetching player data
+					if (sender.getSender() instanceof Player)
+						p = MainPlugin.permission.playerHas(null, (OfflinePlayer) sender.getSender(), perm);
+					else
+						p = MainPlugin.permission.groupHas((String) null, MainPlugin.Instance.unconnPermGroup().get(), perm);
+					System.out.println("Has permission " + perm + ": " + p);
+				} else break; //If any of the permissions aren't granted then don't allow
+			}
+		}
+		return p;
 	}
 
 	/**
@@ -64,7 +78,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
 	 * Returns true if this class or <u>any</u> of the superclasses are mod only.
 	 *
 	 * @param method The subcommand to check
-	 * @return The permission group for the subcommand or null
+	 * @return The permission group for the subcommand or empty string
 	 */
 	private String permGroup(ICommand2MC command, Method method) {
 		//System.out.println("Perm group for command " + command.getClass().getSimpleName() + " and method " + method.getName());
@@ -74,7 +88,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
 			return sc.permGroup();
 		}
 		//System.out.println("Returning getAnnForValue(" + command.getClass().getSimpleName() + ", ...): " + getAnnForValue(command.getClass(), CommandClass.class, CommandClass::permGroup, null));
-		return getAnnForValue(command.getClass(), CommandClass.class, CommandClass::permGroup, null);
+		return getAnnForValue(command.getClass(), CommandClass.class, CommandClass::permGroup, "");
 	}
 
 	/**
