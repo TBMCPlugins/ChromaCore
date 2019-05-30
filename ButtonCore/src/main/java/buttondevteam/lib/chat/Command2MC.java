@@ -12,6 +12,7 @@ import org.bukkit.permissions.PermissionDefault;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.UUID;
 import java.util.function.Function;
 
 public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
@@ -56,8 +57,8 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
 					if (sender.getSender() instanceof Player)
 						p = MainPlugin.permission.playerHas(null, (OfflinePlayer) sender.getSender(), perm);
 					else
-						p = MainPlugin.permission.groupHas((String) null, MainPlugin.Instance.unconnPermGroup().get(), perm);
-					System.out.println("Has permission " + perm + ": " + p);
+						//p = MainPlugin.permission.groupHas((String) null, MainPlugin.Instance.unconnPermGroup().get(), perm);
+						p = MainPlugin.permission.playerHas(null, Bukkit.getOfflinePlayer(new UUID(0, 0)), perm);
 				} else break; //If any of the permissions aren't granted then don't allow
 			}
 		}
