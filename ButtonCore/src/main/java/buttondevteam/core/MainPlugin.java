@@ -45,9 +45,8 @@ import java.util.logging.Logger;
 
 public class MainPlugin extends ButtonPlugin {
 	public static MainPlugin Instance;
-    public static Permission permission;
-	public static boolean Test;
-    public static Essentials ess;
+	public static Permission permission;
+	public static Essentials ess;
 
 	private Logger logger;
 	@Nullable
@@ -69,17 +68,20 @@ public class MainPlugin extends ButtonPlugin {
 			"{channel}] <{name}> {message}");
 	}
 
+	public ConfigData<Boolean> test() {
+		return getIConfig().getData("test", true);
+	}
+
 	@Override
 	public void pluginEnable() {
 		// Logs "Plugin Enabled", registers commands
 		Instance = this;
-        PluginDescriptionFile pdf = getDescription();
+		PluginDescriptionFile pdf = getDescription();
 		logger = getLogger();
 		if (!setupPermissions())
 			throw new NullPointerException("No permission plugin found!");
 		if (!setupEconomy()) //Though Essentials always provides economy so this shouldn't happen
 			getLogger().warning("No economy plugin found! Components using economy will not be registered.");
-		Test = getConfig().getBoolean("test", true);
 		saveConfig();
 		Component.registerComponent(this, new PluginUpdaterComponent());
 		Component.registerComponent(this, new RestartComponent());
@@ -96,31 +98,31 @@ public class MainPlugin extends ButtonPlugin {
 		getCommand2MC().registerCommand(new ThorpeCommand());
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		ChromaGamerBase.addConverter(commandSender -> Optional.ofNullable(commandSender instanceof ConsoleCommandSender || commandSender instanceof BlockCommandSender
-				? TBMCPlayer.getPlayer(new UUID(0, 0), TBMCPlayer.class) : null)); //Console & cmdblocks
+			? TBMCPlayer.getPlayer(new UUID(0, 0), TBMCPlayer.class) : null)); //Console & cmdblocks
 		ChromaGamerBase.addConverter(sender -> Optional.ofNullable(sender instanceof Player
-				? TBMCPlayer.getPlayer(((Player) sender).getUniqueId(), TBMCPlayer.class) : null)); //Players, has higher priority
+			? TBMCPlayer.getPlayer(((Player) sender).getUniqueId(), TBMCPlayer.class) : null)); //Players, has higher priority
 		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
 		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fg§f", Color.White, "g", null)); //The /ooc ID has moved to the config
 		TBMCChatAPI.RegisterChatChannel(
-				Channel.AdminChat = new Channel("§cADMIN§f", Color.Red, "a", Channel.inGroupFilter(null)));
+			Channel.AdminChat = new Channel("§cADMIN§f", Color.Red, "a", Channel.inGroupFilter(null)));
 		TBMCChatAPI.RegisterChatChannel(
-				Channel.ModChat = new Channel("§9MOD§f", Color.Blue, "mod", Channel.inGroupFilter("mod")));
-        TBMCChatAPI.RegisterChatChannel(new Channel("§6DEV§f", Color.Gold, "dev", Channel.inGroupFilter("developer")));
-        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§cRED§f", Color.DarkRed, "red"));
-        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§6ORANGE§f", Color.Gold, "orange"));
-        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§eYELLOW§f", Color.Yellow, "yellow"));
-        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§aGREEN§f", Color.Green, "green"));
-        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§bBLUE§f", Color.Blue, "blue"));
-        TBMCChatAPI.RegisterChatChannel(new ChatRoom("§5PURPLE§f", Color.DarkPurple, "purple"));
+			Channel.ModChat = new Channel("§9MOD§f", Color.Blue, "mod", Channel.inGroupFilter("mod")));
+		TBMCChatAPI.RegisterChatChannel(new Channel("§6DEV§f", Color.Gold, "dev", Channel.inGroupFilter("developer")));
+		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§cRED§f", Color.DarkRed, "red"));
+		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§6ORANGE§f", Color.Gold, "orange"));
+		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§eYELLOW§f", Color.Yellow, "yellow"));
+		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§aGREEN§f", Color.Green, "green"));
+		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§bBLUE§f", Color.Blue, "blue"));
+		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§5PURPLE§f", Color.DarkPurple, "purple"));
 		if (writePluginList().get()) {
 			try {
 				Files.write(new File("plugins", "plugins.txt").toPath(), Arrays.stream(Bukkit.getPluginManager().getPlugins()).map(p -> (CharSequence) p.getDataFolder().getName())::iterator);
 			} catch (IOException e) {
 				TBMCCoreAPI.SendException("Failed to write plugin list!", e);
 			}
-        }
-        ess = Essentials.getPlugin(Essentials.class);
-        logger.info(pdf.getName() + " has been Enabled (V." + pdf.getVersion() + ") Test: " + Test + ".");
+		}
+		ess = Essentials.getPlugin(Essentials.class);
+		logger.info(pdf.getName() + " has been Enabled (V." + pdf.getVersion() + ") Test: " + test().get() + ".");
 	}
 
 	@Override
@@ -128,21 +130,21 @@ public class MainPlugin extends ButtonPlugin {
 		logger.info("Saving player data...");
 		TBMCPlayerBase.savePlayers();
 		logger.info("Player data saved.");
-        new Thread(() -> {
-            File[] files = PluginUpdater.updatedir.listFiles();
-            if (files == null)
-                return;
-	        logger.info("Updating " + files.length + " plugins...");
-            for (File file : files) {
-                try {
-                    Files.move(file.toPath(), new File("plugins", file.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
-	                logger.info("Updated " + file.getName());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-	        logger.info("Update complete!");
-        }).start();
+		new Thread(() -> {
+			File[] files = PluginUpdater.updatedir.listFiles();
+			if (files == null)
+				return;
+			logger.info("Updating " + files.length + " plugins...");
+			for (File file : files) {
+				try {
+					Files.move(file.toPath(), new File("plugins", file.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+					logger.info("Updated " + file.getName());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			logger.info("Update complete!");
+		}).start();
 	}
 
 	private boolean setupPermissions() {

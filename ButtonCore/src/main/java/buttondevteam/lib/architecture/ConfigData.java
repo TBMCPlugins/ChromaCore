@@ -4,7 +4,8 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.ThorpeUtils;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
@@ -19,9 +20,8 @@ import java.util.function.Function;
 
 /**
  * Use the getter/setter constructor if {@link T} isn't a primitive type or String.<br>
- *     Use {@link Component#getConfig()} or {@link ButtonPlugin#getIConfig()} then {@link IHaveConfig#getData(String, Object)} to get an instance.
+ * Use {@link Component#getConfig()} or {@link ButtonPlugin#getIConfig()} then {@link IHaveConfig#getData(String, Object)} to get an instance.
  */
-@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 //@AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class ConfigData<T> {
 	private static final HashMap<Configuration, SaveTask> saveTasks = new HashMap<>();
@@ -29,7 +29,9 @@ public class ConfigData<T> {
 	 * May be null for testing
 	 */
 	private final ConfigurationSection config;
-	private final String path;
+	@Getter
+	@Setter(AccessLevel.PACKAGE)
+	private String path;
 	private final T def;
 	private final Object primitiveDef;
 	private final Runnable saveAction;
@@ -52,14 +54,23 @@ public class ConfigData<T> {
 	private boolean saved = false;
 
 	//This constructor is needed because it sets the getter and setter
-	public ConfigData(ConfigurationSection config, String path, T def, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter, Runnable saveAction) {
+	ConfigData(ConfigurationSection config, String path, T def, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter, Runnable saveAction) {
 		this.config = config;
 		this.path = path;
 		this.def = def;
 		this.primitiveDef = primitiveDef;
 		this.getter = getter;
 		this.setter = setter;
-		this.saveAction=saveAction;
+		this.saveAction = saveAction;
+	}
+
+	@java.beans.ConstructorProperties({"config", "path", "def", "primitiveDef", "saveAction"})
+	ConfigData(ConfigurationSection config, String path, T def, Object primitiveDef, Runnable saveAction) {
+		this.config = config;
+		this.path = path;
+		this.def = def;
+		this.primitiveDef = primitiveDef;
+		this.saveAction = saveAction;
 	}
 
 	@Override
@@ -98,13 +109,15 @@ public class ConfigData<T> {
 	}
 
 	public void set(T value) {
+		if (this instanceof ReadOnlyConfigData)
+			return; //Safety for Discord channel/role data
 		Object val;
 		if (setter != null && value != null)
 			val = setter.apply(value);
 		else val = value;
 		if (config != null) {
 			config.set(path, val);
-			if(!saveTasks.containsKey(config.getRoot())) {
+			if (!saveTasks.containsKey(config.getRoot())) {
 				synchronized (saveTasks) {
 					saveTasks.put(config.getRoot(), new SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, () -> {
 						synchronized (saveTasks) {

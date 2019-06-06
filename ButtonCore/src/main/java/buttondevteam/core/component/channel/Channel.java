@@ -53,7 +53,7 @@ public class Channel {
 	 */
 	public final ConfigData<String> DisplayName() {
 		throwGame();
-		return component.getConfig().getData(ID + ".displayName", defDisplayName);
+		return component.getConfig().getData(ID + ".displayName", defDisplayName); //TODO: Use config map
 	}
 
 	public final ConfigData<Color> Color() {

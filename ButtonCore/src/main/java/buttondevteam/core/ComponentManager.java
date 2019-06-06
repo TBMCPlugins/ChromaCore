@@ -38,7 +38,7 @@ public final class ComponentManager {
 	public static <T extends ButtonPlugin> void unregComponents(T plugin) {
 		while (!plugin.getComponentStack().empty()) //Unregister in reverse order
 			Component.unregisterComponent(plugin, (Component<T>) plugin.getComponentStack().pop()); //Components are pushed on register
-		componentsEnabled = false;
+		//componentsEnabled = false; - continue enabling new components after a plugin gets disabled
 	}
 
 	/**
