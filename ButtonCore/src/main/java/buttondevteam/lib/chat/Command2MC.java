@@ -6,7 +6,6 @@ import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 
@@ -21,9 +20,6 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
 		super.registerCommand(command, '/');
 		var perm = "thorpe.command." + command.getCommandPath().replace(' ', '.');
 		if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
-			System.out.println("Adding perm " + perm + " with default: "
-				+ (modOnly(command) ? PermissionDefault.OP : PermissionDefault.TRUE)); //Allow commands by default, unless it's mod only - TODO: Test
-		if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
 			Bukkit.getPluginManager().addPermission(new Permission(perm,
 				modOnly(command) ? PermissionDefault.OP : PermissionDefault.TRUE)); //Allow commands by default, unless it's mod only - TODO: Test
 		for (val method : command.getClass().getMethods()) {
@@ -31,9 +27,6 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
 			String pg = permGroup(command, method);
 			if (pg.length() == 0) continue;
 			perm = "thorpe." + pg;
-			if (Bukkit.getPluginManager().getPermission(perm) == null) //It may occur multiple times
-				System.out.println("Adding perm " + perm + " with default: "
-					+ PermissionDefault.OP); //Do not allow any commands that belong to a group
 			if (Bukkit.getPluginManager().getPermission(perm) == null) //It may occur multiple times
 				Bukkit.getPluginManager().addPermission(new Permission(perm,
 					//pg.equals(Subcommand.MOD_GROUP) ? PermissionDefault.OP : PermissionDefault.TRUE)); //Allow commands by default, unless it's mod only
@@ -54,10 +47,9 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
 		for (String perm : perms) {
 			if (perm != null) {
 				if (p) { //Use OfflinePlayer to avoid fetching player data
-					if (sender.getSender() instanceof Player)
+					if (sender.getSender() instanceof OfflinePlayer)
 						p = MainPlugin.permission.playerHas(null, (OfflinePlayer) sender.getSender(), perm);
 					else
-						//p = MainPlugin.permission.groupHas((String) null, MainPlugin.Instance.unconnPermGroup().get(), perm);
 						p = MainPlugin.permission.playerHas(null, Bukkit.getOfflinePlayer(new UUID(0, 0)), perm);
 				} else break; //If any of the permissions aren't granted then don't allow
 			}
@@ -82,13 +74,10 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> {
 	 * @return The permission group for the subcommand or empty string
 	 */
 	private String permGroup(ICommand2MC command, Method method) {
-		//System.out.println("Perm group for command " + command.getClass().getSimpleName() + " and method " + method.getName());
 		val sc = method.getAnnotation(Subcommand.class);
 		if (sc != null && sc.permGroup().length() > 0) {
-			//System.out.println("Returning sc.permGroup(): " + sc.permGroup());
 			return sc.permGroup();
 		}
-		//System.out.println("Returning getAnnForValue(" + command.getClass().getSimpleName() + ", ...): " + getAnnForValue(command.getClass(), CommandClass.class, CommandClass::permGroup, null));
 		return getAnnForValue(command.getClass(), CommandClass.class, CommandClass::permGroup, "");
 	}
 

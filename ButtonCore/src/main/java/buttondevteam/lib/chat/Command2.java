@@ -1,5 +1,6 @@
 package buttondevteam.lib.chat;
 
+import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.ThorpeUtils;
 import buttondevteam.lib.player.ChromaGamerBase;
@@ -9,7 +10,9 @@ import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.var;
 import lombok.val;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.InputStreamReader;
 import java.lang.annotation.ElementType;
@@ -20,9 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -52,6 +53,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		 * Allowed for OPs only by default
 		 */
 		String MOD_GROUP = "mod";
+
 		/**
 		 * Help text to show players. A usage message will be also shown below it.
 		 */
@@ -74,6 +76,31 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		public final Method method;
 		public final T command;
 		public String[] helpText;
+	}
+
+	protected static class SubcommandHelpData<T extends ICommand2> extends SubcommandData<T> {
+		private final TreeSet<String> ht = new TreeSet<>();
+		private BukkitTask task;
+
+		public SubcommandHelpData(Method method, T command, String[] helpText) {
+			super(method, command, helpText);
+		}
+
+		public void addSubcommand(String command) {
+			ht.add(command);
+			if (task == null)
+				task = Bukkit.getScheduler().runTask(MainPlugin.Instance, () -> {
+					helpText = new String[ht.size() + 1]; //This will only run after the server is started  List<E> list = new ArrayList<E>(size());
+					helpText[0] = "§6---- Subcommands ----"; //TODO: There may be more to the help text
+					int i = 1;
+					for (Iterator<String> iterator = ht.iterator();
+					     iterator.hasNext() && i < helpText.length; i++) {
+						String e = iterator.next();
+						helpText[i] = e;
+					}
+					task = null; //Run again, if needed
+				});
+		}
 	}
 
 	@RequiredArgsConstructor
@@ -165,10 +192,8 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 					continue;
 				} else if (Number.class.isAssignableFrom(cl) || cl.isPrimitive()) {
 					try {
-						//System.out.println("Converting "+param+" param to "+cl.getSimpleName());
 						//noinspection unchecked
 						Number n = ThorpeUtils.convertNumber(NumberFormat.getInstance().parse(param), (Class<? extends Number>) cl);
-						//System.out.println(n.getClass().getSimpleName()+" with value "+n);
 						params.add(n);
 					} catch (ParseException e) {
 						sender.sendMessage("§c'" + param + "' is not a number.");
@@ -186,7 +211,6 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 				}
 				params.add(cparam);
 			}
-			//System.out.println("Our params: "+params);
 			try {
 				val ret = sd.method.invoke(sd.command, params.toArray()); //I FORGOT TO TURN IT INTO AN ARRAY (for a long time)
 				if (ret instanceof Boolean) {
