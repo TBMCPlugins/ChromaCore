@@ -3,7 +3,6 @@ package buttondevteam.lib;
 import buttondevteam.core.component.channel.Channel;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Cancellable;
@@ -12,7 +11,6 @@ import org.bukkit.event.Event;
 import javax.annotation.Nullable;
 
 @Getter
-@RequiredArgsConstructor
 public abstract class TBMCChatEventBase extends Event implements Cancellable {
 	private final Channel channel;
 	private @NonNull String message;
@@ -25,6 +23,15 @@ public abstract class TBMCChatEventBase extends Event implements Cancellable {
      * The sender's group ID.
      */
     private final String groupID;
+
+	@java.beans.ConstructorProperties({"channel", "message", "score", "groupID"})
+	public TBMCChatEventBase(Channel channel, String message, int score, String groupID) {
+		super(true);
+		this.channel = channel;
+		this.message = message;
+		this.score = score;
+		this.groupID = groupID;
+	}
 
 	/**
 	 * Note: Errors are sent to the sender automatically

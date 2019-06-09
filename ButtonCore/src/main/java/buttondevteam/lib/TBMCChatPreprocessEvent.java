@@ -27,6 +27,7 @@ public class TBMCChatPreprocessEvent extends Event implements Cancellable {
     private boolean cancelled;
 
 	public TBMCChatPreprocessEvent(CommandSender sender, Channel channel, String message) {
+		super(true);
 		this.sender = sender;
 		this.channel = channel;
 		this.message = message; // TODO: Message object with data?

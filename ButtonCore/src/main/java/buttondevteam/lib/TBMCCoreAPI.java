@@ -82,36 +82,41 @@ public class TBMCCoreAPI {
 	}
 
 	public static void SendException(String sourcemsg, Throwable e, boolean debugPotato) {
-		SendUnsentExceptions();
-		TBMCExceptionEvent event = new TBMCExceptionEvent(sourcemsg, e);
-		Bukkit.getPluginManager().callEvent(event);
-		synchronized (exceptionsToSend) {
-			if (!event.isHandled())
-				exceptionsToSend.put(sourcemsg, e);
-		}
-		Bukkit.getLogger().warning(sourcemsg);
-		e.printStackTrace();
-		if (debugPotato) {
-			List<Player> devsOnline = new ArrayList<>();
-			for (Player player : Bukkit.getOnlinePlayers()) {
-				if (coders.contains(player.getName())) {
-					devsOnline.add(player);
+		try {
+			SendUnsentExceptions();
+			TBMCExceptionEvent event = new TBMCExceptionEvent(sourcemsg, e);
+			Bukkit.getPluginManager().callEvent(event);
+			synchronized (exceptionsToSend) {
+				if (!event.isHandled())
+					exceptionsToSend.put(sourcemsg, e);
+			}
+			Bukkit.getLogger().warning(sourcemsg);
+			e.printStackTrace();
+			if (debugPotato) {
+				List<Player> devsOnline = new ArrayList<>();
+				for (Player player : Bukkit.getOnlinePlayers()) {
+					if (coders.contains(player.getName())) {
+						devsOnline.add(player);
+					}
+				}
+				if (!devsOnline.isEmpty()) {
+					DebugPotato potato = new DebugPotato()
+						.setMessage(new String[]{ //
+							"§b§o" + e.getClass().getSimpleName(), //
+							"§c§o" + sourcemsg, //
+							"§a§oFind a dev to fix this issue"})
+						.setType(e instanceof IOException ? "Throwable Potato"
+							: e instanceof ClassCastException ? "Squished Potato"
+							: e instanceof NullPointerException ? "Plain Potato"
+							: e instanceof StackOverflowError ? "Chips" : "Error Potato");
+					for (Player dev : devsOnline) {
+						potato.Send(dev);
+					}
 				}
 			}
-			if (!devsOnline.isEmpty()) {
-				DebugPotato potato = new DebugPotato()
-					.setMessage(new String[]{ //
-						"§b§o" + e.getClass().getSimpleName(), //
-						"§c§o" + sourcemsg, //
-						"§a§oFind a dev to fix this issue"})
-					.setType(e instanceof IOException ? "Throwable Potato"
-						: e instanceof ClassCastException ? "Squished Potato"
-						: e instanceof NullPointerException ? "Plain Potato"
-						: e instanceof StackOverflowError ? "Chips" : "Error Potato");
-				for (Player dev : devsOnline) {
-					potato.Send(dev);
-				}
-			}
+		} catch (Exception ee) {
+			System.err.println("Failed to send exception!");
+			ee.printStackTrace();
 		}
 	}
 
