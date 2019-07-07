@@ -109,7 +109,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		public final String errormsg;
 	}
 
-	private HashMap<String, SubcommandData<TC>> subcommands = new HashMap<>();
+	protected HashMap<String, SubcommandData<TC>> subcommands = new HashMap<>();
 	private HashMap<Class<?>, ParamConverter<?>> paramConverters = new HashMap<>();
 
 	private ArrayList<String> commandHelp = new ArrayList<>(); //Mainly needed by Discord
@@ -321,4 +321,8 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		if (scmd == null) return null;
 		return scmd.helpText;
 	}
+
+	/*public Set<String> getAllSubcommands() {
+		return Collections.unmodifiableSet(subcommands.keySet());
+	}*/
 }

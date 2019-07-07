@@ -97,6 +97,7 @@ public class MainPlugin extends ButtonPlugin {
 		getCommand2MC().registerCommand(new ComponentCommand());
 		getCommand2MC().registerCommand(new ThorpeCommand());
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
+		TBMCCoreAPI.RegisterEventsForExceptions(getCommand2MC(), this);
 		ChromaGamerBase.addConverter(commandSender -> Optional.ofNullable(commandSender instanceof ConsoleCommandSender || commandSender instanceof BlockCommandSender
 			? TBMCPlayer.getPlayer(new UUID(0, 0), TBMCPlayer.class) : null)); //Console & cmdblocks
 		ChromaGamerBase.addConverter(sender -> Optional.ofNullable(sender instanceof Player

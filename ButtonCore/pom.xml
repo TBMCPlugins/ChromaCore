@@ -111,7 +111,7 @@
         </repository> -->
 		<repository>
 			<id>ess-repo</id>
-			<url>http://repo.ess3.net/content/repositories/essrel/</url>
+            <url>https://ci.ender.zone/plugin/repository/everything/</url>
 		</repository>
         <repository>
             <id>Votifier</id>
