@@ -1,7 +1,6 @@
 package buttondevteam.lib.chat;
 
 import buttondevteam.core.MainPlugin;
-import lombok.experimental.var;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -127,7 +126,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		//System.out.println("tab");
 		for (int i = commandline.length(); i != -1; i = commandline.lastIndexOf(' ', i - 1)) {
 			String subcommand = commandline.substring(0, i).toLowerCase();
-			if (subcommand.charAt(0) != '/') subcommand = '/' + subcommand; //Console
+			if (subcommand.length() == 0 || subcommand.charAt(0) != '/') subcommand = '/' + subcommand; //Console
 			//System.out.println("Subcommand: " + subcommand);
 			SubcommandData<ICommand2MC> sd = subcommands.get(subcommand); //O(1)
 			if (sd == null) continue;
@@ -183,7 +182,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 					}
 				}
 				if (paramArr[i1].isVarArgs()) {
-					params.add(commandline.substring(j + 1).split(" +"));
+					par0ams.add(commandline.substring(j + 1).split(" +"));
 					continue;
 				}
 				j = commandline.indexOf(' ', j + 1); //End index

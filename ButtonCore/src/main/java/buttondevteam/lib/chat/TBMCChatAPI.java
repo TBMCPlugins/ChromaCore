@@ -26,10 +26,11 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class TBMCChatAPI {
 
-    private static final HashMap<String, TBMCCommandBase> commands = new HashMap<>();
+	private static final HashMap<String, TBMCCommandBase> commands = new HashMap<>();
 
 	public static HashMap<String, TBMCCommandBase> GetCommands() {
 		return commands;
@@ -38,10 +39,8 @@ public class TBMCChatAPI {
 	/**
 	 * Returns messages formatted for Minecraft chat listing the subcommands of the command.
 	 *
-	 * @param command
-	 *            The command which we want the subcommands of
-	 * @param sender
-	 *            The sender for permissions
+	 * @param command The command which we want the subcommands of
+	 * @param sender  The sender for permissions
 	 * @return The subcommands
 	 */
 	public static String[] GetSubCommands(TBMCCommandBase command, CommandSender sender) {
@@ -52,10 +51,8 @@ public class TBMCChatAPI {
 	 * Returns messages formatted for Minecraft chat listing the subcommands of the command.<br>
 	 * Returns a header if subcommands were found, otherwise returns an empty array.
 	 *
-	 * @param command
-	 *            The command which we want the subcommands of
-	 * @param sender
-	 *            The sender for permissions
+	 * @param command The command which we want the subcommands of
+	 * @param sender  The sender for permissions
 	 * @return The subcommands
 	 */
 	public static String[] GetSubCommands(String command, CommandSender sender) {
@@ -69,7 +66,7 @@ public class TBMCChatAPI {
 			if (cmd.getKey().startsWith(command + " ")) {
 				if (cmd.getValue().isPlayerOnly() && !(sender instanceof Player))
 					continue;
-                if (cmd.getValue().isModOnly() && (MainPlugin.permission != null ? !MainPlugin.permission.has(sender, "tbmc.admin") : !sender.isOp()))
+				if (cmd.getValue().isModOnly() && (MainPlugin.permission != null ? !MainPlugin.permission.has(sender, "tbmc.admin") : !sender.isOp()))
 					continue;
 				int ind = cmd.getKey().indexOf(' ', command.length() + 2);
 				if (ind >= 0) {
@@ -80,7 +77,7 @@ public class TBMCChatAPI {
 					addToCmds.accept("/" + cmd.getKey());
 			}
 		}
-        return cmds.toArray(new String[0]); //Apparently it's faster to use an empty array in modern Java
+		return cmds.toArray(new String[0]); //Apparently it's faster to use an empty array in modern Java
 	}
 
 	/**
@@ -96,22 +93,20 @@ public class TBMCChatAPI {
 	 * <p>
 	 * <i>Using this method after the server is done loading will have no effect.</i>
 	 * </p>
-	 * 
-	 * @param plugin
-	 *            The caller plugin
-	 * @param acmdclass
-	 *            A command's class to get the package name for commands. The provided class's package and subpackages are scanned for commands.
+	 *
+	 * @param plugin    The caller plugin
+	 * @param acmdclass A command's class to get the package name for commands. The provided class's package and subpackages are scanned for commands.
 	 */
 	public static synchronized void AddCommands(JavaPlugin plugin, Class<? extends TBMCCommandBase> acmdclass) {
 		plugin.getLogger().info("Registering commands from " + acmdclass.getPackage().getName());
 		Reflections rf = new Reflections(new ConfigurationBuilder()
-				.setUrls(ClasspathHelper.forPackage(acmdclass.getPackage().getName(),
-						plugin.getClass().getClassLoader()))
-				.addUrls(
-						ClasspathHelper.forClass(OptionallyPlayerCommandBase.class,
-								OptionallyPlayerCommandBase.class.getClassLoader()),
-						ClasspathHelper.forClass(PlayerCommandBase.class, PlayerCommandBase.class.getClassLoader())) // http://stackoverflow.com/questions/12917417/using-reflections-for-finding-the-transitive-subtypes-of-a-class-when-not-all
-				.addClassLoader(plugin.getClass().getClassLoader()).addScanners(new SubTypesScanner()));
+			.setUrls(ClasspathHelper.forPackage(acmdclass.getPackage().getName(),
+				plugin.getClass().getClassLoader()))
+			.addUrls(
+				ClasspathHelper.forClass(OptionallyPlayerCommandBase.class,
+					OptionallyPlayerCommandBase.class.getClassLoader()),
+				ClasspathHelper.forClass(PlayerCommandBase.class, PlayerCommandBase.class.getClassLoader())) // http://stackoverflow.com/questions/12917417/using-reflections-for-finding-the-transitive-subtypes-of-a-class-when-not-all
+			.addClassLoader(plugin.getClass().getClassLoader()).addScanners(new SubTypesScanner()));
 		Set<Class<? extends TBMCCommandBase>> cmds = rf.getSubTypesOf(TBMCCommandBase.class);
 		for (Class<? extends TBMCCommandBase> cmd : cmds) {
 			try {
@@ -139,19 +134,17 @@ public class TBMCChatAPI {
 	 * <p>
 	 * <i>Using this method after the server is done loading will have no effect.</i>
 	 * </p>
-	 * 
-	 * @param plugin
-	 *            The caller plugin
-	 * @param thecmdclass
-	 *            The command's class to create it (because why let you create the command class)
+	 *
+	 * @param plugin      The caller plugin
+	 * @param thecmdclass The command's class to create it (because why let you create the command class)
 	 */
 	public static void AddCommand(JavaPlugin plugin, Class<? extends TBMCCommandBase> thecmdclass, Object... params) {
 		// plugin.getLogger().info("Registering command " + thecmdclass.getSimpleName() + " for " + plugin.getName());
 		try {
 			TBMCCommandBase c;
 			if (params.length > 0)
-                c = thecmdclass.getConstructor(Arrays.stream(params).map(Object::getClass).toArray(Class[]::new))
-						.newInstance(params);
+				c = thecmdclass.getConstructor(Arrays.stream(params).map(Object::getClass).toArray(Class[]::new))
+					.newInstance(params);
 			else
 				c = thecmdclass.newInstance();
 			c.plugin = plugin;
@@ -173,10 +166,8 @@ public class TBMCChatAPI {
 	 * <i>Using this method after the server is done loading will have no effect.</i>
 	 * </p>
 	 *
-	 * @param plugin
-	 *            The caller plugin
-	 * @param cmd
-	 *            The command to add
+	 * @param plugin The caller plugin
+	 * @param cmd    The command to add
 	 */
 	public static void AddCommand(JavaPlugin plugin, TBMCCommandBase cmd) {
 		try {
@@ -259,14 +250,14 @@ public class TBMCChatAPI {
 
 	/**
 	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.<br>
-	 *     This will also send the error message to the sender, if they can't send the message.
+	 * This will also send the error message to the sender, if they can't send the message.
 	 *
-     * @param cm The message to send
+	 * @param cm The message to send
 	 * @return The event cancelled state
 	 */
-    public static boolean SendChatMessage(ChatMessage cm) {
-	    return SendChatMessage(cm, cm.getUser().channel().get());
-    }
+	public static boolean SendChatMessage(ChatMessage cm) {
+		return SendChatMessage(cm, cm.getUser().channel().get());
+	}
 
 	/**
 	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.<br>
@@ -278,36 +269,40 @@ public class TBMCChatAPI {
 	 */
 	public static boolean SendChatMessage(ChatMessage cm, Channel channel) {
 		if (!Channel.getChannelList().contains(channel))
-		    throw new RuntimeException("Channel " + channel.DisplayName().get() + " not registered!");
+			throw new RuntimeException("Channel " + channel.DisplayName().get() + " not registered!");
 		if (!channel.Enabled().get()) {
 			cm.getSender().sendMessage("§cThe channel '" + channel.DisplayName().get() + "' is disabled!");
 			return true; //Cancel sending if channel is disabled
 		}
-		val permcheck = cm.getPermCheck();
-	    RecipientTestResult rtr = getScoreOrSendError(channel, permcheck);
-		int score = rtr.score;
-		if (score == Channel.SCORE_SEND_NOPE || rtr.groupID == null)
-			return true;
-	    TBMCChatPreprocessEvent eventPre = new TBMCChatPreprocessEvent(cm.getSender(), channel, cm.getMessage());
-		Bukkit.getPluginManager().callEvent(eventPre);
-		if (eventPre.isCancelled())
-			return true;
-		cm.setMessage(eventPre.getMessage());
-		TBMCChatEvent event;
-		event = new TBMCChatEvent(channel, cm, rtr);
-		Bukkit.getPluginManager().callEvent(event);
-		return event.isCancelled();
+		Supplier<Boolean> task = () -> {
+			val permcheck = cm.getPermCheck();
+			RecipientTestResult rtr = getScoreOrSendError(channel, permcheck);
+			int score = rtr.score;
+			if (score == Channel.SCORE_SEND_NOPE || rtr.groupID == null)
+				return true;
+			TBMCChatPreprocessEvent eventPre = new TBMCChatPreprocessEvent(cm.getSender(), channel, cm.getMessage());
+			Bukkit.getPluginManager().callEvent(eventPre);
+			if (eventPre.isCancelled())
+				return true;
+			cm.setMessage(eventPre.getMessage());
+			TBMCChatEvent event;
+			event = new TBMCChatEvent(channel, cm, rtr);
+			Bukkit.getPluginManager().callEvent(event);
+			return event.isCancelled();
+		};
+		if (Bukkit.isPrimaryThread())
+			Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, task::get);
+		else
+			return task.get();
+		return false; //Not cancelled if async
 	}
 
 	/**
 	 * Sends a regular message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.
-	 * 
-	 * @param channel
-	 *            The channel to send to
-	 * @param rtr
-	 *            The score&group to use to find the group - use {@link RecipientTestResult#ALL} if the channel doesn't have scores
-	 * @param message
-	 *            The message to send
+	 *
+	 * @param channel    The channel to send to
+	 * @param rtr        The score&group to use to find the group - use {@link RecipientTestResult#ALL} if the channel doesn't have scores
+	 * @param message    The message to send
 	 * @param exceptions Platforms where this message shouldn't be sent (same as {@link ChatMessage#getOrigin()}
 	 * @return The event cancelled state
 	 */
@@ -332,9 +327,8 @@ public class TBMCChatAPI {
 
 	/**
 	 * Register a chat channel. See {@link Channel#Channel(String, Color, String, java.util.function.Function)} for details.
-	 * 
-	 * @param channel
-	 *            A new {@link Channel} to register
+	 *
+	 * @param channel A new {@link Channel} to register
 	 */
 	public static void RegisterChatChannel(Channel channel) {
 		Channel.RegisterChannel(channel);
