@@ -1,6 +1,7 @@
 package buttondevteam.lib.chat;
 
 import buttondevteam.core.MainPlugin;
+import lombok.experimental.var;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;

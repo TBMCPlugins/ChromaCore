@@ -5,16 +5,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -66,7 +63,7 @@ public class PluginUpdater {
 
 	private static boolean updatePluginJitPack(CommandSender sender, String correctname,
                                                String correctbranch) {
-		URL url;
+		/*URL url;
         File result = new File(updatedir, correctname + ".jar");
 		try {
 			url = new URL("https://jitpack.io/com/github/TBMCPlugins/"
@@ -93,8 +90,9 @@ public class PluginUpdater {
 			error(sender, "IO error while updating " + correctname + "\n" + e.getMessage());
 		} catch (Exception e) {
 			e.printStackTrace();
-			error(sender, "Unknown error while updating " + correctname + ": " + e);
-		}
+			error(sender, "Unknown error while updating " + correctname + ": " + e); - TODO: Either add Commons or don't use FileUtils
+		}*/
+		info(sender, "Plugin updating is currently not supported");
 		return false;
 	}
 

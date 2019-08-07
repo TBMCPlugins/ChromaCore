@@ -166,7 +166,8 @@ public final class IHaveConfig {
 						}
 					}).filter(Objects::nonNull).collect(Collectors.toList());
 				} else {
-					MainPlugin.Instance.getLogger().warning("Method " + m.getName() + " returns a config but its parameters are unknown: " + Arrays.toString(m.getParameterTypes()));
+					if (TBMCCoreAPI.IsTestServer())
+						MainPlugin.Instance.getLogger().warning("Method " + m.getName() + " returns a config but its parameters are unknown: " + Arrays.toString(m.getParameterTypes()));
 					continue;
 				}
 				for (val c : configList) {

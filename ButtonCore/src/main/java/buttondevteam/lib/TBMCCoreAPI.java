@@ -4,7 +4,6 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.core.component.updater.PluginUpdater;
 import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.potato.DebugPotato;
-import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -15,10 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class TBMCCoreAPI {
@@ -63,7 +59,8 @@ public class TBMCCoreAPI {
 		InputStream in = con.getInputStream();
 		String encoding = con.getContentEncoding();
 		encoding = encoding == null ? "UTF-8" : encoding;
-		String body = IOUtils.toString(in, encoding);
+		Scanner s = new Scanner(in).useDelimiter("\\A");
+		String body = s.hasNext() ? s.next() : "";
 		in.close();
 		return body;
 	}

@@ -31,6 +31,7 @@
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
+                    <encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -68,6 +69,7 @@
 									<directory>src/main/resources</directory>
 								</resource>
 							</resources>
+                            <encoding>UTF-8</encoding>
 						</configuration>
 					</execution>
 				</executions>
@@ -129,13 +131,6 @@
 			<groupId>org.spigotmc</groupId>
 			<artifactId>spigot-api</artifactId>
 			<version>1.12.2-R0.1-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-io -->
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>1.3.2</version>
 			<scope>provided</scope>
 		</dependency>
 		<!-- Change jitpack.yml to set location of Towny JAR -->
