@@ -1,7 +1,13 @@
 package buttondevteam.lib;
 
+import buttondevteam.core.MainPlugin;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
+import org.bukkit.event.Event;
+
+import java.util.function.Supplier;
 
 public final class ThorpeUtils {
 	private ThorpeUtils() {}
@@ -50,5 +56,34 @@ public final class ThorpeUtils {
 		else if (targetcl == double.class || Double.class.isAssignableFrom(targetcl))
 			return number.doubleValue();
 		return number;
+	}
+
+	/**
+	 * Calls the event always asynchronously. The return value is always false if async.
+	 *
+	 * @param event The event to call
+	 * @return The event cancelled state or false if async.
+	 */
+	public static <T extends Event & Cancellable> boolean callEventAsync(T event) {
+		Supplier<Boolean> task = () -> {
+			Bukkit.getPluginManager().callEvent(event);
+			return event.isCancelled();
+		};
+		return doItAsync(task, false);
+	}
+
+	/**
+	 * Does something always asynchronously. It will execute in the same thread if it's not the server thread.
+	 *
+	 * @param what What to do
+	 * @param def  Default if async
+	 * @return The event cancelled state or false if async.
+	 */
+	public static <T> T doItAsync(Supplier<T> what, T def) {
+		if (Bukkit.isPrimaryThread())
+			Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, what::get);
+		else
+			return what.get();
+		return def;
 	}
 }

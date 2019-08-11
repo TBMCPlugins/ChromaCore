@@ -4,10 +4,7 @@ import buttondevteam.core.CommandCaller;
 import buttondevteam.core.MainPlugin;
 import buttondevteam.core.component.channel.Channel;
 import buttondevteam.core.component.channel.Channel.RecipientTestResult;
-import buttondevteam.lib.TBMCChatEvent;
-import buttondevteam.lib.TBMCChatPreprocessEvent;
-import buttondevteam.lib.TBMCCoreAPI;
-import buttondevteam.lib.TBMCSystemChatEvent;
+import buttondevteam.lib.*;
 import buttondevteam.lib.architecture.Component;
 import lombok.val;
 import org.bukkit.Bukkit;
@@ -290,11 +287,7 @@ public class TBMCChatAPI {
 			Bukkit.getPluginManager().callEvent(event);
 			return event.isCancelled();
 		};
-		if (Bukkit.isPrimaryThread())
-			Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, task::get);
-		else
-			return task.get();
-		return false; //Not cancelled if async
+		return ThorpeUtils.doItAsync(task, false); //Not cancelled if async
 	}
 
 	/**
@@ -314,8 +307,7 @@ public class TBMCChatAPI {
 		if (!Arrays.asList(exceptions).contains("Minecraft"))
 			Bukkit.getConsoleSender().sendMessage("[" + channel.DisplayName().get() + "] " + message);
 		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID, exceptions, target);
-		Bukkit.getPluginManager().callEvent(event);
-		return event.isCancelled();
+		return ThorpeUtils.callEventAsync(event);
 	}
 
 	private static RecipientTestResult getScoreOrSendError(Channel channel, CommandSender sender) {
