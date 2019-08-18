@@ -127,6 +127,7 @@ public class TBMCCoreAPI {
 		}
 	}
 
+	private static EventExceptionCoreHandler eventExceptionCoreHandler;
 	/**
 	 * Registers Bukkit events, handling the exceptions occurring in those events
 	 *
@@ -134,7 +135,8 @@ public class TBMCCoreAPI {
 	 * @param plugin   The plugin which the listener belongs to
 	 */
 	public static void RegisterEventsForExceptions(Listener listener, Plugin plugin) {
-		EventExceptionHandler.registerEvents(listener, plugin, new EventExceptionCoreHandler());
+		if (eventExceptionCoreHandler == null) eventExceptionCoreHandler = new EventExceptionCoreHandler();
+		EventExceptionHandler.registerEvents(listener, plugin, eventExceptionCoreHandler);
 	}
 
 	public static <T extends ChromaGamerBase> void RegisterUserClass(Class<T> userclass) {
