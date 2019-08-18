@@ -21,3 +21,4 @@ depend:
 softdepend:
   - Towny
   - Votifier
+  - Multiverse-Core
