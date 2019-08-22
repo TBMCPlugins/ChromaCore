@@ -126,91 +126,106 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		paramConverters.put(cl, new ParamConverter<>(converter, errormsg));
 	}
 
-	public boolean handleCommand(TP sender, String commandline) throws Exception {
+	public boolean handleCommand(TP sender, String commandline) {
 		for (int i = commandline.length(); i != -1; i = commandline.lastIndexOf(' ', i - 1)) {
 			String subcommand = commandline.substring(0, i).toLowerCase();
 			SubcommandData<TC> sd = subcommands.get(subcommand); //O(1)
 			if (sd == null) continue;
-			if (sd.method == null || sd.command == null) { //Main command not registered, but we have subcommands
-				sender.sendMessage(sd.helpText);
-				return true;
-			}
-			if (!hasPermission(sender, sd.command, sd.method)) {
-				sender.sendMessage("§cYou don't have permission to use this command");
-				return true;
-			}
-			val params = new ArrayList<Object>(sd.method.getParameterCount());
-			int j = subcommand.length(), pj;
-			Class<?>[] parameterTypes = sd.method.getParameterTypes();
-			if (parameterTypes.length == 0)
-				throw new Exception("No sender parameter for method '" + sd.method + "'");
-			val sendertype = parameterTypes[0];
-			final ChromaGamerBase cg;
-			if (sendertype.isAssignableFrom(sender.getClass()))
-				params.add(sender); //The command either expects a CommandSender or it is a Player, or some other expected type
-			else if (sender instanceof Command2MCSender
-				&& sendertype.isAssignableFrom(((Command2MCSender) sender).getSender().getClass()))
-				params.add(((Command2MCSender) sender).getSender());
-			else if (ChromaGamerBase.class.isAssignableFrom(sendertype)
-				&& sender instanceof Command2MCSender
-				&& (cg = ChromaGamerBase.getFromSender(((Command2MCSender) sender).getSender())) != null
-				&& cg.getClass() == sendertype) //The command expects a user of our system
-				params.add(cg);
-			else {
-				sender.sendMessage("§cYou need to be a " + sendertype.getSimpleName() + " to use this command.");
-				return true;
-			}
-			val paramArr = sd.method.getParameters();
-			for (int i1 = 1; i1 < parameterTypes.length; i1++) {
-				Class<?> cl = parameterTypes[i1];
-				pj = j + 1; //Start index
-				if (pj == commandline.length() + 1) { //No param given
-					if (paramArr[i1].isAnnotationPresent(OptionalArg.class)) {
-						if (cl.isPrimitive())
-							params.add(Defaults.defaultValue(cl));
-						else if (Number.class.isAssignableFrom(cl)
-							|| Number.class.isAssignableFrom(cl))
-							params.add(Defaults.defaultValue(Primitives.unwrap(cl)));
-						else
-							params.add(null);
-						continue; //Fill the remaining params with nulls
-					} else {
-						sender.sendMessage(sd.helpText); //Required param missing
-						return true;
-					}
+			Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, () -> {
+				try {
+					handleCommandAsync(sender, commandline, sd, subcommand);
+				} catch (Exception e) {
+					TBMCCoreAPI.SendException("Command execution failed for sender " + sender + " and message " + commandline, e);
 				}
-				if (paramArr[i1].isVarArgs()) {
-					params.add(commandline.substring(j + 1).split(" +"));
-					continue;
+			});
+			return true; //We found a method
+		}
+		return false;
+	}
+
+	//Needed because permission checking may load the (perhaps offline) sender's file which is disallowed on the main thread
+	public void handleCommandAsync(TP sender, String commandline, SubcommandData<TC> sd, String subcommand) throws Exception {
+		if (sd.method == null || sd.command == null) { //Main command not registered, but we have subcommands
+			sender.sendMessage(sd.helpText);
+			return;
+		}
+		if (!hasPermission(sender, sd.command, sd.method)) {
+			sender.sendMessage("§cYou don't have permission to use this command");
+			return;
+		}
+		val params = new ArrayList<Object>(sd.method.getParameterCount());
+		int j = subcommand.length(), pj;
+		Class<?>[] parameterTypes = sd.method.getParameterTypes();
+		if (parameterTypes.length == 0)
+			throw new Exception("No sender parameter for method '" + sd.method + "'");
+		val sendertype = parameterTypes[0];
+		final ChromaGamerBase cg;
+		if (sendertype.isAssignableFrom(sender.getClass()))
+			params.add(sender); //The command either expects a CommandSender or it is a Player, or some other expected type
+		else if (sender instanceof Command2MCSender
+			&& sendertype.isAssignableFrom(((Command2MCSender) sender).getSender().getClass()))
+			params.add(((Command2MCSender) sender).getSender());
+		else if (ChromaGamerBase.class.isAssignableFrom(sendertype)
+			&& sender instanceof Command2MCSender
+			&& (cg = ChromaGamerBase.getFromSender(((Command2MCSender) sender).getSender())) != null
+			&& cg.getClass() == sendertype) //The command expects a user of our system
+			params.add(cg);
+		else {
+			sender.sendMessage("§cYou need to be a " + sendertype.getSimpleName() + " to use this command.");
+			return;
+		}
+		val paramArr = sd.method.getParameters();
+		for (int i1 = 1; i1 < parameterTypes.length; i1++) {
+			Class<?> cl = parameterTypes[i1];
+			pj = j + 1; //Start index
+			if (pj == commandline.length() + 1) { //No param given
+				if (paramArr[i1].isAnnotationPresent(OptionalArg.class)) {
+					if (cl.isPrimitive())
+						params.add(Defaults.defaultValue(cl));
+					else if (Number.class.isAssignableFrom(cl)
+						|| Number.class.isAssignableFrom(cl))
+						params.add(Defaults.defaultValue(Primitives.unwrap(cl)));
+					else
+						params.add(null);
+					continue; //Fill the remaining params with nulls
+				} else {
+					sender.sendMessage(sd.helpText); //Required param missing
+					return;
 				}
-				j = commandline.indexOf(' ', j + 1); //End index
-				if (j == -1 || paramArr[i1].isAnnotationPresent(TextArg.class)) //Last parameter
-					j = commandline.length();
-				String param = commandline.substring(pj, j);
-				if (cl == String.class) {
-					params.add(param);
-					continue;
-				} else if (Number.class.isAssignableFrom(cl) || cl.isPrimitive()) {
-					try {
-						//noinspection unchecked
-						Number n = ThorpeUtils.convertNumber(NumberFormat.getInstance().parse(param), (Class<? extends Number>) cl);
-						params.add(n);
-					} catch (ParseException e) {
-						sender.sendMessage("§c'" + param + "' is not a number.");
-						return true;
-					}
-					continue;
-				}
-				val conv = paramConverters.get(cl);
-				if (conv == null)
-					throw new Exception("No suitable converter found for parameter type '" + cl.getCanonicalName() + "' for command '" + sd.method.toString() + "'");
-				val cparam = conv.converter.apply(param);
-				if (cparam == null) {
-					sender.sendMessage(conv.errormsg); //Param conversion failed - ex. plugin not found
-					return true;
-				}
-				params.add(cparam);
 			}
+			if (paramArr[i1].isVarArgs()) {
+				params.add(commandline.substring(j + 1).split(" +"));
+				continue;
+			}
+			j = commandline.indexOf(' ', j + 1); //End index
+			if (j == -1 || paramArr[i1].isAnnotationPresent(TextArg.class)) //Last parameter
+				j = commandline.length();
+			String param = commandline.substring(pj, j);
+			if (cl == String.class) {
+				params.add(param);
+				continue;
+			} else if (Number.class.isAssignableFrom(cl) || cl.isPrimitive()) {
+				try {
+					//noinspection unchecked
+					Number n = ThorpeUtils.convertNumber(NumberFormat.getInstance().parse(param), (Class<? extends Number>) cl);
+					params.add(n);
+				} catch (ParseException e) {
+					sender.sendMessage("§c'" + param + "' is not a number.");
+					return;
+				}
+				continue;
+			}
+			val conv = paramConverters.get(cl);
+			if (conv == null)
+				throw new Exception("No suitable converter found for parameter type '" + cl.getCanonicalName() + "' for command '" + sd.method.toString() + "'");
+			val cparam = conv.converter.apply(param);
+			if (cparam == null) {
+				sender.sendMessage(conv.errormsg); //Param conversion failed - ex. plugin not found
+				return;
+			}
+			params.add(cparam);
+		}
+		Bukkit.getScheduler().runTask(MainPlugin.Instance, () -> {
 			try {
 				val ret = sd.method.invoke(sd.command, params.toArray()); //I FORGOT TO TURN IT INTO AN ARRAY (for a long time)
 				if (ret instanceof Boolean) {
@@ -218,12 +233,12 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 						sender.sendMessage(sd.helpText);
 				} else if (ret != null)
 					throw new Exception("Wrong return type! Must return a boolean or void. Return value: " + ret);
-				return true; //We found a method
 			} catch (InvocationTargetException e) {
 				TBMCCoreAPI.SendException("An error occurred in a command handler!", e.getCause());
+			} catch (Exception e) {
+				TBMCCoreAPI.SendException("Command handling failed for sender " + sender + " and subcommand " + subcommand, e);
 			}
-		}
-		return false; //Didn't handle
+		});
 	} //TODO: Add to the help
 
 	public abstract void registerCommand(TC command);

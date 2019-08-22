@@ -19,7 +19,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 public class RestartComponent extends Component<MainPlugin> implements Listener {
 	@Override
 	public void enable() {
-		//TODO: Permissions for the commands
 		registerCommand(new ScheduledRestartCommand(this));
 		TBMCChatAPI.AddCommand(this, new PrimeRestartCommand(this));
 		registerListener(this);
