@@ -1,5 +1,6 @@
 package buttondevteam.lib;
 
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
@@ -9,6 +10,7 @@ public class TBMCDebugMessageEvent extends Event {
 	private boolean sent;
 
 	public TBMCDebugMessageEvent(String message) {
+		super(!Bukkit.isPrimaryThread());
 		this.message = message;
 	}
 
