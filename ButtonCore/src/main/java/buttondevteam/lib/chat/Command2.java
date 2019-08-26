@@ -131,9 +131,10 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			String subcommand = commandline.substring(0, i).toLowerCase();
 			SubcommandData<TC> sd = subcommands.get(subcommand); //O(1)
 			if (sd == null) continue;
+			boolean sync = Bukkit.isPrimaryThread();
 			Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, () -> {
 				try {
-					handleCommandAsync(sender, commandline, sd, subcommand);
+					handleCommandAsync(sender, commandline, sd, subcommand, sync);
 				} catch (Exception e) {
 					TBMCCoreAPI.SendException("Command execution failed for sender " + sender + " and message " + commandline, e);
 				}
@@ -144,7 +145,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 	}
 
 	//Needed because permission checking may load the (perhaps offline) sender's file which is disallowed on the main thread
-	public void handleCommandAsync(TP sender, String commandline, SubcommandData<TC> sd, String subcommand) throws Exception {
+	public void handleCommandAsync(TP sender, String commandline, SubcommandData<TC> sd, String subcommand, boolean sync) throws Exception {
 		if (sd.method == null || sd.command == null) { //Main command not registered, but we have subcommands
 			sender.sendMessage(sd.helpText);
 			return;
@@ -225,7 +226,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			}
 			params.add(cparam);
 		}
-		Bukkit.getScheduler().runTask(MainPlugin.Instance, () -> {
+		Runnable lol = () -> {
 			try {
 				val ret = sd.method.invoke(sd.command, params.toArray()); //I FORGOT TO TURN IT INTO AN ARRAY (for a long time)
 				if (ret instanceof Boolean) {
@@ -238,7 +239,11 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			} catch (Exception e) {
 				TBMCCoreAPI.SendException("Command handling failed for sender " + sender + " and subcommand " + subcommand, e);
 			}
-		});
+		};
+		if (sync)
+			Bukkit.getScheduler().runTask(MainPlugin.Instance, lol);
+		else
+			lol.run();
 	} //TODO: Add to the help
 
 	public abstract void registerCommand(TC command);
