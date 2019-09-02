@@ -31,26 +31,29 @@ public class PlayerDataTest extends TestCase {
 	public void testConfig() throws Exception {
 		TestPrepare.PrepareServer();
 		//FileUtils.deleteDirectory(new File(ChromaGamerBase.TBMC_PLAYERS_DIR));
-		Files.walkFileTree(new File(ChromaGamerBase.TBMC_PLAYERS_DIR).toPath(), new SimpleFileVisitor<Path>() {
-			@Override
-			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-				throws IOException {
-				Files.delete(file);
-				return FileVisitResult.CONTINUE;
-			}
-
-			@Override
-			public FileVisitResult postVisitDirectory(Path dir, IOException e)
-				throws IOException {
-				if (e == null) {
-					Files.delete(dir);
+		File file = new File(ChromaGamerBase.TBMC_PLAYERS_DIR);
+		if (file.exists()) {
+			Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+					throws IOException {
+					Files.delete(file);
 					return FileVisitResult.CONTINUE;
-				} else {
-					// directory iteration failed
-					throw e;
 				}
-			}
-		});
+
+				@Override
+				public FileVisitResult postVisitDirectory(Path dir, IOException e)
+					throws IOException {
+					if (e == null) {
+						Files.delete(dir);
+						return FileVisitResult.CONTINUE;
+					} else {
+						// directory iteration failed
+						throw e;
+					}
+				}
+			});
+		}
 		UUID uuid = new UUID(0L, 0L);
 		try (TestPlayerClass p = TBMCPlayerBase.getPlayer(uuid, TestPlayerClass.class)) {
 			p.PlayerName().set("Test");
