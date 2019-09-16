@@ -137,11 +137,10 @@
 			<version>1.12.2-R0.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
-		<!-- Change jitpack.yml to set location of Towny JAR -->
 		<dependency>
-			<groupId>com.github.TBMCPlugins.ButtonCore</groupId>
+            <groupId>com.github.TownyAdvanced</groupId>
 			<artifactId>Towny</artifactId>
-			<version>master-SNAPSHOT</version>
+            <version>0.94.0.9</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
