@@ -8,7 +8,6 @@ import buttondevteam.lib.chat.TBMCChatAPI;
 import buttondevteam.lib.chat.TBMCCommandBase;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.experimental.var;
 import lombok.val;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.Listener;

@@ -6,7 +6,6 @@ import buttondevteam.lib.chat.Command2MC;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.experimental.var;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.annotation.ElementType;

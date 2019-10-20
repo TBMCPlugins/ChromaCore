@@ -8,7 +8,6 @@ import com.google.common.base.Defaults;
 import com.google.common.primitives.Primitives;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.var;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
