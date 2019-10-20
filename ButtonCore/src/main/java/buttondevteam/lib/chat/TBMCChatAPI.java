@@ -287,7 +287,7 @@ public class TBMCChatAPI {
 			Bukkit.getPluginManager().callEvent(event);
 			return event.isCancelled();
 		};
-		return ThorpeUtils.doItAsync(task, false); //Not cancelled if async
+		return ChromaUtils.doItAsync(task, false); //Not cancelled if async
 	}
 
 	/**
@@ -307,7 +307,7 @@ public class TBMCChatAPI {
 		if (!Arrays.asList(exceptions).contains("Minecraft"))
 			Bukkit.getConsoleSender().sendMessage("[" + channel.DisplayName().get() + "] " + message);
 		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID, exceptions, target);
-		return ThorpeUtils.callEventAsync(event);
+		return ChromaUtils.callEventAsync(event);
 	}
 
 	private static RecipientTestResult getScoreOrSendError(Channel channel, CommandSender sender) {

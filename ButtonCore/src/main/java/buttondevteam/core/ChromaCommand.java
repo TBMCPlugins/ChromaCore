@@ -6,11 +6,11 @@ import buttondevteam.lib.chat.ICommand2MC;
 import org.bukkit.command.CommandSender;
 
 @CommandClass
-public class ThorpeCommand extends ICommand2MC {
+public class ChromaCommand extends ICommand2MC {
 	@Command2.Subcommand //TODO: Main permissions (groups) like 'mod'
 	public void reload(CommandSender sender) {
 		if (MainPlugin.Instance.tryReloadConfig())
-			sender.sendMessage("§bConfig reloaded.");
+			sender.sendMessage("§bCore config reloaded.");
 		else
 			sender.sendMessage("§cFailed to reload config. Check console.");
 	}

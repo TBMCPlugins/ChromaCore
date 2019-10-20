@@ -98,8 +98,8 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 
 			Bukkit.getScheduler().runTask(getPlugin(), () -> { //Delay it a bit
 				ByteArrayDataOutput outt = ByteStreams.newDataOutput();
-				outt.writeUTF("Forward"); // So BungeeCord knows to forward it
-				outt.writeUTF("ALL");
+				outt.writeUTF("ForwardToPlayer"); // So BungeeCord knows to forward it
+				outt.writeUTF(player.getName());
 				outt.writeUTF("ChromaCore-Spawn"); // The channel name to check if this your data
 
 				ByteArrayOutputStream msgbytes = new ByteArrayOutputStream();

@@ -9,8 +9,8 @@ import org.bukkit.event.Event;
 
 import java.util.function.Supplier;
 
-public final class ThorpeUtils {
-	private ThorpeUtils() {}
+public final class ChromaUtils {
+	private ChromaUtils() {}
 
 	public static String getDisplayName(CommandSender sender) {
 		if (sender instanceof IHaveFancyName)

@@ -24,7 +24,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	@Override
 	public void registerCommand(ICommand2MC command) {
 		super.registerCommand(command, '/');
-		var perm = "thorpe.command." + command.getCommandPath().replace(' ', '.');
+		var perm = "chroma.command." + command.getCommandPath().replace(' ', '.');
 		if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
 			Bukkit.getPluginManager().addPermission(new Permission(perm,
 				modOnly(command) ? PermissionDefault.OP : PermissionDefault.TRUE)); //Allow commands by default, unless it's mod only - TODO: Test
@@ -32,7 +32,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			if (!method.isAnnotationPresent(Subcommand.class)) continue;
 			String pg = permGroup(command, method);
 			if (pg.length() == 0) continue;
-			perm = "thorpe." + pg;
+			perm = "chroma." + pg;
 			if (Bukkit.getPluginManager().getPermission(perm) == null) //It may occur multiple times
 				Bukkit.getPluginManager().addPermission(new Permission(perm,
 					//pg.equals(Subcommand.MOD_GROUP) ? PermissionDefault.OP : PermissionDefault.TRUE)); //Allow commands by default, unless it's mod only
@@ -50,8 +50,8 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		String pg;
 		boolean p = true;
 		String[] perms = {
-			"thorpe.command." + command.getCommandPath().replace(' ', '.'),
-			(pg = permGroup(command, method)).length() > 0 ? "thorpe." + pg : null,
+			"chroma.command." + command.getCommandPath().replace(' ', '.'),
+			(pg = permGroup(command, method)).length() > 0 ? "chroma." + pg : null,
 			modOnly(command) ? "tbmc.admin" : null
 		};
 		for (String perm : perms) {

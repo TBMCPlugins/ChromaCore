@@ -93,7 +93,7 @@ public class PlayerListener implements Listener {
 		String msg = MainPlugin.Instance.chatFormat().get()
 			.replace("{channel}", event.getChannel().DisplayName().get())
 			.replace("{origin}", event.getOrigin().substring(0, 1))
-			.replace("{name}", ThorpeUtils.getDisplayName(event.getSender()))
+			.replace("{name}", ChromaUtils.getDisplayName(event.getSender()))
 			.replace("{message}", event.getMessage());
 		for (Player player : Bukkit.getOnlinePlayers())
 			if (event.shouldSendTo(player))

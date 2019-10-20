@@ -1,8 +1,8 @@
 package buttondevteam.lib.chat;
 
 import buttondevteam.core.MainPlugin;
+import buttondevteam.lib.ChromaUtils;
 import buttondevteam.lib.TBMCCoreAPI;
-import buttondevteam.lib.ThorpeUtils;
 import buttondevteam.lib.player.ChromaGamerBase;
 import com.google.common.base.Defaults;
 import com.google.common.primitives.Primitives;
@@ -60,7 +60,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		String[] helpText() default {};
 
 		/**
-		 * The main permission which allows using this command (individual access can be still granted with "thorpe.command.X").
+		 * The main permission which allows using this command (individual access can be still granted with "chroma.command.X").
 		 * Used to be "tbmc.admin". The {@link #MOD_GROUP} is provided to use with this.
 		 */
 		String permGroup() default ""; //TODO
@@ -208,7 +208,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			} else if (Number.class.isAssignableFrom(cl) || cl.isPrimitive()) {
 				try {
 					//noinspection unchecked
-					Number n = ThorpeUtils.convertNumber(NumberFormat.getInstance().parse(param), (Class<? extends Number>) cl);
+					Number n = ChromaUtils.convertNumber(NumberFormat.getInstance().parse(param), (Class<? extends Number>) cl);
 					params.add(n);
 				} catch (ParseException e) {
 					sender.sendMessage("§c'" + param + "' is not a number.");

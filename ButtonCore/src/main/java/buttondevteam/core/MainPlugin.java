@@ -97,7 +97,7 @@ public class MainPlugin extends ButtonPlugin {
 			Component.registerComponent(this, new VotifierComponent(economy));
 		ComponentManager.enableComponents();
 		getCommand2MC().registerCommand(new ComponentCommand());
-		getCommand2MC().registerCommand(new ThorpeCommand());
+		getCommand2MC().registerCommand(new ChromaCommand());
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		TBMCCoreAPI.RegisterEventsForExceptions(getCommand2MC(), this);
 		ChromaGamerBase.addConverter(commandSender -> Optional.ofNullable(commandSender instanceof ConsoleCommandSender || commandSender instanceof BlockCommandSender
