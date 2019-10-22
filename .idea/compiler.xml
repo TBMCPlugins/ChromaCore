@@ -3,26 +3,45 @@
   <component name="CompilerConfiguration">
     <annotationProcessing>
       <profile default="true" name="Default" enabled="true" />
-      <profile name="Maven default annotation processors profile" enabled="true">
+      <profile name="Annotation profile for ButtonCore Parent" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <processor name="buttondevteam.buttonproc.ButtonProcessor" />
+        <processor name="com.github.bsideup.jabel.JabelJavacProcessor" />
+        <processor name="lombok.launch.AnnotationProcessorHider$AnnotationProcessor" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/com/github/bsideup/jabel/jabel-javac-plugin/0.2.0/jabel-javac-plugin-0.2.0.jar" />
+          <entry name="$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.10.1/byte-buddy-1.10.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.10.1/byte-buddy-agent-1.10.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.10/lombok-1.18.10.jar" />
+          <entry name="$PROJECT_DIR$/ButtonProcessor/target/classes" />
+          <entry name="$MAVEN_REPOSITORY$/org/yaml/snakeyaml/1.21/snakeyaml-1.21.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/spigotmc/spigot-api/1.12.2-R0.1-SNAPSHOT/spigot-api-1.12.2-R0.1-SNAPSHOT.jar" />
+          <entry name="$MAVEN_REPOSITORY$/commons-lang/commons-lang/2.6/commons-lang-2.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/guava/guava/21.0/guava-21.0.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.8.0/gson-2.8.0.jar" />
+          <entry name="$MAVEN_REPOSITORY$/net/md-5/bungeecord-chat/1.12-SNAPSHOT/bungeecord-chat-1.12-20180712.114550-97.jar" />
+        </processorPath>
         <module name="BuildConfigUpdater" />
         <module name="ButtonCore (1) (com.github.TBMCPlugins.ButtonCore)" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="BuildConfigUpdater" target="10" />
+      <module name="BuildConfigUpdater" target="13" />
       <module name="ButtonCore" target="1.5" />
-      <module name="ButtonCore (1) (com.github.TBMCPlugins.ButtonCore)" target="10" />
-      <module name="ButtonProcessor" target="10" />
+      <module name="ButtonCore (1) (com.github.TBMCPlugins.ButtonCore)" target="13" />
+      <module name="ButtonProcessor" target="13" />
       <module name="ChunkArchive" target="1.8" />
       <module name="RandomTeleport" target="1.8" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="ButtonProcessor" options="-proc:none" />
+      <module name="BuildConfigUpdater" options="--enable-preview" />
+      <module name="ButtonCore (1) (com.github.TBMCPlugins.ButtonCore)" options="--enable-preview" />
+      <module name="ButtonProcessor" options="-proc:none --enable-preview" />
     </option>
   </component>
 </project>
