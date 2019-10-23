@@ -9,9 +9,8 @@ before_install: | # Wget BuildTools and run if cached folder not found
   fi
 language: java
 jdk:
-  - oraclejdk8
+  - oraclejdk11
 sudo: true
-dist: trusty # Needed for Java 8, although we might not need Java 8
 deploy:
   # deploy develop to the staging environment
   - provider: script

@@ -2,11 +2,11 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.github.TBMCPlugins</groupId>
-        <artifactId>ButtonCore</artifactId>
+        <groupId>com.github.TBMCPlugins.ButtonCore</groupId>
+        <artifactId>CorePOM</artifactId>
         <version>master-SNAPSHOT</version>
+        <relativePath>../CorePOM</relativePath>
     </parent>
-	<groupId>com.github.TBMCPlugins.ButtonCore</groupId>
 	<artifactId>ButtonCore</artifactId>
 	<name>ButtonCore</name>
 	<description>ButtonCore</description>
