@@ -9,7 +9,7 @@ before_install: | # Wget BuildTools and run if cached folder not found
   fi
 language: java
 jdk:
-  - oraclejdk8
+  - oraclejdk11
 sudo: true
 deploy:
   # deploy develop to the staging environment

@@ -220,8 +220,8 @@ pip-log.txt
 TheButtonAutoFlair/out/artifacts/Autoflair/Autoflair.jar
 #*.iml
 *.name
-.idea/compiler.xml
-*.xml
+.idea
+dependency-reduced-pom.xml
 
 TBMC/
 /.apt_generated/

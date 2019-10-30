@@ -24,7 +24,7 @@ public final class ComponentManager {
 		Component.getComponents().values().stream().filter(c -> c.shouldBeEnabled().get()).forEach(c -> {
 			try {
 				Component.setComponentEnabled(c, true);
-			} catch (Exception e) {
+			} catch (Exception | NoClassDefFoundError e) {
 				TBMCCoreAPI.SendException("Failed to enable one of the components: " + c.getClass().getSimpleName(), e);
 			}
 		});

@@ -1,7 +1,7 @@
 package buttondevteam.lib.architecture;
 
 import buttondevteam.core.MainPlugin;
-import buttondevteam.lib.ThorpeUtils;
+import buttondevteam.lib.ChromaUtils;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -101,7 +101,7 @@ public class ConfigData<T> {
 			return hmm;
 		}
 		if (val instanceof Number && def != null)
-			val = ThorpeUtils.convertNumber((Number) val,
+			val = ChromaUtils.convertNumber((Number) val,
 				(Class<? extends Number>) def.getClass());
 		if (val instanceof List && def != null && def.getClass().isArray())
 			val = ((List<T>) val).toArray((T[]) Array.newInstance(def.getClass().getComponentType(), 0));

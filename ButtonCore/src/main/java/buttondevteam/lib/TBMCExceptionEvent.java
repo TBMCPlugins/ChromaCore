@@ -1,7 +1,7 @@
 package buttondevteam.lib;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
@@ -14,13 +14,19 @@ import org.bukkit.event.HandlerList;
  *
  */
 @Getter
-@RequiredArgsConstructor
 public class TBMCExceptionEvent extends Event {
 	private static final HandlerList handlers = new HandlerList();
 
 	private final String sourceMessage;
 	private final Throwable exception;
 	private boolean handled;
+
+	@java.beans.ConstructorProperties({"sourceMessage", "exception"})
+	public TBMCExceptionEvent(String sourceMessage, Throwable exception) {
+		super(!Bukkit.isPrimaryThread());
+		this.sourceMessage = sourceMessage;
+		this.exception = exception;
+	}
 
 	public void setHandled() {
 		handled = true;

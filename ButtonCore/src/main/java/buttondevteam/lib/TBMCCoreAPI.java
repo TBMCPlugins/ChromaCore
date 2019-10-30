@@ -4,7 +4,6 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.core.component.updater.PluginUpdater;
 import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.potato.DebugPotato;
-import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -15,10 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class TBMCCoreAPI {
@@ -63,7 +59,8 @@ public class TBMCCoreAPI {
 		InputStream in = con.getInputStream();
 		String encoding = con.getContentEncoding();
 		encoding = encoding == null ? "UTF-8" : encoding;
-		String body = IOUtils.toString(in, encoding);
+		Scanner s = new Scanner(in).useDelimiter("\\A");
+		String body = s.hasNext() ? s.next() : "";
 		in.close();
 		return body;
 	}
@@ -82,36 +79,41 @@ public class TBMCCoreAPI {
 	}
 
 	public static void SendException(String sourcemsg, Throwable e, boolean debugPotato) {
-		SendUnsentExceptions();
-		TBMCExceptionEvent event = new TBMCExceptionEvent(sourcemsg, e);
-		Bukkit.getPluginManager().callEvent(event);
-		synchronized (exceptionsToSend) {
-			if (!event.isHandled())
-				exceptionsToSend.put(sourcemsg, e);
-		}
-		Bukkit.getLogger().warning(sourcemsg);
-		e.printStackTrace();
-		if (debugPotato) {
-			List<Player> devsOnline = new ArrayList<>();
-			for (Player player : Bukkit.getOnlinePlayers()) {
-				if (coders.contains(player.getName())) {
-					devsOnline.add(player);
+		try {
+			SendUnsentExceptions();
+			TBMCExceptionEvent event = new TBMCExceptionEvent(sourcemsg, e);
+			Bukkit.getPluginManager().callEvent(event);
+			synchronized (exceptionsToSend) {
+				if (!event.isHandled())
+					exceptionsToSend.put(sourcemsg, e);
+			}
+			Bukkit.getLogger().warning(sourcemsg);
+			e.printStackTrace();
+			if (debugPotato) {
+				List<Player> devsOnline = new ArrayList<>();
+				for (Player player : Bukkit.getOnlinePlayers()) {
+					if (coders.contains(player.getName())) {
+						devsOnline.add(player);
+					}
+				}
+				if (!devsOnline.isEmpty()) {
+					DebugPotato potato = new DebugPotato()
+						.setMessage(new String[]{ //
+							"§b§o" + e.getClass().getSimpleName(), //
+							"§c§o" + sourcemsg, //
+							"§a§oFind a dev to fix this issue"})
+						.setType(e instanceof IOException ? "Throwable Potato"
+							: e instanceof ClassCastException ? "Squished Potato"
+							: e instanceof NullPointerException ? "Plain Potato"
+							: e instanceof StackOverflowError ? "Chips" : "Error Potato");
+					for (Player dev : devsOnline) {
+						potato.Send(dev);
+					}
 				}
 			}
-			if (!devsOnline.isEmpty()) {
-				DebugPotato potato = new DebugPotato()
-					.setMessage(new String[]{ //
-						"§b§o" + e.getClass().getSimpleName(), //
-						"§c§o" + sourcemsg, //
-						"§a§oFind a dev to fix this issue"})
-					.setType(e instanceof IOException ? "Throwable Potato"
-						: e instanceof ClassCastException ? "Squished Potato"
-						: e instanceof NullPointerException ? "Plain Potato"
-						: e instanceof StackOverflowError ? "Chips" : "Error Potato");
-				for (Player dev : devsOnline) {
-					potato.Send(dev);
-				}
-			}
+		} catch (Exception ee) {
+			System.err.println("Failed to send exception!");
+			ee.printStackTrace();
 		}
 	}
 
@@ -125,6 +127,7 @@ public class TBMCCoreAPI {
 		}
 	}
 
+	private static EventExceptionCoreHandler eventExceptionCoreHandler;
 	/**
 	 * Registers Bukkit events, handling the exceptions occurring in those events
 	 *
@@ -132,7 +135,8 @@ public class TBMCCoreAPI {
 	 * @param plugin   The plugin which the listener belongs to
 	 */
 	public static void RegisterEventsForExceptions(Listener listener, Plugin plugin) {
-		EventExceptionHandler.registerEvents(listener, plugin, new EventExceptionCoreHandler());
+		if (eventExceptionCoreHandler == null) eventExceptionCoreHandler = new EventExceptionCoreHandler();
+		EventExceptionHandler.registerEvents(listener, plugin, eventExceptionCoreHandler);
 	}
 
 	public static <T extends ChromaGamerBase> void RegisterUserClass(Class<T> userclass) {

@@ -6,6 +6,7 @@ import buttondevteam.core.component.channel.ChatRoom;
 import buttondevteam.core.component.members.MemberComponent;
 import buttondevteam.core.component.randomtp.RandomTPComponent;
 import buttondevteam.core.component.restart.RestartComponent;
+import buttondevteam.core.component.spawn.SpawnComponent;
 import buttondevteam.core.component.towny.TownyComponent;
 import buttondevteam.core.component.updater.PluginUpdater;
 import buttondevteam.core.component.updater.PluginUpdaterComponent;
@@ -89,14 +90,16 @@ public class MainPlugin extends ButtonPlugin {
 		Component.registerComponent(this, new ChannelComponent());
 		Component.registerComponent(this, new RandomTPComponent());
 		Component.registerComponent(this, new MemberComponent());
+		Component.registerComponent(this, new SpawnComponent());
 		if (Bukkit.getPluginManager().isPluginEnabled("Towny")) //It fails to load the component class otherwise
 			Component.registerComponent(this, new TownyComponent());
 		if (Bukkit.getPluginManager().isPluginEnabled("Votifier") && economy != null)
 			Component.registerComponent(this, new VotifierComponent(economy));
 		ComponentManager.enableComponents();
 		getCommand2MC().registerCommand(new ComponentCommand());
-		getCommand2MC().registerCommand(new ThorpeCommand());
+		getCommand2MC().registerCommand(new ChromaCommand());
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
+		TBMCCoreAPI.RegisterEventsForExceptions(getCommand2MC(), this);
 		ChromaGamerBase.addConverter(commandSender -> Optional.ofNullable(commandSender instanceof ConsoleCommandSender || commandSender instanceof BlockCommandSender
 			? TBMCPlayer.getPlayer(new UUID(0, 0), TBMCPlayer.class) : null)); //Console & cmdblocks
 		ChromaGamerBase.addConverter(sender -> Optional.ofNullable(sender instanceof Player

@@ -5,10 +5,10 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.Component;
 import com.palmergames.bukkit.towny.Towny;
+import com.palmergames.bukkit.towny.TownyUniverse;
 import com.palmergames.bukkit.towny.exceptions.AlreadyRegisteredException;
 import com.palmergames.bukkit.towny.exceptions.NotRegisteredException;
 import com.palmergames.bukkit.towny.object.Resident;
-import com.palmergames.bukkit.towny.object.TownyUniverse;
 import org.bukkit.Bukkit;
 
 /**
@@ -41,7 +41,7 @@ public class TownyComponent extends Component<MainPlugin> {
 			TBMCCoreAPI.sendDebugMessage("Target resident name is already in use.");
 		} else
 			try {
-				TownyUniverse.getDataSource().renamePlayer(resident, newName); //Fixed in Towny 0.91.1.2
+				tu.getDataSource().renamePlayer(resident, newName); //Fixed in Towny 0.91.1.2
 			} catch (AlreadyRegisteredException e) {
 				TBMCCoreAPI.SendException("Failed to rename resident, there's already one with this name.", e);
 			} catch (NotRegisteredException e) {

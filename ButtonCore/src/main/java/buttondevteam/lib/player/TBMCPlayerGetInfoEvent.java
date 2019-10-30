@@ -24,6 +24,7 @@ public class TBMCPlayerGetInfoEvent extends Event {
 	private final InfoTarget target;
 
 	TBMCPlayerGetInfoEvent(ChromaGamerBase player, InfoTarget target) {
+		super(true);
 		this.player = player;
 		infolines = new ArrayList<>();
 		this.target = target;

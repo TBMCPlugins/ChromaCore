@@ -46,7 +46,7 @@ public @interface CommandClass {
 	String[] helpText() default {};
 
 	/**
-	 * The main permission which allows using this command (individual access can be still granted with "thorpe.command.X").
+	 * The main permission which allows using this command (individual access can be still granted with "chroma.command.X").
 	 * Used to be "tbmc.admin"
 	 */
 	String permGroup() default ""; //TODO: A single annotation instead of these two
