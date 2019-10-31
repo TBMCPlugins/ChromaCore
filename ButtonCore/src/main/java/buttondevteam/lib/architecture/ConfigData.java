@@ -89,7 +89,7 @@ public class ConfigData<T> {
 			val = primitiveDef;
 		}
 		if (!saved && Objects.equals(val, primitiveDef)) { //String needs .equals()
-			if (def == null && config != null) //In Discord's case def may be null
+			if ((def == null || this instanceof ReadOnlyConfigData) && config != null) //In Discord's case def may be null
 				config.set(path, primitiveDef);
 			else
 				set(def); //Save default value - def is always set
