@@ -6,6 +6,7 @@ import buttondevteam.lib.architecture.ConfigData;
 import buttondevteam.lib.chat.Command2;
 import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.ICommand2MC;
+import com.earth2me.essentials.Trade;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
@@ -13,9 +14,11 @@ import com.onarandombox.MultiverseCore.MultiverseCore;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 
 import java.io.*;
+import java.math.BigDecimal;
 
 public class SpawnComponent extends Component<MainPlugin> implements PluginMessageListener {
 	@Override
@@ -87,7 +90,11 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 		public void def(Player player) {
 			if (targetServer().get().length() == 0) {
 				player.sendMessage("§bTeleporting to spawn.");
-				player.teleport(spawnloc);
+				try {
+					MainPlugin.ess.getUser(player).getTeleport().teleport(spawnloc, new Trade(BigDecimal.ZERO, MainPlugin.ess), PlayerTeleportEvent.TeleportCause.COMMAND);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				return;
 			}
 			ByteArrayDataOutput out = ByteStreams.newDataOutput();
