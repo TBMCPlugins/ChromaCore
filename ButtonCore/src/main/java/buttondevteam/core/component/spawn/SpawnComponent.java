@@ -89,11 +89,15 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 		@Command2.Subcommand
 		public void def(Player player) {
 			if (targetServer().get().length() == 0) {
-				player.sendMessage("§bTeleporting to spawn.");
+				player.sendMessage("§bTeleporting to spawn...");
 				try {
-					MainPlugin.ess.getUser(player).getTeleport().teleport(spawnloc, new Trade(BigDecimal.ZERO, MainPlugin.ess), PlayerTeleportEvent.TeleportCause.COMMAND);
+					if (MainPlugin.ess != null)
+						MainPlugin.ess.getUser(player).getTeleport()
+							.teleport(spawnloc, new Trade(BigDecimal.ZERO, MainPlugin.ess), PlayerTeleportEvent.TeleportCause.COMMAND);
+					else
+						player.teleport(spawnloc);
 				} catch (Exception e) {
-					e.printStackTrace();
+					player.sendMessage("§cFailed to teleport: " + e);
 				}
 				return;
 			}

@@ -47,6 +47,7 @@ import java.util.logging.Logger;
 public class MainPlugin extends ButtonPlugin {
 	public static MainPlugin Instance;
 	public static Permission permission;
+	@Nullable
 	public static Essentials ess;
 
 	private Logger logger;
@@ -124,7 +125,8 @@ public class MainPlugin extends ButtonPlugin {
 				TBMCCoreAPI.SendException("Failed to write plugin list!", e);
 			}
 		}
-		ess = Essentials.getPlugin(Essentials.class);
+		if (getServer().getPluginManager().isPluginEnabled("Essentials"))
+			ess = Essentials.getPlugin(Essentials.class);
 		logger.info(pdf.getName() + " has been Enabled (V." + pdf.getVersion() + ") Test: " + test().get() + ".");
 	}
 

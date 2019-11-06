@@ -1,7 +1,7 @@
 name: ChromaCore
 main: buttondevteam.core.MainPlugin
 version: 1.0
-author: TBMCPlugins
+author: NorbiPeti
 commands:
   updateplugin:
     description: Update a TBMC plugin
@@ -22,3 +22,4 @@ softdepend:
   - Towny
   - Votifier
   - Multiverse-Core
+  - Essentials
