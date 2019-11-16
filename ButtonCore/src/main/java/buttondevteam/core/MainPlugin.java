@@ -71,7 +71,7 @@ public class MainPlugin extends ButtonPlugin {
 	}
 
 	public ConfigData<Boolean> test() {
-		return getIConfig().getData("test", true);
+		return getIConfig().getData("test", false);
 	}
 
 	@Override

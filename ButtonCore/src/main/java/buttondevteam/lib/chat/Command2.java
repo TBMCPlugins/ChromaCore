@@ -247,7 +247,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 
 	public abstract void registerCommand(TC command);
 
-	protected void registerCommand(TC command, char commandChar) {
+	protected void registerCommand(TC command, @SuppressWarnings("SameParameterValue") char commandChar) {
 		val path = command.getCommandPath();
 		int x = path.indexOf(' ');
 		val mainPath = commandChar + path.substring(0, x == -1 ? path.length() : x);
@@ -277,7 +277,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			if (ht != null) {
 				val subcommand = commandChar + path + //Add command path (class name by default)
 					(method.getName().equals("def") ? "" : " " + method.getName().replace('_', ' ').toLowerCase()); //Add method name, unless it's 'def'
-				ht = getHelpText(method, ht, subcommand);
+				ht = getParameterHelp(method, ht, subcommand);
 				subcommands.put(subcommand, new SubcommandData<>(method, command, ht)); //Result of the above (def) is that it will show the help text
 				scmdHelpList.add(subcommand);
 				nosubs = false;
@@ -299,7 +299,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		}
 	}
 
-	private String[] getHelpText(Method method, String[] ht, String subcommand) {
+	private String[] getParameterHelp(Method method, String[] ht, String subcommand) {
 		val str = method.getDeclaringClass().getResourceAsStream("/commands.yml");
 		if (str == null)
 			TBMCCoreAPI.SendException("Error while getting command data!", new Exception("Resource not found!"));
