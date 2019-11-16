@@ -16,6 +16,7 @@ import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -95,16 +96,21 @@ public class ConfigData<T> {
 				set(def); //Save default value - def is always set
 			saved = true;
 		}
+		BiFunction<Object, Object, Object> convert=(_val, _def) -> {
+			if (_val instanceof Number && _def != null)
+				_val = ChromaUtils.convertNumber((Number) _val,
+					(Class<? extends Number>) _def.getClass());
+			if (_val instanceof List && _def != null && _def.getClass().isArray())
+				_val = ((List<T>) _val).toArray((T[]) Array.newInstance(_def.getClass().getComponentType(), 0));
+			return _val;
+		};
 		if (getter != null) {
+			val = convert.apply(val, primitiveDef);
 			T hmm = getter.apply(val);
 			if (hmm == null) hmm = def; //Set if the getter returned null
 			return hmm;
 		}
-		if (val instanceof Number && def != null)
-			val = ChromaUtils.convertNumber((Number) val,
-				(Class<? extends Number>) def.getClass());
-		if (val instanceof List && def != null && def.getClass().isArray())
-			val = ((List<T>) val).toArray((T[]) Array.newInstance(def.getClass().getComponentType(), 0));
+		val = convert.apply(val, def);
 		return value = (T) val; //Always cache, if not cached yet
 	}
 
