@@ -15,7 +15,6 @@ import org.bukkit.scheduler.BukkitTask;
 import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -49,10 +48,6 @@ public class ConfigData<T> {
 	 * The config value should not change outside this instance
 	 */
 	private T value;
-	/**
-	 * Whether the default value is saved in the yaml
-	 */
-	private boolean saved = false;
 
 	//This constructor is needed because it sets the getter and setter
 	ConfigData(ConfigurationSection config, String path, T def, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter, Runnable saveAction) {
@@ -85,22 +80,25 @@ public class ConfigData<T> {
 	@SuppressWarnings("unchecked")
 	public T get() {
 		if (value != null) return value; //Speed things up
-		Object val = config == null ? null : config.get(path); //config==null: testing
-		if (val == null) {
+		Object val;
+		if (config == null || !config.isSet(path)) { //Call set() if config == null
 			val = primitiveDef;
-		}
-		if (!saved && Objects.equals(val, primitiveDef)) { //String needs .equals()
 			if (def == null && config != null) //In Discord's case def may be null
-				config.set(path, primitiveDef);
+				setInternal(primitiveDef);
 			else
 				set(def); //Save default value - def is always set
-			saved = true;
-		}
-		BiFunction<Object, Object, Object> convert=(_val, _def) -> {
-			if (_val instanceof Number && _def != null)
-				_val = ChromaUtils.convertNumber((Number) _val,
-					(Class<? extends Number>) _def.getClass());
-			if (_val instanceof List && _def != null && _def.getClass().isArray())
+		} else
+			val = config.get(path); //config==null: testing
+		if (val == null) //If it's set to null explicitly
+			val = primitiveDef;
+		BiFunction<Object, Object, Object> convert = (_val, _def) -> {
+			if (_def instanceof Number) //If we expect a number
+				if (_val instanceof Number)
+					_val = ChromaUtils.convertNumber((Number) _val,
+						(Class<? extends Number>) _def.getClass());
+				else
+					_val = _def; //If we didn't get a number, return default (which is a number)
+			else if (_val instanceof List && _def != null && _def.getClass().isArray())
 				_val = ((List<T>) _val).toArray((T[]) Array.newInstance(_def.getClass().getComponentType(), 0));
 			return _val;
 		};
@@ -121,20 +119,23 @@ public class ConfigData<T> {
 		if (setter != null && value != null)
 			val = setter.apply(value);
 		else val = value;
-		if (config != null) {
-			config.set(path, val);
-			if (!saveTasks.containsKey(config.getRoot())) {
-				synchronized (saveTasks) {
-					saveTasks.put(config.getRoot(), new SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, () -> {
-						synchronized (saveTasks) {
-							saveTasks.remove(config.getRoot());
-							saveAction.run();
-						}
-					}, 100), saveAction));
-				}
+		if (config != null)
+			setInternal(val);
+		this.value = value;
+	}
+
+	private void setInternal(Object val) {
+		config.set(path, val);
+		if (!saveTasks.containsKey(config.getRoot())) {
+			synchronized (saveTasks) {
+				saveTasks.put(config.getRoot(), new SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, () -> {
+					synchronized (saveTasks) {
+						saveTasks.remove(config.getRoot());
+						saveAction.run();
+					}
+				}, 100), saveAction));
 			}
 		}
-		this.value = value;
 	}
 
 	@AllArgsConstructor
