@@ -6,12 +6,16 @@ import buttondevteam.lib.chat.Command2MC;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Stack;
 
@@ -21,14 +25,15 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	private static Command2MC command2MC = new Command2MC();
 	@Getter(AccessLevel.PROTECTED)
 	private IHaveConfig iConfig;
+	private CommentedConfiguration yaml;
 	@Getter(AccessLevel.PROTECTED)
 	private IHaveConfig data; //TODO
-	private boolean loaded = false;
 	/**
 	 * Used to unregister components in the right order - and to reload configs
 	 */
 	@Getter
 	private Stack<Component<?>> componentStack = new Stack<>();
+	;
 
 	protected abstract void pluginEnable();
 
@@ -56,8 +61,8 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	}
 
 	private void loadConfig() {
-		var section = super.getConfig().getConfigurationSection("global");
-		if (section == null) section = super.getConfig().createSection("global");
+		var section = getConfig().getConfigurationSection("global");
+		if (section == null) section = getConfig().createSection("global");
 		iConfig = new IHaveConfig(section, this::saveConfig);
 	}
 
@@ -88,13 +93,35 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	}
 
 	public boolean justReload() {
-		if (loaded && ConfigData.saveNow(getConfig())) {
+		if (yaml != null && ConfigData.saveNow(getConfig())) {
 			getLogger().warning("Saved pending configuration changes to the file, didn't reload (try again).");
 			return false;
 		}
-		super.reloadConfig();
-		loaded = true; //Needed because for the first time it uses reloadConfig() to load it
+		yaml = new CommentedConfiguration(new File(getDataFolder(), "config.yml"));
+		yaml.load();
+		var res = getTextResource("configHelp.yml");
+		if (res == null)
+			return true;
+		var yc = YamlConfiguration.loadConfiguration(res);
+		for (var kv : yc.getValues(true).entrySet())
+			if (kv.getValue() instanceof String)
+				yaml.addComment(kv.getKey(),
+					Arrays.stream(((String) kv.getValue()).split("\n"))
+						.map(str -> "# " + str.trim()).toArray(String[]::new));
 		return true;
+	}
+
+	@Override
+	public FileConfiguration getConfig() {
+		if (yaml == null)
+			justReload();
+		return yaml;
+	}
+
+	@Override
+	public void saveConfig() {
+		if (yaml != null)
+			yaml.save();
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)

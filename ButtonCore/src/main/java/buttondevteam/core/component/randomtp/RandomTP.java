@@ -8,6 +8,8 @@ import org.bukkit.*;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.logging.Logger;
+
 // @formatter:off
 @SuppressWarnings("FieldCanBeLocal")@CommandClass
 public class RandomTP extends TBMCCommandBase
@@ -53,15 +55,15 @@ public class RandomTP extends TBMCCommandBase
 
 	public void onEnable(Component component)
 	{
-		System.out.println("Adding command");
 		TBMCChatAPI.AddCommand(component, this);
 
-		System.out.println("Getting world");
 		world = Bukkit.getWorld("World");
-		System.out.println("Getting border");
 		border = world.getWorldBorder();
-		System.out.println("Getting new location");
-		System.out.println("Success: "+newLocation()); //TODO: It takes 10-30 seconds to find a location (newLocation() was there)
+		Logger logger = component.getPlugin().getLogger();
+		logger.info("Getting new location");
+		if(border.getSize() > 100000)
+			logger.warning("World border is wide, it may take a minute...");
+		logger.info("Success: "+newLocation());
 	}
 
 	/*================================================================================================*/

@@ -20,6 +20,9 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 import java.io.*;
 import java.math.BigDecimal;
 
+/**
+ * Provides a /spawn command that works with BungeeCord. Make sure to set up on each server.
+ */
 public class SpawnComponent extends Component<MainPlugin> implements PluginMessageListener {
 	@Override
 	protected void enable() {
@@ -72,7 +75,7 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 	}
 
 	/**
-	 * Set to empty if this server is the target.
+	 * The BungeeCord server that has the spawn. Set to empty if this server is the target.
 	 */
 	private ConfigData<String> targetServer() {
 		return getConfig().getData("targetServer", "");

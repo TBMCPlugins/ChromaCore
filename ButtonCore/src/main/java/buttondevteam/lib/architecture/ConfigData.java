@@ -83,8 +83,8 @@ public class ConfigData<T> {
 		Object val;
 		if (config == null || !config.isSet(path)) { //Call set() if config == null
 			val = primitiveDef;
-			if (def == null && config != null) //In Discord's case def may be null
-				setInternal(primitiveDef);
+			if ((def == null || this instanceof ReadOnlyConfigData) && config != null) //In Discord's case def may be null
+				setInternal(primitiveDef); //If read-only then we still need to save the default value so it can be set
 			else
 				set(def); //Save default value - def is always set
 		} else

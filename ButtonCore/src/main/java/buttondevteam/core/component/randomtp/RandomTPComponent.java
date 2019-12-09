@@ -6,6 +6,7 @@ import buttondevteam.lib.architecture.Component;
 /**
  * Teleport player to random location within world border.
  * Every five players teleport to the same general area, and then a new general area is randomly selected for the next five players.
+ * Author: github.com/iiegit
  */
 public class RandomTPComponent extends Component<MainPlugin> {
 	@Override
