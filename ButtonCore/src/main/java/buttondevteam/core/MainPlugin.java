@@ -61,15 +61,25 @@ public class MainPlugin extends ButtonPlugin {
 	@Setter
 	private boolean chatHandlerEnabled = true;
 
+	/**
+	 * Sets whether the plugin should write a list of installed plugins in a txt file.
+	 * It can be useful if some other software needs to know the plugins.
+	 */
 	private ConfigData<Boolean> writePluginList() {
 		return getIConfig().getData("writePluginList", false);
 	}
 
+	/**
+	 * The chat format to use for messages from other platforms if Chroma-Chat is not installed.
+	 */
 	ConfigData<String> chatFormat() {
 		return getIConfig().getData("chatFormat", "[{origin}|" +
 			"{channel}] <{name}> {message}");
 	}
 
+	/**
+	 * Print some debug information.
+	 */
 	public ConfigData<Boolean> test() {
 		return getIConfig().getData("test", false);
 	}

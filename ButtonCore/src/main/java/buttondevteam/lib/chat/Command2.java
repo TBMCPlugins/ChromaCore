@@ -144,6 +144,17 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 	}
 
 	//Needed because permission checking may load the (perhaps offline) sender's file which is disallowed on the main thread
+
+	/**
+	 * Handles a command asynchronously
+	 *
+	 * @param sender      The command sender
+	 * @param commandline The command line the sender sent
+	 * @param sd          The subcommand data
+	 * @param subcommand  The subcommand text
+	 * @param sync        Whether the command was originally sync
+	 * @throws Exception If something's not right
+	 */
 	public void handleCommandAsync(TP sender, String commandline, SubcommandData<TC> sd, String subcommand, boolean sync) throws Exception {
 		if (sd.method == null || sd.command == null) { //Main command not registered, but we have subcommands
 			sender.sendMessage(sd.helpText);

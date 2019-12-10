@@ -28,9 +28,12 @@ public class ComponentCommand extends ICommand2MC {
 		"Temporarily enables a component. If you want to permanently enable a component, change it's 'enabled' config option.\""
 	})
 	public boolean enable(CommandSender sender, Plugin plugin, String component) {
-		if (plugin instanceof ButtonPlugin)
-			((ButtonPlugin) plugin).justReload();
-		else
+		if (plugin instanceof ButtonPlugin) {
+			if (!((ButtonPlugin) plugin).justReload()) {
+				sender.sendMessage("§cCouldn't reload config, check console.");
+				return true;
+			}
+		} else
 			plugin.reloadConfig(); //Reload config so the new config values are read - All changes are saved to disk on disable
 		return enable_disable(sender, plugin, component, true);
 	}

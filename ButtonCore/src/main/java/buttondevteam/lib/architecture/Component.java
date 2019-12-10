@@ -1,5 +1,6 @@
 package buttondevteam.lib.architecture;
 
+import buttondevteam.buttonproc.HasConfig;
 import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * Configuration is based on class name
  */
-@HasConfig //Used for obtaining javadoc
+@HasConfig(global = false) //Used for obtaining javadoc
 public abstract class Component<TP extends JavaPlugin> {
 	private static HashMap<Class<? extends Component>, Component<? extends JavaPlugin>> components = new HashMap<>();
 
@@ -141,7 +142,6 @@ public abstract class Component<TP extends JavaPlugin> {
 			//System.out.println("Done enabling "+component.getClassName());
 		} else {
 			component.disable();
-			component.plugin.saveConfig();
 			TBMCChatAPI.RemoveCommands(component);
 		}
 	}

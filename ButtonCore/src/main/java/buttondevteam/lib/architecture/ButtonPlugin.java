@@ -1,5 +1,6 @@
 package buttondevteam.lib.architecture;
 
+import buttondevteam.buttonproc.HasConfig;
 import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.Command2MC;
@@ -19,7 +20,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.Stack;
 
-@HasConfig
+@HasConfig(global = true)
 public abstract class ButtonPlugin extends JavaPlugin {
 	@Getter
 	private static Command2MC command2MC = new Command2MC();
@@ -72,7 +73,8 @@ public abstract class ButtonPlugin extends JavaPlugin {
 			pluginPreDisable();
 			ComponentManager.unregComponents(this);
 			pluginDisable();
-			saveConfig();
+			if (ConfigData.saveNow(getConfig()))
+				getLogger().info("Saved configuration changes.");
 			iConfig = null; //Clearing the hashmap is not enough, we need to update the section as well
 			TBMCChatAPI.RemoveCommands(this);
 		} catch (Exception e) {
@@ -94,27 +96,31 @@ public abstract class ButtonPlugin extends JavaPlugin {
 
 	public boolean justReload() {
 		if (yaml != null && ConfigData.saveNow(getConfig())) {
-			getLogger().warning("Saved pending configuration changes to the file, didn't reload (try again).");
+			getLogger().warning("Saved pending configuration changes to the file, didn't reload. Apply your changes again.");
 			return false;
 		}
-		yaml = new CommentedConfiguration(new File(getDataFolder(), "config.yml"));
-		yaml.load();
+		var file = new File(getDataFolder(), "config.yml");
+		var yaml = new CommentedConfiguration(file);
+		if (file.exists() && !yaml.load()) {
+			getLogger().warning("Failed to load config! Check for syntax errors.");
+			return false;
+		}
+		this.yaml = yaml;
 		var res = getTextResource("configHelp.yml");
 		if (res == null)
 			return true;
 		var yc = YamlConfiguration.loadConfiguration(res);
 		for (var kv : yc.getValues(true).entrySet())
 			if (kv.getValue() instanceof String)
-				yaml.addComment(kv.getKey(),
-					Arrays.stream(((String) kv.getValue()).split("\n"))
-						.map(str -> "# " + str.trim()).toArray(String[]::new));
+				yaml.addComment(kv.getKey(), Arrays.stream(((String) kv.getValue()).split("\n"))
+					.map(str -> "# " + str.trim()).toArray(String[]::new));
 		return true;
 	}
 
 	@Override
 	public FileConfiguration getConfig() {
 		if (yaml == null)
-			justReload();
+			justReload(); //TODO: If it fails to load, it'll probably throw an NPE
 		return yaml;
 	}
 

@@ -125,17 +125,29 @@ public class ConfigData<T> {
 	}
 
 	private void setInternal(Object val) {
+		/*//if (path.contains("Channel")) {
+		System.out.println("Setting value: " + val);
+		System.out.println("For path: " + path);
+		if(path.contains("tc.enabled"))
+			new Exception("Why does this get set on a reload?").printStackTrace();*/
 		config.set(path, val);
 		if (!saveTasks.containsKey(config.getRoot())) {
+			/*//if (path.contains("Channel"))
+			System.out.println("No save task found, adding new one");*/
 			synchronized (saveTasks) {
 				saveTasks.put(config.getRoot(), new SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, () -> {
+					/*//if (path.contains("Channel"))
+					System.out.println("Executing save task...");*/
 					synchronized (saveTasks) {
 						saveTasks.remove(config.getRoot());
 						saveAction.run();
 					}
+					/*//if (path.contains("Channel"))
+					System.out.println("Save task done");*/
 				}, 100), saveAction));
 			}
-		}
+		} /*else //if (path.contains("Channel")) - The answer is... The chat plugin goes through the chat channels on command preprocess
+			System.out.println("Found a save task");*/
 	}
 
 	@AllArgsConstructor
@@ -145,12 +157,14 @@ public class ConfigData<T> {
 	}
 
 	public static boolean saveNow(Configuration config) {
-		SaveTask st = saveTasks.get(config);
-		if (st != null) {
-			st.task.cancel();
-			saveTasks.remove(config);
-			st.saveAction.run();
-			return true;
+		synchronized (saveTasks) {
+			SaveTask st = saveTasks.get(config);
+			if (st != null) {
+				st.task.cancel();
+				saveTasks.remove(config);
+				st.saveAction.run();
+				return true;
+			}
 		}
 		return false;
 	}

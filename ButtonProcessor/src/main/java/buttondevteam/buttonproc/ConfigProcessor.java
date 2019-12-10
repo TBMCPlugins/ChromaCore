@@ -34,7 +34,12 @@ public class ConfigProcessor {
 
 	public void process(Element targetcl) {
 		if (targetcl.getModifiers().contains(Modifier.ABSTRACT)) return;
-		final String path = "components." + targetcl.getSimpleName();
+		HasConfig hasConfig = targetcl.getAnnotation(HasConfig.class);
+		if (hasConfig == null) {
+			System.out.println("That's not our HasConfig annotation...");
+			return;
+		}
+		final String path = hasConfig.global() ? "global" : "components." + targetcl.getSimpleName();
 		File file = new File(fo.toUri());
 		try {
 			if (file.exists())
