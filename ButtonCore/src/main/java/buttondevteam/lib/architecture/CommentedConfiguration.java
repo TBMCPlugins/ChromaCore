@@ -1,6 +1,5 @@
 package buttondevteam.lib.architecture;
 
-import com.palmergames.util.FileMgmt;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.file.YamlConstructor;
@@ -11,10 +10,12 @@ import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 
 /**
  * A copy of Towny's CommentedConfiguration: https://github.com/TownyAdvanced/Towny/blob/master/src/com/palmergames/bukkit/config/CommentedConfiguration.java
+ * Modified to remove dependency on the FileMgmt class
  *
  * @author dumptruckman &amp; Articdive
  */
@@ -46,7 +47,7 @@ public class CommentedConfiguration extends YamlConfiguration { //TODO: Remove F
 		return loaded;
 	}
 
-	public void save() {
+	public void save() throws IOException {
 
 		boolean saved = true;
 
@@ -61,7 +62,7 @@ public class CommentedConfiguration extends YamlConfiguration { //TODO: Remove F
 		// if there's comments to add and it saved fine, we need to add comments
 		if (!comments.isEmpty() && saved) {
 			// String array of each line in the config file
-			String[] yamlContents = FileMgmt.convertFileToString(file).split("[" + System.getProperty("line.separator") + "]");
+			String[] yamlContents = Files.readAllLines(file.toPath()).toArray(new String[0]);
 
 			// This will hold the newly formatted line
 			StringBuilder newContents = new StringBuilder();
@@ -173,7 +174,7 @@ public class CommentedConfiguration extends YamlConfiguration { //TODO: Remove F
 			while (newContents.toString().startsWith(" " + System.getProperty("line.separator"))) {
 				newContents = new StringBuilder(newContents.toString().replaceFirst(" " + System.getProperty("line.separator"), ""));
 			}
-			FileMgmt.stringToFile(newContents.toString(), file);
+			Files.write(file.toPath(), newContents.toString().getBytes());
 		}
 	}
 

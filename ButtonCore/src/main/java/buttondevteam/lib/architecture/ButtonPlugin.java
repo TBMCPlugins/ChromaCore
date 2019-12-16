@@ -7,11 +7,13 @@ import buttondevteam.lib.chat.Command2MC;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -51,7 +53,10 @@ public abstract class ButtonPlugin extends JavaPlugin {
 
 	@Override
 	public final void onEnable() {
-		loadConfig();
+		if (!loadConfig()) {
+			getLogger().warning("Please fix the issues and restart the server to load the plugin.");
+			return;
+		}
 		try {
 			pluginEnable();
 		} catch (Exception e) {
@@ -61,10 +66,14 @@ public abstract class ButtonPlugin extends JavaPlugin {
 			IHaveConfig.pregenConfig(this, null);
 	}
 
-	private void loadConfig() {
-		var section = getConfig().getConfigurationSection("global");
-		if (section == null) section = getConfig().createSection("global");
+	private boolean loadConfig() {
+		var config = getConfig();
+		if (config == null)
+			return false;
+		var section = config.getConfigurationSection("global");
+		if (section == null) section = config.createSection("global");
 		iConfig = new IHaveConfig(section, this::saveConfig);
+		return true;
 	}
 
 	@Override
@@ -101,9 +110,14 @@ public abstract class ButtonPlugin extends JavaPlugin {
 		}
 		var file = new File(getDataFolder(), "config.yml");
 		var yaml = new CommentedConfiguration(file);
-		if (file.exists() && !yaml.load()) {
-			getLogger().warning("Failed to load config! Check for syntax errors.");
-			return false;
+		if (file.exists()) {
+			try {
+				yaml.load(file);
+			} catch (IOException | InvalidConfigurationException e) {
+				getLogger().warning("Failed to load config! Check for syntax errors.");
+				e.printStackTrace();
+				return false;
+			}
 		}
 		this.yaml = yaml;
 		var res = getTextResource("configHelp.yml");
@@ -126,8 +140,12 @@ public abstract class ButtonPlugin extends JavaPlugin {
 
 	@Override
 	public void saveConfig() {
-		if (yaml != null)
-			yaml.save();
+		try {
+			if (yaml != null)
+				yaml.save();
+		} catch (Exception e) {
+			TBMCCoreAPI.SendException("Failed to save config", e);
+		}
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
