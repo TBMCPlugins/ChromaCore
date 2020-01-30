@@ -9,4 +9,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ComponentMetadata {
 	Class<? extends Component>[] depends() default {};
+
+	boolean enabledByDefault() default true;
 }

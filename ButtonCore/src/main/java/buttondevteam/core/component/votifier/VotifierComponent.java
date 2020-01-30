@@ -2,6 +2,7 @@ package buttondevteam.core.component.votifier;
 
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.architecture.Component;
+import buttondevteam.lib.architecture.ComponentMetadata;
 import buttondevteam.lib.architecture.ConfigData;
 import com.vexsoftware.votifier.model.Vote;
 import com.vexsoftware.votifier.model.VotifierEvent;
@@ -15,6 +16,7 @@ import org.bukkit.event.EventHandler;
  * Do not use (EULA)
  */
 @RequiredArgsConstructor
+@ComponentMetadata(enabledByDefault = false)
 public class VotifierComponent extends Component<MainPlugin> {
 	private final Economy economy;
 

@@ -17,6 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -38,7 +39,7 @@ public abstract class Component<TP extends JavaPlugin> {
 	private @Getter IHaveConfig data; //TODO
 
 	public final ConfigData<Boolean> shouldBeEnabled() {
-		return config.getData("enabled", true);
+		return config.getData("enabled", Optional.ofNullable(getClass().getAnnotation(ComponentMetadata.class)).map(ComponentMetadata::enabledByDefault).orElse(true));
 	}
 
 	/**

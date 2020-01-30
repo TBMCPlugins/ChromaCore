@@ -2,6 +2,7 @@ package buttondevteam.core.component.members;
 
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.architecture.Component;
+import buttondevteam.lib.architecture.ComponentMetadata;
 import buttondevteam.lib.architecture.ConfigData;
 import org.bukkit.Statistic;
 import org.bukkit.event.EventHandler;
@@ -18,6 +19,7 @@ import static buttondevteam.core.MainPlugin.permission;
 /**
  * Allows giving a 'member' group over some time elapsed OR played.
  */
+@ComponentMetadata(enabledByDefault = false)
 public class MemberComponent extends Component<MainPlugin> implements Listener {
 	/**
 	 * The permission group to give to the player

@@ -101,7 +101,8 @@ public class MainPlugin extends ButtonPlugin {
 		Component.registerComponent(this, new ChannelComponent());
 		Component.registerComponent(this, new RandomTPComponent());
 		Component.registerComponent(this, new MemberComponent());
-		Component.registerComponent(this, new SpawnComponent());
+		if (Bukkit.getPluginManager().isPluginEnabled("Multiverse-Core"))
+			Component.registerComponent(this, new SpawnComponent());
 		if (Bukkit.getPluginManager().isPluginEnabled("Towny")) //It fails to load the component class otherwise
 			Component.registerComponent(this, new TownyComponent());
 		if (Bukkit.getPluginManager().isPluginEnabled("Votifier") && economy != null)
