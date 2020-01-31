@@ -20,7 +20,7 @@ public class RestartComponent extends Component<MainPlugin> implements Listener 
 	@Override
 	public void enable() {
 		registerCommand(new ScheduledRestartCommand(this));
-		TBMCChatAPI.AddCommand(this, new PrimeRestartCommand(this));
+		registerCommand(new PrimeRestartCommand(this));
 		registerListener(this);
 		restartBroadcast = TBMCSystemChatEvent.BroadcastTarget.add("restartCountdown");
 	}

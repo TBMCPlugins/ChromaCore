@@ -4,4 +4,6 @@ public interface Command2Sender { //We don't need the 'extras' of CommandSender 
 	void sendMessage(String message);
 
 	void sendMessage(String[] message);
+
+	String getName();
 }

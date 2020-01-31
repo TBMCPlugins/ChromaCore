@@ -1,9 +1,8 @@
 package buttondevteam.core.component.randomtp;
 
-import buttondevteam.lib.architecture.Component;
+import buttondevteam.lib.chat.Command2;
 import buttondevteam.lib.chat.CommandClass;
-import buttondevteam.lib.chat.TBMCChatAPI;
-import buttondevteam.lib.chat.TBMCCommandBase;
+import buttondevteam.lib.chat.ICommand2MC;
 import org.bukkit.*;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -11,8 +10,11 @@ import org.bukkit.entity.Player;
 import java.util.logging.Logger;
 
 // @formatter:off
-@SuppressWarnings("FieldCanBeLocal")@CommandClass
-public class RandomTP extends TBMCCommandBase
+@SuppressWarnings("FieldCanBeLocal")@CommandClass(helpText = {
+	"§6---- Random Teleport ----",
+	"Teleport player to random location within world border. Every five players teleport to the same general area, and then a new general area is randomly selected for the next five players."
+})
+public class RandomTP extends ICommand2MC
 {
 	private final int 		radius = 70; //set how far apart the five teleport positions are
 	
@@ -53,10 +55,8 @@ public class RandomTP extends TBMCCommandBase
 
 	/*================================================================================================*/
 
-	public void onEnable(Component component)
+	public void onEnable(RandomTPComponent component)
 	{
-		TBMCChatAPI.AddCommand(component, this);
-
 		world = Bukkit.getWorld("World");
 		border = world.getWorldBorder();
 		Logger logger = component.getPlugin().getLogger();
@@ -65,25 +65,13 @@ public class RandomTP extends TBMCCommandBase
 			logger.warning("World border is wide, it may take a minute...");
 		logger.info("Success: "+newLocation());
 	}
-
-	/*================================================================================================*/
-
-	public String[] GetHelpText(String alias)
-	{
-		return new String[]
-				{
-						"§6---- Random Teleport ----",
-						"Teleport player to random location within world border. Every five players teleport to the same general area, and then a new general area is randomly selected for the next five players."
-				};
-	}
 	
 	/*================================================================================================*/
-		
-	public boolean OnCommand(CommandSender sender, String command, String[] args)
+
+	@Command2.Subcommand
+	public boolean def(CommandSender sender, Player player)
 	{
-		if (args.length == 0) 	return false;
-		
-		if (sender.isOp()) 		return rtp(Bukkit.getPlayer(args[0]));
+		if (sender.isOp()) 		return rtp(player);
 		
 		else					sender.sendMessage("§7 hmm, " + sender.getName() + "... " + sender.getName() + "... nope, no operator permissions.");
 		

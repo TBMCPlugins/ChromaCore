@@ -4,7 +4,6 @@ import buttondevteam.buttonproc.HasConfig;
 import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.Command2MC;
-import buttondevteam.lib.chat.TBMCChatAPI;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -85,7 +84,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 			if (ConfigData.saveNow(getConfig()))
 				getLogger().info("Saved configuration changes.");
 			iConfig = null; //Clearing the hashmap is not enough, we need to update the section as well
-			TBMCChatAPI.RemoveCommands(this);
+			//TBMCChatAPI.RemoveCommands(this); - TODO
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Error while disabling plugin " + getName() + "!", e);
 		}

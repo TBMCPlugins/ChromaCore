@@ -13,7 +13,9 @@ import buttondevteam.lib.architecture.ComponentMetadata;
 public class RandomTPComponent extends Component<MainPlugin> {
 	@Override
 	protected void enable() {
-		new RandomTP().onEnable(this); //It registers it's command
+		var rtp = new RandomTP();
+		registerCommand(rtp);
+		rtp.onEnable(this);
 	}
 
 	@Override

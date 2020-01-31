@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.TabCompleteEvent;
@@ -16,7 +17,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.UUID;
 import java.util.function.Function;
 
 public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implements Listener {
@@ -26,7 +26,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		var perm = "chroma.command." + command.getCommandPath().replace(' ', '.');
 		if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
 			Bukkit.getPluginManager().addPermission(new Permission(perm,
-				modOnly(command) ? PermissionDefault.OP : PermissionDefault.TRUE)); //Allow commands by default, unless it's mod only - TODO: Test
+				PermissionDefault.TRUE)); //Allow commands by default, it will check mod-only
 		for (val method : command.getClass().getMethods()) {
 			if (!method.isAnnotationPresent(Subcommand.class)) continue;
 			String pg = permGroup(command, method);
@@ -34,7 +34,6 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			perm = "chroma." + pg;
 			if (Bukkit.getPluginManager().getPermission(perm) == null) //It may occur multiple times
 				Bukkit.getPluginManager().addPermission(new Permission(perm,
-					//pg.equals(Subcommand.MOD_GROUP) ? PermissionDefault.OP : PermissionDefault.TRUE)); //Allow commands by default, unless it's mod only
 					PermissionDefault.OP)); //Do not allow any commands that belong to a group
 		}
 	}
@@ -50,16 +49,18 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		boolean p = true;
 		String[] perms = {
 			"chroma.command." + command.getCommandPath().replace(' ', '.'),
-			(pg = permGroup(command, method)).length() > 0 ? "chroma." + pg : null,
-			modOnly(command) ? "tbmc.admin" : null
+			(pg = permGroup(command, method)).length() > 0 ? "chroma." + pg : null
 		};
 		for (String perm : perms) {
 			if (perm != null) {
 				if (p) { //Use OfflinePlayer to avoid fetching player data
 					if (sender instanceof OfflinePlayer)
-						p = MainPlugin.permission.playerHas(null, (OfflinePlayer) sender, perm);
+						p = MainPlugin.permission.playerHas(sender instanceof Player ? ((Player) sender).getLocation().getWorld().getName() : null, (OfflinePlayer) sender, perm);
 					else
-						p = MainPlugin.permission.playerHas(null, Bukkit.getOfflinePlayer(new UUID(0, 0)), perm);
+						p = false; //Use sender's method
+					//System.out.println("playerHas " + perm + ": " + p);
+					//System.out.println("hasPermission: " + sender.hasPermission(perm));
+					if (!p) p = sender.hasPermission(perm);
 				} else break; //If any of the permissions aren't granted then don't allow
 			}
 		}
@@ -67,17 +68,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	}
 
 	/**
-	 * Returns true if this class or <u>any</u> of the superclasses are mod only.
-	 *
-	 * @param command The command to check
-	 * @return Whether the command is mod only
-	 */
-	private boolean modOnly(ICommand2MC command) {
-		return getAnnForValue(command.getClass(), CommandClass.class, CommandClass::modOnly, false);
-	}
-
-	/**
-	 * Returns true if this class or <u>any</u> of the superclasses are mod only.
+	 * Returns the first group found in the hierarchy starting from the command method <b>or</b> the mod group if <i>any</i></i> of the superclasses are mod only.
 	 *
 	 * @param method The subcommand to check
 	 * @return The permission group for the subcommand or empty string
@@ -87,6 +78,8 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		if (sc != null && sc.permGroup().length() > 0) {
 			return sc.permGroup();
 		}
+		if (getAnnForValue(command.getClass(), CommandClass.class, CommandClass::modOnly, false))
+			return Subcommand.MOD_GROUP;
 		return getAnnForValue(command.getClass(), CommandClass.class, CommandClass::permGroup, "");
 	}
 

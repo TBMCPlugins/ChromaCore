@@ -135,7 +135,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 				try {
 					handleCommandAsync(sender, commandline, sd, subcommand, sync);
 				} catch (Exception e) {
-					TBMCCoreAPI.SendException("Command execution failed for sender " + sender + " and message " + commandline, e);
+					TBMCCoreAPI.SendException("Command execution failed for sender " + sender.getName() + "(" + sender.getClass().getCanonicalName() + ") and message " + commandline, e);
 				}
 			});
 			return true; //We found a method

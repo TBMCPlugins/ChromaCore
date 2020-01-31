@@ -5,8 +5,6 @@ import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException;
 import buttondevteam.lib.chat.ICommand2MC;
-import buttondevteam.lib.chat.TBMCChatAPI;
-import buttondevteam.lib.chat.TBMCCommandBase;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.val;
@@ -143,7 +141,7 @@ public abstract class Component<TP extends JavaPlugin> {
 			//System.out.println("Done enabling "+component.getClassName());
 		} else {
 			component.disable();
-			TBMCChatAPI.RemoveCommands(component);
+			//TBMCChatAPI.RemoveCommands(component); - TODO
 		}
 	}
 
@@ -211,15 +209,6 @@ public abstract class Component<TP extends JavaPlugin> {
 	 */
 	protected final void registerCommand(ICommand2MC commandBase) {
 		ButtonPlugin.getCommand2MC().registerCommand(commandBase);
-	}
-
-	/**
-	 * Registers a TBMCCommand to the component. Make sure to add it to plugin.yml and use {@link buttondevteam.lib.chat.CommandClass}.
-	 *
-	 * @param commandBase Custom coded command class
-	 */
-	protected final void registerCommand(TBMCCommandBase commandBase) {
-		TBMCChatAPI.AddCommand(this, commandBase);
 	}
 
 	/**

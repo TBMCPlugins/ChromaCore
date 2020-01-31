@@ -1,9 +1,8 @@
 package buttondevteam.lib.architecture;
 
-import lombok.AccessLevel;
-import lombok.Setter;
 import lombok.val;
 import org.bukkit.configuration.ConfigurationSection;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,14 +11,25 @@ import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 public class ListConfigData<T> extends ConfigData<ListConfigData.List<T>> {
+	@SuppressWarnings("unchecked")
 	ListConfigData(ConfigurationSection config, String path, List<T> def, Runnable saveAction) {
-		super(config, path, def, def, saveAction);
+		super(config, path, def, new ArrayList<>(def), list -> {
+			var l = new List<>((ArrayList<T>) list);
+			l.listConfig = def.listConfig;
+			return l;
+		}, ArrayList::new, saveAction);
 		def.listConfig = this; //Can't make the List class non-static or pass this in the super() constructor
 	}
 
 	public static class List<T> extends ArrayList<T> {
-		@Setter(AccessLevel.PACKAGE)
-		ListConfigData<T> listConfig;
+		private ListConfigData<T> listConfig;
+
+		public List(@NotNull Collection<? extends T> c) {
+			super(c);
+		}
+
+		public List() {
+		}
 
 		private void update() {
 			listConfig.set(this); //Update the config model and start save task if needed

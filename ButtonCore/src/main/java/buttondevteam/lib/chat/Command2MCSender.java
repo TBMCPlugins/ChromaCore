@@ -17,4 +17,9 @@ public class Command2MCSender implements Command2Sender {
 	public void sendMessage(String[] message) {
 		sender.sendMessage(message);
 	}
+
+	@Override
+	public String getName() {
+		return sender.getName();
+	}
 }

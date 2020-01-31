@@ -73,7 +73,7 @@ public abstract class ICommand2<TP extends Command2Sender> {
 		String path = getClass().getAnnotation(CommandClass.class).path(),
 			prevpath = path = path.length() == 0 ? getFromClass.apply(getClass()) : path;
 		for (Class<?> cl = getClass().getSuperclass(); cl != null
-			&& !cl.getPackage().getName().equals(TBMCCommandBase.class.getPackage().getName()); cl = cl
+			&& !cl.getPackage().getName().equals(ICommand2MC.class.getPackage().getName()); cl = cl
 			.getSuperclass()) { //
 			String newpath;
 			if (!cl.isAnnotationPresent(CommandClass.class)
