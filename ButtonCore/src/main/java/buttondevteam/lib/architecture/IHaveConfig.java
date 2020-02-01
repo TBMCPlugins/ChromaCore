@@ -140,6 +140,21 @@ public final class IHaveConfig {
 	}
 
 	/**
+	 * This method overload should only be used with primitves or String.
+	 *
+	 * @param path The path in config to use
+	 * @param <T>  The type of this variable (only use primitives or String)
+	 * @return The data object that can be used to get or set the value
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> ListConfigData<T> getListData(String path) {
+		ConfigData<?> data = datamap.get(path);
+		if (data == null)
+			datamap.put(path, data = new ListConfigData<>(config, path, new ListConfigData.List<T>(), saveAction));
+		return (ListConfigData<T>) data;
+	}
+
+	/**
 	 * Generates the config YAML.
 	 *
 	 * @param obj       The object which has config methods

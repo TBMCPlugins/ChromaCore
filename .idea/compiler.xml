@@ -46,17 +46,17 @@
     <bytecodeTargetLevel>
       <module name="BuildConfigUpdater" target="8" />
       <module name="ButtonCore" target="1.5" />
-      <module name="ButtonCore (1) (com.github.TBMCPlugins.ButtonCore)" target="13" />
+      <module name="ButtonCore (1) (com.github.TBMCPlugins.ButtonCore)" target="11" />
       <module name="ButtonProcessor" target="8" />
       <module name="ChunkArchive" target="1.8" />
-      <module name="CorePOM" target="13" />
+      <module name="CorePOM" target="11" />
       <module name="RandomTeleport" target="1.8" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="BuildConfigUpdater" options="" />
-      <module name="ButtonCore (1) (com.github.TBMCPlugins.ButtonCore)" options="--enable-preview" />
+      <module name="ButtonCore (1) (com.github.TBMCPlugins.ButtonCore)" options="" />
       <module name="ButtonProcessor" options="-proc:none" />
     </option>
   </component>

@@ -31,7 +31,9 @@ public class TownyComponent extends Component<MainPlugin> {
 	 */
 	public static void renameInTowny(String oldName, String newName) {
 		if (!ComponentManager.isEnabled(TownyComponent.class))
-			return; TownyUniverse tu = Towny.getPlugin(Towny.class).getTownyUniverse();
+			return;
+		Bukkit.getLogger().info("Renaming" + oldName + " in Towny to " + newName);
+		TownyUniverse tu = Towny.getPlugin(Towny.class).getTownyUniverse();
 		Resident resident = tu.getResidentMap().get(oldName.toLowerCase()); //The map keys are lowercase
 		if (resident == null) {
 			Bukkit.getLogger().warning("Resident not found - couldn't rename in Towny.");
@@ -42,6 +44,7 @@ public class TownyComponent extends Component<MainPlugin> {
 		} else
 			try {
 				tu.getDataSource().renamePlayer(resident, newName); //Fixed in Towny 0.91.1.2
+				Bukkit.getLogger().info("Renaming done.");
 			} catch (AlreadyRegisteredException e) {
 				TBMCCoreAPI.SendException("Failed to rename resident, there's already one with this name.", e);
 			} catch (NotRegisteredException e) {

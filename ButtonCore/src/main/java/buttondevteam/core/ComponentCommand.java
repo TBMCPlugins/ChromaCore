@@ -23,21 +23,33 @@ public class ComponentCommand extends ICommand2MC {
 		getManager().addParamConverter(Plugin.class, arg -> Bukkit.getPluginManager().getPlugin(arg), "Plugin not found!");
 	}
 
-	@Subcommand
+	@Subcommand(helpText = {
+		"Enable component",
+		"Temporarily enables a component. If you want to permanently enable a component, change it's 'enabled' config option.\""
+	})
 	public boolean enable(CommandSender sender, Plugin plugin, String component) {
-		if (plugin instanceof ButtonPlugin)
-			((ButtonPlugin) plugin).justReload();
-		else
+		if (plugin instanceof ButtonPlugin) {
+			if (!((ButtonPlugin) plugin).justReload()) {
+				sender.sendMessage("§cCouldn't reload config, check console.");
+				return true;
+			}
+		} else
 			plugin.reloadConfig(); //Reload config so the new config values are read - All changes are saved to disk on disable
 		return enable_disable(sender, plugin, component, true);
 	}
 
-	@Subcommand
+	@Subcommand(helpText = {
+		"Disable component",
+		"Temporarily disables a component. If you want to permanently disable a component, change it's 'enabled' config option."
+	})
 	public boolean disable(CommandSender sender, Plugin plugin, String component) {
 		return enable_disable(sender, plugin, component, false);
 	}
 
-	@Subcommand
+	@Subcommand(helpText = {
+		"List components",
+		"Lists all of the registered Chroma components"
+	})
 	public boolean list(CommandSender sender, @Command2.OptionalArg String plugin) {
 		sender.sendMessage("§6List of components:");
 		Component.getComponents().values().stream().filter(c -> plugin == null || c.getPlugin().getName().equalsIgnoreCase(plugin)) //If plugin is null, don't check

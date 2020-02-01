@@ -6,6 +6,7 @@ import buttondevteam.lib.architecture.ConfigData;
 import buttondevteam.lib.chat.Command2;
 import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.ICommand2MC;
+import com.earth2me.essentials.Trade;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
@@ -13,10 +14,15 @@ import com.onarandombox.MultiverseCore.MultiverseCore;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 
 import java.io.*;
+import java.math.BigDecimal;
 
+/**
+ * Provides a /spawn command that works with BungeeCord. Make sure to set up on each server.
+ */
 public class SpawnComponent extends Component<MainPlugin> implements PluginMessageListener {
 	@Override
 	protected void enable() {
@@ -69,7 +75,7 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 	}
 
 	/**
-	 * Set to empty if this server is the target.
+	 * The BungeeCord server that has the spawn. Set to empty if this server is the target.
 	 */
 	private ConfigData<String> targetServer() {
 		return getConfig().getData("targetServer", "");
@@ -86,8 +92,16 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 		@Command2.Subcommand
 		public void def(Player player) {
 			if (targetServer().get().length() == 0) {
-				player.sendMessage("§bTeleporting to spawn.");
-				player.teleport(spawnloc);
+				player.sendMessage("§bTeleporting to spawn...");
+				try {
+					if (MainPlugin.ess != null)
+						MainPlugin.ess.getUser(player).getTeleport()
+							.teleport(spawnloc, new Trade(BigDecimal.ZERO, MainPlugin.ess), PlayerTeleportEvent.TeleportCause.COMMAND);
+					else
+						player.teleport(spawnloc);
+				} catch (Exception e) {
+					player.sendMessage("§cFailed to teleport: " + e);
+				}
 				return;
 			}
 			ByteArrayDataOutput out = ByteStreams.newDataOutput();

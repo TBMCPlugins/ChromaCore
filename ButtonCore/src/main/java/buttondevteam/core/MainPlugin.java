@@ -47,6 +47,7 @@ import java.util.logging.Logger;
 public class MainPlugin extends ButtonPlugin {
 	public static MainPlugin Instance;
 	public static Permission permission;
+	@Nullable
 	public static Essentials ess;
 
 	private Logger logger;
@@ -60,18 +61,37 @@ public class MainPlugin extends ButtonPlugin {
 	@Setter
 	private boolean chatHandlerEnabled = true;
 
+	/**
+	 * Sets whether the plugin should write a list of installed plugins in a txt file.
+	 * It can be useful if some other software needs to know the plugins.
+	 */
 	private ConfigData<Boolean> writePluginList() {
 		return getIConfig().getData("writePluginList", false);
 	}
 
+	/**
+	 * The chat format to use for messages from other platforms if Chroma-Chat is not installed.
+	 */
 	ConfigData<String> chatFormat() {
 		return getIConfig().getData("chatFormat", "[{origin}|" +
 			"{channel}] <{name}> {message}");
 	}
 
+	/**
+	 * Print some debug information.
+	 */
 	public ConfigData<Boolean> test() {
-		return getIConfig().getData("test", true);
+		return getIConfig().getData("test", false);
 	}
+
+	/*
+	 * By default, the plugin uses Vault for all command permission checks, but this can have issues (with PEX for example) where default permissions aren't granted.
+	 * When this setting is off, the plugin uses Bukkit's built-in way of handling permissions, which usually works fine for players.
+	 * You can also grant chroma.command.* to each player (mod-only commands need another permission, chroma.mod).
+	 */
+	/*public ConfigData<Boolean> useVaultForCommands() {
+		return getIConfig().getData("useVaultForCommands", true);
+	}*/
 
 	@Override
 	public void pluginEnable() {
@@ -90,7 +110,8 @@ public class MainPlugin extends ButtonPlugin {
 		Component.registerComponent(this, new ChannelComponent());
 		Component.registerComponent(this, new RandomTPComponent());
 		Component.registerComponent(this, new MemberComponent());
-		Component.registerComponent(this, new SpawnComponent());
+		if (Bukkit.getPluginManager().isPluginEnabled("Multiverse-Core"))
+			Component.registerComponent(this, new SpawnComponent());
 		if (Bukkit.getPluginManager().isPluginEnabled("Towny")) //It fails to load the component class otherwise
 			Component.registerComponent(this, new TownyComponent());
 		if (Bukkit.getPluginManager().isPluginEnabled("Votifier") && economy != null)
@@ -124,7 +145,8 @@ public class MainPlugin extends ButtonPlugin {
 				TBMCCoreAPI.SendException("Failed to write plugin list!", e);
 			}
 		}
-		ess = Essentials.getPlugin(Essentials.class);
+		if (getServer().getPluginManager().isPluginEnabled("Essentials"))
+			ess = Essentials.getPlugin(Essentials.class);
 		logger.info(pdf.getName() + " has been Enabled (V." + pdf.getVersion() + ") Test: " + test().get() + ".");
 	}
 

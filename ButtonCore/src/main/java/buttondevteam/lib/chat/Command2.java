@@ -135,7 +135,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 				try {
 					handleCommandAsync(sender, commandline, sd, subcommand, sync);
 				} catch (Exception e) {
-					TBMCCoreAPI.SendException("Command execution failed for sender " + sender + " and message " + commandline, e);
+					TBMCCoreAPI.SendException("Command execution failed for sender " + sender.getName() + "(" + sender.getClass().getCanonicalName() + ") and message " + commandline, e);
 				}
 			});
 			return true; //We found a method
@@ -144,6 +144,17 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 	}
 
 	//Needed because permission checking may load the (perhaps offline) sender's file which is disallowed on the main thread
+
+	/**
+	 * Handles a command asynchronously
+	 *
+	 * @param sender      The command sender
+	 * @param commandline The command line the sender sent
+	 * @param sd          The subcommand data
+	 * @param subcommand  The subcommand text
+	 * @param sync        Whether the command was originally sync
+	 * @throws Exception If something's not right
+	 */
 	public void handleCommandAsync(TP sender, String commandline, SubcommandData<TC> sd, String subcommand, boolean sync) throws Exception {
 		if (sd.method == null || sd.command == null) { //Main command not registered, but we have subcommands
 			sender.sendMessage(sd.helpText);
@@ -247,7 +258,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 
 	public abstract void registerCommand(TC command);
 
-	protected void registerCommand(TC command, char commandChar) {
+	protected void registerCommand(TC command, @SuppressWarnings("SameParameterValue") char commandChar) {
 		val path = command.getCommandPath();
 		int x = path.indexOf(' ');
 		val mainPath = commandChar + path.substring(0, x == -1 ? path.length() : x);
@@ -277,7 +288,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			if (ht != null) {
 				val subcommand = commandChar + path + //Add command path (class name by default)
 					(method.getName().equals("def") ? "" : " " + method.getName().replace('_', ' ').toLowerCase()); //Add method name, unless it's 'def'
-				ht = getHelpText(method, ht, subcommand);
+				ht = getParameterHelp(method, ht, subcommand);
 				subcommands.put(subcommand, new SubcommandData<>(method, command, ht)); //Result of the above (def) is that it will show the help text
 				scmdHelpList.add(subcommand);
 				nosubs = false;
@@ -299,7 +310,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		}
 	}
 
-	private String[] getHelpText(Method method, String[] ht, String subcommand) {
+	private String[] getParameterHelp(Method method, String[] ht, String subcommand) {
 		val str = method.getDeclaringClass().getResourceAsStream("/commands.yml");
 		if (str == null)
 			TBMCCoreAPI.SendException("Error while getting command data!", new Exception("Resource not found!"));

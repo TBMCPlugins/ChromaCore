@@ -15,7 +15,7 @@ import org.bukkit.scheduler.BukkitTask;
 import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -32,7 +32,7 @@ public class ConfigData<T> {
 	@Getter
 	@Setter(AccessLevel.PACKAGE)
 	private String path;
-	private final T def;
+	protected final T def;
 	private final Object primitiveDef;
 	private final Runnable saveAction;
 	/**
@@ -48,10 +48,6 @@ public class ConfigData<T> {
 	 * The config value should not change outside this instance
 	 */
 	private T value;
-	/**
-	 * Whether the default value is saved in the yaml
-	 */
-	private boolean saved = false;
 
 	//This constructor is needed because it sets the getter and setter
 	ConfigData(ConfigurationSection config, String path, T def, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter, Runnable saveAction) {
@@ -84,27 +80,35 @@ public class ConfigData<T> {
 	@SuppressWarnings("unchecked")
 	public T get() {
 		if (value != null) return value; //Speed things up
-		Object val = config == null ? null : config.get(path); //config==null: testing
-		if (val == null) {
+		Object val;
+		if (config == null || !config.isSet(path)) { //Call set() if config == null
 			val = primitiveDef;
-		}
-		if (!saved && Objects.equals(val, primitiveDef)) { //String needs .equals()
 			if ((def == null || this instanceof ReadOnlyConfigData) && config != null) //In Discord's case def may be null
-				config.set(path, primitiveDef);
+				setInternal(primitiveDef); //If read-only then we still need to save the default value so it can be set
 			else
 				set(def); //Save default value - def is always set
-			saved = true;
-		}
+		} else
+			val = config.get(path); //config==null: testing
+		if (val == null) //If it's set to null explicitly
+			val = primitiveDef;
+		BiFunction<Object, Object, Object> convert = (_val, _def) -> {
+			if (_def instanceof Number) //If we expect a number
+				if (_val instanceof Number)
+					_val = ChromaUtils.convertNumber((Number) _val,
+						(Class<? extends Number>) _def.getClass());
+				else
+					_val = _def; //If we didn't get a number, return default (which is a number)
+			else if (_val instanceof List && _def != null && _def.getClass().isArray())
+				_val = ((List<T>) _val).toArray((T[]) Array.newInstance(_def.getClass().getComponentType(), 0));
+			return _val;
+		};
 		if (getter != null) {
+			val = convert.apply(val, primitiveDef);
 			T hmm = getter.apply(val);
 			if (hmm == null) hmm = def; //Set if the getter returned null
 			return hmm;
 		}
-		if (val instanceof Number && def != null)
-			val = ChromaUtils.convertNumber((Number) val,
-				(Class<? extends Number>) def.getClass());
-		if (val instanceof List && def != null && def.getClass().isArray())
-			val = ((List<T>) val).toArray((T[]) Array.newInstance(def.getClass().getComponentType(), 0));
+		val = convert.apply(val, def);
 		return value = (T) val; //Always cache, if not cached yet
 	}
 
@@ -115,20 +119,23 @@ public class ConfigData<T> {
 		if (setter != null && value != null)
 			val = setter.apply(value);
 		else val = value;
-		if (config != null) {
-			config.set(path, val);
-			if (!saveTasks.containsKey(config.getRoot())) {
-				synchronized (saveTasks) {
-					saveTasks.put(config.getRoot(), new SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, () -> {
-						synchronized (saveTasks) {
-							saveTasks.remove(config.getRoot());
-							saveAction.run();
-						}
-					}, 100), saveAction));
-				}
+		if (config != null)
+			setInternal(val);
+		this.value = value;
+	}
+
+	private void setInternal(Object val) {
+		config.set(path, val);
+		if (!saveTasks.containsKey(config.getRoot())) {
+			synchronized (saveTasks) {
+				saveTasks.put(config.getRoot(), new SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, () -> {
+					synchronized (saveTasks) {
+						saveTasks.remove(config.getRoot());
+						saveAction.run();
+					}
+				}, 100), saveAction));
 			}
 		}
-		this.value = value;
 	}
 
 	@AllArgsConstructor
@@ -138,12 +145,14 @@ public class ConfigData<T> {
 	}
 
 	public static boolean saveNow(Configuration config) {
-		SaveTask st = saveTasks.get(config);
-		if (st != null) {
-			st.task.cancel();
-			saveTasks.remove(config);
-			st.saveAction.run();
-			return true;
+		synchronized (saveTasks) {
+			SaveTask st = saveTasks.get(config);
+			if (st != null) {
+				st.task.cancel();
+				saveTasks.remove(config);
+				st.saveAction.run();
+				return true;
+			}
 		}
 		return false;
 	}

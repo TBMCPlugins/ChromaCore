@@ -2,6 +2,7 @@ package buttondevteam.core.component.members;
 
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.architecture.Component;
+import buttondevteam.lib.architecture.ComponentMetadata;
 import buttondevteam.lib.architecture.ConfigData;
 import org.bukkit.Statistic;
 import org.bukkit.event.EventHandler;
@@ -18,6 +19,7 @@ import static buttondevteam.core.MainPlugin.permission;
 /**
  * Allows giving a 'member' group over some time elapsed OR played.
  */
+@ComponentMetadata(enabledByDefault = false)
 public class MemberComponent extends Component<MainPlugin> implements Listener {
 	/**
 	 * The permission group to give to the player
@@ -62,11 +64,15 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 		if (permission != null && !permission.playerInGroup(event.getPlayer(), memberGroup().get())
 			&& (new Date(event.getPlayer().getFirstPlayed()).toInstant().plus(registeredForDays().get(), ChronoUnit.DAYS).isBefore(Instant.now())
 			|| event.getPlayer().getStatistic(playtime.getKey()) > playtime.getValue() * playedHours().get())) {
-			if (permission.playerAddGroup(null, event.getPlayer(), memberGroup().get())) {
-				event.getPlayer().sendMessage("§bYou are a member now. YEEHAW");
-				MainPlugin.Instance.getLogger().info("Added " + event.getPlayer().getName() + " as a member.");
-			} else {
-				MainPlugin.Instance.getLogger().warning("Failed to assign the member role! Please make sure the member group exists or disable the component if it's unused.");
+			try {
+				if (permission.playerAddGroup(null, event.getPlayer(), memberGroup().get())) {
+					event.getPlayer().sendMessage("§bYou are a member now. YEEHAW");
+					MainPlugin.Instance.getLogger().info("Added " + event.getPlayer().getName() + " as a member.");
+				} else {
+					MainPlugin.Instance.getLogger().warning("Failed to assign the member role! Please make sure the member group exists or disable the component if it's unused.");
+				}
+			} catch (UnsupportedOperationException e) {
+				MainPlugin.Instance.getLogger().warning("Failed to assign the member role! Groups are not supported by the permissions implementation.");
 			}
 		}
 	}

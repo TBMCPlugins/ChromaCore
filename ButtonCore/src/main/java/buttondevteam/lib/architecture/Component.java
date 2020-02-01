@@ -1,11 +1,10 @@
 package buttondevteam.lib.architecture;
 
+import buttondevteam.buttonproc.HasConfig;
 import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException;
 import buttondevteam.lib.chat.ICommand2MC;
-import buttondevteam.lib.chat.TBMCChatAPI;
-import buttondevteam.lib.chat.TBMCCommandBase;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.val;
@@ -16,13 +15,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
  * Configuration is based on class name
  */
-@HasConfig //Used for obtaining javadoc
+@HasConfig(global = false) //Used for obtaining javadoc
 public abstract class Component<TP extends JavaPlugin> {
 	private static HashMap<Class<? extends Component>, Component<? extends JavaPlugin>> components = new HashMap<>();
 
@@ -37,7 +37,7 @@ public abstract class Component<TP extends JavaPlugin> {
 	private @Getter IHaveConfig data; //TODO
 
 	public final ConfigData<Boolean> shouldBeEnabled() {
-		return config.getData("enabled", true);
+		return config.getData("enabled", Optional.ofNullable(getClass().getAnnotation(ComponentMetadata.class)).map(ComponentMetadata::enabledByDefault).orElse(true));
 	}
 
 	/**
@@ -141,8 +141,7 @@ public abstract class Component<TP extends JavaPlugin> {
 			//System.out.println("Done enabling "+component.getClassName());
 		} else {
 			component.disable();
-			component.plugin.saveConfig();
-			TBMCChatAPI.RemoveCommands(component);
+			//TBMCChatAPI.RemoveCommands(component); - TODO
 		}
 	}
 
@@ -210,15 +209,6 @@ public abstract class Component<TP extends JavaPlugin> {
 	 */
 	protected final void registerCommand(ICommand2MC commandBase) {
 		ButtonPlugin.getCommand2MC().registerCommand(commandBase);
-	}
-
-	/**
-	 * Registers a TBMCCommand to the component. Make sure to add it to plugin.yml and use {@link buttondevteam.lib.chat.CommandClass}.
-	 *
-	 * @param commandBase Custom coded command class
-	 */
-	protected final void registerCommand(TBMCCommandBase commandBase) {
-		TBMCChatAPI.AddCommand(this, commandBase);
 	}
 
 	/**

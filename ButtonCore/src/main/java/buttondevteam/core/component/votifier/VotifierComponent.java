@@ -2,6 +2,7 @@ package buttondevteam.core.component.votifier;
 
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.architecture.Component;
+import buttondevteam.lib.architecture.ComponentMetadata;
 import buttondevteam.lib.architecture.ConfigData;
 import com.vexsoftware.votifier.model.Vote;
 import com.vexsoftware.votifier.model.VotifierEvent;
@@ -15,6 +16,7 @@ import org.bukkit.event.EventHandler;
  * Do not use (EULA)
  */
 @RequiredArgsConstructor
+@ComponentMetadata(enabledByDefault = false)
 public class VotifierComponent extends Component<MainPlugin> {
 	private final Economy economy;
 
@@ -39,11 +41,11 @@ public class VotifierComponent extends Component<MainPlugin> {
 		getPlugin().getLogger().info("Vote: " + vote);
 		org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(vote.getUsername());
 		Player p = Bukkit.getPlayer(vote.getUsername());
-		if (op != null) {
+		/*if (op != null) {
 			economy.depositPlayer(op, rewardAmount().get());
 		}
 		if (p != null) {
 			p.sendMessage("§bThanks for voting! $50 was added to your account.");
-		}
+		}*/
 	}
 }

@@ -1,5 +1,8 @@
 package buttondevteam.buttonproc;
 
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
+
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -10,29 +13,40 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 
 public class ConfigProcessor {
 	private final ProcessingEnvironment procEnv;
-	private final FileWriter sw;
+	private final YamlConfiguration yc = new YamlConfiguration();
+	private final FileObject fo;
 
 	public ConfigProcessor(ProcessingEnvironment procEnv) {
+		FileObject fo1;
 		this.procEnv = procEnv;
-		FileWriter sw = null;
 		try {
-			FileObject file = procEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "configHelp.md");
-			sw = new FileWriter(new File(file.toUri()));
-			System.out.println(file.toUri());
+			fo1 = procEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "configHelp.yml");
 		} catch (IOException e) {
 			e.printStackTrace();
+			fo1 = null;
 		}
-		this.sw = sw;
+		this.fo = fo1;
 	}
 
 	public void process(Element targetcl) {
 		if (targetcl.getModifiers().contains(Modifier.ABSTRACT)) return;
-		final String path = "components." + targetcl.getSimpleName();
+		HasConfig hasConfig = targetcl.getAnnotation(HasConfig.class);
+		if (hasConfig == null) {
+			System.out.println("That's not our HasConfig annotation...");
+			return;
+		}
+		final String path = hasConfig.global() ? "global" : "components." + targetcl.getSimpleName();
+		File file = new File(fo.toUri());
+		try {
+			if (file.exists())
+				yc.load(file);
+		} catch (IOException | InvalidConfigurationException e) {
+			e.printStackTrace();
+		}
 		for (Element e : targetcl.getEnclosedElements()) {
 			/*System.out.println("Element: "+e);
 			System.out.println("Type: "+e.getClass()+" - "+e.getKind());
@@ -49,30 +63,18 @@ public class ConfigProcessor {
 			String doc = procEnv.getElementUtils().getDocComment(e);
 			if (doc == null) continue;
 			System.out.println("DOC: " + doc);
-			try {
-				sw.append(path).append(".").append(String.valueOf(e.getSimpleName())).append(System.lineSeparator()).append(System.lineSeparator());
-				sw.append(doc.trim()).append(System.lineSeparator()).append(System.lineSeparator());
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
+			yc.set(path + "." + e.getSimpleName(), doc.trim());
 		}
 		String javadoc = procEnv.getElementUtils().getDocComment(targetcl);
+		if (javadoc != null) {
+			System.out.println("JAVADOC");
+			System.out.println(javadoc.trim());
+			yc.set(path, javadoc.trim());
+		}
 		try {
-			if (javadoc != null) {
-				System.out.println("JAVADOC");
-				System.out.println(javadoc.trim());
-				sw.append(path).append(System.lineSeparator()).append(System.lineSeparator());
-				sw.append(javadoc).append(System.lineSeparator()).append(System.lineSeparator());
-			}
-			sw.flush();
+			yc.save(file);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		sw.close();
-		super.finalize();
 	}
 }
