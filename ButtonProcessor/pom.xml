@@ -23,10 +23,10 @@
     </dependencies>
     <parent>
 		<groupId>com.github.TBMCPlugins</groupId>
-		<artifactId>ButtonCore</artifactId>
+		<artifactId>ChromaCore</artifactId>
 		<version>master-SNAPSHOT</version>
 	</parent>
-	<groupId>com.github.TBMCPlugins.ButtonCore</groupId>
+	<groupId>com.github.TBMCPlugins.ChromaCore</groupId>
 	<artifactId>ButtonProcessor</artifactId>
 	<packaging>jar</packaging>
 

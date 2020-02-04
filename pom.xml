@@ -5,17 +5,17 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.TBMCPlugins</groupId>
-    <artifactId>ButtonCore</artifactId>
+    <artifactId>ChromaCore</artifactId>
     <packaging>pom</packaging>
     <version>master-SNAPSHOT</version>
     <properties>
         <lombok.version>1.18.10</lombok.version>
     </properties>
-    <name>ButtonCore Parent</name>
+    <name>Chroma Parent</name>
 
     <modules>
         <module>CorePOM</module>
-        <module>ButtonCore</module>
+        <module>Chroma-Core</module>
         <module>ButtonProcessor</module>
         <module>BuildConfigUpdater</module>
     </modules>

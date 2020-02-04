@@ -4,7 +4,7 @@
                              http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.TBMCPlugins.ButtonCore</groupId>
+    <groupId>com.github.TBMCPlugins.ChromaCore</groupId>
     <artifactId>CorePOM</artifactId>
     <packaging>pom</packaging>
     <version>master-SNAPSHOT</version>
@@ -34,7 +34,7 @@
                                 <version>${lombok.version}</version>
                             </annotationProcessorPath>
                             <annotationProcessorPath>
-                                <groupId>com.github.TBMCPlugins.ButtonCore</groupId>
+                                <groupId>com.github.TBMCPlugins.ChromaCore</groupId>
                                 <artifactId>ButtonProcessor</artifactId>
                                 <version>master-SNAPSHOT</version>
                             </annotationProcessorPath>

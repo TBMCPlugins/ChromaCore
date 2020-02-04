@@ -2,14 +2,14 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.github.TBMCPlugins.ButtonCore</groupId>
+        <groupId>com.github.TBMCPlugins.ChromaCore</groupId>
         <artifactId>CorePOM</artifactId>
         <version>master-SNAPSHOT</version>
         <relativePath>../CorePOM</relativePath>
     </parent>
-	<artifactId>ButtonCore</artifactId>
-	<name>ButtonCore</name>
-	<description>ButtonCore</description>
+	<artifactId>Chroma-Core</artifactId>
+	<name>Chroma-Core</name>
+	<description>Chroma-Core</description>
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<resources>
@@ -24,7 +24,7 @@
 				<filtering>true</filtering>
 			</resource>
 		</resources>
-		<finalName>ButtonCore</finalName>
+		<finalName>Chroma-Core</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -153,7 +153,7 @@
             <version>3.0.0</version>
 		</dependency>
 		<dependency>
-			<groupId>com.github.TBMCPlugins.ButtonCore</groupId>
+			<groupId>com.github.TBMCPlugins.ChromaCore</groupId>
 			<artifactId>ButtonProcessor</artifactId>
 			<version>master-SNAPSHOT</version>
             <scope>compile</scope>
