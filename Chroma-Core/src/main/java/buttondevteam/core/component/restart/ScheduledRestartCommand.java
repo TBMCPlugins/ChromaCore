@@ -54,7 +54,7 @@ public class ScheduledRestartCommand extends ICommand2MC {
                 restartbar.getPlayers().forEach(p -> restartbar.removePlayer(p));
 				Bukkit.spigot().restart();
 			}
-			if (restartCounter % 200 == 0)
+			if (restartCounter % 200 == 0 && Bukkit.getOnlinePlayers().size()>0)
 				TBMCChatAPI.SendSystemMessage(Channel.GlobalChat, Channel.RecipientTestResult.ALL, "§c-- The server is restarting in " + restartCounter / 20 + " seconds! (/press)", component.getRestartBroadcast());
 			restartbar.setProgress(restartCounter / (double) restarttime);
 			restartbar.setTitle(String.format("Server restart in %.2f", restartCounter / 20f));

@@ -5,6 +5,7 @@ import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.architecture.ComponentMetadata;
 import buttondevteam.lib.architecture.ConfigData;
 import org.bukkit.Statistic;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -61,9 +62,7 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		if (permission != null && !permission.playerInGroup(event.getPlayer(), memberGroup().get())
-			&& (new Date(event.getPlayer().getFirstPlayed()).toInstant().plus(registeredForDays().get(), ChronoUnit.DAYS).isBefore(Instant.now())
-			|| event.getPlayer().getStatistic(playtime.getKey()) > playtime.getValue() * playedHours().get())) {
+		if (checkMember(event.getPlayer())			&& (checkRegTime(event.getPlayer())			|| checkPlayTime(event.getPlayer()))) {
 			try {
 				if (permission.playerAddGroup(null, event.getPlayer(), memberGroup().get())) {
 					event.getPlayer().sendMessage("§bYou are a member now. YEEHAW");
@@ -75,6 +74,25 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 				MainPlugin.Instance.getLogger().warning("Failed to assign the member role! Groups are not supported by the permissions implementation.");
 			}
 		}
+	}
+
+	public boolean checkMember(Player player) {
+		return permission != null && !permission.playerInGroup(player, memberGroup().get());
+	}
+
+	public boolean checkRegTime(Player player) {
+		return new Date(player.getFirstPlayed()).toInstant().plus(registeredForDays().get(), ChronoUnit.DAYS).isBefore(Instant.now());
+	}
+
+	public boolean checkPlayTime(Player player) {
+		return player.getStatistic(playtime.getKey()) > playtime.getValue() * playedHours().get());
+	}
+
+	public long getRegTime(Player player) {
+		Instant date = new Date(player.getFirstPlayed()).toInstant().plus(registeredForDays().get(), ChronoUnit.DAYS);
+		if(date.isBefore(Instant.now()))
+			return date.toEpochMilli()-Instant.now().toEpochMilli();
+		return -1;
 	}
 
 }
