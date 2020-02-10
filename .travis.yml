@@ -12,15 +12,10 @@ jdk:
   - oraclejdk11
 sudo: true
 deploy:
-  # deploy develop to the staging environment
-  - provider: script
-    script: chmod +x deploy.sh && sh deploy.sh staging
+  - provider: releases
+    api_key:
+      secure: "T/ITeRn4JSx4HS4n44P7vy03HWmJGVpYeR6tABu8qOLrwz2MUCFu8xvYqoq4MiqIKqFIKtZHgCSWiB1WsTIJPHm9S2xYs0BFocoQDthE+eCtT2wgCHj/xdo0wBm8uktXr2hxRF5Nd2R/mfSLkoVxAM6otOoSa1SidRGKgDCJxRnsgssk5igQR+tpahZYPvuzM5xJ4G6J07cC+HHM7RLYXkkKrsK3LFugTsnNtctwmxQkm6SqzDcc8YPwoJGhj8PLbXc5S8/KaWT0//LNdypnzeIaRv+aY+ky/zLntXlw3EFOk4erTthAEMSu2x6PgX5B/paMawdwnqKul/L4ynMGojrLH8ha9KM7p/lze2bxCaf08RFVFvTQt6yzmvM1suL4KH6gAF4mKhyaU0kBeOsnTTskoxyGxvbZgdo0Y1V+Yd7w58eu8zfxnauaX7f2DEz7gH4qkSl+hC7HAFoY7m7IXkgVN6Vuv3lGdFO5S15lbGoihOPqt9T79lBxi/efiXEE4BmA1g8MeLsyN8N/EO+LqVr6xXAKJet6YtOAe/iIAqxpNDSuME1szusc6+4q3jOy6cPmB1TKsfnIKQmbT98SHc9wE4/76VLd2PlNPppa0AIG/g+qnjhjpFQxB7LnWdP+D6io9N1FYrvoOX8UVAp4XYhwUMNLUInDT/6P6j8lL7A="
+    file: 'Chroma-Core/target/Chroma-Core.jar'
     on:
-      branch: dev
-    skip_cleanup: true
-  # deploy master to production
-  - provider: script
-    script: chmod +x deploy.sh && sh deploy.sh production
-    on:
-      branch: master
+      tags: true
     skip_cleanup: true

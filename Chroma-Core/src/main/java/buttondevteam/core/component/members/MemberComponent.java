@@ -85,7 +85,7 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 	}
 
 	public boolean checkPlayTime(Player player) {
-		return player.getStatistic(playtime.getKey()) > playtime.getValue() * playedHours().get());
+		return player.getStatistic(playtime.getKey()) > playtime.getValue() * playedHours().get();
 	}
 
 	public long getRegTime(Player player) {
