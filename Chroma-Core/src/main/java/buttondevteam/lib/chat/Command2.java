@@ -114,6 +114,8 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 
 	private ArrayList<String> commandHelp = new ArrayList<>(); //Mainly needed by Discord
 
+	private char commandChar;
+
 	/**
 	 * Adds a param converter that obtains a specific object from a string parameter.
 	 * The converter may return null.
@@ -260,6 +262,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 	public abstract void registerCommand(TC command);
 
 	protected void registerCommand(TC command, @SuppressWarnings("SameParameterValue") char commandChar) {
+		this.commandChar = commandChar;
 		val path = command.getCommandPath();
 		int x = path.indexOf(' ');
 		val mainPath = commandChar + path.substring(0, x == -1 ? path.length() : x);
@@ -357,8 +360,19 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		return Collections.unmodifiableSet(subcommands.keySet());
 	}*/
 
-	public void unregisterCommand() {
-
+	/**
+	 * Unregisters all of the subcommands in the given command.
+	 *
+	 * @param command The command object
+	 */
+	public void unregisterCommand(ICommand2<TP> command) {
+		var path = command.getCommandPath();
+		for (val method : command.getClass().getMethods()) {
+			val ann = method.getAnnotation(Subcommand.class);
+			if (ann == null) continue;
+			val subcommand = commandChar + path + getCommandPath(method.getName(), ' ');
+			subcommands.remove(subcommand);
+		}
 	}
 
 	/**

@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
  * Configuration is based on class name
  */
 @HasConfig(global = false) //Used for obtaining javadoc
-public abstract class Component<TP extends ButtonPlugin> {
-	private static HashMap<Class<? extends Component>, Component<? extends JavaPlugin>> components = new HashMap<>();
+public abstract class Component<TP extends JavaPlugin> {
+	@SuppressWarnings("rawtypes") private static HashMap<Class<? extends Component>, Component<? extends JavaPlugin>> components = new HashMap<>();
 
 	@Getter
 	private boolean enabled = false;
@@ -44,11 +44,12 @@ public abstract class Component<TP extends ButtonPlugin> {
 	 * Registers a component checking it's dependencies and calling {@link #register(JavaPlugin)}.<br>
 	 * Make sure to register the dependencies first.<br>
 	 * The component will be enabled automatically, regardless of when it was registered.<br>
+	 * <b>If not using {@link ButtonPlugin}, call {@link ComponentManager#unregComponents(ButtonPlugin)} on plugin disable.</b>
 	 *
 	 * @param component The component to register
 	 * @return Whether the component is registered successfully (it may have failed to enable)
 	 */
-	public static <T extends ButtonPlugin> boolean registerComponent(T plugin, Component<T> component) {
+	public static <T extends JavaPlugin> boolean registerComponent(T plugin, Component<T> component) {
 		return registerUnregisterComponent(plugin, component, true);
 	}
 
@@ -64,11 +65,11 @@ public abstract class Component<TP extends ButtonPlugin> {
 		return registerUnregisterComponent(plugin, component, false);
 	}
 
-	public static <T extends ButtonPlugin> boolean registerUnregisterComponent(T plugin, Component<T> component, boolean register) {
+	public static <T extends JavaPlugin> boolean registerUnregisterComponent(T plugin, Component<T> component, boolean register) {
 		try {
 			val metaAnn = component.getClass().getAnnotation(ComponentMetadata.class);
 			if (metaAnn != null) {
-				Class<? extends Component>[] dependencies = metaAnn.depends();
+				@SuppressWarnings("rawtypes") Class<? extends Component>[] dependencies = metaAnn.depends();
 				for (val dep : dependencies) { //TODO: Support dependencies at enable/disable as well
 					if (!components.containsKey(dep)) {
 						plugin.getLogger().warning("Failed to " + (register ? "" : "un") + "register component " + component.getClassName() + " as a required dependency is missing/disabled: " + dep.getSimpleName());
@@ -85,7 +86,8 @@ public abstract class Component<TP extends ButtonPlugin> {
 				updateConfig(plugin, component);
 				component.register(plugin);
 				components.put(component.getClass(), component);
-				plugin.getComponentStack().push(component);
+				if (plugin instanceof ButtonPlugin)
+					((ButtonPlugin) plugin).getComponentStack().push(component);
 				if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled().get()) {
 					try { //Enable components registered after the previous ones getting enabled
 						setComponentEnabled(component, true);
@@ -138,8 +140,7 @@ public abstract class Component<TP extends ButtonPlugin> {
 			//System.out.println("Done enabling "+component.getClassName());
 		} else {
 			component.disable();
-			//TBMCChatAPI.RemoveCommands(component); - TODO
-			component.getPlugin().getCommand2MC().unregisterCommand();
+			ButtonPlugin.getCommand2MC().unregisterCommands(component);
 		}
 	}
 
@@ -160,6 +161,7 @@ public abstract class Component<TP extends ButtonPlugin> {
 	 *
 	 * @return The currently registered components
 	 */
+	@SuppressWarnings("rawtypes")
 	public static Map<Class<? extends Component>, Component<? extends JavaPlugin>> getComponents() {
 		return Collections.unmodifiableMap(components);
 	}
@@ -200,13 +202,16 @@ public abstract class Component<TP extends ButtonPlugin> {
 	protected abstract void disable();
 
 	/**
-	 * Registers a TBMCCommand to the component. Make sure to use {@link buttondevteam.lib.chat.CommandClass} and {@link buttondevteam.lib.chat.Command2.Subcommand}.
+	 * Registers a command to the component. Make sure to use {@link buttondevteam.lib.chat.CommandClass} and {@link buttondevteam.lib.chat.Command2.Subcommand}.
 	 * You don't need to register the command in plugin.yml.
 	 *
-	 * @param commandBase Custom coded command class
+	 * @param command Custom coded command class
 	 */
-	protected final <T extends ButtonPlugin<T>> void registerCommand(ICommand2MC<T> commandBase) {
-		getPlugin().getCommand2MC().registerCommand(commandBase);
+	protected final void registerCommand(ICommand2MC command) {
+		if (plugin instanceof ButtonPlugin)
+			command.registerToPlugin((ButtonPlugin) plugin);
+		command.registerToComponent(this);
+		ButtonPlugin.getCommand2MC().registerCommand(command);
 	}
 
 	/**

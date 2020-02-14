@@ -2,6 +2,7 @@ package buttondevteam.lib.chat;
 
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.architecture.ButtonPlugin;
+import buttondevteam.lib.architecture.Component;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -18,11 +19,17 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.function.Function;
 
-public class Command2MC<TP extends ButtonPlugin<TP>> extends Command2<ICommand2MC<TP>, Command2MCSender> implements Listener {
+public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implements Listener {
+	/**
+	 * Don't use directly, use the method in Component and ButtonPlugin to automatically unregister the command when needed.
+	 *
+	 * @param command The command to register
+	 */
 	@Override
-	public void registerCommand(ICommand2MC<TP> command) {
+	public void registerCommand(ICommand2MC command) {
 		super.registerCommand(command, '/');
 		var perm = "chroma.command." + command.getCommandPath().replace(' ', '.');
 		if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
@@ -47,11 +54,11 @@ public class Command2MC<TP extends ButtonPlugin<TP>> extends Command2<ICommand2M
 	}
 
 	@Override
-	public boolean hasPermission(Command2MCSender sender, ICommand2MC<TP> command, Method method) {
+	public boolean hasPermission(Command2MCSender sender, ICommand2MC command, Method method) {
 		return hasPermission(sender.getSender(), command, method);
 	}
 
-	public boolean hasPermission(CommandSender sender, ICommand2MC<TP> command, Method method) {
+	public boolean hasPermission(CommandSender sender, ICommand2MC command, Method method) {
 		if (sender instanceof ConsoleCommandSender) return true; //Always allow the console
 		String pg;
 		boolean p = true;
@@ -81,7 +88,7 @@ public class Command2MC<TP extends ButtonPlugin<TP>> extends Command2<ICommand2M
 	 * @param method The subcommand to check
 	 * @return The permission group for the subcommand or empty string
 	 */
-	private String permGroup(ICommand2MC<TP> command, Method method) {
+	private String permGroup(ICommand2MC command, Method method) {
 		val sc = method.getAnnotation(Subcommand.class);
 		if (sc != null && sc.permGroup().length() > 0) {
 			return sc.permGroup();
@@ -120,6 +127,21 @@ public class Command2MC<TP extends ButtonPlugin<TP>> extends Command2<ICommand2M
 		super.addParamConverter(cl, converter, "§c" + errormsg);
 	}
 
+	public void unregisterCommands(ButtonPlugin plugin) {
+		/*var cmds = subcommands.values().stream().map(sd -> sd.command).filter(cmd -> plugin.equals(cmd.getPlugin())).toArray(ICommand2MC[]::new);
+		for (var cmd : cmds)
+			unregisterCommand(cmd);*/
+		subcommands.values().removeIf(sd -> plugin.equals(sd.command.getPlugin()));
+	}
+
+	public void unregisterCommands(Component<?> component) {
+		/*var cmds = subcommands.values().stream().map(sd -> sd.command).filter(cmd -> component.equals(cmd.getComponent())).toArray(ICommand2MC[]::new);
+		for (var cmd : cmds)
+			unregisterCommand(cmd);*/
+		subcommands.values().removeIf(sd -> Optional.ofNullable(sd.command.getComponent())
+			.map(comp -> component.getClass().getSimpleName().equals(comp.getClass().getSimpleName())).orElse(false));
+	}
+
 	@EventHandler
 	private void handleTabComplete(TabCompleteEvent event) {
 		String commandline = event.getBuffer();
@@ -129,7 +151,7 @@ public class Command2MC<TP extends ButtonPlugin<TP>> extends Command2<ICommand2M
 			String subcommand = commandline.substring(0, i).toLowerCase();
 			if (subcommand.length() == 0 || subcommand.charAt(0) != '/') subcommand = '/' + subcommand; //Console
 			//System.out.println("Subcommand: " + subcommand);
-			SubcommandData<ICommand2MC<TP>> sd = subcommands.get(subcommand); //O(1)
+			SubcommandData<ICommand2MC> sd = subcommands.get(subcommand); //O(1)
 			if (sd == null) continue;
 			//System.out.println("ht: " + Arrays.toString(sd.helpText));
 			Arrays.stream(sd.helpText).skip(1).map(ht -> new HashMap.SimpleEntry<>(ht, subcommands.get(ht))).filter(e -> e.getValue() != null)

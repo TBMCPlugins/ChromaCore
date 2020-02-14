@@ -5,7 +5,6 @@ import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.Command2;
 import buttondevteam.lib.chat.Command2.Subcommand;
-import buttondevteam.lib.chat.Command2MC;
 import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.ICommand2MC;
 import lombok.val;
@@ -19,9 +18,8 @@ import java.util.Optional;
 	"Component command",
 	"Can be used to enable/disable/list components"
 })
-public class ComponentCommand extends ICommand2MC<MainPlugin> {
-	@Override
-	public void onRegister(Command2MC<MainPlugin> manager) {
+public class ComponentCommand extends ICommand2MC {
+	public ComponentCommand() {
 		getManager().addParamConverter(Plugin.class, arg -> Bukkit.getPluginManager().getPlugin(arg), "Plugin not found!");
 	}
 
@@ -31,7 +29,7 @@ public class ComponentCommand extends ICommand2MC<MainPlugin> {
 	})
 	public boolean enable(CommandSender sender, Plugin plugin, String component) {
 		if (plugin instanceof ButtonPlugin) {
-			if (!((ButtonPlugin<?>) plugin).justReload()) {
+			if (!((ButtonPlugin) plugin).justReload()) {
 				sender.sendMessage("§cCouldn't reload config, check console.");
 				return true;
 			}

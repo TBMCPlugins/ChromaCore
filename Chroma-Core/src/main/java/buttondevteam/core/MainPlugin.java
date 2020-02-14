@@ -44,7 +44,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-public class MainPlugin extends ButtonPlugin<MainPlugin> {
+public class MainPlugin extends ButtonPlugin {
 	public static MainPlugin Instance;
 	public static Permission permission;
 	@Nullable
@@ -117,8 +117,8 @@ public class MainPlugin extends ButtonPlugin<MainPlugin> {
 		if (Bukkit.getPluginManager().isPluginEnabled("Votifier") && economy != null)
 			Component.registerComponent(this, new VotifierComponent(economy));
 		ComponentManager.enableComponents();
-		getCommand2MC().registerCommand(new ComponentCommand());
-		getCommand2MC().registerCommand(new ChromaCommand());
+		registerCommand(new ComponentCommand());
+		registerCommand(new ChromaCommand());
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		TBMCCoreAPI.RegisterEventsForExceptions(getCommand2MC(), this);
 		ChromaGamerBase.addConverter(commandSender -> Optional.ofNullable(commandSender instanceof ConsoleCommandSender || commandSender instanceof BlockCommandSender
