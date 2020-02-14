@@ -60,6 +60,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 
 	public boolean hasPermission(CommandSender sender, ICommand2MC command, Method method) {
 		if (sender instanceof ConsoleCommandSender) return true; //Always allow the console
+		if (command == null) return true; //Allow viewing the command - it doesn't do anything anyway
 		String pg;
 		boolean p = true;
 		String[] perms = {
@@ -89,9 +90,11 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	 * @return The permission group for the subcommand or empty string
 	 */
 	private String permGroup(ICommand2MC command, Method method) {
-		val sc = method.getAnnotation(Subcommand.class);
-		if (sc != null && sc.permGroup().length() > 0) {
-			return sc.permGroup();
+		if (method != null) {
+			val sc = method.getAnnotation(Subcommand.class);
+			if (sc != null && sc.permGroup().length() > 0) {
+				return sc.permGroup();
+			}
 		}
 		if (getAnnForValue(command.getClass(), CommandClass.class, CommandClass::modOnly, false))
 			return Subcommand.MOD_GROUP;
@@ -131,14 +134,14 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		/*var cmds = subcommands.values().stream().map(sd -> sd.command).filter(cmd -> plugin.equals(cmd.getPlugin())).toArray(ICommand2MC[]::new);
 		for (var cmd : cmds)
 			unregisterCommand(cmd);*/
-		subcommands.values().removeIf(sd -> plugin.equals(sd.command.getPlugin()));
+		subcommands.values().removeIf(sd -> Optional.ofNullable(sd.command).map(ICommand2MC::getPlugin).map(plugin::equals).orElse(false));
 	}
 
 	public void unregisterCommands(Component<?> component) {
 		/*var cmds = subcommands.values().stream().map(sd -> sd.command).filter(cmd -> component.equals(cmd.getComponent())).toArray(ICommand2MC[]::new);
 		for (var cmd : cmds)
 			unregisterCommand(cmd);*/
-		subcommands.values().removeIf(sd -> Optional.ofNullable(sd.command.getComponent())
+		subcommands.values().removeIf(sd -> Optional.ofNullable(sd.command).map(ICommand2MC::getComponent)
 			.map(comp -> component.getClass().getSimpleName().equals(comp.getClass().getSimpleName())).orElse(false));
 	}
 

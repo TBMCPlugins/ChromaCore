@@ -18,6 +18,8 @@ import org.bukkit.boss.BossBar;
 import org.bukkit.command.CommandSender;
 import org.bukkit.scheduler.BukkitTask;
 
+import javax.annotation.Nonnull;
+
 @CommandClass(modOnly = true, path = "schrestart", helpText = {
 	"Scheduled restart", //
 	"This command restarts the server 1 minute after it's executed, warning players every 10 seconds.", //
@@ -31,6 +33,7 @@ public class ScheduledRestartCommand extends ICommand2MC {
 	private BukkitTask restarttask;
 	private volatile BossBar restartbar;
 	@Getter
+	@Nonnull
 	private final RestartComponent component;
 
 	@Command2.Subcommand
