@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * Configuration is based on class name
  */
 @HasConfig(global = false) //Used for obtaining javadoc
-public abstract class Component<TP extends JavaPlugin> {
+public abstract class Component<TP extends ButtonPlugin> {
 	private static HashMap<Class<? extends Component>, Component<? extends JavaPlugin>> components = new HashMap<>();
 
 	@Getter
@@ -44,12 +44,11 @@ public abstract class Component<TP extends JavaPlugin> {
 	 * Registers a component checking it's dependencies and calling {@link #register(JavaPlugin)}.<br>
 	 * Make sure to register the dependencies first.<br>
 	 * The component will be enabled automatically, regardless of when it was registered.<br>
-	 * <b>If not using {@link ButtonPlugin}, call {@link ComponentManager#unregComponents(ButtonPlugin)} on plugin disable.</b>
 	 *
 	 * @param component The component to register
 	 * @return Whether the component is registered successfully (it may have failed to enable)
 	 */
-	public static <T extends JavaPlugin> boolean registerComponent(T plugin, Component<T> component) {
+	public static <T extends ButtonPlugin> boolean registerComponent(T plugin, Component<T> component) {
 		return registerUnregisterComponent(plugin, component, true);
 	}
 
@@ -61,11 +60,11 @@ public abstract class Component<TP extends JavaPlugin> {
 	 * @param component The component to unregister
 	 * @return Whether the component is unregistered successfully (it also got disabled)
 	 */
-	public static <T extends JavaPlugin> boolean unregisterComponent(T plugin, Component<T> component) {
+	public static <T extends ButtonPlugin> boolean unregisterComponent(T plugin, Component<T> component) {
 		return registerUnregisterComponent(plugin, component, false);
 	}
 
-	public static <T extends JavaPlugin> boolean registerUnregisterComponent(T plugin, Component<T> component, boolean register) {
+	public static <T extends ButtonPlugin> boolean registerUnregisterComponent(T plugin, Component<T> component, boolean register) {
 		try {
 			val metaAnn = component.getClass().getAnnotation(ComponentMetadata.class);
 			if (metaAnn != null) {
@@ -86,8 +85,7 @@ public abstract class Component<TP extends JavaPlugin> {
 				updateConfig(plugin, component);
 				component.register(plugin);
 				components.put(component.getClass(), component);
-				if (plugin instanceof ButtonPlugin)
-					((ButtonPlugin) plugin).getComponentStack().push(component);
+				plugin.getComponentStack().push(component);
 				if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled().get()) {
 					try { //Enable components registered after the previous ones getting enabled
 						setComponentEnabled(component, true);
@@ -97,7 +95,6 @@ public abstract class Component<TP extends JavaPlugin> {
 						return true;
 					}
 				}
-				return true; //Component shouldn't be enabled
 			} else {
 				if (!components.containsKey(component.getClass()))
 					return true; //Already unregistered
@@ -111,8 +108,8 @@ public abstract class Component<TP extends JavaPlugin> {
 				}
 				component.unregister(plugin);
 				components.remove(component.getClass());
-				return true;
 			}
+			return true;
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Failed to " + (register ? "" : "un") + "register component " + component.getClassName() + "!", e);
 			return false;
@@ -125,7 +122,7 @@ public abstract class Component<TP extends JavaPlugin> {
 	 *
 	 * @param component The component to register
 	 */
-	public static void setComponentEnabled(Component component, boolean enabled) throws UnregisteredComponentException {
+	public static void setComponentEnabled(Component<?> component, boolean enabled) throws UnregisteredComponentException {
 		if (!components.containsKey(component.getClass()))
 			throw new UnregisteredComponentException(component);
 		if (component.enabled == enabled) return; //Don't do anything
@@ -142,6 +139,7 @@ public abstract class Component<TP extends JavaPlugin> {
 		} else {
 			component.disable();
 			//TBMCChatAPI.RemoveCommands(component); - TODO
+			component.getPlugin().getCommand2MC().unregisterCommand();
 		}
 	}
 
@@ -207,8 +205,8 @@ public abstract class Component<TP extends JavaPlugin> {
 	 *
 	 * @param commandBase Custom coded command class
 	 */
-	protected final void registerCommand(ICommand2MC commandBase) {
-		ButtonPlugin.getCommand2MC().registerCommand(commandBase);
+	protected final <T extends ButtonPlugin<T>> void registerCommand(ICommand2MC<T> commandBase) {
+		getPlugin().getCommand2MC().registerCommand(commandBase);
 	}
 
 	/**

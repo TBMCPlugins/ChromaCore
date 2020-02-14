@@ -1,6 +1,7 @@
 package buttondevteam.lib.chat;
 
 import buttondevteam.core.MainPlugin;
+import buttondevteam.lib.architecture.ButtonPlugin;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -19,9 +20,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.function.Function;
 
-public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implements Listener {
+public class Command2MC<TP extends ButtonPlugin<TP>> extends Command2<ICommand2MC<TP>, Command2MCSender> implements Listener {
 	@Override
-	public void registerCommand(ICommand2MC command) {
+	public void registerCommand(ICommand2MC<TP> command) {
 		super.registerCommand(command, '/');
 		var perm = "chroma.command." + command.getCommandPath().replace(' ', '.');
 		if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
@@ -29,6 +30,13 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 				PermissionDefault.TRUE)); //Allow commands by default, it will check mod-only
 		for (val method : command.getClass().getMethods()) {
 			if (!method.isAnnotationPresent(Subcommand.class)) continue;
+			var path = getCommandPath(method.getName(), '.');
+			if (path.length() > 0) {
+				var subperm = perm + path;
+				if (Bukkit.getPluginManager().getPermission(subperm) == null) //Check needed for plugin reset
+					Bukkit.getPluginManager().addPermission(new Permission(subperm,
+						PermissionDefault.TRUE)); //Allow commands by default, it will check mod-only
+			}
 			String pg = permGroup(command, method);
 			if (pg.length() == 0) continue;
 			perm = "chroma." + pg;
@@ -39,11 +47,11 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	}
 
 	@Override
-	public boolean hasPermission(Command2MCSender sender, ICommand2MC command, Method method) {
+	public boolean hasPermission(Command2MCSender sender, ICommand2MC<TP> command, Method method) {
 		return hasPermission(sender.getSender(), command, method);
 	}
 
-	public boolean hasPermission(CommandSender sender, ICommand2MC command, Method method) {
+	public boolean hasPermission(CommandSender sender, ICommand2MC<TP> command, Method method) {
 		if (sender instanceof ConsoleCommandSender) return true; //Always allow the console
 		String pg;
 		boolean p = true;
@@ -73,7 +81,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	 * @param method The subcommand to check
 	 * @return The permission group for the subcommand or empty string
 	 */
-	private String permGroup(ICommand2MC command, Method method) {
+	private String permGroup(ICommand2MC<TP> command, Method method) {
 		val sc = method.getAnnotation(Subcommand.class);
 		if (sc != null && sc.permGroup().length() > 0) {
 			return sc.permGroup();
@@ -121,7 +129,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			String subcommand = commandline.substring(0, i).toLowerCase();
 			if (subcommand.length() == 0 || subcommand.charAt(0) != '/') subcommand = '/' + subcommand; //Console
 			//System.out.println("Subcommand: " + subcommand);
-			SubcommandData<ICommand2MC> sd = subcommands.get(subcommand); //O(1)
+			SubcommandData<ICommand2MC<TP>> sd = subcommands.get(subcommand); //O(1)
 			if (sd == null) continue;
 			//System.out.println("ht: " + Arrays.toString(sd.helpText));
 			Arrays.stream(sd.helpText).skip(1).map(ht -> new HashMap.SimpleEntry<>(ht, subcommands.get(ht))).filter(e -> e.getValue() != null)

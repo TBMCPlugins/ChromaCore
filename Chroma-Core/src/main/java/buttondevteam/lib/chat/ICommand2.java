@@ -45,10 +45,13 @@ public abstract class ICommand2<TP extends Command2Sender> {
 
 	private final String path;
 	@Getter
-	private final Command2<?, TP> manager; //TIL that if I use a raw type on a variable then none of the type args will work (including what's defined on a method, not on the type)
+	private Command2<?, TP> manager; //TIL that if I use a raw type on a variable then none of the type args will work (including what's defined on a method, not on the type)
 
-	public <T extends ICommand2> ICommand2(Command2<T, TP> manager) {
+	public <T extends ICommand2<TP>> ICommand2() {
 		path = getcmdpath();
+	}
+
+	public <T extends ICommand2<TP>> void onRegister(Command2<T, TP> manager) {
 		this.manager = manager;
 	}
 

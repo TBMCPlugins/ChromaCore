@@ -12,6 +12,7 @@ import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitTask;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStreamReader;
 import java.lang.annotation.ElementType;
@@ -287,7 +288,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			var ht = command.getHelpText(method, ann);
 			if (ht != null) {
 				val subcommand = commandChar + path + //Add command path (class name by default)
-					(method.getName().equals("def") ? "" : " " + method.getName().replace('_', ' ').toLowerCase()); //Add method name, unless it's 'def'
+					getCommandPath(method.getName(), ' '); //Add method name, unless it's 'def'
 				ht = getParameterHelp(method, ht, subcommand);
 				subcommands.put(subcommand, new SubcommandData<>(method, command, ht)); //Result of the above (def) is that it will show the help text
 				scmdHelpList.add(subcommand);
@@ -355,4 +356,20 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 	/*public Set<String> getAllSubcommands() {
 		return Collections.unmodifiableSet(subcommands.keySet());
 	}*/
+
+	public void unregisterCommand() {
+
+	}
+
+	/**
+	 * It will start with the given replace char.
+	 *
+	 * @param methodName  The method's name, method.getName()
+	 * @param replaceChar The character to use between subcommands
+	 * @return The command path starting with the replace char.
+	 */
+	@NotNull
+	public String getCommandPath(String methodName, char replaceChar) {
+		return methodName.equals("def") ? "" : replaceChar + methodName.replace('_', replaceChar).toLowerCase();
+	}
 }

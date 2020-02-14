@@ -62,7 +62,7 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		if (checkMember(event.getPlayer())			&& (checkRegTime(event.getPlayer())			|| checkPlayTime(event.getPlayer()))) {
+		if (checkMember(event.getPlayer()) && (checkRegTime(event.getPlayer()) || checkPlayTime(event.getPlayer()))) {
 			try {
 				if (permission.playerAddGroup(null, event.getPlayer(), memberGroup().get())) {
 					event.getPlayer().sendMessage("§bYou are a member now. YEEHAW");
@@ -90,8 +90,8 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 
 	public long getRegTime(Player player) {
 		Instant date = new Date(player.getFirstPlayed()).toInstant().plus(registeredForDays().get(), ChronoUnit.DAYS);
-		if(date.isBefore(Instant.now()))
-			return date.toEpochMilli()-Instant.now().toEpochMilli();
+		if (date.isBefore(Instant.now()))
+			return date.toEpochMilli() - Instant.now().toEpochMilli();
 		return -1;
 	}
 

@@ -22,9 +22,9 @@ import java.util.Optional;
 import java.util.Stack;
 
 @HasConfig(global = true)
-public abstract class ButtonPlugin extends JavaPlugin {
-	@Getter
-	private static Command2MC command2MC = new Command2MC();
+public abstract class ButtonPlugin<TP extends ButtonPlugin<TP>> extends JavaPlugin {
+	@Getter //Needs to be static as we don't know the plugin when a command is handled
+	private Command2MC<TP> command2MC = new Command2MC<>();
 	@Getter(AccessLevel.PROTECTED)
 	private IHaveConfig iConfig;
 	private CommentedConfiguration yaml;

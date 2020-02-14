@@ -44,7 +44,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-public class MainPlugin extends ButtonPlugin {
+public class MainPlugin extends ButtonPlugin<MainPlugin> {
 	public static MainPlugin Instance;
 	public static Permission permission;
 	@Nullable

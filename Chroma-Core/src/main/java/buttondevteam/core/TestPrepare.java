@@ -2,13 +2,13 @@ package buttondevteam.core;
 
 import buttondevteam.core.component.channel.Channel;
 import buttondevteam.core.component.channel.ChannelComponent;
+import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.Color;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.plugin.PluginManager;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -42,7 +42,7 @@ public class TestPrepare {
 			}
 		}));
 		//noinspection unchecked
-		Component.registerComponent(Mockito.mock(JavaPlugin.class), new ChannelComponent());
+		Component.registerComponent(Mockito.mock(ButtonPlugin.class), new ChannelComponent());
 		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fg§f", Color.White, "g", null));
 	}
 }
