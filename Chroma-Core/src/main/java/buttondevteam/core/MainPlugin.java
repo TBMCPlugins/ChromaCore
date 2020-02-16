@@ -117,8 +117,8 @@ public class MainPlugin extends ButtonPlugin {
 		if (Bukkit.getPluginManager().isPluginEnabled("Votifier") && economy != null)
 			Component.registerComponent(this, new VotifierComponent(economy));
 		ComponentManager.enableComponents();
-		getCommand2MC().registerCommand(new ComponentCommand());
-		getCommand2MC().registerCommand(new ChromaCommand());
+		registerCommand(new ComponentCommand());
+		registerCommand(new ChromaCommand());
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
 		TBMCCoreAPI.RegisterEventsForExceptions(getCommand2MC(), this);
 		ChromaGamerBase.addConverter(commandSender -> Optional.ofNullable(commandSender instanceof ConsoleCommandSender || commandSender instanceof BlockCommandSender

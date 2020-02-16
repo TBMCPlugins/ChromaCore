@@ -62,37 +62,60 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		if (checkMember(event.getPlayer())			&& (checkRegTime(event.getPlayer())			|| checkPlayTime(event.getPlayer()))) {
-			try {
-				if (permission.playerAddGroup(null, event.getPlayer(), memberGroup().get())) {
-					event.getPlayer().sendMessage("§bYou are a member now. YEEHAW");
-					MainPlugin.Instance.getLogger().info("Added " + event.getPlayer().getName() + " as a member.");
-				} else {
-					MainPlugin.Instance.getLogger().warning("Failed to assign the member role! Please make sure the member group exists or disable the component if it's unused.");
-				}
-			} catch (UnsupportedOperationException e) {
-				MainPlugin.Instance.getLogger().warning("Failed to assign the member role! Groups are not supported by the permissions implementation.");
-			}
+		if (checkNotMember(event.getPlayer()) && (checkRegTime(event.getPlayer()) || checkPlayTime(event.getPlayer()))) {
+			addPlayerAsMember(event.getPlayer());
 		}
 	}
 
-	public boolean checkMember(Player player) {
+	public Boolean addPlayerAsMember(Player player) {
+		try {
+			if (permission.playerAddGroup(null, player, memberGroup().get())) {
+				player.sendMessage("§bYou are a member now!");
+				MainPlugin.Instance.getLogger().info("Added " + player.getName() + " as a member.");
+				return true;
+			} else {
+				MainPlugin.Instance.getLogger().warning("Failed to assign the member role! Please make sure the member group exists or disable the component if it's unused.");
+				return false;
+			}
+		} catch (UnsupportedOperationException e) {
+			MainPlugin.Instance.getLogger().warning("Failed to assign the member role! Groups are not supported by the permissions implementation.");
+			return null;
+		}
+	}
+
+	public boolean checkNotMember(Player player) {
 		return permission != null && !permission.playerInGroup(player, memberGroup().get());
 	}
 
 	public boolean checkRegTime(Player player) {
-		return new Date(player.getFirstPlayed()).toInstant().plus(registeredForDays().get(), ChronoUnit.DAYS).isBefore(Instant.now());
+		return getRegTime(player) == -1;
 	}
 
 	public boolean checkPlayTime(Player player) {
-		return player.getStatistic(playtime.getKey()) > playtime.getValue() * playedHours().get();
+		return getPlayTime(player) > playtime.getValue() * playedHours().get();
 	}
 
+	/**
+	 * Returns milliseconds
+	 */
 	public long getRegTime(Player player) {
 		Instant date = new Date(player.getFirstPlayed()).toInstant().plus(registeredForDays().get(), ChronoUnit.DAYS);
-		if(date.isBefore(Instant.now()))
-			return date.toEpochMilli()-Instant.now().toEpochMilli();
+		if (date.isAfter(Instant.now()))
+			return date.toEpochMilli() - Instant.now().toEpochMilli();
 		return -1;
+	}
+
+	public int getPlayTimeTotal(Player player) {
+		return player.getStatistic(playtime.getKey());
+	}
+
+	/**
+	 * Returns hours
+	 */
+	public double getPlayTime(Player player) {
+		double pt = playedHours().get() - (double) getPlayTimeTotal(player) / playtime.getValue();
+		if (pt < 0) return -1;
+		return pt;
 	}
 
 }

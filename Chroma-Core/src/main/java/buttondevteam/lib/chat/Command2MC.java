@@ -1,6 +1,8 @@
 package buttondevteam.lib.chat;
 
 import buttondevteam.core.MainPlugin;
+import buttondevteam.lib.architecture.ButtonPlugin;
+import buttondevteam.lib.architecture.Component;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -17,9 +19,15 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implements Listener {
+	/**
+	 * Don't use directly, use the method in Component and ButtonPlugin to automatically unregister the command when needed.
+	 *
+	 * @param command The command to register
+	 */
 	@Override
 	public void registerCommand(ICommand2MC command) {
 		super.registerCommand(command, '/');
@@ -29,6 +37,13 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 				PermissionDefault.TRUE)); //Allow commands by default, it will check mod-only
 		for (val method : command.getClass().getMethods()) {
 			if (!method.isAnnotationPresent(Subcommand.class)) continue;
+			var path = getCommandPath(method.getName(), '.');
+			if (path.length() > 0) {
+				var subperm = perm + path;
+				if (Bukkit.getPluginManager().getPermission(subperm) == null) //Check needed for plugin reset
+					Bukkit.getPluginManager().addPermission(new Permission(subperm,
+						PermissionDefault.TRUE)); //Allow commands by default, it will check mod-only
+			}
 			String pg = permGroup(command, method);
 			if (pg.length() == 0) continue;
 			perm = "chroma." + pg;
@@ -45,10 +60,14 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 
 	public boolean hasPermission(CommandSender sender, ICommand2MC command, Method method) {
 		if (sender instanceof ConsoleCommandSender) return true; //Always allow the console
+		if (command == null) return true; //Allow viewing the command - it doesn't do anything anyway
 		String pg;
 		boolean p = true;
+		var cmdperm = "chroma.command." + command.getCommandPath().replace(' ', '.');
+		var path = getCommandPath(method.getName(), '.');
 		String[] perms = {
-			"chroma.command." + command.getCommandPath().replace(' ', '.'),
+			path.length() > 0 ? cmdperm + path : null,
+			cmdperm,
 			(pg = permGroup(command, method)).length() > 0 ? "chroma." + pg : null
 		};
 		for (String perm : perms) {
@@ -74,9 +93,11 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	 * @return The permission group for the subcommand or empty string
 	 */
 	private String permGroup(ICommand2MC command, Method method) {
-		val sc = method.getAnnotation(Subcommand.class);
-		if (sc != null && sc.permGroup().length() > 0) {
-			return sc.permGroup();
+		if (method != null) {
+			val sc = method.getAnnotation(Subcommand.class);
+			if (sc != null && sc.permGroup().length() > 0) {
+				return sc.permGroup();
+			}
 		}
 		if (getAnnForValue(command.getClass(), CommandClass.class, CommandClass::modOnly, false))
 			return Subcommand.MOD_GROUP;
@@ -110,6 +131,21 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	@Override
 	public <T> void addParamConverter(Class<T> cl, Function<String, T> converter, String errormsg) {
 		super.addParamConverter(cl, converter, "§c" + errormsg);
+	}
+
+	public void unregisterCommands(ButtonPlugin plugin) {
+		/*var cmds = subcommands.values().stream().map(sd -> sd.command).filter(cmd -> plugin.equals(cmd.getPlugin())).toArray(ICommand2MC[]::new);
+		for (var cmd : cmds)
+			unregisterCommand(cmd);*/
+		subcommands.values().removeIf(sd -> Optional.ofNullable(sd.command).map(ICommand2MC::getPlugin).map(plugin::equals).orElse(false));
+	}
+
+	public void unregisterCommands(Component<?> component) {
+		/*var cmds = subcommands.values().stream().map(sd -> sd.command).filter(cmd -> component.equals(cmd.getComponent())).toArray(ICommand2MC[]::new);
+		for (var cmd : cmds)
+			unregisterCommand(cmd);*/
+		subcommands.values().removeIf(sd -> Optional.ofNullable(sd.command).map(ICommand2MC::getComponent)
+			.map(comp -> component.getClass().getSimpleName().equals(comp.getClass().getSimpleName())).orElse(false));
 	}
 
 	@EventHandler

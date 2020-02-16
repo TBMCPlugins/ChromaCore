@@ -4,6 +4,7 @@ import buttondevteam.buttonproc.HasConfig;
 import buttondevteam.core.ComponentManager;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.Command2MC;
+import buttondevteam.lib.chat.ICommand2MC;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -23,7 +24,7 @@ import java.util.Stack;
 
 @HasConfig(global = true)
 public abstract class ButtonPlugin extends JavaPlugin {
-	@Getter
+	@Getter //Needs to be static as we don't know the plugin when a command is handled
 	private static Command2MC command2MC = new Command2MC();
 	@Getter(AccessLevel.PROTECTED)
 	private IHaveConfig iConfig;
@@ -84,7 +85,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 			if (ConfigData.saveNow(getConfig()))
 				getLogger().info("Saved configuration changes.");
 			iConfig = null; //Clearing the hashmap is not enough, we need to update the section as well
-			//TBMCChatAPI.RemoveCommands(this); - TODO
+			getCommand2MC().unregisterCommands(this);
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Error while disabling plugin " + getName() + "!", e);
 		}
@@ -145,6 +146,16 @@ public abstract class ButtonPlugin extends JavaPlugin {
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Failed to save config", e);
 		}
+	}
+
+	/**
+	 * Registers command and sets its plugin.
+	 *
+	 * @param command The command to register
+	 */
+	protected void registerCommand(ICommand2MC command) {
+		command.registerToPlugin(this);
+		getCommand2MC().registerCommand(command);
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
