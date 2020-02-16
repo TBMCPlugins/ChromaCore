@@ -186,6 +186,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			params.add(cg);
 		else {
 			sender.sendMessage("§cYou need to be a " + sendertype.getSimpleName() + " to use this command.");
+			sender.sendMessage(sd.helpText); //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
 			return;
 		}
 		val paramArr = sd.method.getParameters();

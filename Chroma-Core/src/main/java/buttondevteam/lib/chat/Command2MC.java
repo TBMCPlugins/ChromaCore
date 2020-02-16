@@ -63,8 +63,11 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		if (command == null) return true; //Allow viewing the command - it doesn't do anything anyway
 		String pg;
 		boolean p = true;
+		var cmdperm = "chroma.command." + command.getCommandPath().replace(' ', '.');
+		var path = getCommandPath(method.getName(), '.');
 		String[] perms = {
-			"chroma.command." + command.getCommandPath().replace(' ', '.'),
+			path.length() > 0 ? cmdperm + path : null,
+			cmdperm,
 			(pg = permGroup(command, method)).length() > 0 ? "chroma." + pg : null
 		};
 		for (String perm : perms) {
