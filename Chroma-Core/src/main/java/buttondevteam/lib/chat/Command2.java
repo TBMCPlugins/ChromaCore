@@ -94,7 +94,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 					helpText[0] = "§6---- Subcommands ----"; //TODO: There may be more to the help text
 					int i = 1;
 					for (Iterator<String> iterator = ht.iterator();
-					     iterator.hasNext() && i < helpText.length; i++) {
+						 iterator.hasNext() && i < helpText.length; i++) {
 						String e = iterator.next();
 						helpText[i] = e;
 					}
@@ -221,6 +221,18 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 				continue;
 			} else if (Number.class.isAssignableFrom(cl) || cl.isPrimitive()) {
 				try {
+					if (cl == boolean.class) {
+						params.add(Boolean.parseBoolean(param));
+						continue;
+					}
+					if (cl == char.class) {
+						if (param.length() != 1) {
+							sender.sendMessage("§c'" + param + "' is not a character.");
+							return;
+						}
+						params.add(param.charAt(0));
+						continue;
+					}
 					//noinspection unchecked
 					Number n = ChromaUtils.convertNumber(NumberFormat.getInstance().parse(param), (Class<? extends Number>) cl);
 					params.add(n);
