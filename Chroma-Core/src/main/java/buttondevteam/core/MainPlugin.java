@@ -155,21 +155,6 @@ public class MainPlugin extends ButtonPlugin {
 		logger.info("Saving player data...");
 		TBMCPlayerBase.savePlayers();
 		logger.info("Player data saved.");
-		new Thread(() -> {
-			File[] files = PluginUpdater.updatedir.listFiles();
-			if (files == null)
-				return;
-			logger.info("Updating " + files.length + " plugins...");
-			for (File file : files) {
-				try {
-					Files.move(file.toPath(), new File("plugins", file.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
-					logger.info("Updated " + file.getName());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			logger.info("Update complete!");
-		}).start();
 	}
 
 	private boolean setupPermissions() {
