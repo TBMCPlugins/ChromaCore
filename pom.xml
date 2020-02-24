@@ -17,7 +17,6 @@
         <module>CorePOM</module>
         <module>Chroma-Core</module>
         <module>ButtonProcessor</module>
-        <module>BuildConfigUpdater</module>
     </modules>
 
     <build>

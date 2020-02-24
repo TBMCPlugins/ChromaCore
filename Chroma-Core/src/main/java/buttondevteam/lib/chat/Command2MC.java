@@ -1,6 +1,7 @@
 package buttondevteam.lib.chat;
 
 import buttondevteam.core.MainPlugin;
+import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
 import lombok.val;
@@ -8,6 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -16,6 +18,7 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -51,6 +54,8 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 				Bukkit.getPluginManager().addPermission(new Permission(perm,
 					PermissionDefault.OP)); //Do not allow any commands that belong to a group
 		}
+
+		registerOfficially(command);
 	}
 
 	@Override
@@ -253,6 +258,18 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			} catch (InvocationTargetException e) {
 				TBMCCoreAPI.SendException("An error occurred in a command handler!", e.getCause());
 			}*/
+		}
+	}
+
+	private boolean shouldRegisterOfficially=true;
+	private void registerOfficially(ICommand2MC command) {
+		if(!shouldRegisterOfficially) return;
+		try {
+			var cmdmap=(SimpleCommandMap)Bukkit.getServer().getClass().getMethod("getCommandMap").invoke(Bukkit.getServer());
+			//cmdmap.register(command.getPlugin())
+		} catch (Exception e) {
+			TBMCCoreAPI.SendException("Failed to register command in command map!", e);
+			shouldRegisterOfficially=false;
 		}
 	}
 }

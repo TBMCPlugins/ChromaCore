@@ -1,7 +1,6 @@
 package buttondevteam.lib;
 
 import buttondevteam.core.MainPlugin;
-import buttondevteam.core.component.updater.PluginUpdater;
 import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.potato.DebugPotato;
 import org.bukkit.Bukkit;
@@ -29,28 +28,6 @@ public class TBMCCoreAPI {
 			add("mayskam1995");
 		}
 	};
-
-	/**
-	 * Updates or installs the specified plugin. The plugin must use Maven.
-	 *
-	 * @param name   The plugin's repository name.
-	 * @param sender The command sender (if not console, messages will be printed to console as well).
-	 */
-	public static void UpdatePlugin(String name, CommandSender sender) {
-		UpdatePlugin(name, sender, "master");
-	}
-
-	/**
-	 * Updates or installs the specified plugin from the specified branch. The plugin must use Maven.
-	 *
-	 * @param name   The plugin's repository name.
-	 * @param sender The command sender (if not console, messages will be printed to console as well).
-	 * @param branch The branch to download the plugin from.
-	 * @return Success or not
-	 */
-	public static boolean UpdatePlugin(String name, CommandSender sender, String branch) {
-		return PluginUpdater.UpdatePlugin(name, sender, branch);
-	}
 
 	public static String DownloadString(String urlstr) throws IOException {
 		URL url = new URL(urlstr);

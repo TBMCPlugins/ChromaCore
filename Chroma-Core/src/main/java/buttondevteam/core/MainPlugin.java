@@ -8,8 +8,6 @@ import buttondevteam.core.component.randomtp.RandomTPComponent;
 import buttondevteam.core.component.restart.RestartComponent;
 import buttondevteam.core.component.spawn.SpawnComponent;
 import buttondevteam.core.component.towny.TownyComponent;
-import buttondevteam.core.component.updater.PluginUpdater;
-import buttondevteam.core.component.updater.PluginUpdaterComponent;
 import buttondevteam.core.component.votifier.VotifierComponent;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
@@ -101,10 +99,9 @@ public class MainPlugin extends ButtonPlugin {
 		logger = getLogger();
 		if (!setupPermissions())
 			throw new NullPointerException("No permission plugin found!");
-		if (!setupEconomy()) //Though Essentials always provides economy so this shouldn't happen
+		if (!setupEconomy()) //Though Essentials always provides economy, but we don't require Essentials
 			getLogger().warning("No economy plugin found! Components using economy will not be registered.");
 		saveConfig();
-		Component.registerComponent(this, new PluginUpdaterComponent());
 		Component.registerComponent(this, new RestartComponent());
 		//noinspection unchecked - needed for testing
 		Component.registerComponent(this, new ChannelComponent());
