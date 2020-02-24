@@ -7,6 +7,7 @@ import buttondevteam.lib.architecture.Component;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.SimpleCommandMap;
@@ -266,7 +267,15 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		if(!shouldRegisterOfficially) return;
 		try {
 			var cmdmap=(SimpleCommandMap)Bukkit.getServer().getClass().getMethod("getCommandMap").invoke(Bukkit.getServer());
-			//cmdmap.register(command.getPlugin())
+			var path = command.getCommandPath();
+			int x = path.indexOf(' ');
+			var mainPath = path.substring(0, x == -1 ? path.length() : x);
+			cmdmap.register(command.getPlugin().getName(), new Command(mainPath) {
+				@Override
+				public boolean execute(CommandSender commandSender, String s, String[] strings) {
+					return true;
+				}
+			});
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Failed to register command in command map!", e);
 			shouldRegisterOfficially=false;
