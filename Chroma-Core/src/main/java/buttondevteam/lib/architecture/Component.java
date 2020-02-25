@@ -129,15 +129,11 @@ public abstract class Component<TP extends JavaPlugin> {
 			throw new UnregisteredComponentException(component);
 		if (component.enabled == enabled) return; //Don't do anything
 		if (component.enabled = enabled) {
-			//System.out.println("Updating config for "+component.getClassName());
 			updateConfig(component.getPlugin(), component);
-			//System.out.println("Enabling "+component.getClassName());
 			component.enable();
 			if (ButtonPlugin.configGenAllowed(component)) {
-				//System.out.println("Pregenning config for "+component.getClassName());
 				IHaveConfig.pregenConfig(component, null);
 			}
-			//System.out.println("Done enabling "+component.getClassName());
 		} else {
 			component.disable();
 			ButtonPlugin.getCommand2MC().unregisterCommands(component);

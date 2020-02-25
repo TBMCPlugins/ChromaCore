@@ -19,7 +19,6 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -83,8 +82,6 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 						p = MainPlugin.permission.playerHas(sender instanceof Player ? ((Player) sender).getLocation().getWorld().getName() : null, (OfflinePlayer) sender, perm);
 					else
 						p = false; //Use sender's method
-					//System.out.println("playerHas " + perm + ": " + p);
-					//System.out.println("hasPermission: " + sender.hasPermission(perm));
 					if (!p) p = sender.hasPermission(perm);
 				} else break; //If any of the permissions aren't granted then don't allow
 			}
@@ -158,14 +155,11 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	private void handleTabComplete(TabCompleteEvent event) {
 		String commandline = event.getBuffer();
 		CommandSender sender = event.getSender();
-		//System.out.println("tab");
 		for (int i = commandline.length(); i != -1; i = commandline.lastIndexOf(' ', i - 1)) {
 			String subcommand = commandline.substring(0, i).toLowerCase();
 			if (subcommand.length() == 0 || subcommand.charAt(0) != '/') subcommand = '/' + subcommand; //Console
-			//System.out.println("Subcommand: " + subcommand);
 			SubcommandData<ICommand2MC> sd = subcommands.get(subcommand); //O(1)
 			if (sd == null) continue;
-			//System.out.println("ht: " + Arrays.toString(sd.helpText));
 			Arrays.stream(sd.helpText).skip(1).map(ht -> new HashMap.SimpleEntry<>(ht, subcommands.get(ht))).filter(e -> e.getValue() != null)
 				.filter(kv -> kv.getKey().startsWith(commandline))
 				.filter(kv -> hasPermission(sender, kv.getValue().command, kv.getValue().method))
@@ -266,19 +260,26 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	private void registerOfficially(ICommand2MC command) {
 		if(!shouldRegisterOfficially) return;
 		try {
-			var cmdmap=(SimpleCommandMap)Bukkit.getServer().getClass().getMethod("getCommandMap").invoke(Bukkit.getServer());
+			var cmdmap = (SimpleCommandMap) Bukkit.getServer().getClass().getMethod("getCommandMap").invoke(Bukkit.getServer());
 			var path = command.getCommandPath();
 			int x = path.indexOf(' ');
 			var mainPath = path.substring(0, x == -1 ? path.length() : x);
-			cmdmap.register(command.getPlugin().getName(), new Command(mainPath) {
-				@Override
-				public boolean execute(CommandSender commandSender, String s, String[] strings) {
-					return true;
-				}
-			});
+			cmdmap.register(command.getPlugin().getName(), new BukkitCommand(mainPath));
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Failed to register command in command map!", e);
-			shouldRegisterOfficially=false;
+			shouldRegisterOfficially = false;
+		}
+	}
+
+	private static class BukkitCommand extends Command {
+		protected BukkitCommand(String name) {
+			super(name);
+		}
+
+		@Override
+		public boolean execute(CommandSender sender, String commandLabel, String[] args) {
+			sender.sendMessage("§cThe command wasn't executed for some reason... (command processing failed)");
+			return true;
 		}
 	}
 }

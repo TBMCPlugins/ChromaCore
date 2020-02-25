@@ -1,6 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.github.TBMCPlugins.ChromaCore</groupId>
+        <artifactId>CorePOM</artifactId>
+        <version>master-SNAPSHOT</version>
+        <relativePath>../CorePOM</relativePath>
+    </parent>
     <repositories>
         <repository>
             <id>spigot-repo</id>
@@ -21,12 +27,6 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
-    <parent>
-		<groupId>com.github.TBMCPlugins</groupId>
-		<artifactId>ChromaCore</artifactId>
-		<version>master-SNAPSHOT</version>
-	</parent>
-	<groupId>com.github.TBMCPlugins.ChromaCore</groupId>
 	<artifactId>ButtonProcessor</artifactId>
 	<packaging>jar</packaging>
 
@@ -40,17 +40,17 @@
 				<configuration>
 					<compilerArgument>-proc:none</compilerArgument>
 				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M3</version>
-				<configuration>
-					<useSystemClassLoader>false
-					</useSystemClassLoader> <!-- https://stackoverflow.com/a/53012553/2703239 -->
-				</configuration>
-			</plugin>
-		</plugins>
+                <configuration>
+                    <useSystemClassLoader>false
+                    </useSystemClassLoader> <!-- https://stackoverflow.com/a/53012553/2703239 -->
+                </configuration>
+            </plugin>
+        </plugins>
 	</build>
 
 	<properties>

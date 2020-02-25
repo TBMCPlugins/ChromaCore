@@ -54,7 +54,6 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 		if ("ChromaCore-Spawn".equals(subchannel)) {
 			// Use the code sample in the 'Response' sections below to read
 			// the data.
-			System.out.println("Heh nice");
 			short len = in.readShort();
 			byte[] msgbytes = new byte[len];
 			in.readFully(msgbytes);
