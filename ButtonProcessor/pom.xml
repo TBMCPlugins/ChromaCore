@@ -1,12 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.github.TBMCPlugins.ChromaCore</groupId>
-        <artifactId>CorePOM</artifactId>
-        <version>master-SNAPSHOT</version>
-        <relativePath>../CorePOM</relativePath>
-    </parent>
     <repositories>
         <repository>
             <id>spigot-repo</id>
@@ -27,7 +21,10 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
+    <!-- Can't use Core POM because it uses this processor -->
+    <groupId>com.github.TBMCPlugins.ChromaCore</groupId>
 	<artifactId>ButtonProcessor</artifactId>
+    <version>master-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>ButtonProcessor</name>
@@ -36,9 +33,12 @@
 	<build>
 		<plugins>
 			<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<compilerArgument>-proc:none</compilerArgument>
+                    <source>8</source>
+                    <target>8</target>
 				</configuration>
             </plugin>
             <plugin>
