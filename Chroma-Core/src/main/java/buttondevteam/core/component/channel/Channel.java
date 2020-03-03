@@ -195,6 +195,7 @@ public class Channel {
 		if (component == null)
 			throw new RuntimeException("Attempting to register a channel before the component is registered!");
 		channels.add(channel);
+		component.registerChannelCommand(channel);
 		Bukkit.getScheduler().runTask(MainPlugin.Instance, () -> Bukkit.getPluginManager().callEvent(new ChatChannelRegisterEvent(channel))); // Wait for server start
     }
 
