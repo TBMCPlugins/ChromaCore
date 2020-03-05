@@ -29,17 +29,27 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.4.2</version>
+                <version>3.2.1</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
 						<goals>
 							<goal>shade</goal>
 						</goals>
-						<configuration>
-							<artifactSet>
-							</artifactSet>
-						</configuration>
+                        <configuration>
+                            <artifactSet>
+                                <includes>
+                                    <include>me.lucko:commodore</include>
+                                </includes>
+                            </artifactSet>
+                            <relocations>
+                                <relocation>
+                                    <pattern>me.lucko.commodore</pattern>
+                                    <!-- vvv Replace with the package of your plugin vvv -->
+                                    <shadedPattern>buttondevteam.core.commodore</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
 					</execution>
 				</executions>
 			</plugin>
@@ -106,7 +116,7 @@
 		<repository>
 			<id>ess-repo</id>
             <url>https://ci.ender.zone/plugin/repository/everything/</url>
-		</repository>
+        </repository>
         <repository>
             <id>Votifier</id>
             <url>https://dl.bintray.com/nuvotifier/maven/</url>
@@ -115,7 +125,11 @@
             <id>Multiverse-Core</id>
             <url>http://repo.onarandombox.com/content/repositories/multiverse/</url>
         </repository>
-	</repositories>
+        <repository>
+            <id>minecraft-repo</id>
+            <url>https://libraries.minecraft.net/</url>
+        </repository>
+    </repositories>
 	<dependencies>
 		<dependency>
 			<groupId>org.reflections</groupId>
@@ -176,7 +190,13 @@
             <version>4.0.1</version>
             <scope>provided</scope>
         </dependency>
-	</dependencies>
+        <dependency>
+            <groupId>me.lucko</groupId>
+            <artifactId>commodore</artifactId>
+            <version>1.5</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 	<organization>
 		<name>TBMCPlugins</name>
 		<url>https://github.com/TBMCPlugins</url>

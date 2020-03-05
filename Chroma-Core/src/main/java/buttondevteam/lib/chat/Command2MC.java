@@ -4,7 +4,13 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
+import com.mojang.brigadier.arguments.*;
+import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import lombok.val;
+import me.lucko.commodore.Commodore;
+import me.lucko.commodore.CommodoreProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -20,8 +26,10 @@ import org.bukkit.permissions.PermissionDefault;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -33,7 +41,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	 */
 	@Override
 	public void registerCommand(ICommand2MC command) {
-		super.registerCommand(command, '/');
+		var subcmds = super.registerCommand(command, '/');
 		var perm = "chroma.command." + command.getCommandPath().replace(' ', '.');
 		if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
 			Bukkit.getPluginManager().addPermission(new Permission(perm,
@@ -55,7 +63,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 					PermissionDefault.OP)); //Do not allow any commands that belong to a group
 		}
 
-		registerOfficially(command);
+		registerOfficially(command, subcmds);
 	}
 
 	@Override
@@ -256,9 +264,14 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		}
 	}
 
-	private boolean shouldRegisterOfficially=true;
-	private void registerOfficially(ICommand2MC command) {
-		if(!shouldRegisterOfficially) return;
+	private boolean shouldRegisterOfficially = true;
+
+	private void registerOfficially(ICommand2MC command, List<SubcommandData<ICommand2MC>> subcmds) {
+		if (!shouldRegisterOfficially) return;
+		if (CommodoreProvider.isSupported()) {
+			TabcompleteHelper.registerTabcomplete(command, subcmds);
+			return; //Commodore registers the command as well
+		}
 		try {
 			var cmdmap = (SimpleCommandMap) Bukkit.getServer().getClass().getMethod("getCommandMap").invoke(Bukkit.getServer());
 			var path = command.getCommandPath();
@@ -280,6 +293,67 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		public boolean execute(CommandSender sender, String commandLabel, String[] args) {
 			sender.sendMessage("§cThe command wasn't executed for some reason... (command processing failed)");
 			return true;
+		}
+	}
+
+	private static class TabcompleteHelper {
+		private static Commodore commodore;
+
+		private static void registerTabcomplete(ICommand2MC command2MC, List<SubcommandData<ICommand2MC>> subcmds) {
+			if (commodore == null)
+				commodore = CommodoreProvider.getCommodore(MainPlugin.Instance); //Register all to the Core, it's easier
+			System.out.println("Registering tabcomplete for path: " + command2MC.getCommandPath());
+			String[] path = command2MC.getCommandPath().split(" ");
+			var maincmd = LiteralArgumentBuilder.literal(path[0]);
+			var cmd = maincmd;
+			for (int i = 1; i < path.length; i++) {
+				var subcmd = LiteralArgumentBuilder.literal(path[i]);
+				cmd.then(subcmd);
+				cmd = subcmd; //Add each part of the path as a child of the previous one
+			}
+			for (SubcommandData<ICommand2MC> subcmd : subcmds) {
+				String[] subpath = ButtonPlugin.getCommand2MC().getCommandPath(subcmd.method.getName(), ' ').trim().split(" ");
+				ArgumentBuilder<Object, ?> scmd = cmd;
+				if (subpath[0].length() > 0) { //If the method is def, it will contain one empty string
+					for (String s : subpath) {
+						var subsubcmd = LiteralArgumentBuilder.literal(s);
+						scmd.then(subsubcmd);
+						scmd = subsubcmd; //Add method name part of the path (could_be_multiple())
+					}
+				}
+				Parameter[] parameters = subcmd.method.getParameters();
+				for (int i = 1; i < parameters.length; i++) { //Skip sender
+					Parameter parameter = parameters[i];
+					ArgumentType<?> type;
+					final Class<?> ptype = parameter.getType();
+					if (ptype == String.class)
+						if (parameter.isAnnotationPresent(TextArg.class))
+							type = StringArgumentType.greedyString();
+						else
+							type = StringArgumentType.word();
+					else if (ptype == int.class || ptype == Integer.class)
+						type = IntegerArgumentType.integer(); //TODO: Min, max
+					else if (ptype == long.class || ptype == Long.class)
+						type = LongArgumentType.longArg();
+					else if (ptype == float.class || ptype == Float.class)
+						type = FloatArgumentType.floatArg();
+					else if (ptype == double.class || ptype == Double.class)
+						type = DoubleArgumentType.doubleArg();
+					else if (ptype == char.class || ptype == Character.class)
+						type = StringArgumentType.word();
+					else if (ptype == boolean.class || ptype == Boolean.class)
+						type = BoolArgumentType.bool();
+					else  //TODO: Custom parameter types
+						type = StringArgumentType.word();
+					var arg = RequiredArgumentBuilder.argument(parameter.getName(), type);
+					scmd.then(arg);
+					scmd = arg;
+				}
+			}
+			System.out.println("maincmd: " + maincmd);
+			System.out.println("Children:");
+			maincmd.build().getChildren().forEach(System.out::println);
+			commodore.register(maincmd);
 		}
 	}
 }

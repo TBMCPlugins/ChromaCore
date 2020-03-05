@@ -94,7 +94,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 					helpText[0] = "§6---- Subcommands ----"; //TODO: There may be more to the help text
 					int i = 1;
 					for (Iterator<String> iterator = ht.iterator();
-						 iterator.hasNext() && i < helpText.length; i++) {
+					     iterator.hasNext() && i < helpText.length; i++) {
 						String e = iterator.next();
 						helpText[i] = e;
 					}
@@ -274,7 +274,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 
 	public abstract void registerCommand(TC command);
 
-	protected void registerCommand(TC command, @SuppressWarnings("SameParameterValue") char commandChar) {
+	protected List<SubcommandData<TC>> registerCommand(TC command, @SuppressWarnings("SameParameterValue") char commandChar) {
 		this.commandChar = commandChar;
 		val path = command.getCommandPath();
 		int x = path.indexOf(' ');
@@ -298,6 +298,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Could not register default handler for command /" + path, e);
 		}
+		var addedSubcommands = new ArrayList<SubcommandData<TC>>();
 		for (val method : command.getClass().getMethods()) {
 			val ann = method.getAnnotation(Subcommand.class);
 			if (ann == null) continue; //Don't call the method on non-subcommands because they're not in the yaml
@@ -306,15 +307,20 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 				val subcommand = commandChar + path + //Add command path (class name by default)
 					getCommandPath(method.getName(), ' '); //Add method name, unless it's 'def'
 				ht = getParameterHelp(method, ht, subcommand);
-				subcommands.put(subcommand, new SubcommandData<>(method, command, ht)); //Result of the above (def) is that it will show the help text
+				var sd = new SubcommandData<>(method, command, ht);
+				subcommands.put(subcommand, sd); //Result of the above (def) is that it will show the help text
+				addedSubcommands.add(sd);
 				scmdHelpList.add(subcommand);
 				nosubs = false;
 			}
 		}
 		if (nosubs && scmdHelpList.size() > 0)
 			scmdHelpList.remove(scmdHelpList.size() - 1); //Remove Subcommands header
-		if (mainMethod != null && !subcommands.containsKey(commandChar + path)) //Command specified by the class
-			subcommands.put(commandChar + path, new SubcommandData<>(mainMethod, command, scmdHelpList.toArray(new String[0])));
+		if (mainMethod != null && !subcommands.containsKey(commandChar + path)) { //Command specified by the class
+			var sd = new SubcommandData<>(mainMethod, command, scmdHelpList.toArray(new String[0]));
+			subcommands.put(commandChar + path, sd);
+			addedSubcommands.add(sd);
+		}
 		if (mainMethod != null && !mainPath.equals(commandChar + path)) { //Main command, typically the same as the above
 			if (isSubcommand) { //The class itself is a subcommand
 				val scmd = subcommands.computeIfAbsent(mainPath, p -> new SubcommandData<>(null, null, new String[]{"§6---- Subcommands ----"}));
@@ -325,6 +331,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			} else if (!subcommands.containsKey(mainPath))
 				subcommands.put(mainPath, new SubcommandData<>(null, null, scmdHelpList.toArray(new String[0])));
 		}
+		return addedSubcommands;
 	}
 
 	private String[] getParameterHelp(Method method, String[] ht, String subcommand) {
