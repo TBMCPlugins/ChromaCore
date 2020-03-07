@@ -285,7 +285,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		boolean nosubs = true;
 		boolean isSubcommand = x != -1;
 		try { //Register the default handler first so it can be reliably overwritten
-			mainMethod = command.getClass().getMethod("def", Command2Sender.class, String.class);
+			mainMethod = command.getClass().getMethod("def", Command2Sender.class);
 			val cc = command.getClass().getAnnotation(CommandClass.class);
 			var ht = cc == null || isSubcommand ? new String[0] : cc.helpText(); //If it's not the main command, don't add it
 			if (ht.length > 0)
@@ -303,7 +303,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			val ann = method.getAnnotation(Subcommand.class);
 			if (ann == null) continue; //Don't call the method on non-subcommands because they're not in the yaml
 			var ht = command.getHelpText(method, ann);
-			if (ht != null) {
+			if (ht != null) { //The method is a subcommand
 				val subcommand = commandChar + path + //Add command path (class name by default)
 					getCommandPath(method.getName(), ' '); //Add method name, unless it's 'def'
 				ht = getParameterHelp(method, ht, subcommand);

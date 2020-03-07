@@ -12,10 +12,9 @@ public abstract class ICommand2<TP extends Command2Sender> {
 	 * Default handler for commands, can be used to copy the args too.
 	 *
 	 * @param sender The sender which ran the command
-	 * @param args   All of the arguments passed as is
 	 * @return The success of the command
 	 */
-	public boolean def(TP sender, @Command2.TextArg String args) {
+	public boolean def(TP sender) {
 		return false;
 	}
 

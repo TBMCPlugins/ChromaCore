@@ -12,23 +12,21 @@ import lombok.val;
 import me.lucko.commodore.Commodore;
 import me.lucko.commodore.CommodoreProvider;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.server.TabCompleteEvent;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -159,7 +157,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			.map(comp -> component.getClass().getSimpleName().equals(comp.getClass().getSimpleName())).orElse(false));
 	}
 
-	@EventHandler
+	/*@EventHandler
 	private void handleTabComplete(TabCompleteEvent event) {
 		String commandline = event.getBuffer();
 		CommandSender sender = event.getSender();
@@ -260,24 +258,23 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 				return true; //We found a method
 			} catch (InvocationTargetException e) {
 				TBMCCoreAPI.SendException("An error occurred in a command handler!", e.getCause());
-			}*/
+			}*
 		}
-	}
+	}*/
 
 	private boolean shouldRegisterOfficially = true;
 
 	private void registerOfficially(ICommand2MC command, List<SubcommandData<ICommand2MC>> subcmds) {
 		if (!shouldRegisterOfficially) return;
-		if (CommodoreProvider.isSupported()) {
-			TabcompleteHelper.registerTabcomplete(command, subcmds);
-			return; //Commodore registers the command as well
-		}
 		try {
 			var cmdmap = (SimpleCommandMap) Bukkit.getServer().getClass().getMethod("getCommandMap").invoke(Bukkit.getServer());
 			var path = command.getCommandPath();
 			int x = path.indexOf(' ');
 			var mainPath = path.substring(0, x == -1 ? path.length() : x);
-			cmdmap.register(command.getPlugin().getName(), new BukkitCommand(mainPath));
+			var bukkitCommand = new BukkitCommand(mainPath);
+			cmdmap.register(command.getPlugin().getName(), bukkitCommand);
+			if (CommodoreProvider.isSupported())
+				TabcompleteHelper.registerTabcomplete(command, subcmds, bukkitCommand);
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Failed to register command in command map!", e);
 			shouldRegisterOfficially = false;
@@ -294,20 +291,37 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			sender.sendMessage("§cThe command wasn't executed for some reason... (command processing failed)");
 			return true;
 		}
+
+		@Override
+		public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
+			return Collections.emptyList();
+		}
+
+		@Override
+		public List<String> tabComplete(CommandSender sender, String alias, String[] args, Location location) throws IllegalArgumentException {
+			return Collections.emptyList();
+		}
 	}
 
 	private static class TabcompleteHelper {
 		private static Commodore commodore;
 
-		private static void registerTabcomplete(ICommand2MC command2MC, List<SubcommandData<ICommand2MC>> subcmds) {
-			if (commodore == null)
+		private static void registerTabcomplete(ICommand2MC command2MC, List<SubcommandData<ICommand2MC>> subcmds, Command bukkitCommand) {
+			if (commodore == null) {
 				commodore = CommodoreProvider.getCommodore(MainPlugin.Instance); //Register all to the Core, it's easier
+				System.out.println("Registering test tabcomplete");
+				commodore.register(LiteralArgumentBuilder.literal("test")
+					.then(LiteralArgumentBuilder.literal("asd")
+						.then(RequiredArgumentBuilder.argument("dsa", StringArgumentType.word())))
+					.then(RequiredArgumentBuilder.argument("lol", StringArgumentType.word())));
+			}
 			System.out.println("Registering tabcomplete for path: " + command2MC.getCommandPath());
 			String[] path = command2MC.getCommandPath().split(" ");
 			var maincmd = LiteralArgumentBuilder.literal(path[0]);
 			var cmd = maincmd;
 			for (int i = 1; i < path.length; i++) {
 				var subcmd = LiteralArgumentBuilder.literal(path[i]);
+				System.out.println(cmd.build() + " -> " + subcmd.build());
 				cmd.then(subcmd);
 				cmd = subcmd; //Add each part of the path as a child of the previous one
 			}
@@ -317,6 +331,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 				if (subpath[0].length() > 0) { //If the method is def, it will contain one empty string
 					for (String s : subpath) {
 						var subsubcmd = LiteralArgumentBuilder.literal(s);
+						System.out.println(scmd.build() + " -> " + subsubcmd.build());
 						scmd.then(subsubcmd);
 						scmd = subsubcmd; //Add method name part of the path (could_be_multiple())
 					}
@@ -346,14 +361,15 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 					else  //TODO: Custom parameter types
 						type = StringArgumentType.word();
 					var arg = RequiredArgumentBuilder.argument(parameter.getName(), type);
+					System.out.println("Adding arg: " + arg.build() + " to " + scmd.build());
 					scmd.then(arg);
 					scmd = arg;
 				}
 			}
-			System.out.println("maincmd: " + maincmd);
+			System.out.println("maincmd: " + maincmd.build());
 			System.out.println("Children:");
 			maincmd.build().getChildren().forEach(System.out::println);
-			commodore.register(maincmd);
+			commodore.register(bukkitCommand, maincmd, p -> true);
 		}
 	}
 }
