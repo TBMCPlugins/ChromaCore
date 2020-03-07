@@ -5,9 +5,9 @@ import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
 import com.mojang.brigadier.arguments.*;
-import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.tree.CommandNode;
 import lombok.val;
 import me.lucko.commodore.Commodore;
 import me.lucko.commodore.CommodoreProvider;
@@ -317,22 +317,22 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			}
 			System.out.println("Registering tabcomplete for path: " + command2MC.getCommandPath());
 			String[] path = command2MC.getCommandPath().split(" ");
-			var maincmd = LiteralArgumentBuilder.literal(path[0]);
+			var maincmd = LiteralArgumentBuilder.literal(path[0]).build();
 			var cmd = maincmd;
 			for (int i = 1; i < path.length; i++) {
-				var subcmd = LiteralArgumentBuilder.literal(path[i]);
-				System.out.println(cmd.build() + " -> " + subcmd.build());
-				cmd.then(subcmd);
+				var subcmd = LiteralArgumentBuilder.literal(path[i]).build();
+				System.out.println(cmd + " -> " + subcmd);
+				cmd.addChild(subcmd);
 				cmd = subcmd; //Add each part of the path as a child of the previous one
 			}
 			for (SubcommandData<ICommand2MC> subcmd : subcmds) {
 				String[] subpath = ButtonPlugin.getCommand2MC().getCommandPath(subcmd.method.getName(), ' ').trim().split(" ");
-				ArgumentBuilder<Object, ?> scmd = cmd;
+				CommandNode<Object> scmd = cmd;
 				if (subpath[0].length() > 0) { //If the method is def, it will contain one empty string
 					for (String s : subpath) {
-						var subsubcmd = LiteralArgumentBuilder.literal(s);
-						System.out.println(scmd.build() + " -> " + subsubcmd.build());
-						scmd.then(subsubcmd);
+						var subsubcmd = LiteralArgumentBuilder.literal(s).build();
+						System.out.println(scmd + " -> " + subsubcmd);
+						scmd.addChild(subsubcmd);
 						scmd = subsubcmd; //Add method name part of the path (could_be_multiple())
 					}
 				}
@@ -346,7 +346,9 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 							type = StringArgumentType.greedyString();
 						else
 							type = StringArgumentType.word();
-					else if (ptype == int.class || ptype == Integer.class)
+					else if (ptype == int.class || ptype == Integer.class
+						|| ptype == byte.class || ptype == Byte.class
+						|| ptype == short.class || ptype == Short.class)
 						type = IntegerArgumentType.integer(); //TODO: Min, max
 					else if (ptype == long.class || ptype == Long.class)
 						type = LongArgumentType.longArg();
@@ -360,16 +362,16 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 						type = BoolArgumentType.bool();
 					else  //TODO: Custom parameter types
 						type = StringArgumentType.word();
-					var arg = RequiredArgumentBuilder.argument(parameter.getName(), type);
-					System.out.println("Adding arg: " + arg.build() + " to " + scmd.build());
-					scmd.then(arg);
+					var arg = RequiredArgumentBuilder.argument(parameter.getName(), type).build();
+					System.out.println("Adding arg: " + arg + " to " + scmd);
+					scmd.addChild(arg);
 					scmd = arg;
 				}
 			}
-			System.out.println("maincmd: " + maincmd.build());
+			System.out.println("maincmd: " + maincmd);
 			System.out.println("Children:");
-			maincmd.build().getChildren().forEach(System.out::println);
-			commodore.register(bukkitCommand, maincmd, p -> true);
+			maincmd.getChildren().forEach(System.out::println);
+			commodore.register(maincmd);
 		}
 	}
 }
