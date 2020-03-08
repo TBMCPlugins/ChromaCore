@@ -17,6 +17,7 @@ import org.bukkit.Bukkit;
 public class TownyComponent extends Component<MainPlugin> {
 	@Override
 	protected void enable() {
+		registerCommand(new RemoveResidentsCommand());
 	}
 
 	@Override
@@ -38,9 +39,9 @@ public class TownyComponent extends Component<MainPlugin> {
 		if (resident == null) {
 			Bukkit.getLogger().warning("Resident not found - couldn't rename in Towny.");
 			TBMCCoreAPI.sendDebugMessage("Resident not found - couldn't rename in Towny.");
-		} else if (tu.getResidentMap().contains(newName.toLowerCase())) {
-			Bukkit.getLogger().warning("Target resident name is already in use."); // TODO: Handle
-			TBMCCoreAPI.sendDebugMessage("Target resident name is already in use.");
+		} else if (tu.getDataSource().hasResident(newName)) {
+			Bukkit.getLogger().warning("Target resident name is already in use.");
+			TBMCCoreAPI.sendDebugMessage("Target resident name is already in use. (" + oldName + " -> " + newName + ")");
 		} else
 			try {
 				tu.getDataSource().renamePlayer(resident, newName); //Fixed in Towny 0.91.1.2
