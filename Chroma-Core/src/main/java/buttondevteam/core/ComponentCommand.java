@@ -25,9 +25,9 @@ public class ComponentCommand extends ICommand2MC {
 
 	@Subcommand(helpText = {
 		"Enable component",
-		"Temporarily enables a component. If you want to permanently enable a component, change it's 'enabled' config option.\""
+		"Temporarily or permanently enables a component."
 	})
-	public boolean enable(CommandSender sender, Plugin plugin, String component) {
+	public boolean enable(CommandSender sender, Plugin plugin, String component, @Command2.OptionalArg boolean permanent) {
 		if (plugin instanceof ButtonPlugin) {
 			if (!((ButtonPlugin) plugin).justReload()) {
 				sender.sendMessage("§cCouldn't reload config, check console.");
@@ -35,15 +35,15 @@ public class ComponentCommand extends ICommand2MC {
 			}
 		} else
 			plugin.reloadConfig(); //Reload config so the new config values are read - All changes are saved to disk on disable
-		return enable_disable(sender, plugin, component, true);
+		return enable_disable(sender, plugin, component, true, permanent);
 	}
 
 	@Subcommand(helpText = {
 		"Disable component",
-		"Temporarily disables a component. If you want to permanently disable a component, change it's 'enabled' config option."
+		"Temporarily or permanently disables a component."
 	})
-	public boolean disable(CommandSender sender, Plugin plugin, String component) {
-		return enable_disable(sender, plugin, component, false);
+	public boolean disable(CommandSender sender, Plugin plugin, String component, @Command2.OptionalArg boolean permanent) {
+		return enable_disable(sender, plugin, component, false, permanent);
 	}
 
 	@Subcommand(helpText = {
@@ -57,13 +57,15 @@ public class ComponentCommand extends ICommand2MC {
 		return true;
 	}
 
-	private boolean enable_disable(CommandSender sender, Plugin plugin, String component, boolean enable) {
+	private boolean enable_disable(CommandSender sender, Plugin plugin, String component, boolean enable, boolean permanent) {
 		try {
 			val oc = getComponentOrError(plugin, component, sender);
 			if (!oc.isPresent())
 				return true;
 			Component.setComponentEnabled(oc.get(), enable);
-			sender.sendMessage(oc.get().getClass().getSimpleName() + " " + (enable ? "en" : "dis") + "abled.");
+			if (permanent)
+				oc.get().shouldBeEnabled().set(enable);
+			sender.sendMessage(oc.get().getClass().getSimpleName() + " " + (enable ? "en" : "dis") + "abled " + (permanent ? "permanently" : "temporarily") + ".");
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Couldn't " + (enable ? "en" : "dis") + "able component " + component + "!", e);
 		}
@@ -77,5 +79,5 @@ public class ComponentCommand extends ICommand2MC {
 		if (!oc.isPresent())
 			sender.sendMessage("§cComponent not found!"); //^ Much simpler to solve in the new command system
 		return oc;
-	} //TODO: Tabcompletion for the new command system
+	}
 }
