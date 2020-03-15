@@ -5,7 +5,6 @@ import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.*;
 import buttondevteam.lib.player.ChromaGamerBase;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -43,19 +42,21 @@ public class ChannelComponent extends Component {
 	@RequiredArgsConstructor
 	private static class ChannelCommand extends ICommand2MC {
 		private final Channel channel;
+
 		@Override
 		public String getCommandPath() {
 			return channel.ID; //TODO: IDs
 		}
 
 		@Command2.Subcommand
-		public void def(CommandSender sender, @Command2.OptionalArg @Command2.TextArg String message) {
+		public void def(Command2MCSender senderMC, @Command2.OptionalArg @Command2.TextArg String message) {
+			var sender = senderMC.getSender();
 			var user = ChromaGamerBase.getFromSender(sender);
-			if(user==null) {
+			if (user == null) {
 				sender.sendMessage("§cYou can't use channels from this platform.");
 				return;
 			}
-			if(message==null) {
+			if (message == null) {
 				Channel oldch = user.channel().get();
 				if (oldch instanceof ChatRoom)
 					((ChatRoom) oldch).leaveRoom(sender);
@@ -67,9 +68,9 @@ public class ChannelComponent extends Component {
 						((ChatRoom) channel).joinRoom(sender);
 				}
 				sender.sendMessage("§6You are now talking in: §b" + user.channel().get().DisplayName().get());
-			}
-			else
-				TBMCChatAPI.SendChatMessage(ChatMessage.builder(sender, user, message).build(), channel);
+			} else
+				TBMCChatAPI.SendChatMessage(ChatMessage.builder(sender, user, message).fromCommand(true)
+					.permCheck(senderMC.getPermCheck()).build(), channel);
 		}
 	}
 }

@@ -97,11 +97,12 @@ public class PlayerListener implements Listener {
 			return;
 		if (!MainPlugin.Instance.isChatHandlerEnabled()) return;
 		if (event.getOrigin().equals("Minecraft")) return; //Let other plugins handle MC messages
+		var channel = event.getChannel();
 		String msg = MainPlugin.Instance.chatFormat().get()
-			.replace("{channel}", event.getChannel().DisplayName().get())
+			.replace("{channel}", channel.DisplayName().get())
 			.replace("{origin}", event.getOrigin().substring(0, 1))
 			.replace("{name}", ChromaUtils.getDisplayName(event.getSender()))
-			.replace("{message}", event.getMessage());
+			.replace("{message}", "§" + channel.Color().get().ordinal() + event.getMessage());
 		for (Player player : Bukkit.getOnlinePlayers())
 			if (event.shouldSendTo(player))
 				player.sendMessage(msg);

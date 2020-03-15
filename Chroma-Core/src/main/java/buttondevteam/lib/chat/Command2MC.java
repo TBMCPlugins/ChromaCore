@@ -202,21 +202,13 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		private static Commodore commodore;
 
 		private static void registerTabcomplete(ICommand2MC command2MC, List<SubcommandData<ICommand2MC>> subcmds, Command bukkitCommand) {
-			if (commodore == null) {
+			if (commodore == null)
 				commodore = CommodoreProvider.getCommodore(MainPlugin.Instance); //Register all to the Core, it's easier
-				System.out.println("Registering test tabcomplete");
-				commodore.register(LiteralArgumentBuilder.literal("test")
-					.then(LiteralArgumentBuilder.literal("asd")
-						.then(RequiredArgumentBuilder.argument("dsa", StringArgumentType.word())))
-					.then(RequiredArgumentBuilder.argument("lol", StringArgumentType.word())));
-			}
-			System.out.println("Registering tabcomplete for path: " + command2MC.getCommandPath());
 			String[] path = command2MC.getCommandPath().split(" ");
 			var maincmd = LiteralArgumentBuilder.literal(path[0]).build();
 			var cmd = maincmd;
 			for (int i = 1; i < path.length; i++) {
 				var subcmd = LiteralArgumentBuilder.literal(path[i]).build();
-				System.out.println(cmd + " -> " + subcmd);
 				cmd.addChild(subcmd);
 				cmd = subcmd; //Add each part of the path as a child of the previous one
 			}
@@ -226,7 +218,6 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 				if (subpath[0].length() > 0) { //If the method is def, it will contain one empty string
 					for (String s : subpath) {
 						var subsubcmd = LiteralArgumentBuilder.literal(s).build();
-						System.out.println(scmd + " -> " + subsubcmd);
 						scmd.addChild(subsubcmd);
 						scmd = subsubcmd; //Add method name part of the path (could_be_multiple())
 					}
@@ -258,14 +249,10 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 					else  //TODO: Custom parameter types
 						type = StringArgumentType.word();
 					var arg = RequiredArgumentBuilder.argument(parameter.getName(), type).build();
-					System.out.println("Adding arg: " + arg + " to " + scmd);
 					scmd.addChild(arg);
 					scmd = arg;
 				}
 			}
-			System.out.println("maincmd: " + maincmd);
-			System.out.println("Children:");
-			maincmd.getChildren().forEach(System.out::println);
 			commodore.register(maincmd);
 		}
 	}
