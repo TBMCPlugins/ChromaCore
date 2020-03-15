@@ -254,6 +254,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		}
 		Runnable lol = () -> {
 			try {
+				sd.method.setAccessible(true); //It may be part of a private class
 				val ret = sd.method.invoke(sd.command, params.toArray()); //I FORGOT TO TURN IT INTO AN ARRAY (for a long time)
 				if (ret instanceof Boolean) {
 					if (!(boolean) ret) //Show usage

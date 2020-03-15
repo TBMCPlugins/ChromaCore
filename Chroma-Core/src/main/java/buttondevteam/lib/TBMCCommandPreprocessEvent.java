@@ -1,6 +1,8 @@
 package buttondevteam.lib;
 
+import buttondevteam.core.component.channel.Channel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Cancellable;
@@ -14,19 +16,17 @@ import org.bukkit.event.HandlerList;
  * @author NorbiPeti
  */
 @Getter
+@RequiredArgsConstructor
 public class TBMCCommandPreprocessEvent extends Event implements Cancellable {
 	private static final HandlerList handlers = new HandlerList();
 
 	private final CommandSender sender;
+	private final Channel channel;
 	@Setter
-	private String message;
+	private final String message;
+	private final CommandSender permCheck;
 	@Setter
 	private boolean cancelled;
-
-	public TBMCCommandPreprocessEvent(CommandSender sender, String message) {
-		this.sender = sender;
-		this.message = message;
-	}
 
 	@Override
 	public HandlerList getHandlers() {

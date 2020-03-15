@@ -5,6 +5,7 @@ import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.chat.ChatMessage;
 import buttondevteam.lib.chat.Command2MCSender;
 import buttondevteam.lib.chat.TBMCChatAPI;
+import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.player.TBMCPlayer;
 import buttondevteam.lib.player.TBMCPlayerBase;
 import lombok.val;
@@ -37,13 +38,13 @@ public class PlayerListener implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onSystemChat(TBMCSystemChatEvent event) {
-        if (event.isHandled())
-	        return; // Only handle here if ButtonChat couldn't - ButtonChat doesn't even handle this
+		if (event.isHandled())
+			return; // Only handle here if ButtonChat couldn't - ButtonChat doesn't even handle this
 		if (Arrays.stream(event.getExceptions()).anyMatch("Minecraft"::equalsIgnoreCase))
 			return;
-        Bukkit.getOnlinePlayers().stream().filter(event::shouldSendTo)
-	        .forEach(p -> p.sendMessage(event.getChannel().DisplayName().get().substring(0, 2) + event.getMessage()));
-    }
+		Bukkit.getOnlinePlayers().stream().filter(event::shouldSendTo)
+			.forEach(p -> p.sendMessage(event.getChannel().DisplayName().get().substring(0, 2) + event.getMessage()));
+	}
 
 	@EventHandler
 	public void onPlayerChatPreprocess(PlayerCommandPreprocessEvent event) {
@@ -58,7 +59,13 @@ public class PlayerListener implements Listener {
 
 	private void handlePreprocess(CommandSender sender, String message, Cancellable event) {
 		if (event.isCancelled()) return;
-		val ev = new TBMCCommandPreprocessEvent(sender, message);
+		/*val cg = Optional.ofNullable(ChromaGamerBase.getFromSender(sender));
+		val ch = cg.map(ChromaGamerBase::channel).map(ChannelPlayerData::get);
+		val rtr = ch.map(c -> c.getRTR(sender)).orElseGet(() -> new Channel.RecipientTestResult("Failed to get user"));
+		val ev = new TBMCCommandPreprocessEvent(sender, ch.orElse(Channel.GlobalChat), message, rtr.score, rtr.groupID);*/
+		val cg = ChromaGamerBase.getFromSender(sender);
+		if (cg == null) throw new RuntimeException("Couldn't get user from sender for " + sender.getName() + "!");
+		val ev = new TBMCCommandPreprocessEvent(sender, cg.channel().get(), message, sender);
 		Bukkit.getPluginManager().callEvent(ev);
 		if (ev.isCancelled())
 			event.setCancelled(true); //Cancel the original event
@@ -68,7 +75,7 @@ public class PlayerListener implements Listener {
 	public void onTBMCPreprocess(TBMCCommandPreprocessEvent event) {
 		if (event.isCancelled()) return;
 		try {
-			event.setCancelled(ButtonPlugin.getCommand2MC().handleCommand(new Command2MCSender(event.getSender()), event.getMessage()));
+			event.setCancelled(ButtonPlugin.getCommand2MC().handleCommand(new Command2MCSender(event.getSender(), event.getChannel(), event.getPermCheck()), event.getMessage()));
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Command processing failed for sender '" + event.getSender() + "' and message '" + event.getMessage() + "'", e);
 		}
