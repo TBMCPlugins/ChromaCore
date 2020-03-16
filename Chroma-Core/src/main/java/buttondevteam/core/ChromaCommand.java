@@ -20,4 +20,14 @@ public class ChromaCommand extends ICommand2MC {
 		else
 			sender.sendMessage("§cFailed to reload config. Check console.");
 	}
+
+	@Command2.Subcommand
+	public void def(CommandSender sender) {
+		sender.sendMessage(ButtonPlugin.getCommand2MC().getCommandsText());
+	}
+
+	@Command2.Subcommand
+	public void test(CommandSender sender, char test) {
+		sender.sendMessage(test + "");
+	}
 }

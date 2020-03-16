@@ -4,6 +4,7 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
+import buttondevteam.lib.chat.commandargs.BetterStringArgumentType;
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -231,7 +232,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 						if (parameter.isAnnotationPresent(TextArg.class))
 							type = StringArgumentType.greedyString();
 						else
-							type = StringArgumentType.word();
+							type = BetterStringArgumentType.word();
 					else if (ptype == int.class || ptype == Integer.class
 						|| ptype == byte.class || ptype == Byte.class
 						|| ptype == short.class || ptype == Short.class)
@@ -243,17 +244,26 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 					else if (ptype == double.class || ptype == Double.class)
 						type = DoubleArgumentType.doubleArg();
 					else if (ptype == char.class || ptype == Character.class)
-						type = StringArgumentType.word();
+						type = BetterStringArgumentType.word(1);
 					else if (ptype == boolean.class || ptype == Boolean.class)
 						type = BoolArgumentType.bool();
 					else  //TODO: Custom parameter types
-						type = StringArgumentType.word();
-					var arg = RequiredArgumentBuilder.argument(parameter.getName(), type).build();
+						type = BetterStringArgumentType.word();
+					var arg = RequiredArgumentBuilder.argument(subcmd.parameters[i - 1], type).build();
 					scmd.addChild(arg);
 					scmd = arg;
 				}
 			}
-			commodore.register(maincmd);
+			/*try {
+				Class.forName("net.minecraft.server.v1_15_R1.ArgumentRegistry").getMethod("a", String.class, Class.class,
+					Class.forName("net.minecraft.server.v1_15_R1.ArgumentSerializer"))
+					.invoke(null, "chroma:string", BetterStringArgumentType.class,
+						Class.forName("net.minecraft.server.v1_15_R1.ArgumentSerializerVoid").getConstructors()[0]
+							.newInstance((Supplier<BetterStringArgumentType>) BetterStringArgumentType::word));
+			} catch (Exception e) { - Client log: Could not deserialize chroma:string
+				e.printStackTrace();
+			}*/
+			commodore.register(bukkitCommand, maincmd);
 		}
 	}
 }

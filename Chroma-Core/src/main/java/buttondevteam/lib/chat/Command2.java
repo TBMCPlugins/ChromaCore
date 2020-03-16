@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStreamReader;
@@ -23,14 +22,17 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.function.Function;
 
 /**
  * The method name is the subcommand, use underlines (_) to add further subcommands.
  * The args may be null if the conversion failed and it's optional.
  */
-public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> {
+public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Sender> {
 	protected Command2() {
 		commandHelp.add("§6---- Commands ----");
 	}
@@ -60,10 +62,10 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		String[] helpText() default {};
 
 		/**
-		 * The main permission which allows using this command (individual access can be still granted with "chroma.command.X").
+		 * The main permission which allows using this command (individual access can be still revoked with "chroma.command.X").
 		 * Used to be "tbmc.admin". The {@link #MOD_GROUP} is provided to use with this.
 		 */
-		String permGroup() default ""; //TODO
+		String permGroup() default "";
 	}
 
 	@Target(ElementType.PARAMETER)
@@ -72,13 +74,14 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 	}
 
 	@AllArgsConstructor
-	protected static class SubcommandData<T extends ICommand2> {
+	protected static class SubcommandData<T extends ICommand2<?>> {
 		public final Method method;
 		public final T command;
+		public final String[] parameters;
 		public String[] helpText;
 	}
 
-	protected static class SubcommandHelpData<T extends ICommand2> extends SubcommandData<T> {
+	/*protected static class SubcommandHelpData<T extends ICommand2> extends SubcommandData<T> {
 		private final TreeSet<String> ht = new TreeSet<>();
 		private BukkitTask task;
 
@@ -101,7 +104,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 					task = null; //Run again, if needed
 				});
 		}
-	}
+	}*/
 
 	@RequiredArgsConstructor
 	protected static class ParamConverter<T> {
@@ -131,7 +134,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 	public boolean handleCommand(TP sender, String commandline) {
 		for (int i = commandline.length(); i != -1; i = commandline.lastIndexOf(' ', i - 1)) {
 			String subcommand = commandline.substring(0, i).toLowerCase();
-			SubcommandData<TC> sd = subcommands.get(subcommand); //O(1)
+			SubcommandData<TC> sd = subcommands.get(subcommand);
 			if (sd == null) continue;
 			boolean sync = Bukkit.isPrimaryThread();
 			Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, () -> {
@@ -177,12 +180,12 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		if (sendertype.isAssignableFrom(sender.getClass()))
 			params.add(sender); //The command either expects a CommandSender or it is a Player, or some other expected type
 		else if (sender instanceof Command2MCSender
-			&& sendertype.isAssignableFrom(((Command2MCSender) sender).getSender().getClass()))
+				&& sendertype.isAssignableFrom(((Command2MCSender) sender).getSender().getClass()))
 			params.add(((Command2MCSender) sender).getSender());
 		else if (ChromaGamerBase.class.isAssignableFrom(sendertype)
-			&& sender instanceof Command2MCSender
-			&& (cg = ChromaGamerBase.getFromSender(((Command2MCSender) sender).getSender())) != null
-			&& cg.getClass() == sendertype) //The command expects a user of our system
+				&& sender instanceof Command2MCSender
+				&& (cg = ChromaGamerBase.getFromSender(((Command2MCSender) sender).getSender())) != null
+				&& cg.getClass() == sendertype) //The command expects a user of our system
 			params.add(cg);
 		else {
 			sender.sendMessage("§cYou need to be a " + sendertype.getSimpleName() + " to use this command.");
@@ -198,7 +201,7 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 					if (cl.isPrimitive())
 						params.add(Defaults.defaultValue(cl));
 					else if (Number.class.isAssignableFrom(cl)
-						|| Number.class.isAssignableFrom(cl))
+							|| Number.class.isAssignableFrom(cl))
 						params.add(Defaults.defaultValue(Primitives.unwrap(cl)));
 					else
 						params.add(null);
@@ -306,9 +309,10 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 			var ht = command.getHelpText(method, ann);
 			if (ht != null) { //The method is a subcommand
 				val subcommand = commandChar + path + //Add command path (class name by default)
-					getCommandPath(method.getName(), ' '); //Add method name, unless it's 'def'
-				ht = getParameterHelp(method, ht, subcommand);
-				var sd = new SubcommandData<>(method, command, ht);
+						getCommandPath(method.getName(), ' '); //Add method name, unless it's 'def'
+				var params = new String[method.getParameterCount() - 1];
+				ht = getParameterHelp(method, ht, subcommand, params);
+				var sd = new SubcommandData<>(method, command, params, ht);
 				subcommands.put(subcommand, sd); //Result of the above (def) is that it will show the help text
 				addedSubcommands.add(sd);
 				scmdHelpList.add(subcommand);
@@ -318,24 +322,24 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 		if (nosubs && scmdHelpList.size() > 0)
 			scmdHelpList.remove(scmdHelpList.size() - 1); //Remove Subcommands header
 		if (mainMethod != null && !subcommands.containsKey(commandChar + path)) { //Command specified by the class
-			var sd = new SubcommandData<>(mainMethod, command, scmdHelpList.toArray(new String[0]));
+			var sd = new SubcommandData<>(mainMethod, command, null, scmdHelpList.toArray(new String[0]));
 			subcommands.put(commandChar + path, sd);
 			addedSubcommands.add(sd);
 		}
 		if (mainMethod != null && !mainPath.equals(commandChar + path)) { //Main command, typically the same as the above
 			if (isSubcommand) { //The class itself is a subcommand
-				val scmd = subcommands.computeIfAbsent(mainPath, p -> new SubcommandData<>(null, null, new String[]{"§6---- Subcommands ----"}));
+				val scmd = subcommands.computeIfAbsent(mainPath, p -> new SubcommandData<>(null, null, new String[0], new String[]{"§6---- Subcommands ----"}));
 				val scmdHelp = Arrays.copyOf(scmd.helpText, scmd.helpText.length + scmdHelpList.size());
 				for (int i = 0; i < scmdHelpList.size(); i++)
 					scmdHelp[scmd.helpText.length + i] = scmdHelpList.get(i);
 				scmd.helpText = scmdHelp;
 			} else if (!subcommands.containsKey(mainPath))
-				subcommands.put(mainPath, new SubcommandData<>(null, null, scmdHelpList.toArray(new String[0])));
+				subcommands.put(mainPath, new SubcommandData<>(null, null, new String[0], scmdHelpList.toArray(new String[0])));
 		}
 		return addedSubcommands;
 	}
 
-	private String[] getParameterHelp(Method method, String[] ht, String subcommand) {
+	private String[] getParameterHelp(Method method, String[] ht, String subcommand, String[] parameters) {
 		val str = method.getDeclaringClass().getResourceAsStream("/commands.yml");
 		if (str == null)
 			TBMCCoreAPI.SendException("Error while getting command data!", new Exception("Resource not found!"));
@@ -355,6 +359,9 @@ public abstract class Command2<TC extends ICommand2, TP extends Command2Sender> 
 						String[] both = Arrays.copyOf(ht, ht.length + 1);
 						both[ht.length] = "§6Usage:§r " + subcommand + " " + params;
 						ht = both;
+						var paramArray = params.split(" ");
+						for (int j = 0; j < paramArray.length && j < parameters.length; j++)
+							parameters[j] = paramArray[j];
 					} else
 						TBMCCoreAPI.SendException("Error while getting command data for " + method + "!", new Exception("Method '" + method.toString() + "' != " + mname + " or params is " + params));
 				} else
