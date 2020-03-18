@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * The method name is the subcommand, use underlines (_) to add further subcommands.
@@ -110,10 +111,11 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	protected static class ParamConverter<T> {
 		public final Function<String, T> converter;
 		public final String errormsg;
+		public final Supplier<Iterable<String>> allSupplier;
 	}
 
-	protected HashMap<String, SubcommandData<TC>> subcommands = new HashMap<>();
-	private HashMap<Class<?>, ParamConverter<?>> paramConverters = new HashMap<>();
+	protected final HashMap<String, SubcommandData<TC>> subcommands = new HashMap<>();
+	protected final HashMap<Class<?>, ParamConverter<?>> paramConverters = new HashMap<>();
 
 	private ArrayList<String> commandHelp = new ArrayList<>(); //Mainly needed by Discord
 
@@ -123,12 +125,14 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	 * Adds a param converter that obtains a specific object from a string parameter.
 	 * The converter may return null.
 	 *
-	 * @param cl        The class of the result object
-	 * @param converter The converter to use
-	 * @param <T>       The type of the result
+	 * @param <T>         The type of the result
+	 * @param cl          The class of the result object
+	 * @param converter   The converter to use
+	 * @param allSupplier The supplier of all possible values (ideally)
 	 */
-	public <T> void addParamConverter(Class<T> cl, Function<String, T> converter, String errormsg) {
-		paramConverters.put(cl, new ParamConverter<>(converter, errormsg));
+	public <T> void addParamConverter(Class<T> cl, Function<String, T> converter, String errormsg,
+	                                  Supplier<Iterable<String>> allSupplier) {
+		paramConverters.put(cl, new ParamConverter<>(converter, errormsg, allSupplier));
 	}
 
 	public boolean handleCommand(TP sender, String commandline) {
@@ -180,12 +184,12 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		if (sendertype.isAssignableFrom(sender.getClass()))
 			params.add(sender); //The command either expects a CommandSender or it is a Player, or some other expected type
 		else if (sender instanceof Command2MCSender
-				&& sendertype.isAssignableFrom(((Command2MCSender) sender).getSender().getClass()))
+			&& sendertype.isAssignableFrom(((Command2MCSender) sender).getSender().getClass()))
 			params.add(((Command2MCSender) sender).getSender());
 		else if (ChromaGamerBase.class.isAssignableFrom(sendertype)
-				&& sender instanceof Command2MCSender
-				&& (cg = ChromaGamerBase.getFromSender(((Command2MCSender) sender).getSender())) != null
-				&& cg.getClass() == sendertype) //The command expects a user of our system
+			&& sender instanceof Command2MCSender
+			&& (cg = ChromaGamerBase.getFromSender(((Command2MCSender) sender).getSender())) != null
+			&& cg.getClass() == sendertype) //The command expects a user of our system
 			params.add(cg);
 		else {
 			sender.sendMessage("§cYou need to be a " + sendertype.getSimpleName() + " to use this command.");
@@ -201,7 +205,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 					if (cl.isPrimitive())
 						params.add(Defaults.defaultValue(cl));
 					else if (Number.class.isAssignableFrom(cl)
-							|| Number.class.isAssignableFrom(cl))
+						|| Number.class.isAssignableFrom(cl))
 						params.add(Defaults.defaultValue(Primitives.unwrap(cl)));
 					else
 						params.add(null);
@@ -309,7 +313,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			var ht = command.getHelpText(method, ann);
 			if (ht != null) { //The method is a subcommand
 				val subcommand = commandChar + path + //Add command path (class name by default)
-						getCommandPath(method.getName(), ' '); //Add method name, unless it's 'def'
+					getCommandPath(method.getName(), ' '); //Add method name, unless it's 'def'
 				var params = new String[method.getParameterCount() - 1];
 				ht = getParameterHelp(method, ht, subcommand, params);
 				var sd = new SubcommandData<>(method, command, params, ht);

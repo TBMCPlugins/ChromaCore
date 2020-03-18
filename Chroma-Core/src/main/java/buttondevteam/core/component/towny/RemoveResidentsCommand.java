@@ -2,6 +2,7 @@ package buttondevteam.core.component.towny;
 
 import buttondevteam.lib.chat.Command2;
 import buttondevteam.lib.chat.CommandClass;
+import buttondevteam.lib.chat.CustomTabComplete;
 import buttondevteam.lib.chat.ICommand2MC;
 import com.palmergames.bukkit.towny.TownySettings;
 import com.palmergames.bukkit.towny.TownyUniverse;
@@ -20,7 +21,7 @@ import java.util.stream.Stream;
 })
 public class RemoveResidentsCommand extends ICommand2MC {
 	@Command2.Subcommand
-	public void def(CommandSender sender, @Command2.OptionalArg String remove) {
+	public void def(CommandSender sender, @Command2.OptionalArg @CustomTabComplete("remove") String remove) {
 		Bukkit.getScheduler().runTaskAsynchronously(getPlugin(), () -> {
 			sender.sendMessage("Starting...");
 			var ds = TownyUniverse.getInstance().getDataSource();

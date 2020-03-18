@@ -4,11 +4,12 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
-import buttondevteam.lib.chat.commandargs.BetterStringArgumentType;
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import lombok.val;
 import me.lucko.commodore.Commodore;
 import me.lucko.commodore.CommodoreProvider;
@@ -20,7 +21,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.server.TabCompleteEvent;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 
@@ -31,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implements Listener {
 	/**
@@ -139,8 +143,8 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	 * {@see super#addParamConverter}
 	 */
 	@Override
-	public <T> void addParamConverter(Class<T> cl, Function<String, T> converter, String errormsg) {
-		super.addParamConverter(cl, converter, "§c" + errormsg);
+	public <T> void addParamConverter(Class<T> cl, Function<String, T> converter, String errormsg, Supplier<Iterable<String>> allSupplier) {
+		super.addParamConverter(cl, converter, "§c" + errormsg, allSupplier);
 	}
 
 	public void unregisterCommands(ButtonPlugin plugin) {
@@ -156,6 +160,13 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			unregisterCommand(cmd);*/
 		subcommands.values().removeIf(sd -> Optional.ofNullable(sd.command).map(ICommand2MC::getComponent)
 			.map(comp -> component.getClass().getSimpleName().equals(comp.getClass().getSimpleName())).orElse(false));
+	}
+
+	@EventHandler
+	public void onTabComplete(TabCompleteEvent event) {
+		//System.out.println("Tabcomplete: " + event.getBuffer());
+		//System.out.println("First completion: " + event.getCompletions().stream().findFirst().orElse("no completions"));
+		event.getCompletions().clear();
 	}
 
 	private boolean shouldRegisterOfficially = true;
@@ -202,6 +213,19 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	private static class TabcompleteHelper {
 		private static Commodore commodore;
 
+		private static LiteralCommandNode<Object> appendSubcommand(String path, CommandNode<Object> parent,
+		                                                           SubcommandData<ICommand2MC> subcommand) {
+			var scmdBuilder = LiteralArgumentBuilder.literal(path);
+			if (subcommand != null)
+				scmdBuilder.requires(o -> {
+					var sender = commodore.getBukkitSender(o);
+					return ButtonPlugin.getCommand2MC().hasPermission(sender, subcommand.command, subcommand.method);
+				});
+			var scmd = scmdBuilder.build();
+			parent.addChild(scmd);
+			return scmd;
+		}
+
 		private static void registerTabcomplete(ICommand2MC command2MC, List<SubcommandData<ICommand2MC>> subcmds, Command bukkitCommand) {
 			if (commodore == null)
 				commodore = CommodoreProvider.getCommodore(MainPlugin.Instance); //Register all to the Core, it's easier
@@ -209,18 +233,15 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			var maincmd = LiteralArgumentBuilder.literal(path[0]).build();
 			var cmd = maincmd;
 			for (int i = 1; i < path.length; i++) {
-				var subcmd = LiteralArgumentBuilder.literal(path[i]).build();
-				cmd.addChild(subcmd);
-				cmd = subcmd; //Add each part of the path as a child of the previous one
+				var scmd = subcmds.stream().filter(sd -> sd.method.getName().equals("def")).findAny().orElse(null);
+				cmd = appendSubcommand(path[i], cmd, scmd);  //Add each part of the path as a child of the previous one
 			}
 			for (SubcommandData<ICommand2MC> subcmd : subcmds) {
 				String[] subpath = ButtonPlugin.getCommand2MC().getCommandPath(subcmd.method.getName(), ' ').trim().split(" ");
 				CommandNode<Object> scmd = cmd;
 				if (subpath[0].length() > 0) { //If the method is def, it will contain one empty string
 					for (String s : subpath) {
-						var subsubcmd = LiteralArgumentBuilder.literal(s).build();
-						scmd.addChild(subsubcmd);
-						scmd = subsubcmd; //Add method name part of the path (could_be_multiple())
+						scmd = appendSubcommand(s, scmd, subcmd); //Add method name part of the path (could_be_multiple())
 					}
 				}
 				Parameter[] parameters = subcmd.method.getParameters();
@@ -232,7 +253,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 						if (parameter.isAnnotationPresent(TextArg.class))
 							type = StringArgumentType.greedyString();
 						else
-							type = BetterStringArgumentType.word();
+							type = StringArgumentType.word();
 					else if (ptype == int.class || ptype == Integer.class
 						|| ptype == byte.class || ptype == Byte.class
 						|| ptype == short.class || ptype == Short.class)
@@ -244,12 +265,18 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 					else if (ptype == double.class || ptype == Double.class)
 						type = DoubleArgumentType.doubleArg();
 					else if (ptype == char.class || ptype == Character.class)
-						type = BetterStringArgumentType.word(1);
+						type = StringArgumentType.word();
 					else if (ptype == boolean.class || ptype == Boolean.class)
 						type = BoolArgumentType.bool();
 					else  //TODO: Custom parameter types
-						type = BetterStringArgumentType.word();
-					var arg = RequiredArgumentBuilder.argument(subcmd.parameters[i - 1], type).build();
+						type = StringArgumentType.word();
+					val param = subcmd.parameters[i - 1];
+					var argb = RequiredArgumentBuilder.argument(param, type)
+						.suggests((SuggestionProvider<Object>) (context, builder) -> {
+							//TODO
+							return builder.suggest(param).buildFuture();
+						});
+					var arg = argb.build();
 					scmd.addChild(arg);
 					scmd = arg;
 				}
@@ -263,7 +290,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			} catch (Exception e) { - Client log: Could not deserialize chroma:string
 				e.printStackTrace();
 			}*/
-			commodore.register(bukkitCommand, maincmd);
+			commodore.register(maincmd);
 		}
 	}
 }

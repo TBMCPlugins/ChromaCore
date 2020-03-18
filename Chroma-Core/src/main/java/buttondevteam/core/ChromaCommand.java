@@ -26,7 +26,7 @@ public class ChromaCommand extends ICommand2MC {
 		sender.sendMessage(ButtonPlugin.getCommand2MC().getCommandsText());
 	}
 
-	@Command2.Subcommand
+	@Command2.Subcommand //TODO: Remove
 	public void test(CommandSender sender, char test) {
 		sender.sendMessage(test + "");
 	}

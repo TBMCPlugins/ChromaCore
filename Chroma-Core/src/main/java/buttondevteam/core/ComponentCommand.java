@@ -6,13 +6,17 @@ import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.Command2;
 import buttondevteam.lib.chat.Command2.Subcommand;
 import buttondevteam.lib.chat.CommandClass;
+import buttondevteam.lib.chat.CustomTabCompleteMethod;
 import buttondevteam.lib.chat.ICommand2MC;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @CommandClass(modOnly = true, helpText = {
 	"Component command",
@@ -20,7 +24,8 @@ import java.util.Optional;
 })
 public class ComponentCommand extends ICommand2MC {
 	public ComponentCommand() {
-		getManager().addParamConverter(Plugin.class, arg -> Bukkit.getPluginManager().getPlugin(arg), "Plugin not found!");
+		getManager().addParamConverter(Plugin.class, arg -> Bukkit.getPluginManager().getPlugin(arg), "Plugin not found!",
+			() -> Arrays.stream(Bukkit.getPluginManager().getPlugins()).map(Plugin::getName)::iterator);
 	}
 
 	@Subcommand(helpText = {
@@ -57,6 +62,11 @@ public class ComponentCommand extends ICommand2MC {
 		return true;
 	}
 
+	@CustomTabCompleteMethod(param = "component", subcommand = {"enable", "disable"})
+	public Iterable<String> componentTabcomplete(Plugin plugin) {
+		return getPluginComponents(plugin).map(c -> c.getClass().getSimpleName())::iterator;
+	}
+
 	private boolean enable_disable(CommandSender sender, Plugin plugin, String component, boolean enable, boolean permanent) {
 		try {
 			val oc = getComponentOrError(plugin, component, sender);
@@ -72,10 +82,13 @@ public class ComponentCommand extends ICommand2MC {
 		return true;
 	}
 
+	private Stream<Component<? extends JavaPlugin>> getPluginComponents(Plugin plugin) {
+		return Component.getComponents().values().stream()
+			.filter(c -> plugin.getName().equals(c.getPlugin().getName()));
+	}
+
 	private Optional<Component<?>> getComponentOrError(Plugin plugin, String arg, CommandSender sender) {
-		val oc = Component.getComponents().values().stream()
-			.filter(c -> plugin.getName().equals(c.getPlugin().getName()))
-			.filter(c -> c.getClass().getSimpleName().equalsIgnoreCase(arg)).findAny();
+		val oc = getPluginComponents(plugin).filter(c -> c.getClass().getSimpleName().equalsIgnoreCase(arg)).findAny();
 		if (!oc.isPresent())
 			sender.sendMessage("§cComponent not found!"); //^ Much simpler to solve in the new command system
 		return oc;
