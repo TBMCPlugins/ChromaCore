@@ -286,6 +286,8 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 							type = StringArgumentType.word();
 						else if (ptype == boolean.class || ptype == Boolean.class)
 							type = BoolArgumentType.bool();
+						else if (parameter.isVarArgs())
+							type = StringArgumentType.greedyString();
 						else {
 							type = StringArgumentType.word();
 							customParamTypeTemp = true;
@@ -300,6 +302,10 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 						.map(Triplet::getValue2).findAny();
 					var argb = RequiredArgumentBuilder.argument(param, type)
 						.suggests((SuggestionProvider<Object>) (context, builder) -> {
+							if (parameter.isVarArgs()) { //Do it before the builder is used
+								int x = context.getInput().lastIndexOf(' ') + 1;
+								builder = builder.createOffset(x);
+							}
 							if (customTC.isPresent())
 								for (val ctc : customTC.get())
 									builder.suggest(ctc);
@@ -364,7 +370,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 							if (ptype == boolean.class || ptype == Boolean.class)
 								builder.suggest("true").suggest("false");
 							return builder.suggest(param).buildFuture().whenComplete((s, e) -> //The list is automatically ordered
-								Collections.swap(s.getList(), 0, s.getList().size() - 1)); //So we need to put the <param> at the end after that
+								s.getList().add(s.getList().remove(0))); //So we need to put the <param> at the end after that
 						});
 					var arg = argb.build();
 					scmd.addChild(arg);
