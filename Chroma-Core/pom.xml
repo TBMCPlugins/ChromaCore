@@ -39,8 +39,9 @@
                         <configuration>
                             <artifactSet>
                                 <includes>
-                                    <include>me.lucko:commodore</include>
-                                </includes>
+									<include>me.lucko:commodore</include>
+									<include>org.javatuples:javatuples</include>
+								</includes>
                             </artifactSet>
                             <relocations>
                                 <relocation>
@@ -170,33 +171,38 @@
 			<groupId>com.github.TBMCPlugins.ChromaCore</groupId>
 			<artifactId>ButtonProcessor</artifactId>
 			<version>master-SNAPSHOT</version>
-            <scope>compile</scope>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>net.ess3</groupId>
-            <artifactId>EssentialsX</artifactId>
-            <version>2.17.1</version>
+			<artifactId>EssentialsX</artifactId>
+			<version>2.17.1</version>
 			<scope>provided</scope>
 		</dependency>
-        <dependency>
-            <groupId>com.vexsoftware</groupId>
-            <artifactId>nuvotifier-universal</artifactId>
-            <version>2.3.4</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.onarandombox.multiversecore</groupId>
-            <artifactId>Multiverse-Core</artifactId>
-            <version>4.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>me.lucko</groupId>
-            <artifactId>commodore</artifactId>
-            <version>1.7</version>
-            <scope>compile</scope>
-        </dependency>
-    </dependencies>
+		<dependency>
+			<groupId>com.vexsoftware</groupId>
+			<artifactId>nuvotifier-universal</artifactId>
+			<version>2.3.4</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.onarandombox.multiversecore</groupId>
+			<artifactId>Multiverse-Core</artifactId>
+			<version>4.0.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>me.lucko</groupId>
+			<artifactId>commodore</artifactId>
+			<version>1.7</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.javatuples</groupId>
+			<artifactId>javatuples</artifactId>
+			<version>1.2</version>
+		</dependency>
+	</dependencies>
 	<organization>
 		<name>TBMCPlugins</name>
 		<url>https://github.com/TBMCPlugins</url>

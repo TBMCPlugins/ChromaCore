@@ -67,6 +67,11 @@ public class ComponentCommand extends ICommand2MC {
 		return getPluginComponents(plugin).map(c -> c.getClass().getSimpleName())::iterator;
 	}
 
+	@CustomTabCompleteMethod(param = "plugin")
+	public Iterable<String> list() {
+		return Arrays.stream(Bukkit.getPluginManager().getPlugins()).map(Plugin::getName)::iterator;
+	}
+
 	private boolean enable_disable(CommandSender sender, Plugin plugin, String component, boolean enable, boolean permanent) {
 		try {
 			val oc = getComponentOrError(plugin, component, sender);

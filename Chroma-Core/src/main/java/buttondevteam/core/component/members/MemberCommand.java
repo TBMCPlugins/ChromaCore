@@ -7,7 +7,6 @@ import buttondevteam.lib.chat.ICommand2MC;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 
 import java.util.concurrent.TimeUnit;
@@ -20,8 +19,6 @@ public class MemberCommand extends ICommand2MC {
 	private final MemberComponent component;
 
 	public MemberCommand(MemberComponent component) {
-		getManager().addParamConverter(OfflinePlayer.class, Bukkit::getOfflinePlayer, "Player not found!",
-			() -> Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName)::iterator);
 		this.component = component;
 	}
 

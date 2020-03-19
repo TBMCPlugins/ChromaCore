@@ -24,10 +24,12 @@ import lombok.Setter;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.BlockCommandSender;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -36,10 +38,10 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 public class MainPlugin extends ButtonPlugin {
@@ -135,6 +137,9 @@ public class MainPlugin extends ButtonPlugin {
 		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§aGREEN§f", Color.Green, "green"));
 		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§bBLUE§f", Color.Blue, "blue"));
 		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§5PURPLE§f", Color.DarkPurple, "purple"));
+		Supplier<Iterable<String>> playerSupplier = () -> Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName)::iterator;
+		getCommand2MC().addParamConverter(OfflinePlayer.class, Bukkit::getOfflinePlayer, "Player not found!", playerSupplier);
+		getCommand2MC().addParamConverter(Player.class, Bukkit::getPlayer, "Online player not found!", playerSupplier);
 		if (writePluginList().get()) {
 			try {
 				Files.write(new File("plugins", "plugins.txt").toPath(), Arrays.stream(Bukkit.getPluginManager().getPlugins()).map(p -> (CharSequence) p.getDataFolder().getName())::iterator);

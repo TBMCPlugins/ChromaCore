@@ -26,15 +26,19 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.server.TabCompleteEvent;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
+import org.javatuples.Triplet;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implements Listener {
 	/**
@@ -236,8 +240,19 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 				var scmd = subcmds.stream().filter(sd -> sd.method.getName().equals("def")).findAny().orElse(null);
 				cmd = appendSubcommand(path[i], cmd, scmd);  //Add each part of the path as a child of the previous one
 			}
+			final var customTCmethods = Arrays.stream(command2MC.getClass().getDeclaredMethods()) //val doesn't recognize the type arguments
+				.flatMap(method -> Stream.of(Optional.ofNullable(method.getAnnotation(CustomTabCompleteMethod.class)))
+					.filter(Optional::isPresent).map(Optional::get) // Java 9 has .stream()
+					.flatMap(ctcm -> {
+						var paths = Optional.of(ctcm.subcommand()).filter(s -> s.length > 0)
+							.orElseGet(() -> new String[]{
+								ButtonPlugin.getCommand2MC().getCommandPath(method.getName(), ' ').trim()
+							});
+						return Arrays.stream(paths).map(name -> new Triplet<>(name, ctcm.param(), method));
+					})).collect(Collectors.toList());
 			for (SubcommandData<ICommand2MC> subcmd : subcmds) {
-				String[] subpath = ButtonPlugin.getCommand2MC().getCommandPath(subcmd.method.getName(), ' ').trim().split(" ");
+				String subpathAsOne = ButtonPlugin.getCommand2MC().getCommandPath(subcmd.method.getName(), ' ').trim();
+				String[] subpath = subpathAsOne.split(" ");
 				CommandNode<Object> scmd = cmd;
 				if (subpath[0].length() > 0) { //If the method is def, it will contain one empty string
 					for (String s : subpath) {
@@ -249,47 +264,113 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 					Parameter parameter = parameters[i];
 					ArgumentType<?> type;
 					final Class<?> ptype = parameter.getType();
-					if (ptype == String.class)
-						if (parameter.isAnnotationPresent(TextArg.class))
-							type = StringArgumentType.greedyString();
-						else
+					final boolean customParamType;
+					{
+						boolean customParamTypeTemp = false;
+						if (ptype == String.class)
+							if (parameter.isAnnotationPresent(TextArg.class))
+								type = StringArgumentType.greedyString();
+							else
+								type = StringArgumentType.word();
+						else if (ptype == int.class || ptype == Integer.class
+							|| ptype == byte.class || ptype == Byte.class
+							|| ptype == short.class || ptype == Short.class)
+							type = IntegerArgumentType.integer(); //TODO: Min, max
+						else if (ptype == long.class || ptype == Long.class)
+							type = LongArgumentType.longArg();
+						else if (ptype == float.class || ptype == Float.class)
+							type = FloatArgumentType.floatArg();
+						else if (ptype == double.class || ptype == Double.class)
+							type = DoubleArgumentType.doubleArg();
+						else if (ptype == char.class || ptype == Character.class)
 							type = StringArgumentType.word();
-					else if (ptype == int.class || ptype == Integer.class
-						|| ptype == byte.class || ptype == Byte.class
-						|| ptype == short.class || ptype == Short.class)
-						type = IntegerArgumentType.integer(); //TODO: Min, max
-					else if (ptype == long.class || ptype == Long.class)
-						type = LongArgumentType.longArg();
-					else if (ptype == float.class || ptype == Float.class)
-						type = FloatArgumentType.floatArg();
-					else if (ptype == double.class || ptype == Double.class)
-						type = DoubleArgumentType.doubleArg();
-					else if (ptype == char.class || ptype == Character.class)
-						type = StringArgumentType.word();
-					else if (ptype == boolean.class || ptype == Boolean.class)
-						type = BoolArgumentType.bool();
-					else  //TODO: Custom parameter types
-						type = StringArgumentType.word();
+						else if (ptype == boolean.class || ptype == Boolean.class)
+							type = BoolArgumentType.bool();
+						else {
+							type = StringArgumentType.word();
+							customParamTypeTemp = true;
+						}
+						customParamType = customParamTypeTemp;
+					}
 					val param = subcmd.parameters[i - 1];
+					val customTC = Optional.ofNullable(parameter.getAnnotation(CustomTabComplete.class))
+						.map(CustomTabComplete::value);
+					final Optional<Method> customTCmethod = customTCmethods.stream().filter(t -> subpathAsOne.equalsIgnoreCase(t.getValue0()))
+						.filter(t -> param.replaceAll("[\\[\\]<>]", "").equalsIgnoreCase(t.getValue1()))
+						.map(Triplet::getValue2).findAny();
 					var argb = RequiredArgumentBuilder.argument(param, type)
 						.suggests((SuggestionProvider<Object>) (context, builder) -> {
-							//TODO
-							return builder.suggest(param).buildFuture();
+							if (customTC.isPresent())
+								for (val ctc : customTC.get())
+									builder.suggest(ctc);
+							if (customTCmethod.isPresent()) {
+								final var method = customTCmethod.get();
+								val params = method.getParameters();
+								val args = new Object[params.length];
+								for (int j = 0, k = 0; j < args.length && k < subcmd.parameters.length; j++) {
+									val paramObj = params[j];
+									if (CommandSender.class.isAssignableFrom(paramObj.getType())) {
+										args[j] = commodore.getBukkitSender(context.getSource());
+										continue;
+									}
+									val paramValueString = context.getArgument(subcmd.parameters[k], String.class);
+									if (paramObj.getType() == String.class) {
+										args[j] = paramValueString;
+										continue;
+									}
+									val converter = ButtonPlugin.getCommand2MC().paramConverters.get(params[j].getType());
+									if (converter == null) {
+										TBMCCoreAPI.SendException("Could not find a suitable converter for type " + params[j].getType().getSimpleName(),
+											new NullPointerException("converter is null"));
+										break;
+									}
+									val paramValue = converter.converter.apply(paramValueString);
+									if (paramValue == null) //For example, the player provided an invalid plugin name
+										break;
+									args[j] = paramValue;
+									k++; //Only increment if not CommandSender
+								}
+								if (args.length == 0 || args[args.length - 1] != null) { //Arguments filled entirely
+									try {
+										val suggestions = method.invoke(command2MC, args);
+										if (suggestions instanceof Iterable) {
+											//noinspection unchecked
+											for (Object suggestion : (Iterable<Object>) suggestions)
+												if (suggestion instanceof String)
+													builder.suggest((String) suggestion);
+												else
+													throw new ClassCastException("Bad return type! It should return an Iterable<String> or a String[].");
+										} else if (suggestions instanceof String[])
+											for (String suggestion : (String[]) suggestions)
+												builder.suggest(suggestion);
+										else
+											throw new ClassCastException("Bad return type! It should return a String[] or an Iterable<String>.");
+									} catch (Exception e) {
+										TBMCCoreAPI.SendException("Failed to run tabcomplete method " + method.getName() + " for command " + command2MC.getClass().getSimpleName(), e);
+									}
+								}
+							}
+							if (customParamType) {
+								val converter = ButtonPlugin.getCommand2MC().paramConverters.get(ptype);
+								if (converter == null)
+									TBMCCoreAPI.SendException("Could not find a suitable converter for type " + ptype.getSimpleName(),
+										new NullPointerException("converter is null"));
+								else {
+									var suggestions = converter.allSupplier.get();
+									for (String suggestion : suggestions)
+										builder.suggest(suggestion);
+								}
+							}
+							if (ptype == boolean.class || ptype == Boolean.class)
+								builder.suggest("true").suggest("false");
+							return builder.suggest(param).buildFuture().whenComplete((s, e) -> //The list is automatically ordered
+								Collections.swap(s.getList(), 0, s.getList().size() - 1)); //So we need to put the <param> at the end after that
 						});
 					var arg = argb.build();
 					scmd.addChild(arg);
 					scmd = arg;
 				}
 			}
-			/*try {
-				Class.forName("net.minecraft.server.v1_15_R1.ArgumentRegistry").getMethod("a", String.class, Class.class,
-					Class.forName("net.minecraft.server.v1_15_R1.ArgumentSerializer"))
-					.invoke(null, "chroma:string", BetterStringArgumentType.class,
-						Class.forName("net.minecraft.server.v1_15_R1.ArgumentSerializerVoid").getConstructors()[0]
-							.newInstance((Supplier<BetterStringArgumentType>) BetterStringArgumentType::word));
-			} catch (Exception e) { - Client log: Could not deserialize chroma:string
-				e.printStackTrace();
-			}*/
 			commodore.register(maincmd);
 		}
 	}
