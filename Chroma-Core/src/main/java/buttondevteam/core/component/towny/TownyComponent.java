@@ -4,7 +4,6 @@ import buttondevteam.core.ComponentManager;
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.Component;
-import com.palmergames.bukkit.towny.Towny;
 import com.palmergames.bukkit.towny.TownyUniverse;
 import com.palmergames.bukkit.towny.exceptions.AlreadyRegisteredException;
 import com.palmergames.bukkit.towny.exceptions.NotRegisteredException;
@@ -34,22 +33,23 @@ public class TownyComponent extends Component<MainPlugin> {
 		if (!ComponentManager.isEnabled(TownyComponent.class))
 			return;
 		Bukkit.getLogger().info("Renaming" + oldName + " in Towny to " + newName);
-		TownyUniverse tu = Towny.getPlugin(Towny.class).getTownyUniverse();
-		Resident resident = tu.getResidentMap().get(oldName.toLowerCase()); //The map keys are lowercase
-		if (resident == null) {
-			Bukkit.getLogger().warning("Resident not found - couldn't rename in Towny.");
-			TBMCCoreAPI.sendDebugMessage("Resident not found - couldn't rename in Towny.");
-		} else if (tu.getDataSource().hasResident(newName)) {
-			Bukkit.getLogger().warning("Target resident name is already in use.");
-			TBMCCoreAPI.sendDebugMessage("Target resident name is already in use. (" + oldName + " -> " + newName + ")");
-		} else
-			try {
+		TownyUniverse tu = TownyUniverse.getInstance();
+		try {
+			Resident resident = tu.getDataSource().getResident(oldName);
+			if (resident == null) {
+				Bukkit.getLogger().warning("Resident not found - couldn't rename in Towny.");
+				TBMCCoreAPI.sendDebugMessage("Resident not found - couldn't rename in Towny.");
+			} else if (tu.getDataSource().hasResident(newName)) {
+				Bukkit.getLogger().warning("Target resident name is already in use.");
+				TBMCCoreAPI.sendDebugMessage("Target resident name is already in use. (" + oldName + " -> " + newName + ")");
+			} else {
 				tu.getDataSource().renamePlayer(resident, newName); //Fixed in Towny 0.91.1.2
 				Bukkit.getLogger().info("Renaming done.");
-			} catch (AlreadyRegisteredException e) {
-				TBMCCoreAPI.SendException("Failed to rename resident, there's already one with this name.", e);
-			} catch (NotRegisteredException e) {
-				TBMCCoreAPI.SendException("Failed to rename resident, the resident isn't registered.", e);
 			}
+		} catch (AlreadyRegisteredException e) {
+			TBMCCoreAPI.SendException("Failed to rename resident, there's already one with this name.", e);
+		} catch (NotRegisteredException e) {
+			TBMCCoreAPI.SendException("Failed to rename resident, the resident isn't registered.", e);
+		}
 	}
 }
