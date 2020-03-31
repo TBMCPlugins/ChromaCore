@@ -4,6 +4,7 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
+import buttondevteam.lib.player.ChromaGamerBase;
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -16,10 +17,7 @@ import me.lucko.commodore.CommodoreProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.command.SimpleCommandMap;
+import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -48,7 +46,15 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	 */
 	@Override
 	public void registerCommand(ICommand2MC command) {
+		/*String mainpath;
+		var plugin = command.getPlugin();
+		{
+			String cpath = command.getCommandPath();
+			int i = cpath.indexOf(' ');
+			mainpath = cpath.substring(0, i == -1 ? cpath.length() : i);
+		}*/
 		var subcmds = super.registerCommand(command, '/');
+
 		var perm = "chroma.command." + command.getCommandPath().replace(' ', '.');
 		if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
 			Bukkit.getPluginManager().addPermission(new Permission(perm,
@@ -173,6 +179,19 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		event.getCompletions().clear();
 	}
 
+	@Override
+	public boolean handleCommand(Command2MCSender sender, String commandline) {
+		int i = commandline.indexOf(' ');
+		String mainpath = commandline.substring(1, i == -1 ? commandline.length() : i); //Without the slash
+		PluginCommand pcmd;
+		if (MainPlugin.Instance.prioritizeCustomCommands().get()
+			|| (pcmd = Bukkit.getPluginCommand(mainpath)) == null //Our commands aren't PluginCommands
+			|| pcmd.getPlugin() instanceof ButtonPlugin) //Unless it's specified in the plugin.yml
+			return super.handleCommand(sender, commandline);
+		else
+			return false;
+	}
+
 	private boolean shouldRegisterOfficially = true;
 
 	private void registerOfficially(ICommand2MC command, List<SubcommandData<ICommand2MC>> subcmds) {
@@ -199,7 +218,14 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 
 		@Override
 		public boolean execute(CommandSender sender, String commandLabel, String[] args) {
-			sender.sendMessage("§cThe command wasn't executed for some reason... (command processing failed)");
+			var user = ChromaGamerBase.getFromSender(sender);
+			if (user == null) {
+				TBMCCoreAPI.SendException("Failed to run Bukkit command for user!", new Throwable("No Chroma user found"));
+				sender.sendMessage("§cAn internal error occurred.");
+				return true;
+			}
+			ButtonPlugin.getCommand2MC().handleCommand(new Command2MCSender(sender, user.channel().get(), sender),
+				"/" + getName() + " " + String.join(" ", args));
 			return true;
 		}
 
@@ -378,6 +404,10 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 				}
 			}
 			commodore.register(maincmd);
+			var prefixedcmd = new LiteralCommandNode<>(command2MC.getPlugin().getName().toLowerCase() + ":" + path[0], maincmd.getCommand(), maincmd.getRequirement(), maincmd.getRedirect(), maincmd.getRedirectModifier(), maincmd.isFork());
+			for (var child : maincmd.getChildren())
+				prefixedcmd.addChild(child);
+			commodore.register(prefixedcmd);
 		}
 	}
 }

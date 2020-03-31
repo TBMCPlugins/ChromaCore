@@ -84,14 +84,12 @@ public class MainPlugin extends ButtonPlugin {
 		return getIConfig().getData("test", false);
 	}
 
-	/*
-	 * By default, the plugin uses Vault for all command permission checks, but this can have issues (with PEX for example) where default permissions aren't granted.
-	 * When this setting is off, the plugin uses Bukkit's built-in way of handling permissions, which usually works fine for players.
-	 * You can also grant chroma.command.* to each player (mod-only commands need another permission, chroma.mod).
+	/**
+	 * If a Chroma command clashes with another plugin's command, this setting determines whether the Chroma command should be executed or the other plugin's.
 	 */
-	/*public ConfigData<Boolean> useVaultForCommands() {
-		return getIConfig().getData("useVaultForCommands", true);
-	}*/
+	public ConfigData<Boolean> prioritizeCustomCommands() {
+		return getIConfig().getData("prioritizeCustomCommands", false);
+	}
 
 	@Override
 	public void pluginEnable() {

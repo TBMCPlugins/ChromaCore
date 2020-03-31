@@ -165,7 +165,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	 * @param sync        Whether the command was originally sync
 	 * @throws Exception If something's not right
 	 */
-	public void handleCommandAsync(TP sender, String commandline, SubcommandData<TC> sd, String subcommand, boolean sync) throws Exception {
+	private void handleCommandAsync(TP sender, String commandline, SubcommandData<TC> sd, String subcommand, boolean sync) throws Exception {
 		if (sd.method == null || sd.command == null) { //Main command not registered, but we have subcommands
 			sender.sendMessage(sd.helpText);
 			return;
@@ -330,15 +330,12 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			subcommands.put(commandChar + path, sd);
 			addedSubcommands.add(sd);
 		}
-		if (mainMethod != null && !mainPath.equals(commandChar + path)) { //Main command, typically the same as the above
-			if (isSubcommand) { //The class itself is a subcommand
-				val scmd = subcommands.computeIfAbsent(mainPath, p -> new SubcommandData<>(null, null, new String[0], new String[]{"§6---- Subcommands ----"}));
-				val scmdHelp = Arrays.copyOf(scmd.helpText, scmd.helpText.length + scmdHelpList.size());
-				for (int i = 0; i < scmdHelpList.size(); i++)
-					scmdHelp[scmd.helpText.length + i] = scmdHelpList.get(i);
-				scmd.helpText = scmdHelp;
-			} else if (!subcommands.containsKey(mainPath))
-				subcommands.put(mainPath, new SubcommandData<>(null, null, new String[0], scmdHelpList.toArray(new String[0])));
+		if (isSubcommand) { //The class itself is a subcommand
+			val scmd = subcommands.computeIfAbsent(mainPath, p -> new SubcommandData<>(null, null, new String[0], new String[]{"§6---- Subcommands ----"}));
+			val scmdHelp = Arrays.copyOf(scmd.helpText, scmd.helpText.length + scmdHelpList.size());
+			for (int i = 0; i < scmdHelpList.size(); i++)
+				scmdHelp[scmd.helpText.length + i] = scmdHelpList.get(i);
+			scmd.helpText = scmdHelp;
 		}
 		return addedSubcommands;
 	}

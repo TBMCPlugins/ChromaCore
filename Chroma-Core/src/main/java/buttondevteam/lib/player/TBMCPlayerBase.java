@@ -1,5 +1,6 @@
 package buttondevteam.lib.player;
 
+import buttondevteam.core.MainPlugin;
 import buttondevteam.core.component.towny.TownyComponent;
 import buttondevteam.lib.TBMCCoreAPI;
 import org.bukkit.Bukkit;
@@ -114,14 +115,13 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	 */
 	public static void joinPlayer(Player p) {
 		TBMCPlayer player = TBMCPlayerBase.getPlayer(p.getUniqueId(), TBMCPlayer.class);
-		Bukkit.getLogger().info("Loaded player: " + player.PlayerName().get());
 		if (player.PlayerName().get() == null) {
 			player.PlayerName().set(p.getName());
-			Bukkit.getLogger().info("Player name saved: " + player.PlayerName().get());
+			MainPlugin.Instance.getLogger().info("Player name saved: " + player.PlayerName().get());
 		} else if (!p.getName().equals(player.PlayerName().get())) {
 			TownyComponent.renameInTowny(player.PlayerName().get(), p.getName());
+			MainPlugin.Instance.getLogger().info(player.PlayerName().get() + " renamed to " + p.getName());
 			player.PlayerName().set(p.getName());
-			Bukkit.getLogger().info("Renamed to " + p.getName());
 		}
 		playermap.put(p.getUniqueId() + "-" + TBMCPlayer.class.getSimpleName(), player);
 

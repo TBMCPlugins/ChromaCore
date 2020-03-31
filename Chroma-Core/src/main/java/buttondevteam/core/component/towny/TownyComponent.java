@@ -32,7 +32,7 @@ public class TownyComponent extends Component<MainPlugin> {
 	public static void renameInTowny(String oldName, String newName) {
 		if (!ComponentManager.isEnabled(TownyComponent.class))
 			return;
-		Bukkit.getLogger().info("Renaming" + oldName + " in Towny to " + newName);
+		Bukkit.getLogger().info("Renaming " + oldName + " in Towny to " + newName);
 		TownyUniverse tu = TownyUniverse.getInstance();
 		try {
 			Resident resident = tu.getDataSource().getResident(oldName);
