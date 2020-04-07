@@ -21,4 +21,9 @@ public @interface CustomTabCompleteMethod {
 	 * The subcommand(s) which have the parameter, by default the method's name
 	 */
 	String[] subcommand() default {};
+
+	/**
+	 * Parameter types can provide tab completions. This allows disabling that.
+	 */
+	boolean ignoreTypeCompletion() default false;
 }

@@ -19,9 +19,7 @@ import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.server.TabCompleteEvent;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.javatuples.Triplet;
@@ -33,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -70,9 +69,9 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			}
 			String pg = permGroup(command, method);
 			if (pg.length() == 0) continue;
-			perm = "chroma." + pg;
-			if (Bukkit.getPluginManager().getPermission(perm) == null) //It may occur multiple times
-				Bukkit.getPluginManager().addPermission(new Permission(perm,
+			String permGroup = "chroma." + pg;
+			if (Bukkit.getPluginManager().getPermission(permGroup) == null) //It may occur multiple times
+				Bukkit.getPluginManager().addPermission(new Permission(permGroup,
 					PermissionDefault.OP)); //Do not allow any commands that belong to a group
 		}
 
@@ -172,12 +171,16 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			.map(comp -> component.getClass().getSimpleName().equals(comp.getClass().getSimpleName())).orElse(false));
 	}
 
-	@EventHandler
+	/*@EventHandler
 	public void onTabComplete(TabCompleteEvent event) {
-		//System.out.println("Tabcomplete: " + event.getBuffer());
-		//System.out.println("First completion: " + event.getCompletions().stream().findFirst().orElse("no completions"));
-		event.getCompletions().clear();
-	}
+		try {
+			event.getCompletions().clear(); //Remove player names
+		} catch (UnsupportedOperationException e) {
+			//System.out.println("Tabcomplete: " + event.getBuffer());
+			//System.out.println("First completion: " + event.getCompletions().stream().findFirst().orElse("no completions"));
+			//System.out.println("Listeners: " + Arrays.toString(event.getHandlers().getRegisteredListeners()));
+		}
+	}*/
 
 	@Override
 	public boolean handleCommand(Command2MCSender sender, String commandline) {
@@ -231,11 +234,13 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 
 		@Override
 		public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
+			//System.out.println("Correct tabcomplete queried");
 			return Collections.emptyList();
 		}
 
 		@Override
 		public List<String> tabComplete(CommandSender sender, String alias, String[] args, Location location) throws IllegalArgumentException {
+			//System.out.println("Correct tabcomplete queried");
 			return Collections.emptyList();
 		}
 	}
@@ -245,22 +250,33 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 
 		private static LiteralCommandNode<Object> appendSubcommand(String path, CommandNode<Object> parent,
 		                                                           SubcommandData<ICommand2MC> subcommand) {
+			LiteralCommandNode<Object> scmd;
+			if ((scmd = (LiteralCommandNode<Object>) parent.getChild(path)) != null)
+				return scmd;
 			var scmdBuilder = LiteralArgumentBuilder.literal(path);
 			if (subcommand != null)
 				scmdBuilder.requires(o -> {
 					var sender = commodore.getBukkitSender(o);
 					return ButtonPlugin.getCommand2MC().hasPermission(sender, subcommand.command, subcommand.method);
 				});
-			var scmd = scmdBuilder.build();
+			scmd = scmdBuilder.build();
 			parent.addChild(scmd);
 			return scmd;
 		}
 
 		private static void registerTabcomplete(ICommand2MC command2MC, List<SubcommandData<ICommand2MC>> subcmds, Command bukkitCommand) {
-			if (commodore == null)
+			if (commodore == null) {
 				commodore = CommodoreProvider.getCommodore(MainPlugin.Instance); //Register all to the Core, it's easier
+				commodore.register(LiteralArgumentBuilder.literal("un").redirect(RequiredArgumentBuilder.argument("unsomething",
+					StringArgumentType.word()).suggests((context, builder) -> builder.suggest("untest").buildFuture()).build()));
+			}
 			String[] path = command2MC.getCommandPath().split(" ");
-			var maincmd = LiteralArgumentBuilder.literal(path[0]).build();
+			var shouldRegister = new AtomicBoolean(true);
+			@SuppressWarnings("unchecked") var maincmd = commodore.getRegisteredNodes().stream()
+				.filter(node -> node.getLiteral().equalsIgnoreCase(path[0]))
+				.filter(node -> { shouldRegister.set(false); return true; })
+				.map(node -> (LiteralCommandNode<Object>) node).findAny()
+				.orElseGet(() -> LiteralArgumentBuilder.literal(path[0]).build()); //Commodore 1.8 removes previous nodes
 			var cmd = maincmd;
 			for (int i = 1; i < path.length; i++) {
 				var scmd = subcmds.stream().filter(sd -> sd.method.getName().equals("def")).findAny().orElse(null);
@@ -274,7 +290,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 							.orElseGet(() -> new String[]{
 								ButtonPlugin.getCommand2MC().getCommandPath(method.getName(), ' ').trim()
 							});
-						return Arrays.stream(paths).map(name -> new Triplet<>(name, ctcm.param(), method));
+						return Arrays.stream(paths).map(name -> new Triplet<>(name, ctcm, method));
 					})).collect(Collectors.toList());
 			for (SubcommandData<ICommand2MC> subcmd : subcmds) {
 				String subpathAsOne = ButtonPlugin.getCommand2MC().getCommandPath(subcmd.method.getName(), ' ').trim();
@@ -323,20 +339,24 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 					val param = subcmd.parameters[i - 1];
 					val customTC = Optional.ofNullable(parameter.getAnnotation(CustomTabComplete.class))
 						.map(CustomTabComplete::value);
-					final Optional<Method> customTCmethod = customTCmethods.stream().filter(t -> subpathAsOne.equalsIgnoreCase(t.getValue0()))
-						.filter(t -> param.replaceAll("[\\[\\]<>]", "").equalsIgnoreCase(t.getValue1()))
-						.map(Triplet::getValue2).findAny();
+					var customTCmethod = customTCmethods.stream().filter(t -> subpathAsOne.equalsIgnoreCase(t.getValue0()))
+						.filter(t -> param.replaceAll("[\\[\\]<>]", "").equalsIgnoreCase(t.getValue1().param()))
+						.findAny();
 					var argb = RequiredArgumentBuilder.argument(param, type)
 						.suggests((SuggestionProvider<Object>) (context, builder) -> {
 							if (parameter.isVarArgs()) { //Do it before the builder is used
-								int x = context.getInput().lastIndexOf(' ') + 1;
-								builder = builder.createOffset(x);
+								int nextTokenStart = context.getInput().lastIndexOf(' ') + 1;
+								builder = builder.createOffset(nextTokenStart);
 							}
 							if (customTC.isPresent())
 								for (val ctc : customTC.get())
 									builder.suggest(ctc);
+							boolean ignoreCustomParamType = false;
 							if (customTCmethod.isPresent()) {
-								final var method = customTCmethod.get();
+								var tr = customTCmethod.get();
+								if (tr.getValue1().ignoreTypeCompletion())
+									ignoreCustomParamType = true;
+								final var method = tr.getValue2();
 								val params = method.getParameters();
 								val args = new Object[params.length];
 								for (int j = 0, k = 0; j < args.length && k < subcmd.parameters.length; j++) {
@@ -382,7 +402,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 									}
 								}
 							}
-							if (customParamType) {
+							if (!ignoreCustomParamType && customParamType) {
 								val converter = ButtonPlugin.getCommand2MC().paramConverters.get(ptype);
 								if (converter == null)
 									TBMCCoreAPI.SendException("Could not find a suitable converter for type " + ptype.getSimpleName(),
@@ -395,19 +415,27 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 							}
 							if (ptype == boolean.class || ptype == Boolean.class)
 								builder.suggest("true").suggest("false");
+							final String loweredInput = builder.getRemaining().toLowerCase();
 							return builder.suggest(param).buildFuture().whenComplete((s, e) -> //The list is automatically ordered
-								s.getList().add(s.getList().remove(0))); //So we need to put the <param> at the end after that
+								s.getList().add(s.getList().remove(0))) //So we need to put the <param> at the end after that
+								.whenComplete((ss, e) -> ss.getList().removeIf(s -> {
+									String text = s.getText();
+									return !text.startsWith("<") && !text.startsWith("[") && !text.toLowerCase().startsWith(loweredInput);
+								}));
 						});
 					var arg = argb.build();
 					scmd.addChild(arg);
 					scmd = arg;
 				}
 			}
-			commodore.register(maincmd);
-			var prefixedcmd = new LiteralCommandNode<>(command2MC.getPlugin().getName().toLowerCase() + ":" + path[0], maincmd.getCommand(), maincmd.getRequirement(), maincmd.getRedirect(), maincmd.getRedirectModifier(), maincmd.isFork());
-			for (var child : maincmd.getChildren())
-				prefixedcmd.addChild(child);
-			commodore.register(prefixedcmd);
+			if (shouldRegister.get()) {
+				commodore.register(maincmd);
+				//MinecraftArgumentTypes.getByKey(NamespacedKey.minecraft(""))
+				var prefixedcmd = new LiteralCommandNode<>(command2MC.getPlugin().getName().toLowerCase() + ":" + path[0], maincmd.getCommand(), maincmd.getRequirement(), maincmd.getRedirect(), maincmd.getRedirectModifier(), maincmd.isFork());
+				for (var child : maincmd.getChildren())
+					prefixedcmd.addChild(child);
+				commodore.register(prefixedcmd);
+			}
 		}
 	}
 }

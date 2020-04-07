@@ -4,18 +4,28 @@ import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.chat.Command2;
 import buttondevteam.lib.chat.CommandClass;
 import buttondevteam.lib.chat.ICommand2MC;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
+import java.util.Arrays;
+import java.util.Optional;
+
 @CommandClass
 public class ChromaCommand extends ICommand2MC {
+	public ChromaCommand() {
+		getManager().addParamConverter(ButtonPlugin.class, name ->
+				(ButtonPlugin) Optional.ofNullable(Bukkit.getPluginManager().getPlugin(name))
+					.filter(plugin -> plugin instanceof ButtonPlugin).orElse(null),
+			"No Chroma plugin found by that name.", () -> Arrays.stream(Bukkit.getPluginManager().getPlugins())
+				.filter(plugin -> plugin instanceof ButtonPlugin).map(Plugin::getName)::iterator);
+	}
+
 	@Command2.Subcommand
-	public void reload(CommandSender sender, @Command2.OptionalArg Plugin plugin) {
+	public void reload(CommandSender sender, @Command2.OptionalArg ButtonPlugin plugin) {
 		if (plugin == null)
 			plugin = MainPlugin.Instance;
-		if (!(plugin instanceof ButtonPlugin)) //Probably not a good idea to allow reloading any plugin's config
-			sender.sendMessage("§c" + plugin.getName() + " doesn't support this.");
-		else if (((ButtonPlugin) plugin).tryReloadConfig())
+		if (plugin.tryReloadConfig())
 			sender.sendMessage("§b" + plugin.getName() + " config reloaded.");
 		else
 			sender.sendMessage("§cFailed to reload config. Check console.");
