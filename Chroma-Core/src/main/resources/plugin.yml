@@ -23,3 +23,4 @@ softdepend:
   - Votifier
   - Multiverse-Core
   - Essentials
+api-version: '1.13'

@@ -119,20 +119,33 @@ public abstract class Component<TP extends JavaPlugin> {
 	}
 
 	/**
-	 * Registers a component checking it's dependencies and calling {@link #register(JavaPlugin)}.<br>
-	 * Make sure to register the dependencies first.
+	 * Enables or disables the given component. If the component fails to enable, it will be disabled.
 	 *
 	 * @param component The component to register
+	 * @param enabled   Whether it's enabled or not
 	 */
 	public static void setComponentEnabled(Component<?> component, boolean enabled) throws UnregisteredComponentException {
 		if (!components.containsKey(component.getClass()))
 			throw new UnregisteredComponentException(component);
 		if (component.enabled == enabled) return; //Don't do anything
 		if (component.enabled = enabled) {
-			updateConfig(component.getPlugin(), component);
-			component.enable();
-			if (ButtonPlugin.configGenAllowed(component)) {
-				IHaveConfig.pregenConfig(component, null);
+			try {
+				updateConfig(component.getPlugin(), component);
+				component.enable();
+				if (ButtonPlugin.configGenAllowed(component)) {
+					IHaveConfig.pregenConfig(component, null);
+				}
+			} catch (Exception e) {
+				try { //Automatically disable components that fail to enable properly
+					setComponentEnabled(component, false);
+					throw e;
+				} catch (Exception ex) {
+					Throwable t = ex;
+					for (var th = t; th != null; th = th.getCause())
+						t = th; //Set if not null
+					t.initCause(e);
+					throw ex;
+				}
 			}
 		} else {
 			component.disable();
