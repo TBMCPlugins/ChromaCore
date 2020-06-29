@@ -71,14 +71,14 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 		try {
 			if (permission.playerAddGroup(null, player, memberGroup().get())) {
 				player.sendMessage("§bYou are a member now!");
-				MainPlugin.Instance.getLogger().info("Added " + player.getName() + " as a member.");
+				log("Added " + player.getName() + " as a member.");
 				return true;
 			} else {
-				MainPlugin.Instance.getLogger().warning("Failed to assign the member role! Please make sure the member group exists or disable the component if it's unused.");
+				logWarn("Failed to assign the member role! Please make sure the member group exists or disable the component if it's unused.");
 				return false;
 			}
 		} catch (UnsupportedOperationException e) {
-			MainPlugin.Instance.getLogger().warning("Failed to assign the member role! Groups are not supported by the permissions implementation.");
+			logWarn("Failed to assign the member role! Groups are not supported by the permissions implementation.");
 			return null;
 		}
 	}

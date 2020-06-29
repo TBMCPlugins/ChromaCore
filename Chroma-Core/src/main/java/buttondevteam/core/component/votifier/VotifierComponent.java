@@ -38,7 +38,7 @@ public class VotifierComponent extends Component<MainPlugin> {
 	@SuppressWarnings("deprecation")
 	public void onVotifierEvent(VotifierEvent event) {
 		Vote vote = event.getVote();
-		getPlugin().getLogger().info("Vote: " + vote);
+		log("Vote: " + vote);
 		org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(vote.getUsername());
 		Player p = Bukkit.getPlayer(vote.getUsername());
 		/*if (op != null) {

@@ -59,11 +59,10 @@ public class RandomTP extends ICommand2MC
 	{
 		world = Bukkit.getWorld("World");
 		border = world.getWorldBorder();
-		Logger logger = component.getPlugin().getLogger();
-		logger.info("Getting new location");
+		component.log("Getting new location");
 		if(border.getSize() > 100000)
-			logger.warning("World border is wide, it may take a minute...");
-		logger.info("Success: "+newLocation());
+			component.logWarn("World border is wide, it may take a minute...");
+		component.log("Success: "+newLocation());
 	}
 	
 	/*================================================================================================*/

@@ -19,7 +19,7 @@ import java.util.HashMap;
  *
  * @author dumptruckman &amp; Articdive
  */
-public class CommentedConfiguration extends YamlConfiguration { //TODO: Remove FileMgmt dependency
+public class CommentedConfiguration extends YamlConfiguration {
 	private HashMap<String, String> comments;
 	private File file;
 

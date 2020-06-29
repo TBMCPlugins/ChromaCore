@@ -175,6 +175,14 @@ public abstract class Component<TP extends JavaPlugin> {
 		return Collections.unmodifiableMap(components);
 	}
 
+	public void log(String message) {
+		plugin.getLogger().info("[" + getClassName() + "] " + message);
+	}
+
+	public void logWarn(String message) {
+		plugin.getLogger().warning("[" + getClassName() + "] " + message);
+	}
+
 	/**
 	 * Registers the module, when called by the JavaPlugin class.
 	 * This gets fired when the plugin is enabled. Use {@link #enable()} to register commands and such.

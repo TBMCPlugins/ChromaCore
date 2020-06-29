@@ -30,21 +30,22 @@ public class TownyComponent extends Component<MainPlugin> {
 	 * @param newName The player's new name
 	 */
 	public static void renameInTowny(String oldName, String newName) {
-		if (!ComponentManager.isEnabled(TownyComponent.class))
+		var component = ComponentManager.getIfEnabled(TownyComponent.class);
+		if (component == null)
 			return;
-		Bukkit.getLogger().info("Renaming " + oldName + " in Towny to " + newName);
+		component.log("Renaming " + oldName + " in Towny to " + newName);
 		TownyUniverse tu = TownyUniverse.getInstance();
 		try {
 			Resident resident = tu.getDataSource().getResident(oldName);
 			if (resident == null) {
-				Bukkit.getLogger().warning("Resident not found - couldn't rename in Towny.");
+				component.logWarn("Resident not found - couldn't rename in Towny.");
 				TBMCCoreAPI.sendDebugMessage("Resident not found - couldn't rename in Towny.");
 			} else if (tu.getDataSource().hasResident(newName)) {
-				Bukkit.getLogger().warning("Target resident name is already in use.");
+				component.logWarn("Target resident name is already in use.");
 				TBMCCoreAPI.sendDebugMessage("Target resident name is already in use. (" + oldName + " -> " + newName + ")");
 			} else {
 				tu.getDataSource().renamePlayer(resident, newName); //Fixed in Towny 0.91.1.2
-				Bukkit.getLogger().info("Renaming done.");
+				component.log("Renaming done.");
 			}
 		} catch (AlreadyRegisteredException e) {
 			TBMCCoreAPI.SendException("Failed to rename resident, there's already one with this name.", e);
