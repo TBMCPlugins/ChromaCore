@@ -198,7 +198,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	private boolean shouldRegisterOfficially = true;
 
 	private void registerOfficially(ICommand2MC command, List<SubcommandData<ICommand2MC>> subcmds) {
-		if (!shouldRegisterOfficially) return;
+		if (!shouldRegisterOfficially || command.getPlugin() == null) return;
 		try {
 			var cmdmap = (SimpleCommandMap) Bukkit.getServer().getClass().getMethod("getCommandMap").invoke(Bukkit.getServer());
 			var path = command.getCommandPath();

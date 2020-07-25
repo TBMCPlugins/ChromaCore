@@ -4,6 +4,7 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.core.component.channel.Channel;
 import buttondevteam.lib.TBMCSystemChatEvent;
 import buttondevteam.lib.architecture.Component;
+import buttondevteam.lib.architecture.ConfigData;
 import buttondevteam.lib.chat.IFakePlayer;
 import buttondevteam.lib.chat.TBMCChatAPI;
 import lombok.Getter;
@@ -13,16 +14,28 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+
 /**
  * Provides commands such as /schrestart (restart after a countdown) and /primerestart (restart when nobody is online)
  */
 public class RestartComponent extends Component<MainPlugin> implements Listener {
 	@Override
 	public void enable() {
-		registerCommand(new ScheduledRestartCommand(this));
+		var scheduledRestartCommand = new ScheduledRestartCommand(this);
+		registerCommand(scheduledRestartCommand);
 		registerCommand(new PrimeRestartCommand(this));
 		registerListener(this);
 		restartBroadcast = TBMCSystemChatEvent.BroadcastTarget.add("restartCountdown");
+
+		int restartAt = restartAt().get();
+		if (restartAt < 0) return;
+		int restart = syncStart(restartAt);
+		log("Scheduled restart " + (restart / 3600. / 20.) + " hours from now");
+		Bukkit.getScheduler().runTaskLater(getPlugin(), () -> scheduledRestartCommand.def(Bukkit.getConsoleSender(), 0), restart);
 	}
 
 	@Override
@@ -30,9 +43,35 @@ public class RestartComponent extends Component<MainPlugin> implements Listener 
 		TBMCSystemChatEvent.BroadcastTarget.remove(restartBroadcast);
 	}
 
+	/**
+	 * Specifies the hour of day when the server should be restarted. Set to -1 to disable.
+	 */
+	private ConfigData<Integer> restartAt() {
+		return getConfig().getData("restartAt", 12);
+	}
+
 	private long lasttime = 0;
 	@Getter
 	private TBMCSystemChatEvent.BroadcastTarget restartBroadcast;
+
+	private int syncStart(int hour) {
+		var now = ZonedDateTime.now(ZoneId.ofOffset("", ZoneOffset.UTC));
+		int secs = now.getHour() * 3600 + now.getMinute() * 60 + now.getSecond();
+		//System.out.println("now: " + secs / 3600.);
+		int diff = secs - hour * 3600;
+		//System.out.println("diff: " + diff / 3600.);
+		if (diff < 0) {
+			diff += 24 * 3600;
+		}
+		//System.out.println("diff: " + diff / 3600.);
+		int count = diff / (24 * 3600);
+		//System.out.println("count: " + count);
+		int intervalPart = diff - count * 24 * 3600;
+		//System.out.println("intervalPart: " + intervalPart / 3600.);
+		int remaining = 24 * 3600 - intervalPart;
+		//System.out.println("remaining: " + remaining / 3600.);
+		return remaining * 20;
+	}
 
 	@EventHandler
 	public void onPlayerLeave(PlayerQuitEvent event) {

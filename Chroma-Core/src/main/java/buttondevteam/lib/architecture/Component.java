@@ -143,7 +143,8 @@ public abstract class Component<TP extends JavaPlugin> {
 					Throwable t = ex;
 					for (var th = t; th != null; th = th.getCause())
 						t = th; //Set if not null
-					t.initCause(e);
+					if (t != e)
+						t.initCause(e);
 					throw ex;
 				}
 			}
