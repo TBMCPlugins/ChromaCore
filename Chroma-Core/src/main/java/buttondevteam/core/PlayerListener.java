@@ -102,7 +102,7 @@ public class PlayerListener implements Listener {
 			.replace("{channel}", channel.DisplayName().get())
 			.replace("{origin}", event.getOrigin().substring(0, 1))
 			.replace("{name}", ChromaUtils.getDisplayName(event.getSender()))
-			.replace("{message}", "§" + channel.Color().get().ordinal() + event.getMessage());
+			.replace("{message}", String.format("§%x%s", channel.Color().get().ordinal(), event.getMessage()));
 		for (Player player : Bukkit.getOnlinePlayers())
 			if (event.shouldSendTo(player))
 				player.sendMessage(msg);
