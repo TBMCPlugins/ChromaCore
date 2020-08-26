@@ -18,8 +18,11 @@ import java.util.stream.Collectors;
  */
 public final class IHaveConfig {
 	private final HashMap<String, ConfigData<?>> datamap = new HashMap<>();
+	/**
+	 * Returns the Bukkit ConfigurationSection. Use {@link #signalChange()} after changing it.
+	 */
 	@Getter
-	private ConfigurationSection config;
+	private final ConfigurationSection config;
 	private final Runnable saveAction;
 
 	/**
@@ -152,6 +155,13 @@ public final class IHaveConfig {
 		if (data == null)
 			datamap.put(path, data = new ListConfigData<>(config, path, new ListConfigData.List<T>(), saveAction));
 		return (ListConfigData<T>) data;
+	}
+
+	/**
+	 * Schedules a save operation. Use after changing the ConfigurationSection directly.
+	 */
+	public void signalChange() {
+		ConfigData.signalChange(config, saveAction);
 	}
 
 	/**

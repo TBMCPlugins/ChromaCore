@@ -71,10 +71,7 @@ public class ConfigData<T> {
 
 	@Override
 	public String toString() {
-		return "ConfigData{" +
-			"path='" + path + '\'' +
-			", value=" + value +
-			'}';
+		return "ConfigData{" + "path='" + path + '\'' + ", value=" + value + '}';
 	}
 
 	@SuppressWarnings("unchecked")
@@ -126,6 +123,10 @@ public class ConfigData<T> {
 
 	private void setInternal(Object val) {
 		config.set(path, val);
+		signalChange(config, saveAction);
+	}
+
+	static void signalChange(ConfigurationSection config, Runnable saveAction) {
 		if (!saveTasks.containsKey(config.getRoot())) {
 			synchronized (saveTasks) {
 				saveTasks.put(config.getRoot(), new SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, () -> {
