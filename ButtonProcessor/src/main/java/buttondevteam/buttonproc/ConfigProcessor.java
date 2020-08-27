@@ -52,11 +52,16 @@ public class ConfigProcessor {
 			System.out.println("Type: "+e.getClass()+" - "+e.getKind());
 			if(e instanceof ExecutableElement)
 				System.out.println("METHOD!");*/
-			if (!(e instanceof ExecutableElement)) continue;
-			TypeMirror tm = ((ExecutableElement) e).getReturnType();
+			TypeMirror tm;
+			if (e instanceof ExecutableElement)
+				tm = ((ExecutableElement) e).getReturnType();
+			else if (e.getKind().isField())
+				tm = e.asType();
+			else
+				continue;
 			if (tm.getKind() != TypeKind.DECLARED) continue;
 			DeclaredType dt = (DeclaredType) tm;
-			if (!dt.asElement().getSimpleName().contentEquals("ConfigData"))
+			if (!dt.asElement().getSimpleName().toString().contains("ConfigData"))
 				continue; //Ahhha! There was a return here! (MinecraftChatModule getListener())
 			System.out.println("Config: " + e.getSimpleName());
 
