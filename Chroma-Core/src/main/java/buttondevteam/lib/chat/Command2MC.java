@@ -204,7 +204,11 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			var path = command.getCommandPath();
 			int x = path.indexOf(' ');
 			var mainPath = path.substring(0, x == -1 ? path.length() : x);
-			var bukkitCommand = new BukkitCommand(mainPath);
+			Command bukkitCommand;
+			{
+				var oldcmd = cmdmap.getCommand(mainPath);
+				bukkitCommand = oldcmd == null ? new BukkitCommand(mainPath) : oldcmd;
+			}
 			cmdmap.register(command.getPlugin().getName(), bukkitCommand);
 			if (CommodoreProvider.isSupported())
 				TabcompleteHelper.registerTabcomplete(command, subcmds, bukkitCommand);
