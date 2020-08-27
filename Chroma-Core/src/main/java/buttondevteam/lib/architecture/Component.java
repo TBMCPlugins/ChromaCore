@@ -161,9 +161,11 @@ public abstract class Component<TP extends JavaPlugin> {
 			var configSect = compconf.getConfigurationSection(component.getClassName());
 			if (configSect == null)
 				configSect = compconf.createSection(component.getClassName());
-			component.config = new IHaveConfig(configSect, plugin::saveConfig);
+			if (component.config != null) component.config.reset(configSect);
+			else component.config = new IHaveConfig(configSect, plugin::saveConfig);
 		} else //Testing
-			component.config = new IHaveConfig(null, plugin::saveConfig);
+			if (component.config == null)
+				component.config = new IHaveConfig(null, plugin::saveConfig);
 	}
 
 	/**

@@ -10,6 +10,6 @@ public class ReadOnlyConfigData<T> extends ConfigData<T> {
 	}
 
 	ReadOnlyConfigData(ConfigurationSection config, String path, T def, Object primitiveDef, Runnable saveAction) {
-		super(config, path, def, primitiveDef, saveAction);
+		super(config, path, def, primitiveDef, null, null, saveAction);
 	}
 }

@@ -2,10 +2,7 @@ package buttondevteam.lib.architecture;
 
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.ChromaUtils;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
@@ -22,13 +19,12 @@ import java.util.function.Function;
  * Use the getter/setter constructor if {@link T} isn't a primitive type or String.<br>
  * Use {@link Component#getConfig()} or {@link ButtonPlugin#getIConfig()} then {@link IHaveConfig#getData(String, Object)} to get an instance.
  */
-//@AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class ConfigData<T> {
 	private static final HashMap<Configuration, SaveTask> saveTasks = new HashMap<>();
 	/**
 	 * May be null for testing
 	 */
-	private final ConfigurationSection config;
+	private ConfigurationSection config;
 	@Getter
 	@Setter(AccessLevel.PACKAGE)
 	private String path;
@@ -38,19 +34,31 @@ public class ConfigData<T> {
 	/**
 	 * The parameter is of a primitive type as returned by {@link YamlConfiguration#get(String)}
 	 */
-	private Function<Object, T> getter;
+	private final Function<Object, T> getter;
 	/**
 	 * The result should be a primitive type or string that can be retrieved correctly later
 	 */
-	private Function<T, Object> setter;
+	private final Function<T, Object> setter;
 
 	/**
 	 * The config value should not change outside this instance
 	 */
 	private T value;
 
-	//This constructor is needed because it sets the getter and setter
 	ConfigData(ConfigurationSection config, String path, T def, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter, Runnable saveAction) {
+		if (def == null) {
+			if (primitiveDef == null)
+				throw new IllegalArgumentException("Either def or primitiveDef must be set.");
+			if (getter == null)
+				throw new IllegalArgumentException("A getter and setter must be present when using primitiveDef.");
+			def = getter.apply(primitiveDef);
+		} else if (primitiveDef == null)
+			if (setter == null)
+				primitiveDef = def;
+			else
+				primitiveDef = setter.apply(def);
+		if ((getter == null) != (setter == null))
+			throw new IllegalArgumentException("Both setters and getters must be present (or none if def is primitive).");
 		this.config = config;
 		this.path = path;
 		this.def = def;
@@ -60,18 +68,14 @@ public class ConfigData<T> {
 		this.saveAction = saveAction;
 	}
 
-	@java.beans.ConstructorProperties({"config", "path", "def", "primitiveDef", "saveAction"})
-	ConfigData(ConfigurationSection config, String path, T def, Object primitiveDef, Runnable saveAction) {
-		this.config = config;
-		this.path = path;
-		this.def = def;
-		this.primitiveDef = primitiveDef;
-		this.saveAction = saveAction;
-	}
-
 	@Override
 	public String toString() {
 		return "ConfigData{" + "path='" + path + '\'' + ", value=" + value + '}';
+	}
+
+	void reset(ConfigurationSection config) {
+		value = null;
+		this.config = config;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -156,5 +160,90 @@ public class ConfigData<T> {
 			}
 		}
 		return false;
+	}
+
+	public static <T> ConfigData.ConfigDataBuilder<T> builder(ConfigurationSection config, String path, Runnable saveAction) {
+		return new ConfigDataBuilder<T>(config, path, saveAction);
+	}
+
+	@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+	public static class ConfigDataBuilder<T> {
+		private final ConfigurationSection config;
+		private final String path;
+		private T def;
+		private Object primitiveDef;
+		private Function<Object, T> getter;
+		private Function<T, Object> setter;
+		private final Runnable saveAction;
+
+		/**
+		 * The default value to use, as used in code. If not a primitive type, use the {@link #getter(Function)} and {@link #setter(Function)} methods.
+		 * <br/>
+		 * To set the value as it is stored, use {@link #primitiveDef(Object)}.
+		 *
+		 * @param def The default value
+		 * @return This builder
+		 */
+		public ConfigDataBuilder<T> def(T def) {
+			this.def = def;
+			return this;
+		}
+
+		/**
+		 * The default value to use, as stored in yaml. Must be a primitive type. Make sure to use the {@link #getter(Function)} and {@link #setter(Function)} methods.
+		 * <br/>
+		 * To set the value as used in the code, use {@link #def(Object)}.
+		 *
+		 * @param primitiveDef The default value
+		 * @return This builder
+		 */
+		public ConfigDataBuilder<T> primitiveDef(Object primitiveDef) {
+			this.primitiveDef = primitiveDef;
+			return this;
+		}
+
+		/**
+		 * A function to use to obtain the runtime object from the yaml representation (usually string).
+		 * The {@link #setter(Function)} must also be set.
+		 *
+		 * @param getter A function that receives the primitive type and returns the runtime type
+		 * @return This builder
+		 */
+		public ConfigDataBuilder<T> getter(Function<Object, T> getter) {
+			this.getter = getter;
+			return this;
+		}
+
+		/**
+		 * A function to use to obtain the yaml representation (usually string) from the runtime object.
+		 * The {@link #getter(Function)} must also be set.
+		 *
+		 * @param setter A function that receives the runtime type and returns the primitive type
+		 * @return This builder
+		 */
+		public ConfigDataBuilder<T> setter(Function<T, Object> setter) {
+			this.setter = setter;
+			return this;
+		}
+
+		/**
+		 * Builds a modifiable config representation. Use if you want to change the value <i>in code</i>.
+		 *
+		 * @return A ConfigData instance.
+		 */
+		public ConfigData<T> build() {
+			return new ConfigData<>(config, path, def, primitiveDef, getter, setter, saveAction);
+		}
+
+		/**
+		 * Builds a read-only config representation. Use if you only want the value to be changed <i>in the config</i>.
+		 *
+		 * @return A ReadOnlyConfigData instance.
+		 */
+		public ReadOnlyConfigData<T> buildReadOnly() {
+			return new ReadOnlyConfigData<>(config, path, def, primitiveDef, getter, setter, saveAction);
+		}
+
+		public String toString() {return "ConfigData.ConfigDataBuilder(config=" + this.config + ", path=" + this.path + ", def=" + this.def + ", primitiveDef=" + this.primitiveDef + ", getter=" + this.getter + ", setter=" + this.setter + ", saveAction=" + this.saveAction + ")";}
 	}
 }

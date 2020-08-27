@@ -22,7 +22,7 @@ public final class IHaveConfig {
 	 * Returns the Bukkit ConfigurationSection. Use {@link #signalChange()} after changing it.
 	 */
 	@Getter
-	private final ConfigurationSection config;
+	private ConfigurationSection config;
 	private final Runnable saveAction;
 
 	/**
@@ -36,7 +36,18 @@ public final class IHaveConfig {
 	}
 
 	/**
-	 * This method overload should only be used with primitves or String.
+	 * Gets a config object for the given path. The def or primitiveDef must be set. If a getter is present, a setter must be present as well.
+	 *
+	 * @param path The dot-separated path relative to this config instance
+	 * @param <T>  The runtime type of the config value
+	 * @return A ConfigData builder to set how to obtain the value
+	 */
+	public <T> ConfigData.ConfigDataBuilder<T> getConfig(String path) {
+		return ConfigData.builder(config, path, saveAction);
+	}
+
+	/**
+	 * This method overload should only be used with primitives or String.
 	 *
 	 * @param path The path in config to use
 	 * @param def  The value to use by default
@@ -46,7 +57,7 @@ public final class IHaveConfig {
 	@SuppressWarnings("unchecked")
 	public <T> ConfigData<T> getData(String path, T def) {
 		ConfigData<?> data = datamap.get(path);
-		if (data == null) datamap.put(path, data = new ConfigData<>(config, path, def, def, saveAction));
+		if (data == null) datamap.put(path, data = new ConfigData<>(config, path, def, def, null, null, saveAction));
 		return (ConfigData<T>) data;
 	}
 
@@ -117,7 +128,7 @@ public final class IHaveConfig {
 		ConfigData<?> data = datamap.get(path);
 		if (data == null) {
 			val defval = def.get();
-			datamap.put(path, data = new ConfigData<>(config, path, defval, defval, saveAction));
+			datamap.put(path, data = new ConfigData<>(config, path, defval, defval, null, null, saveAction));
 		}
 		return (ConfigData<T>) data;
 	}
@@ -162,6 +173,14 @@ public final class IHaveConfig {
 	 */
 	public void signalChange() {
 		ConfigData.signalChange(config, saveAction);
+	}
+
+	/**
+	 * Clears all caches and loads everything from yaml.
+	 */
+	public void reset(ConfigurationSection config) {
+		this.config = config;
+		datamap.forEach((path, data) -> data.reset(config));
 	}
 
 	/**

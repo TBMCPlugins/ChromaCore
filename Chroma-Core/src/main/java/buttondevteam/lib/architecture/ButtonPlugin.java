@@ -72,7 +72,8 @@ public abstract class ButtonPlugin extends JavaPlugin {
 			return false;
 		var section = config.getConfigurationSection("global");
 		if (section == null) section = config.createSection("global");
-		iConfig = new IHaveConfig(section, this::saveConfig);
+		if (iConfig != null) iConfig.reset(section);
+		else iConfig = new IHaveConfig(section, this::saveConfig);
 		return true;
 	}
 
