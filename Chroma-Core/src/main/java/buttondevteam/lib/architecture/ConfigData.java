@@ -30,7 +30,8 @@ public class ConfigData<T> {
 	private String path;
 	protected final T def;
 	private final Object primitiveDef;
-	private final Runnable saveAction;
+	@Setter(AccessLevel.PACKAGE)
+	private Runnable saveAction;
 	/**
 	 * The parameter is of a primitive type as returned by {@link YamlConfiguration#get(String)}
 	 */

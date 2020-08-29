@@ -31,9 +31,7 @@ public abstract class Component<TP extends JavaPlugin> {
 	@Getter
 	@NonNull
 	private TP plugin;
-	@NonNull
-	private @Getter
-	IHaveConfig config;
+	private @Getter final IHaveConfig config = new IHaveConfig(null);
 	private @Getter IHaveConfig data; //TODO
 
 	public final ConfigData<Boolean> shouldBeEnabled() {
@@ -83,6 +81,7 @@ public abstract class Component<TP extends JavaPlugin> {
 					return false;
 				}
 				component.plugin = plugin;
+				component.config.setSaveAction(plugin::saveConfig);
 				updateConfig(plugin, component);
 				component.register(plugin);
 				components.put(component.getClass(), component);
@@ -161,11 +160,8 @@ public abstract class Component<TP extends JavaPlugin> {
 			var configSect = compconf.getConfigurationSection(component.getClassName());
 			if (configSect == null)
 				configSect = compconf.createSection(component.getClassName());
-			if (component.config != null) component.config.reset(configSect);
-			else component.config = new IHaveConfig(configSect, plugin::saveConfig);
-		} else //Testing
-			if (component.config == null)
-				component.config = new IHaveConfig(null, plugin::saveConfig);
+			component.config.reset(configSect);
+		} //Testing: it's already set
 	}
 
 	/**
@@ -192,7 +188,7 @@ public abstract class Component<TP extends JavaPlugin> {
 	 *
 	 * @param plugin Plugin object
 	 */
-	@SuppressWarnings({"unused", "WeakerAccess"})
+	@SuppressWarnings({"unused"})
 	protected void register(JavaPlugin plugin) {
 	}
 
@@ -203,7 +199,7 @@ public abstract class Component<TP extends JavaPlugin> {
 	 *
 	 * @param plugin Plugin object
 	 */
-	@SuppressWarnings({"WeakerAccess", "unused"})
+	@SuppressWarnings({"unused"})
 	protected void unregister(JavaPlugin plugin) {
 	}
 
@@ -257,10 +253,15 @@ public abstract class Component<TP extends JavaPlugin> {
 		var cs = c.getConfigurationSection(key);
 		if (cs == null) cs = c.createSection(key);
 		val res = cs.getValues(false).entrySet().stream().filter(e -> e.getValue() instanceof ConfigurationSection)
-			.collect(Collectors.toMap(Map.Entry::getKey, kv -> new IHaveConfig((ConfigurationSection) kv.getValue(), getPlugin()::saveConfig)));
+			.collect(Collectors.toMap(Map.Entry::getKey, kv -> {
+				var conf = new IHaveConfig(getPlugin()::saveConfig);
+				conf.reset((ConfigurationSection) kv.getValue());
+				return conf;
+			}));
 		if (res.size() == 0) {
 			for (val entry : defaultProvider.entrySet()) {
-				val conf = new IHaveConfig(cs.createSection(entry.getKey()), getPlugin()::saveConfig);
+				val conf = new IHaveConfig(getPlugin()::saveConfig);
+				conf.reset(cs.createSection(entry.getKey()));
 				entry.getValue().accept(conf);
 				res.put(entry.getKey(), conf);
 			}

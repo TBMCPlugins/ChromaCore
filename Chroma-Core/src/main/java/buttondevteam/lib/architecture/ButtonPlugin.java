@@ -25,9 +25,9 @@ import java.util.Stack;
 @HasConfig(global = true)
 public abstract class ButtonPlugin extends JavaPlugin {
 	@Getter //Needs to be static as we don't know the plugin when a command is handled
-	private static Command2MC command2MC = new Command2MC();
+	private static final Command2MC command2MC = new Command2MC();
 	@Getter(AccessLevel.PROTECTED)
-	private IHaveConfig iConfig;
+	private final IHaveConfig iConfig = new IHaveConfig(this::saveConfig);
 	private CommentedConfiguration yaml;
 	@Getter(AccessLevel.PROTECTED)
 	private IHaveConfig data; //TODO
@@ -35,8 +35,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	 * Used to unregister components in the right order - and to reload configs
 	 */
 	@Getter
-	private Stack<Component<?>> componentStack = new Stack<>();
-	;
+	private final Stack<Component<?>> componentStack = new Stack<>();
 
 	protected abstract void pluginEnable();
 
@@ -72,8 +71,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 			return false;
 		var section = config.getConfigurationSection("global");
 		if (section == null) section = config.createSection("global");
-		if (iConfig != null) iConfig.reset(section);
-		else iConfig = new IHaveConfig(section, this::saveConfig);
+		iConfig.reset(section);
 		return true;
 	}
 
@@ -85,7 +83,6 @@ public abstract class ButtonPlugin extends JavaPlugin {
 			pluginDisable();
 			if (ConfigData.saveNow(getConfig()))
 				getLogger().info("Saved configuration changes.");
-			iConfig = null; //Clearing the hashmap is not enough, we need to update the section as well
 			getCommand2MC().unregisterCommands(this);
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Error while disabling plugin " + getName() + "!", e);

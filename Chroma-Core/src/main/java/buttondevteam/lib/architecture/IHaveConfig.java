@@ -23,15 +23,14 @@ public final class IHaveConfig {
 	 */
 	@Getter
 	private ConfigurationSection config;
-	private final Runnable saveAction;
+	private Runnable saveAction;
 
 	/**
 	 * May be used in testing.
 	 *
-	 * @param section May be null for testing
+	 * @param saveAction What to do to save the config to disk. Don't use get methods until it's non-null.
 	 */
-	IHaveConfig(ConfigurationSection section, Runnable saveAction) {
-		config = section;
+	IHaveConfig(Runnable saveAction) {
 		this.saveAction = saveAction;
 	}
 
@@ -181,6 +180,11 @@ public final class IHaveConfig {
 	public void reset(ConfigurationSection config) {
 		this.config = config;
 		datamap.forEach((path, data) -> data.reset(config));
+	}
+
+	void setSaveAction(Runnable saveAction) {
+		this.saveAction = saveAction;
+		datamap.forEach((path, data) -> data.setSaveAction(saveAction));
 	}
 
 	/**
