@@ -3,6 +3,7 @@ package buttondevteam.lib.architecture;
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.val;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -23,6 +24,8 @@ public final class IHaveConfig {
 	 */
 	@Getter
 	private ConfigurationSection config;
+	@Getter
+	@Setter
 	private Runnable saveAction;
 
 	/**
@@ -42,7 +45,11 @@ public final class IHaveConfig {
 	 * @return A ConfigData builder to set how to obtain the value
 	 */
 	public <T> ConfigData.ConfigDataBuilder<T> getConfig(String path) {
-		return ConfigData.builder(config, path, saveAction);
+		return ConfigData.builder(this, path);
+	}
+
+	void onConfigBuild(ConfigData<?> config) {
+		datamap.put(config.getPath(), config);
 	}
 
 	/**
@@ -56,7 +63,7 @@ public final class IHaveConfig {
 	@SuppressWarnings("unchecked")
 	public <T> ConfigData<T> getData(String path, T def) {
 		ConfigData<?> data = datamap.get(path);
-		if (data == null) datamap.put(path, data = new ConfigData<>(config, path, def, def, null, null, saveAction));
+		if (data == null) datamap.put(path, data = new ConfigData<>(this, path, def, def, null, null));
 		return (ConfigData<T>) data;
 	}
 
@@ -74,7 +81,7 @@ public final class IHaveConfig {
 	public <T> ConfigData<T> getData(String path, T def, Function<Object, T> getter, Function<T, Object> setter) {
 		ConfigData<?> data = datamap.get(path);
 		if (data == null)
-			datamap.put(path, data = new ConfigData<>(config, path, def, setter.apply(def), getter, setter, saveAction));
+			datamap.put(path, data = new ConfigData<>(this, path, def, setter.apply(def), getter, setter));
 		return (ConfigData<T>) data;
 	}
 
@@ -92,7 +99,7 @@ public final class IHaveConfig {
 	public <T> ConfigData<T> getDataPrimDef(String path, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter) {
 		ConfigData<?> data = datamap.get(path);
 		if (data == null)
-			datamap.put(path, data = new ConfigData<>(config, path, getter.apply(primitiveDef), primitiveDef, getter, setter, saveAction));
+			datamap.put(path, data = new ConfigData<>(this, path, getter.apply(primitiveDef), primitiveDef, getter, setter));
 		return (ConfigData<T>) data;
 	}
 
@@ -110,7 +117,7 @@ public final class IHaveConfig {
 	public <T> ReadOnlyConfigData<T> getReadOnlyDataPrimDef(String path, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter) {
 		ConfigData<?> data = datamap.get(path);
 		if (data == null)
-			datamap.put(path, data = new ReadOnlyConfigData<>(config, path, getter.apply(primitiveDef), primitiveDef, getter, setter, saveAction));
+			datamap.put(path, data = new ReadOnlyConfigData<>(this, path, getter.apply(primitiveDef), primitiveDef, getter, setter));
 		return (ReadOnlyConfigData<T>) data;
 	}
 
@@ -127,7 +134,7 @@ public final class IHaveConfig {
 		ConfigData<?> data = datamap.get(path);
 		if (data == null) {
 			val defval = def.get();
-			datamap.put(path, data = new ConfigData<>(config, path, defval, defval, null, null, saveAction));
+			datamap.put(path, data = new ConfigData<>(this, path, defval, defval, null, null));
 		}
 		return (ConfigData<T>) data;
 	}
@@ -147,7 +154,7 @@ public final class IHaveConfig {
 		ConfigData<?> data = datamap.get(path);
 		if (data == null) {
 			val defval = def.get();
-			datamap.put(path, data = new ConfigData<>(config, path, defval, setter.apply(defval), getter, setter, saveAction));
+			datamap.put(path, data = new ConfigData<>(this, path, defval, setter.apply(defval), getter, setter));
 		}
 		return (ConfigData<T>) data;
 	}
@@ -163,7 +170,7 @@ public final class IHaveConfig {
 	public <T> ListConfigData<T> getListData(String path) {
 		ConfigData<?> data = datamap.get(path);
 		if (data == null)
-			datamap.put(path, data = new ListConfigData<>(config, path, new ListConfigData.List<T>(), saveAction));
+			datamap.put(path, data = new ListConfigData<>(this, path, new ListConfigData.List<T>()));
 		return (ListConfigData<T>) data;
 	}
 
@@ -171,7 +178,7 @@ public final class IHaveConfig {
 	 * Schedules a save operation. Use after changing the ConfigurationSection directly.
 	 */
 	public void signalChange() {
-		ConfigData.signalChange(config, saveAction);
+		ConfigData.signalChange(this);
 	}
 
 	/**
@@ -179,12 +186,6 @@ public final class IHaveConfig {
 	 */
 	public void reset(ConfigurationSection config) {
 		this.config = config;
-		datamap.forEach((path, data) -> data.reset(config));
-	}
-
-	void setSaveAction(Runnable saveAction) {
-		this.saveAction = saveAction;
-		datamap.forEach((path, data) -> data.setSaveAction(saveAction));
 	}
 
 	/**

@@ -5,7 +5,6 @@ import buttondevteam.lib.ChromaUtils;
 import lombok.*;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.Configuration;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -24,14 +23,12 @@ public class ConfigData<T> {
 	/**
 	 * May be null for testing
 	 */
-	private ConfigurationSection config;
+	private IHaveConfig config;
 	@Getter
 	@Setter(AccessLevel.PACKAGE)
 	private String path;
 	protected final T def;
 	private final Object primitiveDef;
-	@Setter(AccessLevel.PACKAGE)
-	private Runnable saveAction;
 	/**
 	 * The parameter is of a primitive type as returned by {@link YamlConfiguration#get(String)}
 	 */
@@ -46,7 +43,7 @@ public class ConfigData<T> {
 	 */
 	private T value;
 
-	ConfigData(ConfigurationSection config, String path, T def, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter, Runnable saveAction) {
+	ConfigData(IHaveConfig config, String path, T def, Object primitiveDef, Function<Object, T> getter, Function<T, Object> setter) {
 		if (def == null) {
 			if (primitiveDef == null)
 				throw new IllegalArgumentException("Either def or primitiveDef must be set.");
@@ -66,7 +63,6 @@ public class ConfigData<T> {
 		this.primitiveDef = primitiveDef;
 		this.getter = getter;
 		this.setter = setter;
-		this.saveAction = saveAction;
 	}
 
 	@Override
@@ -74,14 +70,14 @@ public class ConfigData<T> {
 		return "ConfigData{" + "path='" + path + '\'' + ", value=" + value + '}';
 	}
 
-	void reset(ConfigurationSection config) {
+	void reset() {
 		value = null;
-		this.config = config;
 	}
 
 	@SuppressWarnings("unchecked")
 	public T get() {
 		if (value != null) return value; //Speed things up
+		var config = this.config.getConfig();
 		Object val;
 		if (config == null || !config.isSet(path)) { //Call set() if config == null
 			val = primitiveDef;
@@ -127,19 +123,21 @@ public class ConfigData<T> {
 	}
 
 	private void setInternal(Object val) {
-		config.set(path, val);
-		signalChange(config, saveAction);
+		config.getConfig().set(path, val);
+		signalChange(config);
 	}
 
-	static void signalChange(ConfigurationSection config, Runnable saveAction) {
-		if (!saveTasks.containsKey(config.getRoot())) {
+	static void signalChange(IHaveConfig config) {
+		var cc = config.getConfig();
+		var sa = config.getSaveAction();
+		if (!saveTasks.containsKey(cc.getRoot())) {
 			synchronized (saveTasks) {
-				saveTasks.put(config.getRoot(), new SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, () -> {
+				saveTasks.put(cc.getRoot(), new SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, () -> {
 					synchronized (saveTasks) {
-						saveTasks.remove(config.getRoot());
-						saveAction.run();
+						saveTasks.remove(cc.getRoot());
+						sa.run();
 					}
-				}, 100), saveAction));
+				}, 100), sa));
 			}
 		}
 	}
@@ -163,19 +161,18 @@ public class ConfigData<T> {
 		return false;
 	}
 
-	public static <T> ConfigData.ConfigDataBuilder<T> builder(ConfigurationSection config, String path, Runnable saveAction) {
-		return new ConfigDataBuilder<T>(config, path, saveAction);
+	public static <T> ConfigData.ConfigDataBuilder<T> builder(IHaveConfig config, String path) {
+		return new ConfigDataBuilder<T>(config, path);
 	}
 
 	@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 	public static class ConfigDataBuilder<T> {
-		private final ConfigurationSection config;
+		private final IHaveConfig config;
 		private final String path;
 		private T def;
 		private Object primitiveDef;
 		private Function<Object, T> getter;
 		private Function<T, Object> setter;
-		private final Runnable saveAction;
 
 		/**
 		 * The default value to use, as used in code. If not a primitive type, use the {@link #getter(Function)} and {@link #setter(Function)} methods.
@@ -233,7 +230,9 @@ public class ConfigData<T> {
 		 * @return A ConfigData instance.
 		 */
 		public ConfigData<T> build() {
-			return new ConfigData<>(config, path, def, primitiveDef, getter, setter, saveAction);
+			ConfigData<T> config = new ConfigData<>(this.config, path, def, primitiveDef, getter, setter);
+			this.config.onConfigBuild(config);
+			return config;
 		}
 
 		/**
@@ -242,9 +241,9 @@ public class ConfigData<T> {
 		 * @return A ReadOnlyConfigData instance.
 		 */
 		public ReadOnlyConfigData<T> buildReadOnly() {
-			return new ReadOnlyConfigData<>(config, path, def, primitiveDef, getter, setter, saveAction);
+			return new ReadOnlyConfigData<>(config, path, def, primitiveDef, getter, setter);
 		}
 
-		public String toString() {return "ConfigData.ConfigDataBuilder(config=" + this.config + ", path=" + this.path + ", def=" + this.def + ", primitiveDef=" + this.primitiveDef + ", getter=" + this.getter + ", setter=" + this.setter + ", saveAction=" + this.saveAction + ")";}
+		public String toString() {return "ConfigData.ConfigDataBuilder(config=" + this.config + ", path=" + this.path + ", def=" + this.def + ", primitiveDef=" + this.primitiveDef + ", getter=" + this.getter + ", setter=" + this.setter + ")";}
 	}
 }

@@ -1,7 +1,6 @@
 package buttondevteam.lib.architecture;
 
 import lombok.val;
-import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -12,12 +11,12 @@ import java.util.function.UnaryOperator;
 
 public class ListConfigData<T> extends ConfigData<ListConfigData.List<T>> {
 	@SuppressWarnings("unchecked")
-	ListConfigData(ConfigurationSection config, String path, List<T> def, Runnable saveAction) {
+	ListConfigData(IHaveConfig config, String path, List<T> def) {
 		super(config, path, def, new ArrayList<>(def), list -> {
 			var l = new List<>((ArrayList<T>) list);
 			l.listConfig = def.listConfig;
 			return l;
-		}, ArrayList::new, saveAction);
+		}, ArrayList::new);
 		def.listConfig = this; //Can't make the List class non-static or pass this in the super() constructor
 	}
 
