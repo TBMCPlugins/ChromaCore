@@ -241,7 +241,9 @@ public class ConfigData<T> {
 		 * @return A ReadOnlyConfigData instance.
 		 */
 		public ReadOnlyConfigData<T> buildReadOnly() {
-			return new ReadOnlyConfigData<>(config, path, def, primitiveDef, getter, setter);
+			ReadOnlyConfigData<T> config = new ReadOnlyConfigData<>(this.config, path, def, primitiveDef, getter, setter);
+			this.config.onConfigBuild(config);
+			return config;
 		}
 
 		public String toString() {return "ConfigData.ConfigDataBuilder(config=" + this.config + ", path=" + this.path + ", def=" + this.def + ", primitiveDef=" + this.primitiveDef + ", getter=" + this.getter + ", setter=" + this.setter + ")";}
