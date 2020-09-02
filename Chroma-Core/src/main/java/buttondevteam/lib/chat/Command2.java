@@ -67,6 +67,8 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		 * Used to be "tbmc.admin". The {@link #MOD_GROUP} is provided to use with this.
 		 */
 		String permGroup() default "";
+
+		String[] aliases() default {};
 	}
 
 	@Target(ElementType.PARAMETER)
@@ -318,6 +320,8 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 				ht = getParameterHelp(method, ht, subcommand, params);
 				var sd = new SubcommandData<>(method, command, params, ht);
 				subcommands.put(subcommand, sd); //Result of the above (def) is that it will show the help text
+				for (String alias : ann.aliases())
+					subcommands.put(commandChar + path + alias, sd);
 				addedSubcommands.add(sd);
 				scmdHelpList.add(subcommand);
 				nosubs = false;
@@ -401,6 +405,8 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			if (ann == null) continue;
 			val subcommand = commandChar + path + getCommandPath(method.getName(), ' ');
 			subcommands.remove(subcommand);
+			for (String alias : ann.aliases())
+				subcommands.remove(alias);
 		}
 	}
 

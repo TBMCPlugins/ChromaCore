@@ -37,7 +37,7 @@ public final class ChromaUtils {
 		/**
 		 * May return null.
 		 *
-		 * @return The full name that can be used to uniquely indentify the user.
+		 * @return The full name that can be used to uniquely identify the user.
 		 */
 		String getFancyFullName();
 	}
@@ -77,7 +77,7 @@ public final class ChromaUtils {
 	 *
 	 * @param what What to do
 	 * @param def  Default if async
-	 * @return The event cancelled state or false if async.
+	 * @return The value supplied by the action or def if async.
 	 */
 	public static <T> T doItAsync(Supplier<T> what, T def) {
 		if (Bukkit.isPrimaryThread())
