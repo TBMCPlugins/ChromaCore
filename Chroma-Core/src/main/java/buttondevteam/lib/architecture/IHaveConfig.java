@@ -186,6 +186,7 @@ public final class IHaveConfig {
 	 */
 	public void reset(ConfigurationSection config) {
 		this.config = config;
+		datamap.forEach((path, data) -> data.reset());
 	}
 
 	/**

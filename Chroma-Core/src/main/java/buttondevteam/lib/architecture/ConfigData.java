@@ -117,7 +117,7 @@ public class ConfigData<T> {
 		if (setter != null && value != null)
 			val = setter.apply(value);
 		else val = value;
-		if (config != null)
+		if (config.getConfig() != null)
 			setInternal(val);
 		this.value = value;
 	}

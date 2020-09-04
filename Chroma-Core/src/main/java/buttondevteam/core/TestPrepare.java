@@ -19,11 +19,16 @@ import java.util.Collections;
 import java.util.logging.Logger;
 
 public class TestPrepare {
+	private static boolean test = false;
+
+	public static boolean isTest() { return test; }
+
 	public static void PrepareServer() {
+		test = true;
 		Bukkit.setServer(Mockito.mock(Server.class, new Answer<Object>() {
 
 			@Override
-            public Object answer(InvocationOnMock invocation) {
+			public Object answer(InvocationOnMock invocation) {
 				if (returns(invocation, String.class))
 					return "test";
 				if (returns(invocation, Logger.class))
