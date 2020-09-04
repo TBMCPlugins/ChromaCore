@@ -21,6 +21,7 @@ import org.bukkit.command.CommandSender;
 public class PrimeRestartCommand extends ICommand2MC {
 	private final RestartComponent component;
 
+	@Command2.Subcommand
 	public void def(CommandSender sender, @Command2.TextArg @Command2.OptionalArg String somethingrandom) {
 		loud = somethingrandom != null;
 		if (Bukkit.getOnlinePlayers().size() > 0) {

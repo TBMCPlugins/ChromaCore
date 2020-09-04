@@ -184,10 +184,20 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 
 	@Override
 	public boolean handleCommand(Command2MCSender sender, String commandline) {
+		return handleCommand(sender, commandline, true);
+	}
+
+	private boolean handleCommand(Command2MCSender sender, String commandline, boolean checkPlugin) {
 		int i = commandline.indexOf(' ');
 		String mainpath = commandline.substring(1, i == -1 ? commandline.length() : i); //Without the slash
 		PluginCommand pcmd;
-		if (MainPlugin.Instance.prioritizeCustomCommands().get()
+		/*System.out.println("Command line: " + commandline);
+		System.out.println("Prioritize: " + MainPlugin.Instance.prioritizeCustomCommands().get());
+		System.out.println("PCMD: " + (pcmd = Bukkit.getPluginCommand(mainpath)));
+		if (pcmd != null)
+			System.out.println("ButtonPlugin: " + (pcmd.getPlugin() instanceof ButtonPlugin));*/
+		if (!checkPlugin
+			|| MainPlugin.Instance.prioritizeCustomCommands().get()
 			|| (pcmd = Bukkit.getPluginCommand(mainpath)) == null //Our commands aren't PluginCommands
 			|| pcmd.getPlugin() instanceof ButtonPlugin) //Unless it's specified in the plugin.yml
 			return super.handleCommand(sender, commandline);
@@ -205,17 +215,40 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			int x = path.indexOf(' ');
 			var mainPath = path.substring(0, x == -1 ? path.length() : x);
 			Command bukkitCommand;
-			{
-				var oldcmd = cmdmap.getCommand(mainPath);
+			{ //TODO: Commands conflicting with Essentials have to be registered in plugin.yml
+				var oldcmd = cmdmap.getCommand(command.getPlugin().getName() + ":" + mainPath); //The label with the fallback prefix is always registered
+				if (oldcmd == null) {
+					bukkitCommand = new BukkitCommand(mainPath);
+					cmdmap.register(command.getPlugin().getName(), bukkitCommand);
+				} else {
+					bukkitCommand = oldcmd;
+					if (bukkitCommand instanceof PluginCommand)
+						((PluginCommand) bukkitCommand).setExecutor(this::executeCommand);
+				}
 				bukkitCommand = oldcmd == null ? new BukkitCommand(mainPath) : oldcmd;
+				/*System.out.println("oldcmd: " + oldcmd);
+				System.out.println("bukkitCommand: " + bukkitCommand);*/
 			}
-			cmdmap.register(command.getPlugin().getName(), bukkitCommand);
+			//System.out.println("Registering to " + command.getPlugin().getName());
 			if (CommodoreProvider.isSupported())
 				TabcompleteHelper.registerTabcomplete(command, subcmds, bukkitCommand);
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Failed to register command in command map!", e);
 			shouldRegisterOfficially = false;
 		}
+	}
+
+	private boolean executeCommand(CommandSender sender, Command command, String label, String[] args) {
+		var user = ChromaGamerBase.getFromSender(sender);
+		if (user == null) {
+			TBMCCoreAPI.SendException("Failed to run Bukkit command for user!", new Throwable("No Chroma user found"));
+			sender.sendMessage("§cAn internal error occurred.");
+			return true;
+		}
+		//System.out.println("Executing " + label + " which is actually " + command.getName());
+		handleCommand(new Command2MCSender(sender, user.channel().get(), sender),
+			("/" + command.getName() + " " + String.join(" ", args)).trim(), false); ///trim(): remove space if there are no args
+		return true;
 	}
 
 	private static class BukkitCommand extends Command {
@@ -225,15 +258,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 
 		@Override
 		public boolean execute(CommandSender sender, String commandLabel, String[] args) {
-			var user = ChromaGamerBase.getFromSender(sender);
-			if (user == null) {
-				TBMCCoreAPI.SendException("Failed to run Bukkit command for user!", new Throwable("No Chroma user found"));
-				sender.sendMessage("§cAn internal error occurred.");
-				return true;
-			}
-			ButtonPlugin.getCommand2MC().handleCommand(new Command2MCSender(sender, user.channel().get(), sender),
-				"/" + getName() + " " + String.join(" ", args));
-			return true;
+			return ButtonPlugin.getCommand2MC().executeCommand(sender, this, commandLabel, args);
 		}
 
 		@Override
