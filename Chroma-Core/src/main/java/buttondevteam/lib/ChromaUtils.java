@@ -86,4 +86,16 @@ public final class ChromaUtils {
 			return what.get();
 		return def;
 	}
+
+	private static boolean test = false;
+
+	/**
+	 * Returns true while unit testing.
+	 */
+	public static boolean isTest() { return test; }
+
+	/**
+	 * Call when unit testing.
+	 */
+	public static void setTest() { test = true; }
 }

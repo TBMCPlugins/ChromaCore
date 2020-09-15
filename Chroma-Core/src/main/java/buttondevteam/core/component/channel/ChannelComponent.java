@@ -1,6 +1,6 @@
 package buttondevteam.core.component.channel;
 
-import buttondevteam.core.TestPrepare;
+import buttondevteam.lib.ChromaUtils;
 import buttondevteam.lib.TBMCSystemChatEvent;
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.*;
@@ -36,7 +36,7 @@ public class ChannelComponent extends Component {
 	}
 
 	void registerChannelCommand(Channel channel) {
-		if (!TestPrepare.isTest())
+		if (!ChromaUtils.isTest())
 			registerCommand(new ChannelCommand(channel));
 	}
 

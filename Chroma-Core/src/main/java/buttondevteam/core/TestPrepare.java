@@ -2,6 +2,7 @@ package buttondevteam.core;
 
 import buttondevteam.core.component.channel.Channel;
 import buttondevteam.core.component.channel.ChannelComponent;
+import buttondevteam.lib.ChromaUtils;
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.chat.Color;
 import buttondevteam.lib.chat.TBMCChatAPI;
@@ -19,12 +20,9 @@ import java.util.Collections;
 import java.util.logging.Logger;
 
 public class TestPrepare {
-	private static boolean test = false;
-
-	public static boolean isTest() { return test; }
 
 	public static void PrepareServer() {
-		test = true;
+		ChromaUtils.setTest(); //Needs to be in a separate class because of the potential lack of Mockito
 		Bukkit.setServer(Mockito.mock(Server.class, new Answer<Object>() {
 
 			@Override
