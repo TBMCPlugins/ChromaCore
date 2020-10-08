@@ -77,7 +77,7 @@ public abstract class Component<TP extends JavaPlugin> {
 			}
 			if (register) {
 				if (components.containsKey(component.getClass())) {
-					TBMCCoreAPI.SendException("Failed to register component " + component.getClassName(), new IllegalArgumentException("The component is already registered!"));
+					TBMCCoreAPI.SendException("Failed to register component " + component.getClassName(), new IllegalArgumentException("The component is already registered!"), plugin);
 					return false;
 				}
 				component.plugin = plugin;
@@ -92,7 +92,7 @@ public abstract class Component<TP extends JavaPlugin> {
 						setComponentEnabled(component, true);
 						return true;
 					} catch (Exception | NoClassDefFoundError e) {
-						TBMCCoreAPI.SendException("Failed to enable component " + component.getClassName() + "!", e);
+						TBMCCoreAPI.SendException("Failed to enable component " + component.getClassName() + "!", e, component);
 						return true;
 					}
 				}
@@ -103,7 +103,7 @@ public abstract class Component<TP extends JavaPlugin> {
 					try {
 						setComponentEnabled(component, false);
 					} catch (Exception | NoClassDefFoundError e) {
-						TBMCCoreAPI.SendException("Failed to disable component " + component.getClassName() + "!", e);
+						TBMCCoreAPI.SendException("Failed to disable component " + component.getClassName() + "!", e, component);
 						return false; //If failed to disable, won't unregister either
 					}
 				}
@@ -112,7 +112,7 @@ public abstract class Component<TP extends JavaPlugin> {
 			}
 			return true;
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Failed to " + (register ? "" : "un") + "register component " + component.getClassName() + "!", e);
+			TBMCCoreAPI.SendException("Failed to " + (register ? "" : "un") + "register component " + component.getClassName() + "!", e, plugin);
 			return false;
 		}
 	}
@@ -153,7 +153,7 @@ public abstract class Component<TP extends JavaPlugin> {
 		}
 	}
 
-	public static void updateConfig(JavaPlugin plugin, Component component) {
+	public static void updateConfig(JavaPlugin plugin, Component<?> component) {
 		if (plugin.getConfig() != null) { //Production
 			var compconf = plugin.getConfig().getConfigurationSection("components");
 			if (compconf == null) compconf = plugin.getConfig().createSection("components");

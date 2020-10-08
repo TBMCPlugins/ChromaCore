@@ -5,7 +5,9 @@ import buttondevteam.lib.TBMCCoreAPI;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
@@ -211,7 +213,13 @@ public final class IHaveConfig {
 						try {
 							return (ConfigData<?>) m.invoke(obj, kv.getValue());
 						} catch (IllegalAccessException | InvocationTargetException e) {
-							TBMCCoreAPI.SendException("Failed to pregenerate " + m.getName() + " for " + obj + " using config " + kv.getKey() + "!", e);
+							String msg = "Failed to pregenerate " + m.getName() + " for " + obj + " using config " + kv.getKey() + "!";
+							if (obj instanceof Component<?>)
+								TBMCCoreAPI.SendException(msg, e, (Component<?>) obj);
+							else if (obj instanceof JavaPlugin)
+								TBMCCoreAPI.SendException(msg, e, (JavaPlugin) obj);
+							else
+								TBMCCoreAPI.SendException(msg, e, false, Bukkit.getLogger()::warning);
 							return null;
 						}
 					}).filter(Objects::nonNull).collect(Collectors.toList());
@@ -228,7 +236,13 @@ public final class IHaveConfig {
 					c.get(); //Saves the default value if needed - also checks validity
 				}
 			} catch (Exception e) {
-				TBMCCoreAPI.SendException("Failed to pregenerate " + m.getName() + " for " + obj + "!", e);
+				String msg = "Failed to pregenerate " + m.getName() + " for " + obj + "!";
+				if (obj instanceof Component<?>)
+					TBMCCoreAPI.SendException(msg, e, (Component<?>) obj);
+				else if (obj instanceof JavaPlugin)
+					TBMCCoreAPI.SendException(msg, e, (JavaPlugin) obj);
+				else
+					TBMCCoreAPI.SendException(msg, e, false, Bukkit.getLogger()::warning);
 			}
 		}
 	}

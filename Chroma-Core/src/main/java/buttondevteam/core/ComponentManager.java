@@ -25,7 +25,7 @@ public final class ComponentManager {
 			try {
 				Component.setComponentEnabled(c, true);
 			} catch (Exception | NoClassDefFoundError e) {
-				TBMCCoreAPI.SendException("Failed to enable one of the components: " + c.getClass().getSimpleName(), e);
+				TBMCCoreAPI.SendException("Failed to enable one of the components: " + c.getClass().getSimpleName(), e, c);
 			}
 		});
 		componentsEnabled = true;

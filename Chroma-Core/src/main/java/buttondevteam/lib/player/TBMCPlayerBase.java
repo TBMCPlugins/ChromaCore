@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	protected UUID uuid;
 
-	private String pluginname;
+	private final String pluginname;
 
 	protected TBMCPlayerBase() {
 		if (getClass().isAnnotationPresent(PlayerClass.class))
@@ -77,8 +77,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 			player.uuid = uuid;
 			return player;
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException(
-				"Failed to get player with UUID " + uuid + " and class " + cl.getSimpleName() + "!", e);
+			TBMCCoreAPI.SendException("Failed to get player with UUID " + uuid + " and class " + cl.getSimpleName() + "!", e, MainPlugin.Instance);
 			return null;
 		}
 	}
@@ -86,7 +85,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	/**
 	 * Key: UUID-Class
 	 */
-	static final ConcurrentHashMap<String, TBMCPlayerBase> playermap = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<String, TBMCPlayerBase> playermap = new ConcurrentHashMap<>();
 
 	/**
 	 * Gets the TBMCPlayer object as a specific plugin player, keeping it's data<br>
@@ -147,7 +146,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 				p.close();
 			} catch (Exception e) {
 				TBMCCoreAPI.SendException("Error while saving player " + p.PlayerName().get() + " (" + p.getFolder()
-					+ "/" + p.getFileName() + ")!", e);
+					+ "/" + p.getFileName() + ")!", e, MainPlugin.Instance);
 			}
 		});
 	}

@@ -1,5 +1,6 @@
 package buttondevteam.lib.player;
 
+import buttondevteam.core.MainPlugin;
 import buttondevteam.core.component.channel.Channel;
 import buttondevteam.lib.TBMCCoreAPI;
 import com.google.common.collect.HashBiMap;
@@ -30,19 +31,17 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 			playerTypes.put(userclass, userclass.getAnnotation(UserClass.class).foldername());
 		else if (userclass.isAnnotationPresent(AbstractUserClass.class))
 			playerTypes.put(userclass.getAnnotation(AbstractUserClass.class).prototype(),
-					userclass.getAnnotation(AbstractUserClass.class).foldername());
+				userclass.getAnnotation(AbstractUserClass.class).foldername());
 		else // <-- Really important
 			throw new RuntimeException("Class not registered as a user class! Use @UserClass or TBMCPlayerBase");
 	}
 
 	/**
 	 * Returns the folder name for the given player class.
-	 * 
-	 * @param cl
-	 *            The class to get the folder from (like {@link TBMCPlayerBase} or one of it's subclasses)
+	 *
+	 * @param cl The class to get the folder from (like {@link TBMCPlayerBase} or one of it's subclasses)
 	 * @return The folder name for the given type
-	 * @throws RuntimeException
-	 *             If the class doesn't have the {@link UserClass} annotation.
+	 * @throws RuntimeException If the class doesn't have the {@link UserClass} annotation.
 	 */
 	public static <T extends ChromaGamerBase> String getFolderForType(Class<T> cl) {
 		if (cl.isAnnotationPresent(UserClass.class))
@@ -54,9 +53,8 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	/**
 	 * Returns the player class for the given folder name.
-	 * 
-	 * @param foldername
-	 *            The folder to get the class from (like "minecraft")
+	 *
+	 * @param foldername The folder to get the class from (like "minecraft")
 	 * @return The type for the given folder name or null if not found
 	 */
 	public static Class<? extends ChromaGamerBase> getTypeForFolder(String foldername) {
@@ -72,16 +70,16 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	}
 
 	/**
-     * Use {@link #data(Object)} or {@link #data(String, Object)} where possible; the 'id' must be always set
+	 * Use {@link #data(Object)} or {@link #data(String, Object)} where possible; the 'id' must be always set
 	 */
 	protected YamlConfiguration plugindata;
 
 	/***
 	 * Loads a user from disk and returns the user object. Make sure to use the subclasses' methods, where possible, like {@link TBMCPlayerBase#getPlayer(java.util.UUID, Class)}
 	 *
-     * @param fname Filename without .yml, usually UUID
-     * @param cl User class
-     * @return The user object
+	 * @param fname Filename without .yml, usually UUID
+	 * @param cl User class
+	 * @return The user object
 	 */
 	public static <T extends ChromaGamerBase> T getUser(String fname, Class<T> cl) {
 		try {
@@ -93,7 +91,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 			obj.plugindata.set(folder + "_id", fname);
 			return obj;
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("An error occured while loading a " + cl.getSimpleName() + "!", e);
+			TBMCCoreAPI.SendException("An error occured while loading a " + cl.getSimpleName() + "!", e, MainPlugin.Instance);
 		}
 		return null;
 	}
@@ -140,15 +138,14 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		try {
 			close();
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Error while saving player to " + getFolder() + "/" + getFileName() + ".yml!", e);
+			TBMCCoreAPI.SendException("Error while saving player to " + getFolder() + "/" + getFileName() + ".yml!", e, MainPlugin.Instance);
 		}
 	}
 
 	/**
 	 * Connect two accounts. Do not use for connecting two Minecraft accounts or similar. Also make sure you have the "id" tag set
-	 * 
-	 * @param user
-	 *            The account to connect with
+	 *
+	 * @param user The account to connect with
 	 */
 	public <T extends ChromaGamerBase> void connectWith(T user) {
 		// Set the ID, go through all linked files and connect them as well
@@ -157,7 +154,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		final String ownFolder = getFolder();
 		final String userFolder = user.getFolder();
 		if (ownFolder.equalsIgnoreCase(userFolder))
-			throw new RuntimeException("Do not connect two accounts of the same type! Type: "+ownFolder);
+			throw new RuntimeException("Do not connect two accounts of the same type! Type: " + ownFolder);
 		user.plugindata.set(ownFolder + "_id", plugindata.getString(ownFolder + "_id"));
 		plugindata.set(userFolder + "_id", user.plugindata.getString(userFolder + "_id"));
 		Consumer<YamlConfiguration> sync = sourcedata -> {
@@ -176,7 +173,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 							cg.plugindata.set(item.getValue() + "_id", sourcedata.getString(item.getValue() + "_id")); // Set all existing IDs
 				} catch (Exception e) {
 					TBMCCoreAPI.SendException("Failed to update " + sourcefolder + " ID in player files for " + id
-							+ " in folder with " + entry.getValue() + " id " + otherid + "!", e);
+						+ " in folder with " + entry.getValue() + " id " + otherid + "!", e, MainPlugin.Instance);
 				}
 			}
 		};
@@ -186,9 +183,8 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	/**
 	 * Retunrs the ID for the T typed player object connected with this one or null if no connection found.
-	 * 
-	 * @param cl
-	 *            The player class to get the ID from
+	 *
+	 * @param cl The player class to get the ID from
 	 * @return The ID or null if not found
 	 */
 	public <T extends ChromaGamerBase> String getConnectedID(Class<T> cl) {
@@ -198,9 +194,8 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	/**
 	 * Returns this player as a plugin player. This will return a new instance unless the player is online.<br>
 	 * Make sure to close both the returned and this object. A try-with-resources block or two can help.<br>
-	 * 
-	 * @param cl
-	 *            The target player class
+	 *
+	 * @param cl The target player class
 	 * @return The player as a {@link T} object or null if not having an account there
 	 */
 	@SuppressWarnings("unchecked")
@@ -224,16 +219,16 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	private void ThrowIfNoUser() {
 		if (!getClass().isAnnotationPresent(UserClass.class)
-				&& !getClass().isAnnotationPresent(AbstractUserClass.class))
+			&& !getClass().isAnnotationPresent(AbstractUserClass.class))
 			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
 	}
 
 	@SuppressWarnings("rawtypes")
-    private final HashMap<String, PlayerData> datamap = new HashMap<>();
+	private final HashMap<String, PlayerData> datamap = new HashMap<>();
 
 	/**
 	 * Use from a data() method, which is in a method with the name of the key. For example, use flair() for the enclosing method of the outer data() to save to and load from "flair"
-	 * 
+	 *
 	 * @return A data object with methods to get and set
 	 */
 	@SuppressWarnings("unchecked")
@@ -247,7 +242,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	/**
 	 * Use from a method with the name of the key. For example, use flair() for the enclosing method to save to and load from "flair"
-	 * 
+	 *
 	 * @return A data object with methods to get and set
 	 */
 	@SuppressWarnings("unchecked")
@@ -265,7 +260,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	/**
 	 * Use from a data() method, which is in a method with the name of the key. For example, use flair() for the enclosing method of the outer data() to save to and load from "flair"
-	 * 
+	 *
 	 * @return A data object with methods to get and set
 	 */
 	@SuppressWarnings("unchecked")
@@ -306,9 +301,8 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	/**
 	 * Get player information. This method calls the {@link TBMCPlayerGetInfoEvent} to get all the player information across the TBMC plugins.
-	 * 
-	 * @param target
-	 *            The {@link InfoTarget} to return the info for.
+	 *
+	 * @param target The {@link InfoTarget} to return the info for.
 	 * @return The player information.
 	 */
 	public String getInfo(InfoTarget target) {

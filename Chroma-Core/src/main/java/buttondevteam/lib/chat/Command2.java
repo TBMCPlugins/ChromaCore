@@ -147,7 +147,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 				try {
 					handleCommandAsync(sender, commandline, sd, subcommand, sync);
 				} catch (Exception e) {
-					TBMCCoreAPI.SendException("Command execution failed for sender " + sender.getName() + "(" + sender.getClass().getCanonicalName() + ") and message " + commandline, e);
+					TBMCCoreAPI.SendException("Command execution failed for sender " + sender.getName() + "(" + sender.getClass().getCanonicalName() + ") and message " + commandline, e, MainPlugin.Instance);
 				}
 			});
 			return true; //We found a method
@@ -271,9 +271,9 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 				} else if (ret != null)
 					throw new Exception("Wrong return type! Must return a boolean or void. Return value: " + ret);
 			} catch (InvocationTargetException e) {
-				TBMCCoreAPI.SendException("An error occurred in a command handler!", e.getCause());
+				TBMCCoreAPI.SendException("An error occurred in a command handler for " + subcommand + "!", e.getCause(), MainPlugin.Instance);
 			} catch (Exception e) {
-				TBMCCoreAPI.SendException("Command handling failed for sender " + sender + " and subcommand " + subcommand, e);
+				TBMCCoreAPI.SendException("Command handling failed for sender " + sender + " and subcommand " + subcommand, e, MainPlugin.Instance);
 			}
 		};
 		if (sync)
@@ -306,7 +306,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			if (!commandHelp.contains(mainPath))
 				commandHelp.add(mainPath);
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Could not register default handler for command /" + path, e);
+			TBMCCoreAPI.SendException("Could not register default handler for command /" + path, e, MainPlugin.Instance);
 		}
 		var addedSubcommands = new ArrayList<SubcommandData<TC>>();
 		for (val method : command.getClass().getMethods()) {
@@ -347,7 +347,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	private String[] getParameterHelp(Method method, String[] ht, String subcommand, String[] parameters) {
 		val str = method.getDeclaringClass().getResourceAsStream("/commands.yml");
 		if (str == null)
-			TBMCCoreAPI.SendException("Error while getting command data!", new Exception("Resource not found!"));
+			TBMCCoreAPI.SendException("Error while getting command data!", new Exception("Resource not found!"), MainPlugin.Instance);
 		else {
 			if (ht.length > 0)
 				ht[0] = "§6---- " + ht[0] + " ----";
@@ -368,11 +368,11 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 						for (int j = 0; j < paramArray.length && j < parameters.length; j++)
 							parameters[j] = paramArray[j];
 					} else
-						TBMCCoreAPI.SendException("Error while getting command data for " + method + "!", new Exception("Method '" + method.toString() + "' != " + mname + " or params is " + params));
+						TBMCCoreAPI.SendException("Error while getting command data for " + method + "!", new Exception("Method '" + method.toString() + "' != " + mname + " or params is " + params), MainPlugin.Instance);
 				} else
-					TBMCCoreAPI.SendException("Error while getting command data for " + method + "!", new Exception("cs is " + cs));
+					TBMCCoreAPI.SendException("Error while getting command data for " + method + "!", new Exception("cs is " + cs), MainPlugin.Instance);
 			} else
-				TBMCCoreAPI.SendException("Error while getting command data for " + method + "!", new Exception("ccs is " + ccs + " - class: " + method.getDeclaringClass().getCanonicalName()));
+				TBMCCoreAPI.SendException("Error while getting command data for " + method + "!", new Exception("ccs is " + ccs + " - class: " + method.getDeclaringClass().getCanonicalName()), MainPlugin.Instance);
 		}
 		return ht;
 	}

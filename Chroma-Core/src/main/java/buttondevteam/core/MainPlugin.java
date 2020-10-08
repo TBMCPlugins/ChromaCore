@@ -142,7 +142,7 @@ public class MainPlugin extends ButtonPlugin {
 			try {
 				Files.write(new File("plugins", "plugins.txt").toPath(), Arrays.stream(Bukkit.getPluginManager().getPlugins()).map(p -> (CharSequence) p.getDataFolder().getName())::iterator);
 			} catch (IOException e) {
-				TBMCCoreAPI.SendException("Failed to write plugin list!", e);
+				TBMCCoreAPI.SendException("Failed to write plugin list!", e, this);
 			}
 		}
 		if (getServer().getPluginManager().isPluginEnabled("Essentials"))

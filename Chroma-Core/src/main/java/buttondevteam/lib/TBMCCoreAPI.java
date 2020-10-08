@@ -1,13 +1,14 @@
 package buttondevteam.lib;
 
 import buttondevteam.core.MainPlugin;
+import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.player.ChromaGamerBase;
 import buttondevteam.lib.potato.DebugPotato;
 import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +16,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 
 public class TBMCCoreAPI {
 	static final List<String> coders = new ArrayList<String>() {
@@ -51,11 +53,21 @@ public class TBMCCoreAPI {
 	 * @param sourcemsg A message that is shown at the top of the exception (before the exception's message)
 	 * @param e         The exception to send
 	 */
-	public static void SendException(String sourcemsg, Throwable e) {
-		SendException(sourcemsg, e, false);
+	public static void SendException(String sourcemsg, Throwable e, Component<?> component) {
+		SendException(sourcemsg, e, false, component::logWarn);
 	}
 
-	public static void SendException(String sourcemsg, Throwable e, boolean debugPotato) {
+	/**
+	 * Send exception to the {@link TBMCExceptionEvent}.
+	 *
+	 * @param sourcemsg A message that is shown at the top of the exception (before the exception's message)
+	 * @param e         The exception to send
+	 */
+	public static void SendException(String sourcemsg, Throwable e, JavaPlugin plugin) {
+		SendException(sourcemsg, e, false, plugin.getLogger()::warning);
+	}
+
+	public static void SendException(String sourcemsg, Throwable e, boolean debugPotato, Consumer<String> logWarn) {
 		try {
 			SendUnsentExceptions();
 			TBMCExceptionEvent event = new TBMCExceptionEvent(sourcemsg, e);
@@ -64,7 +76,7 @@ public class TBMCCoreAPI {
 				if (!event.isHandled())
 					exceptionsToSend.put(sourcemsg, e);
 			}
-			Bukkit.getLogger().warning(sourcemsg);
+			logWarn.accept(sourcemsg);
 			e.printStackTrace();
 			if (debugPotato) {
 				List<Player> devsOnline = new ArrayList<>();
@@ -105,6 +117,7 @@ public class TBMCCoreAPI {
 	}
 
 	private static EventExceptionCoreHandler eventExceptionCoreHandler;
+
 	/**
 	 * Registers Bukkit events, handling the exceptions occurring in those events
 	 *

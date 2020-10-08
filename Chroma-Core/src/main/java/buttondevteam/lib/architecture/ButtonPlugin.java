@@ -59,7 +59,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 		try {
 			pluginEnable();
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Error while enabling plugin " + getName() + "!", e);
+			TBMCCoreAPI.SendException("Error while enabling plugin " + getName() + "!", e, this);
 		}
 		if (configGenAllowed(this)) //If it's not disabled (by default it's not)
 			IHaveConfig.pregenConfig(this, null);
@@ -85,7 +85,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 				getLogger().info("Saved configuration changes.");
 			getCommand2MC().unregisterCommands(this);
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Error while disabling plugin " + getName() + "!", e);
+			TBMCCoreAPI.SendException("Error while disabling plugin " + getName() + "!", e, this);
 		}
 	}
 
@@ -142,7 +142,7 @@ public abstract class ButtonPlugin extends JavaPlugin {
 			if (yaml != null)
 				yaml.save();
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Failed to save config", e);
+			TBMCCoreAPI.SendException("Failed to save config", e, this);
 		}
 	}
 

@@ -4,6 +4,7 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.core.component.channel.Channel;
 import buttondevteam.lib.TBMCSystemChatEvent;
 import buttondevteam.lib.architecture.Component;
+import buttondevteam.lib.architecture.ComponentMetadata;
 import buttondevteam.lib.architecture.ConfigData;
 import buttondevteam.lib.chat.IFakePlayer;
 import buttondevteam.lib.chat.TBMCChatAPI;
@@ -14,14 +15,15 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 /**
- * Provides commands such as /schrestart (restart after a countdown) and /primerestart (restart when nobody is online)
+ * Provides commands such as /schrestart (restart after a countdown) and /primerestart (restart when nobody is online).
+ * Also can automatically restart at a given time.
  */
+@ComponentMetadata(enabledByDefault = false)
 public class RestartComponent extends Component<MainPlugin> implements Listener {
 	@Override
 	public void enable() {

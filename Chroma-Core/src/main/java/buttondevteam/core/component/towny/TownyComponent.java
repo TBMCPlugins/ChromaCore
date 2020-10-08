@@ -8,7 +8,6 @@ import com.palmergames.bukkit.towny.TownyUniverse;
 import com.palmergames.bukkit.towny.exceptions.AlreadyRegisteredException;
 import com.palmergames.bukkit.towny.exceptions.NotRegisteredException;
 import com.palmergames.bukkit.towny.object.Resident;
-import org.bukkit.Bukkit;
 
 /**
  * Automatically renames Towny players if they changed their Minecraft name
@@ -48,9 +47,9 @@ public class TownyComponent extends Component<MainPlugin> {
 				component.log("Renaming done.");
 			}
 		} catch (AlreadyRegisteredException e) {
-			TBMCCoreAPI.SendException("Failed to rename resident, there's already one with this name.", e);
+			TBMCCoreAPI.SendException("Failed to rename resident, there's already one with this name.", e, component);
 		} catch (NotRegisteredException e) {
-			TBMCCoreAPI.SendException("Failed to rename resident, the resident isn't registered.", e);
+			TBMCCoreAPI.SendException("Failed to rename resident, the resident isn't registered.", e, component);
 		}
 	}
 }

@@ -8,7 +8,6 @@ import buttondevteam.lib.player.ChromaGamerBase;
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import lombok.val;
@@ -233,7 +232,10 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			if (CommodoreProvider.isSupported())
 				TabcompleteHelper.registerTabcomplete(command, subcmds, bukkitCommand);
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Failed to register command in command map!", e);
+			if (command.getComponent() == null)
+				TBMCCoreAPI.SendException("Failed to register command in command map!", e, command.getPlugin());
+			else
+				TBMCCoreAPI.SendException("Failed to register command in command map!", e, command.getComponent());
 			shouldRegisterOfficially = false;
 		}
 	}
@@ -241,7 +243,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	private boolean executeCommand(CommandSender sender, Command command, String label, String[] args) {
 		var user = ChromaGamerBase.getFromSender(sender);
 		if (user == null) {
-			TBMCCoreAPI.SendException("Failed to run Bukkit command for user!", new Throwable("No Chroma user found"));
+			TBMCCoreAPI.SendException("Failed to run Bukkit command for user!", new Throwable("No Chroma user found"), MainPlugin.Instance);
 			sender.sendMessage("§cAn internal error occurred.");
 			return true;
 		}
@@ -372,7 +374,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 						.filter(t -> param.replaceAll("[\\[\\]<>]", "").equalsIgnoreCase(t.getValue1().param()))
 						.findAny();
 					var argb = RequiredArgumentBuilder.argument(param, type)
-						.suggests((SuggestionProvider<Object>) (context, builder) -> {
+						.suggests((context, builder) -> {
 							if (parameter.isVarArgs()) { //Do it before the builder is used
 								int nextTokenStart = context.getInput().lastIndexOf(' ') + 1;
 								builder = builder.createOffset(nextTokenStart);
@@ -399,12 +401,9 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 										args[j] = paramValueString;
 										continue;
 									}
-									val converter = ButtonPlugin.getCommand2MC().paramConverters.get(params[j].getType());
-									if (converter == null) {
-										TBMCCoreAPI.SendException("Could not find a suitable converter for type " + params[j].getType().getSimpleName(),
-											new NullPointerException("converter is null"));
+									val converter = getParamConverter(params[j].getType(), command2MC);
+									if (converter == null)
 										break;
-									}
 									val paramValue = converter.converter.apply(paramValueString);
 									if (paramValue == null) //For example, the player provided an invalid plugin name
 										break;
@@ -427,16 +426,17 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 										else
 											throw new ClassCastException("Bad return type! It should return a String[] or an Iterable<String>.");
 									} catch (Exception e) {
-										TBMCCoreAPI.SendException("Failed to run tabcomplete method " + method.getName() + " for command " + command2MC.getClass().getSimpleName(), e);
+										String msg = "Failed to run tabcomplete method " + method.getName() + " for command " + command2MC.getClass().getSimpleName();
+										if (command2MC.getComponent() == null)
+											TBMCCoreAPI.SendException(msg, e, command2MC.getPlugin());
+										else
+											TBMCCoreAPI.SendException(msg, e, command2MC.getComponent());
 									}
 								}
 							}
 							if (!ignoreCustomParamType && customParamType) {
-								val converter = ButtonPlugin.getCommand2MC().paramConverters.get(ptype);
-								if (converter == null)
-									TBMCCoreAPI.SendException("Could not find a suitable converter for type " + ptype.getSimpleName(),
-										new NullPointerException("converter is null"));
-								else {
+								val converter = getParamConverter(ptype, command2MC);
+								if (converter != null) {
 									var suggestions = converter.allSupplier.get();
 									for (String suggestion : suggestions)
 										builder.suggest(suggestion);
@@ -466,5 +466,19 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 				commodore.register(prefixedcmd);
 			}
 		}
+	}
+
+	private static ParamConverter<?> getParamConverter(Class<?> cl, ICommand2MC command2MC) {
+		val converter = ButtonPlugin.getCommand2MC().paramConverters.get(cl);
+		if (converter == null) {
+			String msg = "Could not find a suitable converter for type " + cl.getSimpleName();
+			Exception exception = new NullPointerException("converter is null");
+			if (command2MC.getComponent() == null)
+				TBMCCoreAPI.SendException(msg, exception, command2MC.getPlugin());
+			else
+				TBMCCoreAPI.SendException(msg, exception, command2MC.getComponent());
+			return null;
+		}
+		return converter;
 	}
 }

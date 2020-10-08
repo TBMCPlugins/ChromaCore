@@ -2,6 +2,7 @@ package buttondevteam.core.component.spawn;
 
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.architecture.Component;
+import buttondevteam.lib.architecture.ComponentMetadata;
 import buttondevteam.lib.architecture.ConfigData;
 import buttondevteam.lib.chat.Command2;
 import buttondevteam.lib.chat.CommandClass;
@@ -23,6 +24,7 @@ import java.math.BigDecimal;
 /**
  * Provides a /spawn command that works with BungeeCord. Make sure to set up on each server.
  */
+@ComponentMetadata(enabledByDefault = false)
 public class SpawnComponent extends Component<MainPlugin> implements PluginMessageListener {
 	@Override
 	protected void enable() {

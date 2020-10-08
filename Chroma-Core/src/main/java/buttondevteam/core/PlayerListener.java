@@ -77,7 +77,7 @@ public class PlayerListener implements Listener {
 		try {
 			event.setCancelled(ButtonPlugin.getCommand2MC().handleCommand(new Command2MCSender(event.getSender(), event.getChannel(), event.getPermCheck()), event.getMessage()));
 		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Command processing failed for sender '" + event.getSender() + "' and message '" + event.getMessage() + "'", e);
+			TBMCCoreAPI.SendException("Command processing failed for sender '" + event.getSender() + "' and message '" + event.getMessage() + "'", e, MainPlugin.Instance);
 		}
 	}
 
