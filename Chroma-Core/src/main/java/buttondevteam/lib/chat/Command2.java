@@ -284,7 +284,11 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 
 	public abstract void registerCommand(TC command);
 
-	protected List<SubcommandData<TC>> registerCommand(TC command, @SuppressWarnings("SameParameterValue") char commandChar) {
+	protected List<SubcommandData<TC>> registerCommand(TC command, char commandChar) {
+		return registerCommand(command, command.getCommandPath(), commandChar);
+	}
+
+	protected List<SubcommandData<TC>> registerCommand(TC command, String commandPath, @SuppressWarnings("SameParameterValue") char commandChar) {
 		this.commandChar = commandChar;
 		val path = command.getCommandPath();
 		int x = path.indexOf(' ');

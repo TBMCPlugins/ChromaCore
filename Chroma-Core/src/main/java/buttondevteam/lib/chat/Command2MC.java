@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,6 +53,10 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			mainpath = cpath.substring(0, i == -1 ? cpath.length() : i);
 		}*/
 		var subcmds = super.registerCommand(command, '/');
+		var bcmd = registerOfficially(command, subcmds);
+		if (bcmd != null)
+			for (String alias : bcmd.getAliases())
+				super.registerCommand(command, command.getCommandPath().replaceFirst("^" + bcmd.getName(), Matcher.quoteReplacement(alias)), '/');
 
 		var perm = "chroma.command." + command.getCommandPath().replace(' ', '.');
 		if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
@@ -73,8 +78,6 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 				Bukkit.getPluginManager().addPermission(new Permission(permGroup,
 					PermissionDefault.OP)); //Do not allow any commands that belong to a group
 		}
-
-		registerOfficially(command, subcmds);
 	}
 
 	@Override
@@ -206,8 +209,8 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 
 	private boolean shouldRegisterOfficially = true;
 
-	private void registerOfficially(ICommand2MC command, List<SubcommandData<ICommand2MC>> subcmds) {
-		if (!shouldRegisterOfficially || command.getPlugin() == null) return;
+	private Command registerOfficially(ICommand2MC command, List<SubcommandData<ICommand2MC>> subcmds) {
+		if (!shouldRegisterOfficially || command.getPlugin() == null) return null;
 		try {
 			var cmdmap = (SimpleCommandMap) Bukkit.getServer().getClass().getMethod("getCommandMap").invoke(Bukkit.getServer());
 			var path = command.getCommandPath();
@@ -231,12 +234,14 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			//System.out.println("Registering to " + command.getPlugin().getName());
 			if (CommodoreProvider.isSupported())
 				TabcompleteHelper.registerTabcomplete(command, subcmds, bukkitCommand);
+			return bukkitCommand;
 		} catch (Exception e) {
 			if (command.getComponent() == null)
 				TBMCCoreAPI.SendException("Failed to register command in command map!", e, command.getPlugin());
 			else
 				TBMCCoreAPI.SendException("Failed to register command in command map!", e, command.getComponent());
 			shouldRegisterOfficially = false;
+			return null;
 		}
 	}
 
