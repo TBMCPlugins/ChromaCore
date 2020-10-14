@@ -228,10 +228,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 						((PluginCommand) bukkitCommand).setExecutor(this::executeCommand);
 				}
 				bukkitCommand = oldcmd == null ? new BukkitCommand(mainPath) : oldcmd;
-				/*System.out.println("oldcmd: " + oldcmd);
-				System.out.println("bukkitCommand: " + bukkitCommand);*/
 			}
-			//System.out.println("Registering to " + command.getPlugin().getName());
 			if (CommodoreProvider.isSupported())
 				TabcompleteHelper.registerTabcomplete(command, subcmds, bukkitCommand);
 			return bukkitCommand;
@@ -465,10 +462,14 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			if (shouldRegister.get()) {
 				commodore.register(maincmd);
 				//MinecraftArgumentTypes.getByKey(NamespacedKey.minecraft(""))
-				var prefixedcmd = new LiteralCommandNode<>(command2MC.getPlugin().getName().toLowerCase() + ":" + path[0], maincmd.getCommand(), maincmd.getRequirement(), maincmd.getRedirect(), maincmd.getRedirectModifier(), maincmd.isFork());
-				for (var child : maincmd.getChildren())
-					prefixedcmd.addChild(child);
+				String pluginName = command2MC.getPlugin().getName().toLowerCase();
+				var prefixedcmd = LiteralArgumentBuilder.literal(pluginName + ":" + path[0])
+					.redirect(maincmd).build();
 				commodore.register(prefixedcmd);
+				for (String alias : bukkitCommand.getAliases()) {
+					commodore.register(LiteralArgumentBuilder.literal(alias).redirect(maincmd).build());
+					commodore.register(LiteralArgumentBuilder.literal(pluginName + ":" + alias).redirect(maincmd).build());
+				}
 			}
 		}
 	}

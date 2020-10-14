@@ -288,9 +288,8 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		return registerCommand(command, command.getCommandPath(), commandChar);
 	}
 
-	protected List<SubcommandData<TC>> registerCommand(TC command, String commandPath, @SuppressWarnings("SameParameterValue") char commandChar) {
+	protected List<SubcommandData<TC>> registerCommand(TC command, String path, @SuppressWarnings("SameParameterValue") char commandChar) {
 		this.commandChar = commandChar;
-		val path = command.getCommandPath();
 		int x = path.indexOf(' ');
 		val mainPath = commandChar + path.substring(0, x == -1 ? path.length() : x);
 		//var scmdmap = subcommandStrings.computeIfAbsent(mainPath, k -> new HashSet<>()); //Used to display subcommands
