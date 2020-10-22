@@ -23,6 +23,10 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 			pluginname = getClass().getAnnotation(PlayerClass.class).pluginname();
 		else
 			throw new RuntimeException("Class not defined as player class! Use @PlayerClass");
+
+		var section = plugindata.getConfigurationSection(pluginname);
+		if (section == null) section = plugindata.createSection(pluginname);
+		config.reset(section);
 	}
 
 	public UUID getUUID() {

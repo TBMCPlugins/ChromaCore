@@ -3,7 +3,10 @@ package buttondevteam.lib.player;
 import buttondevteam.core.MainPlugin;
 import buttondevteam.core.component.channel.Channel;
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.architecture.ConfigData;
+import buttondevteam.lib.architecture.IHaveConfig;
 import com.google.common.collect.HashBiMap;
+import lombok.Getter;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -16,17 +19,32 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @ChromaGamerEnforcer
-public abstract class ChromaGamerBase implements AutoCloseable {
-	public static final String TBMC_PLAYERS_DIR = "TBMC/players/";
-
+public abstract class ChromaGamerBase {
+	private static final String TBMC_PLAYERS_DIR = "TBMC/players/";
 	private static final HashBiMap<Class<? extends ChromaGamerBase>, String> playerTypes = HashBiMap.create();
+	private static final HashMap<Class<? extends ChromaGamerBase>, Supplier<? extends ChromaGamerBase>> constructors = new HashMap<>();
+	private static final HashMap<Class<? extends ChromaGamerBase>, HashMap<String, ChromaGamerBase>> userCache = new HashMap<>();
+	private static final ArrayList<Function<CommandSender, ? extends Optional<? extends ChromaGamerBase>>> senderConverters = new ArrayList<>();
 
 	/**
-	 * Used for connecting with every type of user ({@link #connectWith(ChromaGamerBase)})
+	 * Use {@link #getConfig()} where possible; the 'id' must be always set
 	 */
-	public static void RegisterPluginUserClass(Class<? extends ChromaGamerBase> userclass) {
+	protected YamlConfiguration plugindata;
+
+	@Getter
+	protected final IHaveConfig config = new IHaveConfig(this::save);
+
+	public void init() {
+		config.reset(plugindata);
+	}
+
+	/**
+	 * Used for connecting with every type of user ({@link #connectWith(ChromaGamerBase)}) and to init the configs.
+	 */
+	public static <T extends ChromaGamerBase> void RegisterPluginUserClass(Class<T> userclass, Supplier<T> constructor) {
 		if (userclass.isAnnotationPresent(UserClass.class))
 			playerTypes.put(userclass, userclass.getAnnotation(UserClass.class).foldername());
 		else if (userclass.isAnnotationPresent(AbstractUserClass.class))
@@ -34,6 +52,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 				userclass.getAnnotation(AbstractUserClass.class).foldername());
 		else // <-- Really important
 			throw new RuntimeException("Class not registered as a user class! Use @UserClass or TBMCPlayerBase");
+		constructors.put(userclass, constructor);
 	}
 
 	/**
@@ -61,19 +80,6 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		return playerTypes.inverse().get(foldername);
 	}
 
-	/**
-	 * This method returns the filename for this player data. For example, for Minecraft-related data, MC UUIDs, for Discord data, use Discord IDs, etc.<br>
-	 * <b>Does not include .yml</b>
-	 */
-	public final String getFileName() {
-		return plugindata.getString(getFolder() + "_id");
-	}
-
-	/**
-	 * Use {@link #data(Object)} or {@link #data(String, Object)} where possible; the 'id' must be always set
-	 */
-	protected YamlConfiguration plugindata;
-
 	/***
 	 * Loads a user from disk and returns the user object. Make sure to use the subclasses' methods, where possible, like {@link TBMCPlayerBase#getPlayer(java.util.UUID, Class)}
 	 *
@@ -82,21 +88,23 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 * @return The user object
 	 */
 	public static <T extends ChromaGamerBase> T getUser(String fname, Class<T> cl) {
-		try {
-			T obj = cl.newInstance();
-			final String folder = getFolderForType(cl);
-			final File file = new File(TBMC_PLAYERS_DIR + folder, fname + ".yml");
-			file.getParentFile().mkdirs();
-			obj.plugindata = YamlConfiguration.loadConfiguration(file);
-			obj.plugindata.set(folder + "_id", fname);
-			return obj;
-		} catch (Exception e) {
-			TBMCCoreAPI.SendException("An error occured while loading a " + cl.getSimpleName() + "!", e, MainPlugin.Instance);
+		HashMap<String, ? extends ChromaGamerBase> uc;
+		if (userCache.containsKey(cl)) {
+			uc = userCache.get(cl);
+			if (uc.containsKey(fname))
+				//noinspection unchecked
+				return (T) uc.get(fname);
 		}
-		return null;
+		@SuppressWarnings("unchecked") T obj = (T) constructors.get(cl).get();
+		final String folder = getFolderForType(cl);
+		final File file = new File(TBMC_PLAYERS_DIR + folder, fname + ".yml");
+		file.getParentFile().mkdirs();
+		obj.plugindata = YamlConfiguration.loadConfiguration(file);
+		obj.plugindata.set(folder + "_id", fname);
+		obj.init();
+		userCache.computeIfAbsent(cl, key -> new HashMap<>()).put(fname, obj);
+		return obj;
 	}
-
-	private static ArrayList<Function<CommandSender, ? extends Optional<? extends ChromaGamerBase>>> senderConverters = new ArrayList<>();
 
 	/**
 	 * Adds a converter to the start of the list.
@@ -123,20 +131,12 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	}
 
 	/**
-	 * Saves the player. It'll pass all exceptions to the caller. To automatically handle the exception, use {@link #save()} instead.
+	 * Saves the player. It'll handle all exceptions that may happen.
 	 */
-	@Override
-	public void close() throws Exception {
-		if (plugindata.getKeys(false).size() > 0)
-			plugindata.save(new File(TBMC_PLAYERS_DIR + getFolder(), getFileName() + ".yml"));
-	}
-
-	/**
-	 * Saves the player. It'll handle all exceptions that may happen. To catch the exception, use {@link #close()} instead.
-	 */
-	public void save() {
+	private final void save() {
 		try {
-			close();
+			if (plugindata.getKeys(false).size() > 0)
+				plugindata.save(new File(TBMC_PLAYERS_DIR + getFolder(), getFileName() + ".yml"));
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Error while saving player to " + getFolder() + "/" + getFileName() + ".yml!", e, MainPlugin.Instance);
 		}
@@ -147,7 +147,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 *
 	 * @param user The account to connect with
 	 */
-	public <T extends ChromaGamerBase> void connectWith(T user) {
+	public final <T extends ChromaGamerBase> void connectWith(T user) {
 		// Set the ID, go through all linked files and connect them as well
 		if (!playerTypes.containsKey(getClass()))
 			throw new RuntimeException("Class not registered as a user class! Use TBMCCoreAPI.RegisterUserClass");
@@ -166,14 +166,14 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 				final String otherid = sourcedata.getString(entry.getValue() + "_id");
 				if (otherid == null)
 					continue;
-				try (ChromaGamerBase cg = getUser(otherid, entry.getKey())) {
-					cg.plugindata.set(sourcefolder + "_id", id); // Set new IDs
-					for (val item : playerTypes.entrySet())
-						if (sourcedata.contains(item.getValue() + "_id"))
-							cg.plugindata.set(item.getValue() + "_id", sourcedata.getString(item.getValue() + "_id")); // Set all existing IDs
-				} catch (Exception e) {
-					TBMCCoreAPI.SendException("Failed to update " + sourcefolder + " ID in player files for " + id
-						+ " in folder with " + entry.getValue() + " id " + otherid + "!", e, MainPlugin.Instance);
+				ChromaGamerBase cg = getUser(otherid, entry.getKey());
+				cg.plugindata.set(sourcefolder + "_id", id); // Set new IDs
+				cg.config.signalChange();
+				for (val item : playerTypes.entrySet()) {
+					if (sourcedata.contains(item.getValue() + "_id")) {
+						cg.plugindata.set(item.getValue() + "_id", sourcedata.getString(item.getValue() + "_id")); // Set all existing IDs
+						cg.config.signalChange();
+					}
 				}
 			}
 		};
@@ -187,7 +187,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 * @param cl The player class to get the ID from
 	 * @return The ID or null if not found
 	 */
-	public <T extends ChromaGamerBase> String getConnectedID(Class<T> cl) {
+	public final <T extends ChromaGamerBase> String getConnectedID(Class<T> cl) {
 		return plugindata.getString(getFolderForType(cl) + "_id");
 	}
 
@@ -200,7 +200,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 */
 	@SuppressWarnings("unchecked")
 	@Nullable
-	public <T extends ChromaGamerBase> T getAs(Class<T> cl) { // TODO: Provide a way to use TBMCPlayerBase's loaded players
+	public final <T extends ChromaGamerBase> T getAs(Class<T> cl) {
 		if (cl.getSimpleName().equals(getClass().getSimpleName()))
 			return (T) this;
 		String newfolder = getFolderForType(cl);
@@ -213,90 +213,16 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 		return getUser(plugindata.getString(newfolder + "_id"), cl);
 	}
 
-	public String getFolder() {
+	/**
+	 * This method returns the filename for this player data. For example, for Minecraft-related data, MC UUIDs, for Discord data, use Discord IDs, etc.<br>
+	 * <b>Does not include .yml</b>
+	 */
+	public final String getFileName() {
+		return plugindata.getString(getFolder() + "_id");
+	}
+
+	public final String getFolder() {
 		return getFolderForType(getClass());
-	}
-
-	private void ThrowIfNoUser() {
-		if (!getClass().isAnnotationPresent(UserClass.class)
-			&& !getClass().isAnnotationPresent(AbstractUserClass.class))
-			throw new RuntimeException("Class not registered as a user class! Use @UserClass");
-	}
-
-	@SuppressWarnings("rawtypes")
-	private final HashMap<String, PlayerData> datamap = new HashMap<>();
-
-	/**
-	 * Use from a data() method, which is in a method with the name of the key. For example, use flair() for the enclosing method of the outer data() to save to and load from "flair"
-	 *
-	 * @return A data object with methods to get and set
-	 */
-	@SuppressWarnings("unchecked")
-	protected <T> PlayerData<T> data(String sectionname, T def) {
-		ThrowIfNoUser();
-		String mname = sectionname + "." + new Exception().getStackTrace()[2].getMethodName();
-		if (!datamap.containsKey(mname))
-			datamap.put(mname, new PlayerData<T>(mname, plugindata, def));
-		return datamap.get(mname);
-	}
-
-	/**
-	 * Use from a method with the name of the key. For example, use flair() for the enclosing method to save to and load from "flair"
-	 *
-	 * @return A data object with methods to get and set
-	 */
-	@SuppressWarnings("unchecked")
-	protected <T> PlayerData<T> data(T def) {
-		ThrowIfNoUser();
-		String mname = new Exception().getStackTrace()[1].getMethodName();
-		if (!datamap.containsKey(mname))
-			datamap.put(mname, new PlayerData<T>(mname, plugindata, def));
-		return datamap.get(mname);
-	}
-
-	@SuppressWarnings("rawtypes")
-	private final HashMap<String, EnumPlayerData> dataenummap = new HashMap<>();
-	private ChannelPlayerData datachannel;
-
-	/**
-	 * Use from a data() method, which is in a method with the name of the key. For example, use flair() for the enclosing method of the outer data() to save to and load from "flair"
-	 *
-	 * @return A data object with methods to get and set
-	 */
-	@SuppressWarnings("unchecked")
-	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(String sectionname, Class<T> cl, T def) {
-		ThrowIfNoUser();
-		String mname = sectionname + "." + new Exception().getStackTrace()[2].getMethodName();
-		if (!dataenummap.containsKey(mname))
-			dataenummap.put(mname, new EnumPlayerData<T>(mname, plugindata, cl, def));
-		return dataenummap.get(mname);
-	}
-
-	/**
-	 * Use from a method with the name of the key. For example, use flair() for the enclosing method to save to and load from "flair"
-	 *
-	 * @return A data object with methods to get and set
-	 */
-	@SuppressWarnings("unchecked")
-	protected <T extends Enum<T>> EnumPlayerData<T> dataEnum(Class<T> cl, T def) {
-		ThrowIfNoUser();
-		String mname = new Exception().getStackTrace()[1].getMethodName();
-		if (!dataenummap.containsKey(mname))
-			dataenummap.put(mname, new EnumPlayerData<T>(mname, plugindata, cl, def));
-		return dataenummap.get(mname);
-	}
-
-	/**
-	 * Channel
-	 *
-	 * @return A data object with methods to get and set
-	 */
-	@SuppressWarnings("unchecked")
-	protected ChannelPlayerData dataChannel(Channel def) { //TODO: Make interface with fromString() method and require use of that for player data types
-		ThrowIfNoUser();
-		if (datachannel == null)
-			datachannel = new ChannelPlayerData("channel", plugindata, def);
-		return datachannel;
 	}
 
 	/**
@@ -305,7 +231,7 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 	 * @param target The {@link InfoTarget} to return the info for.
 	 * @return The player information.
 	 */
-	public String getInfo(InfoTarget target) {
+	public final String getInfo(InfoTarget target) {
 		TBMCPlayerGetInfoEvent event = new TBMCPlayerGetInfoEvent(this, target);
 		Bukkit.getServer().getPluginManager().callEvent(event);
 		return event.getResult();
@@ -317,7 +243,6 @@ public abstract class ChromaGamerBase implements AutoCloseable {
 
 	//-----------------------------------------------------------------
 
-	public ChannelPlayerData channel() {
-		return dataChannel(Channel.GlobalChat);
-	}
+	public final ConfigData<Channel> channel = getConfig().getData("channel", Channel.GlobalChat,
+		id -> Channel.getChannels().filter(ch -> ch.ID.equalsIgnoreCase((String) id)).findAny().orElse(null), ch -> ch.ID);
 }

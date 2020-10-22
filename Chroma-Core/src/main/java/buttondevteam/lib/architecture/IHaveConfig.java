@@ -35,7 +35,7 @@ public final class IHaveConfig {
 	 *
 	 * @param saveAction What to do to save the config to disk. Don't use get methods until it's non-null.
 	 */
-	IHaveConfig(Runnable saveAction) {
+	public IHaveConfig(Runnable saveAction) {
 		this.saveAction = saveAction;
 	}
 
