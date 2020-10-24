@@ -102,7 +102,10 @@ public abstract class ChromaGamerBase {
 		obj.plugindata = YamlConfiguration.loadConfiguration(file);
 		obj.plugindata.set(folder + "_id", fname);
 		obj.init();
-		userCache.computeIfAbsent(cl, key -> new HashMap<>()).put(fname, obj);
+		synchronized (userCache) {
+			userCache.computeIfAbsent(cl, key -> new HashMap<>()).put(fname, obj);
+		}
+		obj.scheduleUncache();
 		return obj;
 	}
 
@@ -130,16 +133,34 @@ public abstract class ChromaGamerBase {
 		return null;
 	}
 
+	public static void saveUsers() {
+		for (var users : userCache.values())
+			for (var user : users.values())
+				ConfigData.saveNow(user.plugindata); //Calls save()
+	}
+
 	/**
-	 * Saves the player. It'll handle all exceptions that may happen.
+	 * Saves the player. It'll handle all exceptions that may happen. Called automatically.
 	 */
-	private final void save() {
+	protected void save() {
 		try {
 			if (plugindata.getKeys(false).size() > 0)
 				plugindata.save(new File(TBMC_PLAYERS_DIR + getFolder(), getFileName() + ".yml"));
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Error while saving player to " + getFolder() + "/" + getFileName() + ".yml!", e, MainPlugin.Instance);
 		}
+	}
+
+	public void uncache() {
+		synchronized (userCache) {
+			var c = userCache.get(getClass());
+			if (c != null) if (c.remove(getFileName()) != this)
+				throw new IllegalStateException("A different player instance was cached!");
+		}
+	}
+
+	protected void scheduleUncache() {
+		Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, this::uncache, 2 * 60 * 60 * 20); //2 hours
 	}
 
 	/**
@@ -243,6 +264,6 @@ public abstract class ChromaGamerBase {
 
 	//-----------------------------------------------------------------
 
-	public final ConfigData<Channel> channel = getConfig().getData("channel", Channel.GlobalChat,
+	public final ConfigData<Channel> channel = config.getData("channel", Channel.GlobalChat,
 		id -> Channel.getChannels().filter(ch -> ch.ID.equalsIgnoreCase((String) id)).findAny().orElse(null), ch -> ch.ID);
 }

@@ -17,6 +17,7 @@ import java.net.URLConnection;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class TBMCCoreAPI {
 	static final List<String> coders = new ArrayList<String>() {
@@ -129,8 +130,8 @@ public class TBMCCoreAPI {
 		EventExceptionHandler.registerEvents(listener, plugin, eventExceptionCoreHandler);
 	}
 
-	public static <T extends ChromaGamerBase> void RegisterUserClass(Class<T> userclass) {
-		ChromaGamerBase.RegisterPluginUserClass(userclass);
+	public static <T extends ChromaGamerBase> void RegisterUserClass(Class<T> userclass, Supplier<T> constructor) {
+		ChromaGamerBase.RegisterPluginUserClass(userclass, constructor);
 	}
 
 	/**

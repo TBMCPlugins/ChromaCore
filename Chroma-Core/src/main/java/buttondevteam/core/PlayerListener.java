@@ -1,5 +1,6 @@
 package buttondevteam.core;
 
+import buttondevteam.core.component.towny.TownyComponent;
 import buttondevteam.lib.*;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.chat.ChatMessage;
@@ -28,12 +29,21 @@ public class PlayerListener implements Listener {
 
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void OnPlayerJoin(PlayerJoinEvent event) {
-		TBMCPlayerBase.joinPlayer(event.getPlayer());
+		var p = event.getPlayer();
+		TBMCPlayer player = TBMCPlayerBase.getPlayer(p.getUniqueId(), TBMCPlayer.class);
+		if (player.PlayerName().get() == null) {
+			player.PlayerName().set(p.getName());
+			MainPlugin.Instance.getLogger().info("Player name saved: " + player.PlayerName().get());
+		} else if (!p.getName().equals(player.PlayerName().get())) {
+			TownyComponent.renameInTowny(player.PlayerName().get(), p.getName());
+			MainPlugin.Instance.getLogger().info(player.PlayerName().get() + " renamed to " + p.getName());
+			player.PlayerName().set(p.getName());
+		}
 	}
 
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void OnPlayerLeave(PlayerQuitEvent event) {
-		TBMCPlayerBase.quitPlayer(event.getPlayer());
+		TBMCPlayerBase.getPlayer(event.getPlayer().getUniqueId(), TBMCPlayer.class).uncache();
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -65,7 +75,7 @@ public class PlayerListener implements Listener {
 		val ev = new TBMCCommandPreprocessEvent(sender, ch.orElse(Channel.GlobalChat), message, rtr.score, rtr.groupID);*/
 		val cg = ChromaGamerBase.getFromSender(sender);
 		if (cg == null) throw new RuntimeException("Couldn't get user from sender for " + sender.getName() + "!");
-		val ev = new TBMCCommandPreprocessEvent(sender, cg.channel().get(), message, sender);
+		val ev = new TBMCCommandPreprocessEvent(sender, cg.channel.get(), message, sender);
 		Bukkit.getPluginManager().callEvent(ev);
 		if (ev.isCancelled())
 			event.setCancelled(true); //Cancel the original event

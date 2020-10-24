@@ -250,7 +250,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			return true;
 		}
 		//System.out.println("Executing " + label + " which is actually " + command.getName());
-		handleCommand(new Command2MCSender(sender, user.channel().get(), sender),
+		handleCommand(new Command2MCSender(sender, user.channel.get(), sender),
 			("/" + command.getName() + " " + String.join(" ", args)).trim(), false); ///trim(): remove space if there are no args
 		return true;
 	}

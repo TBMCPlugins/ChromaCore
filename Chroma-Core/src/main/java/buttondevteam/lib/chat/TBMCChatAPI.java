@@ -22,7 +22,7 @@ public class TBMCChatAPI {
 	 * @return The event cancelled state
 	 */
 	public static boolean SendChatMessage(ChatMessage cm) {
-		return SendChatMessage(cm, cm.getUser().channel().get());
+		return SendChatMessage(cm, cm.getUser().channel.get());
 	}
 
 	/**

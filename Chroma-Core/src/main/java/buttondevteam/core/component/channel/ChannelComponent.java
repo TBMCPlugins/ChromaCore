@@ -59,17 +59,17 @@ public class ChannelComponent extends Component {
 				return;
 			}
 			if (message == null) {
-				Channel oldch = user.channel().get();
+				Channel oldch = user.channel.get();
 				if (oldch instanceof ChatRoom)
 					((ChatRoom) oldch).leaveRoom(sender);
 				if (oldch.equals(channel))
-					user.channel().set(Channel.GlobalChat);
+					user.channel.set(Channel.GlobalChat);
 				else {
-					user.channel().set(channel);
+					user.channel.set(channel);
 					if (channel instanceof ChatRoom)
 						((ChatRoom) channel).joinRoom(sender);
 				}
-				sender.sendMessage("§6You are now talking in: §b" + user.channel().get().DisplayName().get());
+				sender.sendMessage("§6You are now talking in: §b" + user.channel.get().DisplayName().get());
 			} else
 				TBMCChatAPI.SendChatMessage(ChatMessage.builder(sender, user, message).fromCommand(true)
 					.permCheck(senderMC.getPermCheck()).build(), channel);

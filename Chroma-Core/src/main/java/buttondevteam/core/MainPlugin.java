@@ -122,7 +122,7 @@ public class MainPlugin extends ButtonPlugin {
 			? TBMCPlayer.getPlayer(new UUID(0, 0), TBMCPlayer.class) : null)); //Console & cmdblocks
 		ChromaGamerBase.addConverter(sender -> Optional.ofNullable(sender instanceof Player
 			? TBMCPlayer.getPlayer(((Player) sender).getUniqueId(), TBMCPlayer.class) : null)); //Players, has higher priority
-		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class);
+		TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase.class, TBMCPlayer::new);
 		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fg§f", Color.White, "g", null)); //The /ooc ID has moved to the config
 		TBMCChatAPI.RegisterChatChannel(
 			Channel.AdminChat = new Channel("§cADMIN§f", Color.Red, "a", Channel.inGroupFilter(null)));
@@ -153,7 +153,7 @@ public class MainPlugin extends ButtonPlugin {
 	@Override
 	public void pluginDisable() {
 		logger.info("Saving player data...");
-		TBMCPlayerBase.savePlayers();
+		ChromaGamerBase.saveUsers();
 		logger.info("Player data saved.");
 	}
 
