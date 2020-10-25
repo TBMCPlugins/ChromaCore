@@ -24,11 +24,11 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	}
 
 	public ConfigData<String> PlayerName() {
-		return config.getData("PlayerName", "");
+		return super.config.getData("PlayerName", "");
 	}
 
 	/**
-	 * Get player as a plugin player
+	 * Get player as a plugin player.
 	 *
 	 * @param uuid The UUID of the player to get
 	 * @param cl   The type of the player
@@ -36,7 +36,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	 */
 	public static <T extends TBMCPlayerBase> T getPlayer(UUID uuid, Class<T> cl) {
 		var player = ChromaGamerBase.getUser(uuid.toString(), cl);
-		if (player.uuid.equals(uuid))
+		if (!player.getUUID().equals(uuid)) //It will be set from the filename because we check it for scheduling the uncache.
 			throw new IllegalStateException("Player UUID differs after converting from and to string...");
 		return player;
 	}
@@ -44,7 +44,6 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 	@Override
 	public void init() {
 		super.init();
-		uuid = UUID.fromString(getFileName());
 
 		String pluginname;
 		if (getClass().isAnnotationPresent(PlayerClass.class))
@@ -52,42 +51,34 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 		else
 			throw new RuntimeException("Class not defined as player class! Use @PlayerClass");
 
-		var section = super.plugindata.getConfigurationSection(pluginname);
-		if (section == null) section = super.plugindata.createSection(pluginname);
+		var playerData = commonUserData.getPlayerData();
+		var section = playerData.getConfigurationSection(pluginname);
+		if (section == null) section = playerData.createSection(pluginname);
 		config.reset(section);
 	}
 
 	@Override
-	protected void scheduleUncache() { //Don't schedule it, it will happen on quit
+	protected void scheduleUncache() { //Don't schedule it, it will happen on quit - if the player is online
+		var p = Bukkit.getPlayer(getUUID());
+		if (p == null || !p.isOnline())
+			super.scheduleUncache();
 	}
 
 	/**
-	 * This method returns a TBMC player from their name. Calling this method may return an offline player which will load it, therefore it's highly recommended to use {@link #close()} to unload the
-	 * player data. Using try-with-resources may be the easiest way to achieve this. Example:
-	 *
-	 * <pre>
-	 * {@code
-	 * try(TBMCPlayer player = getFromName(p))
-	 * {
-	 * 	...
-	 * }
-	 * </pre>
+	 * This method returns a TBMC player from their name. See {@link Bukkit#getOfflinePlayer(String)}.
 	 *
 	 * @param name The player's name
 	 * @return The {@link TBMCPlayer} object for the player
 	 */
+	@SuppressWarnings("deprecation")
 	public static <T extends TBMCPlayerBase> T getFromName(String name, Class<T> cl) {
-		@SuppressWarnings("deprecation")
 		OfflinePlayer p = Bukkit.getOfflinePlayer(name);
-		if (p != null)
-			return getPlayer(p.getUniqueId(), cl);
-		else
-			return null;
+		return getPlayer(p.getUniqueId(), cl);
 	}
 
 	@Override
 	protected void save() {
-		Set<String> keys = plugindata.getKeys(false);
+		Set<String> keys = commonUserData.getPlayerData().getKeys(false);
 		if (keys.size() > 1) // PlayerName is always saved, but we don't need a file for just that
 			super.save();
 	}
