@@ -124,8 +124,9 @@ public abstract class ButtonPlugin extends JavaPlugin {
 		var yc = YamlConfiguration.loadConfiguration(res);
 		for (var kv : yc.getValues(true).entrySet())
 			if (kv.getValue() instanceof String)
-				yaml.addComment(kv.getKey(), Arrays.stream(((String) kv.getValue()).split("\n"))
-					.map(str -> "# " + str.trim()).toArray(String[]::new));
+				yaml.addComment(kv.getKey().replace(".generalDescriptionInsteadOfAConfig", ""),
+					Arrays.stream(((String) kv.getValue()).split("\n"))
+						.map(str -> "# " + str.trim()).toArray(String[]::new));
 		return true;
 	}
 

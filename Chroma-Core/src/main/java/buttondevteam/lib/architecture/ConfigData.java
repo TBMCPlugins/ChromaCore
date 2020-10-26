@@ -63,6 +63,7 @@ public class ConfigData<T> {
 		this.primitiveDef = primitiveDef;
 		this.getter = getter;
 		this.setter = setter;
+		get(); //Generate config automatically
 	}
 
 	@Override

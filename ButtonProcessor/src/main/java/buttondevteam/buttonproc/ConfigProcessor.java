@@ -69,15 +69,19 @@ public class ConfigProcessor {
 			if (doc == null) continue;
 			System.out.println("DOC: " + doc);
 			yc.set(path + "." + e.getSimpleName(), doc.trim());
+			/*System.out.println("Set " + path + "." + e.getSimpleName() + " to " + doc.trim());
+			System.out.println("Check: " + yc.getString(path + "." + e.getSimpleName()));
+			System.out.println("Wut2: " + yc.getString("components.MemberComponent.memberGroup"));*/
 		}
 		String javadoc = procEnv.getElementUtils().getDocComment(targetcl);
 		if (javadoc != null) {
 			System.out.println("JAVADOC");
 			System.out.println(javadoc.trim());
-			yc.set(path, javadoc.trim());
+			yc.set(path + ".generalDescriptionInsteadOfAConfig", javadoc.trim());
 		}
 		try {
 			yc.save(file);
+			//System.out.println("Wut: " + yc.getString("components.MemberComponent.memberGroup"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -373,9 +373,9 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 					} else
 						TBMCCoreAPI.SendException("Error while getting command data for " + method + "!", new Exception("Method '" + method.toString() + "' != " + mname + " or params is " + params), MainPlugin.Instance);
 				} else
-					TBMCCoreAPI.SendException("Error while getting command data for " + method + "!", new Exception("cs is " + cs), MainPlugin.Instance);
+					MainPlugin.Instance.getLogger().warning("Failed to get command data for " + method + " (cs is null)! Make sure to use 'clean install' when building the project.");
 			} else
-				TBMCCoreAPI.SendException("Error while getting command data for " + method + "!", new Exception("ccs is " + ccs + " - class: " + method.getDeclaringClass().getCanonicalName()), MainPlugin.Instance);
+				MainPlugin.Instance.getLogger().warning("Failed to get command data for " + method + " (ccs is null)! Make sure to use 'clean install' when building the project.");
 		}
 		return ht;
 	}
