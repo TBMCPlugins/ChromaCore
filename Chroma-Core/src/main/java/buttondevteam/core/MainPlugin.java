@@ -65,31 +65,23 @@ public class MainPlugin extends ButtonPlugin {
 	 * Sets whether the plugin should write a list of installed plugins in a txt file.
 	 * It can be useful if some other software needs to know the plugins.
 	 */
-	private ConfigData<Boolean> writePluginList() {
-		return getIConfig().getData("writePluginList", false);
-	}
+	private final ConfigData<Boolean> writePluginList = getIConfig().getData("writePluginList", false);
 
 	/**
 	 * The chat format to use for messages from other platforms if Chroma-Chat is not installed.
 	 */
-	ConfigData<String> chatFormat() {
-		return getIConfig().getData("chatFormat", "[{origin}|" +
-			"{channel}] <{name}> {message}");
-	}
+	ConfigData<String> chatFormat = getIConfig().getData("chatFormat", "[{origin}|" +
+		"{channel}] <{name}> {message}");
 
 	/**
 	 * Print some debug information.
 	 */
-	public ConfigData<Boolean> test() {
-		return getIConfig().getData("test", false);
-	}
+	public final ConfigData<Boolean> test = getIConfig().getData("test", false);
 
 	/**
 	 * If a Chroma command clashes with another plugin's command, this setting determines whether the Chroma command should be executed or the other plugin's.
 	 */
-	public ConfigData<Boolean> prioritizeCustomCommands() {
-		return getIConfig().getData("prioritizeCustomCommands", false);
-	}
+	public final ConfigData<Boolean> prioritizeCustomCommands = getIConfig().getData("prioritizeCustomCommands", false);
 
 	@Override
 	public void pluginEnable() {
@@ -103,7 +95,6 @@ public class MainPlugin extends ButtonPlugin {
 			getLogger().warning("No economy plugin found! Components using economy will not be registered.");
 		saveConfig();
 		Component.registerComponent(this, new RestartComponent());
-		//noinspection unchecked - needed for testing
 		Component.registerComponent(this, new ChannelComponent());
 		Component.registerComponent(this, new RandomTPComponent());
 		Component.registerComponent(this, new MemberComponent());
@@ -138,7 +129,7 @@ public class MainPlugin extends ButtonPlugin {
 		Supplier<Iterable<String>> playerSupplier = () -> Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName)::iterator;
 		getCommand2MC().addParamConverter(OfflinePlayer.class, Bukkit::getOfflinePlayer, "Player not found!", playerSupplier);
 		getCommand2MC().addParamConverter(Player.class, Bukkit::getPlayer, "Online player not found!", playerSupplier);
-		if (writePluginList().get()) {
+		if (writePluginList.get()) {
 			try {
 				Files.write(new File("plugins", "plugins.txt").toPath(), Arrays.stream(Bukkit.getPluginManager().getPlugins()).map(p -> (CharSequence) p.getDataFolder().getName())::iterator);
 			} catch (IOException e) {
@@ -147,7 +138,7 @@ public class MainPlugin extends ButtonPlugin {
 		}
 		if (getServer().getPluginManager().isPluginEnabled("Essentials"))
 			ess = Essentials.getPlugin(Essentials.class);
-		logger.info(pdf.getName() + " has been Enabled (V." + pdf.getVersion() + ") Test: " + test().get() + ".");
+		logger.info(pdf.getName() + " has been Enabled (V." + pdf.getVersion() + ") Test: " + test.get() + ".");
 	}
 
 	@Override

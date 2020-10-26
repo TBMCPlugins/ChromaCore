@@ -29,7 +29,7 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 	@Override
 	protected void enable() {
 		registerCommand(new SpawnCommand());
-		if (targetServer().get().length() == 0) {
+		if (targetServer.get().length() == 0) {
 			spawnloc = MultiverseCore.getPlugin(MultiverseCore.class).getMVWorldManager().getFirstSpawnWorld()
 				.getSpawnLocation();
 		}
@@ -49,7 +49,7 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 		if (!channel.equals("BungeeCord")) {
 			return;
 		}
-		if (targetServer().get().length() != 0)
+		if (targetServer.get().length() != 0)
 			return;
 		ByteArrayDataInput in = ByteStreams.newDataInput(message);
 		String subchannel = in.readUTF();
@@ -78,9 +78,7 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 	/**
 	 * The BungeeCord server that has the spawn. Set to empty if this server is the target.
 	 */
-	private ConfigData<String> targetServer() {
-		return getConfig().getData("targetServer", "");
-	}
+	private final ConfigData<String> targetServer = getConfig().getData("targetServer", "");
 
 	private Location spawnloc;
 
@@ -92,7 +90,7 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 		@SuppressWarnings("UnstableApiUsage")
 		@Command2.Subcommand
 		public void def(Player player) {
-			if (targetServer().get().length() == 0) {
+			if (targetServer.get().length() == 0) {
 				player.sendMessage("§bTeleporting to spawn...");
 				try {
 					if (MainPlugin.ess != null)
@@ -107,7 +105,7 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 			}
 			ByteArrayDataOutput out = ByteStreams.newDataOutput();
 			out.writeUTF("Connect");
-			out.writeUTF(targetServer().get());
+			out.writeUTF(targetServer.get());
 
 			player.sendPluginMessage(getPlugin(), "BungeeCord", out.toByteArray());
 

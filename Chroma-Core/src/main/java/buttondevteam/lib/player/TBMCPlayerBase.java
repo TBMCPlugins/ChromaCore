@@ -23,9 +23,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 		return uuid;
 	}
 
-	public ConfigData<String> PlayerName() {
-		return super.config.getData("PlayerName", "");
-	}
+	public final ConfigData<String> PlayerName = super.config.getData("PlayerName", "");
 
 	/**
 	 * Get player as a plugin player.

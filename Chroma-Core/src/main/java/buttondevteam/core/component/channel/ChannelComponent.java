@@ -11,7 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 /**
  * Manages chat channels. If disabled, only global channels will be registered.
  */
-public class ChannelComponent extends Component {
+public class ChannelComponent extends Component<JavaPlugin> {
 	static TBMCSystemChatEvent.BroadcastTarget roomJoinLeave;
 
 	@Override
@@ -69,7 +69,7 @@ public class ChannelComponent extends Component {
 					if (channel instanceof ChatRoom)
 						((ChatRoom) channel).joinRoom(sender);
 				}
-				sender.sendMessage("§6You are now talking in: §b" + user.channel.get().DisplayName().get());
+				sender.sendMessage("§6You are now talking in: §b" + user.channel.get().DisplayName.get());
 			} else
 				TBMCChatAPI.SendChatMessage(ChatMessage.builder(sender, user, message).fromCommand(true)
 					.permCheck(senderMC.getPermCheck()).build(), channel);

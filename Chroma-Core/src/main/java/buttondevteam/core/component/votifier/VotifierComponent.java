@@ -20,9 +20,7 @@ import org.bukkit.event.EventHandler;
 public class VotifierComponent extends Component<MainPlugin> {
 	private final Economy economy;
 
-	private ConfigData<Double> rewardAmount() {
-		return getConfig().getData("rewardAmount", 0.0);
-	}
+	private final ConfigData<Double> rewardAmount = getConfig().getData("rewardAmount", 0.0);
 
 	@Override
 	protected void enable() {

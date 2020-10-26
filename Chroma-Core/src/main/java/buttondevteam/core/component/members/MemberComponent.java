@@ -25,23 +25,17 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 	/**
 	 * The permission group to give to the player
 	 */
-	ConfigData<String> memberGroup() {
-		return getConfig().getData("memberGroup", "member");
-	}
+	final ConfigData<String> memberGroup = getConfig().getData("memberGroup", "member");
 
 	/**
 	 * The amount of hours needed to play before promotion
 	 */
-	private ConfigData<Integer> playedHours() {
-		return getConfig().getData("playedHours", 12);
-	}
+	private final ConfigData<Integer> playedHours = getConfig().getData("playedHours", 12);
 
 	/**
 	 * The amount of days passed since first login
 	 */
-	private ConfigData<Integer> registeredForDays() {
-		return getConfig().getData("registeredForDays", 7);
-	}
+	private final ConfigData<Integer> registeredForDays = getConfig().getData("registeredForDays", 7);
 
 	private AbstractMap.SimpleEntry<Statistic, Integer> playtime;
 
@@ -69,7 +63,7 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 
 	public Boolean addPlayerAsMember(Player player) {
 		try {
-			if (permission.playerAddGroup(null, player, memberGroup().get())) {
+			if (permission.playerAddGroup(null, player, memberGroup.get())) {
 				player.sendMessage("§bYou are a member now!");
 				log("Added " + player.getName() + " as a member.");
 				return true;
@@ -84,7 +78,7 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 	}
 
 	public boolean checkNotMember(Player player) {
-		return permission != null && !permission.playerInGroup(player, memberGroup().get());
+		return permission != null && !permission.playerInGroup(player, memberGroup.get());
 	}
 
 	public boolean checkRegTime(Player player) {
@@ -92,14 +86,14 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 	}
 
 	public boolean checkPlayTime(Player player) {
-		return getPlayTime(player) > playtime.getValue() * playedHours().get();
+		return getPlayTime(player) > playtime.getValue() * playedHours.get();
 	}
 
 	/**
 	 * Returns milliseconds
 	 */
 	public long getRegTime(Player player) {
-		Instant date = new Date(player.getFirstPlayed()).toInstant().plus(registeredForDays().get(), ChronoUnit.DAYS);
+		Instant date = new Date(player.getFirstPlayed()).toInstant().plus(registeredForDays.get(), ChronoUnit.DAYS);
 		if (date.isAfter(Instant.now()))
 			return date.toEpochMilli() - Instant.now().toEpochMilli();
 		return -1;
@@ -113,7 +107,7 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 	 * Returns hours
 	 */
 	public double getPlayTime(Player player) {
-		double pt = playedHours().get() - (double) getPlayTimeTotal(player) / playtime.getValue();
+		double pt = playedHours.get() - (double) getPlayTimeTotal(player) / playtime.getValue();
 		if (pt < 0) return -1;
 		return pt;
 	}

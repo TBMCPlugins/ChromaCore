@@ -199,7 +199,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		if (pcmd != null)
 			System.out.println("ButtonPlugin: " + (pcmd.getPlugin() instanceof ButtonPlugin));*/
 		if (!checkPlugin
-			|| MainPlugin.Instance.prioritizeCustomCommands().get()
+			|| MainPlugin.Instance.prioritizeCustomCommands.get()
 			|| (pcmd = Bukkit.getPluginCommand(mainpath)) == null //Our commands aren't PluginCommands
 			|| pcmd.getPlugin() instanceof ButtonPlugin) //Unless it's specified in the plugin.yml
 			return super.handleCommand(sender, commandline);

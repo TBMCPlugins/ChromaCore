@@ -34,9 +34,8 @@ public abstract class Component<TP extends JavaPlugin> {
 	private @Getter final IHaveConfig config = new IHaveConfig(null);
 	private @Getter IHaveConfig data; //TODO
 
-	public final ConfigData<Boolean> shouldBeEnabled() {
-		return config.getData("enabled", Optional.ofNullable(getClass().getAnnotation(ComponentMetadata.class)).map(ComponentMetadata::enabledByDefault).orElse(true));
-	}
+	public final ConfigData<Boolean> shouldBeEnabled = config.getData("enabled",
+		Optional.ofNullable(getClass().getAnnotation(ComponentMetadata.class)).map(ComponentMetadata::enabledByDefault).orElse(true));
 
 	/**
 	 * Registers a component checking it's dependencies and calling {@link #register(JavaPlugin)}.<br>
@@ -87,7 +86,7 @@ public abstract class Component<TP extends JavaPlugin> {
 				components.put(component.getClass(), component);
 				if (plugin instanceof ButtonPlugin)
 					((ButtonPlugin) plugin).getComponentStack().push(component);
-				if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled().get()) {
+				if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled.get()) {
 					try { //Enable components registered after the previous ones getting enabled
 						setComponentEnabled(component, true);
 						return true;

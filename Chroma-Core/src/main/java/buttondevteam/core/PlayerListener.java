@@ -31,13 +31,13 @@ public class PlayerListener implements Listener {
 	public void OnPlayerJoin(PlayerJoinEvent event) {
 		var p = event.getPlayer();
 		TBMCPlayer player = TBMCPlayerBase.getPlayer(p.getUniqueId(), TBMCPlayer.class);
-		if (player.PlayerName().get() == null) {
-			player.PlayerName().set(p.getName());
-			MainPlugin.Instance.getLogger().info("Player name saved: " + player.PlayerName().get());
-		} else if (!p.getName().equals(player.PlayerName().get())) {
-			TownyComponent.renameInTowny(player.PlayerName().get(), p.getName());
-			MainPlugin.Instance.getLogger().info(player.PlayerName().get() + " renamed to " + p.getName());
-			player.PlayerName().set(p.getName());
+		if (player.PlayerName.get() == null) {
+			player.PlayerName.set(p.getName());
+			MainPlugin.Instance.getLogger().info("Player name saved: " + player.PlayerName.get());
+		} else if (!p.getName().equals(player.PlayerName.get())) {
+			TownyComponent.renameInTowny(player.PlayerName.get(), p.getName());
+			MainPlugin.Instance.getLogger().info(player.PlayerName.get() + " renamed to " + p.getName());
+			player.PlayerName.set(p.getName());
 		}
 	}
 
@@ -53,7 +53,7 @@ public class PlayerListener implements Listener {
 		if (Arrays.stream(event.getExceptions()).anyMatch("Minecraft"::equalsIgnoreCase))
 			return;
 		Bukkit.getOnlinePlayers().stream().filter(event::shouldSendTo)
-			.forEach(p -> p.sendMessage(event.getChannel().DisplayName().get().substring(0, 2) + event.getMessage()));
+			.forEach(p -> p.sendMessage(event.getChannel().DisplayName.get().substring(0, 2) + event.getMessage()));
 	}
 
 	@EventHandler
@@ -108,11 +108,11 @@ public class PlayerListener implements Listener {
 		if (!MainPlugin.Instance.isChatHandlerEnabled()) return;
 		if (event.getOrigin().equals("Minecraft")) return; //Let other plugins handle MC messages
 		var channel = event.getChannel();
-		String msg = MainPlugin.Instance.chatFormat().get()
-			.replace("{channel}", channel.DisplayName().get())
+		String msg = MainPlugin.Instance.chatFormat.get()
+			.replace("{channel}", channel.DisplayName.get())
 			.replace("{origin}", event.getOrigin().substring(0, 1))
 			.replace("{name}", ChromaUtils.getDisplayName(event.getSender()))
-			.replace("{message}", String.format("§%x%s", channel.Color().get().ordinal(), event.getMessage()));
+			.replace("{message}", String.format("§%x%s", channel.Color.get().ordinal(), event.getMessage()));
 		for (Player player : Bukkit.getOnlinePlayers())
 			if (event.shouldSendTo(player))
 				player.sendMessage(msg);

@@ -21,7 +21,7 @@ public final class ComponentManager {
 	 */
 	public static void enableComponents() {
 		//Component.getComponents().values().stream().filter(c->cs.getConfigurationSection(c.getClass().getSimpleName()).getBoolean("enabled")).forEach(c-> {
-		Component.getComponents().values().stream().filter(c -> c.shouldBeEnabled().get()).forEach(c -> {
+		Component.getComponents().values().stream().filter(c -> c.shouldBeEnabled.get()).forEach(c -> {
 			try {
 				Component.setComponentEnabled(c, true);
 			} catch (Exception | NoClassDefFoundError e) {

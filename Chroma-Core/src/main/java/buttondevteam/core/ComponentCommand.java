@@ -80,7 +80,7 @@ public class ComponentCommand extends ICommand2MC {
 				return true;
 			Component.setComponentEnabled(oc.get(), enable);
 			if (permanent)
-				oc.get().shouldBeEnabled().set(enable);
+				oc.get().shouldBeEnabled.set(enable);
 			sender.sendMessage(oc.get().getClass().getSimpleName() + " " + (enable ? "en" : "dis") + "abled " + (permanent ? "permanently" : "temporarily") + ".");
 		} catch (Exception e) {
 			TBMCCoreAPI.SendException("Couldn't " + (enable ? "en" : "dis") + "able component " + component + "!", e, (JavaPlugin) plugin);

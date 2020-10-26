@@ -38,8 +38,8 @@ public class MemberCommand extends ICommand2MC {
 				sender.sendMessage("§cCannot find player or haven't played before.");
 				return;
 			}
-			if (add ? MainPlugin.permission.playerAddGroup(null, op, component.memberGroup().get())
-				: MainPlugin.permission.playerRemoveGroup(null, op, component.memberGroup().get()))
+			if (add ? MainPlugin.permission.playerAddGroup(null, op, component.memberGroup.get())
+				: MainPlugin.permission.playerRemoveGroup(null, op, component.memberGroup.get()))
 				sender.sendMessage("§b" + op.getName() + " " + (add ? "added" : "removed") + " as a member!");
 			else
 				sender.sendMessage("§cFailed to " + (add ? "add" : "remove") + " " + op.getName() + " as a member!");

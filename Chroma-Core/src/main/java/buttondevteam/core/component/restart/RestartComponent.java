@@ -33,7 +33,7 @@ public class RestartComponent extends Component<MainPlugin> implements Listener 
 		registerListener(this);
 		restartBroadcast = TBMCSystemChatEvent.BroadcastTarget.add("restartCountdown");
 
-		int restartAt = restartAt().get();
+		int restartAt = this.restartAt.get();
 		if (restartAt < 0) return;
 		int restart = syncStart(restartAt);
 		log("Scheduled restart " + (restart / 3600. / 20.) + " hours from now");
@@ -48,9 +48,7 @@ public class RestartComponent extends Component<MainPlugin> implements Listener 
 	/**
 	 * Specifies the hour of day when the server should be restarted. Set to -1 to disable.
 	 */
-	private ConfigData<Integer> restartAt() {
-		return getConfig().getData("restartAt", 12);
-	}
+	private final ConfigData<Integer> restartAt = getConfig().getData("restartAt", 12);
 
 	private long lasttime = 0;
 	@Getter
