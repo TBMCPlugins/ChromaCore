@@ -1,4 +1,4 @@
-name: ChromaCore
+name: Chroma-Core
 main: buttondevteam.core.MainPlugin
 version: '${noprefix.version}'
 author: NorbiPeti
