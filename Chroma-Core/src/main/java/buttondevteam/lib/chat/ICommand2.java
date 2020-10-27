@@ -63,6 +63,18 @@ public abstract class ICommand2<TP extends Command2Sender> {
 		return path;
 	}
 
+	private static final String[] EMPTY_PATHS = new String[0];
+
+	/**
+	 * All of the command's paths it will be invoked on. Does not include aliases or the default path.
+	 * Must be lowercase and must include the full path.
+	 *
+	 * @return The full command paths that this command should be registered under in addition to the default one.
+	 */
+	public String[] getCommandPaths() {
+		return EMPTY_PATHS;
+	}
+
 	private String getcmdpath() {
 		if (!getClass().isAnnotationPresent(CommandClass.class))
 			throw new RuntimeException(

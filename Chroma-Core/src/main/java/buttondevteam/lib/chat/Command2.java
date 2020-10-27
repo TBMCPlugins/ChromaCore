@@ -322,9 +322,9 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 				var params = new String[method.getParameterCount() - 1];
 				ht = getParameterHelp(method, ht, subcommand, params);
 				var sd = new SubcommandData<>(method, command, params, ht);
-				subcommands.put(subcommand, sd); //Result of the above (def) is that it will show the help text
-				for (String alias : ann.aliases())
-					subcommands.put(commandChar + path + alias, sd);
+				registerCommand(path, method.getName(), ann, sd);
+				for (String p : command.getCommandPaths())
+					registerCommand(p, method.getName(), ann, sd);
 				addedSubcommands.add(sd);
 				scmdHelpList.add(subcommand);
 				nosubs = false;
@@ -380,6 +380,13 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		return ht;
 	}
 
+	private void registerCommand(String path, String methodName, Subcommand ann, SubcommandData<TC> sd) {
+		val subcommand = commandChar + path + getCommandPath(methodName, ' ');
+		subcommands.put(subcommand, sd);
+		for (String alias : ann.aliases())
+			subcommands.put(commandChar + path + alias, sd);
+	}
+
 	public abstract boolean hasPermission(TP sender, TC command, Method subcommand);
 
 	public String[] getCommandsText() {
@@ -406,11 +413,17 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		for (val method : command.getClass().getMethods()) {
 			val ann = method.getAnnotation(Subcommand.class);
 			if (ann == null) continue;
-			val subcommand = commandChar + path + getCommandPath(method.getName(), ' ');
-			subcommands.remove(subcommand);
-			for (String alias : ann.aliases())
-				subcommands.remove(alias);
+			unregisterCommand(path, method.getName(), ann);
+			for (String p : command.getCommandPaths())
+				unregisterCommand(p, method.getName(), ann);
 		}
+	}
+
+	private void unregisterCommand(String path, String methodName, Subcommand ann) {
+		val subcommand = commandChar + path + getCommandPath(methodName, ' ');
+		subcommands.remove(subcommand);
+		for (String alias : ann.aliases())
+			subcommands.remove(commandChar + path + alias);
 	}
 
 	/**

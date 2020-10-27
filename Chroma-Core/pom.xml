@@ -1,15 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.github.TBMCPlugins.ChromaCore</groupId>
-        <artifactId>CorePOM</artifactId>
-        <version>master-SNAPSHOT</version>
-        <relativePath>../CorePOM</relativePath>
-    </parent>
+	<parent>
+		<groupId>com.github.TBMCPlugins.ChromaCore</groupId>
+		<artifactId>CorePOM</artifactId>
+		<version>master-SNAPSHOT</version>
+		<relativePath>../CorePOM</relativePath>
+	</parent>
 	<artifactId>Chroma-Core</artifactId>
 	<name>Chroma-Core</name>
 	<description>Chroma-Core</description>
+	<version>v${noprefix.version}-SNAPSHOT</version>
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<resources>
@@ -218,6 +219,7 @@
 		<!-- github server corresponds to entry in ~/.m2/settings.xml -->
 		<github.global.server>github</github.global.server>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<noprefix.version>1.0</noprefix.version>
 	</properties>
 	<scm>
 		<url>https://github.com/TBMCPlugins/mvn-repo</url>

@@ -1,6 +1,6 @@
 name: ChromaCore
 main: buttondevteam.core.MainPlugin
-version: '1.0'
+version: '${noprefix.version}'
 author: NorbiPeti
 commands:
   updateplugin:

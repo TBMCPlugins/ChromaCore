@@ -47,7 +47,12 @@ public class ChannelComponent extends Component<JavaPlugin> {
 
 		@Override
 		public String getCommandPath() {
-			return channel.ID; //TODO: IDs
+			return channel.ID;
+		}
+
+		@Override
+		public String[] getCommandPaths() {
+			return channel.IDs.get();
 		}
 
 		@Command2.Subcommand
