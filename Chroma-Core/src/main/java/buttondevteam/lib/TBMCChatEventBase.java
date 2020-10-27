@@ -54,6 +54,6 @@ public abstract class TBMCChatEventBase extends Event implements Cancellable {
      */
     @Nullable
     public String getGroupID(CommandSender sender) {
-	    return channel.getGroupID(sender); //TODO: Performance-wise it'd be much better to use serialization for player data - it's only converted once
+	    return channel.getGroupID(sender);
     }
 }

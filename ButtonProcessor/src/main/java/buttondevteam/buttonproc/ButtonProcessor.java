@@ -21,35 +21,29 @@ import java.util.stream.Collectors;
 @SupportedAnnotationTypes("buttondevteam.*")
 public class ButtonProcessor extends AbstractProcessor {
 	@Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 		if (configProcessor == null)
 			configProcessor = new ConfigProcessor(processingEnv);
-        for (TypeElement te : annotations) {
-            Set<? extends Element> classes = roundEnv.getElementsAnnotatedWith(te);
-            for (Element targetcl : classes) {
-                System.out.println("Processing " + targetcl);
-                List<? extends AnnotationMirror> annotationMirrors = processingEnv.getElementUtils()
-                        .getAllAnnotationMirrors(targetcl);
-	            //System.out.println("Annotations: " + annotationMirrors);
-                Function<String, Boolean> hasAnnotation = ann -> annotationMirrors.stream()
-                        .anyMatch(am -> am.getAnnotationType().toString().contains(ann));
-                if (hasAnnotation.apply("ChromaGamerEnforcer") && !hasAnnotation.apply("UserClass")
-                        && !targetcl.getModifiers().contains(Modifier.ABSTRACT))
-                    processingEnv.getMessager().printMessage(Kind.ERROR,
-                            "No UserClass annotation found for " + targetcl.getSimpleName(), targetcl);
-                if (hasAnnotation.apply("TBMCPlayerEnforcer") && !hasAnnotation.apply("PlayerClass")
-                        && !targetcl.getModifiers().contains(Modifier.ABSTRACT))
-                    processingEnv.getMessager().printMessage(Kind.ERROR,
-                            "No PlayerClass annotation found for " + targetcl.getSimpleName(), targetcl);
-                for (AnnotationMirror annotation : annotationMirrors) {
-                    String type = annotation.getAnnotationType().toString();
-	                //System.out.println("Type: " + type);
-                }
-	            processSubcommands(targetcl, annotationMirrors);
-	            if (hasAnnotation.apply("HasConfig"))
-		            configProcessor.process(targetcl);
-            }
-        }
+		for (TypeElement te : annotations) {
+			Set<? extends Element> classes = roundEnv.getElementsAnnotatedWith(te);
+			for (Element targetcl : classes) {
+				List<? extends AnnotationMirror> annotationMirrors = processingEnv.getElementUtils()
+					.getAllAnnotationMirrors(targetcl);
+				Function<String, Boolean> hasAnnotation = ann -> annotationMirrors.stream()
+					.anyMatch(am -> am.getAnnotationType().toString().contains(ann));
+				if (hasAnnotation.apply("ChromaGamerEnforcer") && !hasAnnotation.apply("UserClass")
+					&& !targetcl.getModifiers().contains(Modifier.ABSTRACT))
+					processingEnv.getMessager().printMessage(Kind.ERROR,
+						"No UserClass annotation found for " + targetcl.getSimpleName(), targetcl);
+				if (hasAnnotation.apply("TBMCPlayerEnforcer") && !hasAnnotation.apply("PlayerClass")
+					&& !targetcl.getModifiers().contains(Modifier.ABSTRACT))
+					processingEnv.getMessager().printMessage(Kind.ERROR,
+						"No PlayerClass annotation found for " + targetcl.getSimpleName(), targetcl);
+				processSubcommands(targetcl, annotationMirrors);
+				if (hasAnnotation.apply("HasConfig"))
+					configProcessor.process(targetcl);
+			}
+		}
 		try {
 			if (found) {
 				FileObject fo = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "commands.yml");
@@ -59,38 +53,33 @@ public class ButtonProcessor extends AbstractProcessor {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-        return true; // claim the annotations
-    }
+		return true; // claim the annotations
+	}
 
-	private YamlConfiguration yc = new YamlConfiguration();
+	private final YamlConfiguration yc = new YamlConfiguration();
 	private boolean found = false;
 	private ConfigProcessor configProcessor;
 
-	private void processSubcommands(Element targetcl, List<? extends AnnotationMirror> annotationMirrors) {
-		if (!(targetcl instanceof ExecutableElement))
+	private void processSubcommands(Element method, List<? extends AnnotationMirror> annotationMirrors) {
+		if (!(method instanceof ExecutableElement))
 			return;
-		//System.out.println("Annotations: "+annotationMirrors);
 		if (annotationMirrors.stream().noneMatch(an -> an.getAnnotationType().toString().endsWith("Subcommand")))
 			return;
-		//System.out.print("Processing method: " + targetcl.getEnclosingElement()+" "+targetcl);
-		ConfigurationSection cs = yc.createSection(targetcl.getEnclosingElement().toString()
-			+ "." + targetcl.getSimpleName().toString()); //Need to do the 2 config sections at once so it doesn't overwrite the class section
-		System.out.println(targetcl);
-		cs.set("method", targetcl.toString());
-		cs.set("params", ((ExecutableElement) targetcl).getParameters().stream().skip(1).map(p -> {
-			//String tn=p.asType().toString();
-			//return tn.substring(tn.lastIndexOf('.')+1)+" "+p.getSimpleName();
+		ConfigurationSection cs = yc.createSection(method.getEnclosingElement().toString()
+			+ "." + method.getSimpleName().toString()); //Need to do the 2 config sections at once so it doesn't overwrite the class section
+		System.out.println("Found subcommand: " + method);
+		cs.set("method", method.toString());
+		cs.set("params", ((ExecutableElement) method).getParameters().stream().skip(1).map(p -> {
 			boolean optional = p.getAnnotationMirrors().stream().anyMatch(am -> am.getAnnotationType().toString().endsWith("OptionalArg"));
 			if (optional)
 				return "[" + p.getSimpleName() + "]";
 			return "<" + p.getSimpleName() + ">";
 		}).collect(Collectors.joining(" ")));
-		//System.out.println();
 		found = true;
 	}
 
 	@Override
-    public SourceVersion getSupportedSourceVersion() {
-        return SourceVersion.latestSupported();
-    }
+	public SourceVersion getSupportedSourceVersion() {
+		return SourceVersion.latestSupported();
+	}
 }

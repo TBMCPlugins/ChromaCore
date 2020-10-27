@@ -30,12 +30,8 @@ public class TBMCChatPreprocessEvent extends Event implements Cancellable {
 		super(true);
 		this.sender = sender;
 		this.channel = channel;
-		this.message = message; // TODO: Message object with data?
+		this.message = message;
 	}
-
-	/*
-	 * public TBMCPlayer getPlayer() { return TBMCPlayer.getPlayer(sender); // TODO: Get Chroma user }
-	 */
 
 	@Override
 	public HandlerList getHandlers() {

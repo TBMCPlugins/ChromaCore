@@ -48,10 +48,6 @@ public class ConfigProcessor {
 			e.printStackTrace();
 		}
 		for (Element e : targetcl.getEnclosedElements()) {
-			/*System.out.println("Element: "+e);
-			System.out.println("Type: "+e.getClass()+" - "+e.getKind());
-			if(e instanceof ExecutableElement)
-				System.out.println("METHOD!");*/
 			TypeMirror tm;
 			if (e instanceof ExecutableElement)
 				tm = ((ExecutableElement) e).getReturnType();
@@ -63,25 +59,19 @@ public class ConfigProcessor {
 			DeclaredType dt = (DeclaredType) tm;
 			if (!dt.asElement().getSimpleName().toString().contains("ConfigData"))
 				continue; //Ahhha! There was a return here! (MinecraftChatModule getListener())
-			System.out.println("Config: " + e.getSimpleName());
 
 			String doc = procEnv.getElementUtils().getDocComment(e);
 			if (doc == null) continue;
-			System.out.println("DOC: " + doc);
+			System.out.println("Adding docs for config: " + e.getSimpleName());
 			yc.set(path + "." + e.getSimpleName(), doc.trim());
-			/*System.out.println("Set " + path + "." + e.getSimpleName() + " to " + doc.trim());
-			System.out.println("Check: " + yc.getString(path + "." + e.getSimpleName()));
-			System.out.println("Wut2: " + yc.getString("components.MemberComponent.memberGroup"));*/
 		}
 		String javadoc = procEnv.getElementUtils().getDocComment(targetcl);
 		if (javadoc != null) {
-			System.out.println("JAVADOC");
-			System.out.println(javadoc.trim());
+			System.out.println("Adding docs for class: " + targetcl.getSimpleName());
 			yc.set(path + ".generalDescriptionInsteadOfAConfig", javadoc.trim());
 		}
 		try {
 			yc.save(file);
-			//System.out.println("Wut: " + yc.getString("components.MemberComponent.memberGroup"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

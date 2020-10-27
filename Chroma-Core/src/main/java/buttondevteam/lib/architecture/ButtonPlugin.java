@@ -133,7 +133,8 @@ public abstract class ButtonPlugin extends JavaPlugin {
 	@Override
 	public FileConfiguration getConfig() {
 		if (yaml == null)
-			justReload(); //TODO: If it fails to load, it'll probably throw an NPE
+			justReload();
+		if (yaml == null) return new YamlConfiguration(); //Return a temporary instance
 		return yaml;
 	}
 

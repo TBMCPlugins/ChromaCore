@@ -30,7 +30,6 @@ public class TBMCChatEvent extends TBMCChatEventBase {
 	private boolean isIgnoreSenderPermissions() {
 		return cm.getPermCheck() != cm.getSender();
 	}
-	// TODO: Message object with data?
 
     /**
      * This will allow the sender of the message if {@link #isIgnoreSenderPermissions()} is true.

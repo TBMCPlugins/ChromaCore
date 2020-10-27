@@ -1,6 +1,6 @@
 package buttondevteam.lib.player;
 
-@PlayerClass(pluginname = "ButtonCore") //TODO: Migrate
+@PlayerClass(pluginname = "Chroma-Core")
 public final class TBMCPlayer extends TBMCPlayerBase {
 
 }

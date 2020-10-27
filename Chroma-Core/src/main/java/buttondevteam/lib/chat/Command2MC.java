@@ -217,7 +217,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			int x = path.indexOf(' ');
 			var mainPath = path.substring(0, x == -1 ? path.length() : x);
 			Command bukkitCommand;
-			{ //TODO: Commands conflicting with Essentials have to be registered in plugin.yml
+			{ //Commands conflicting with Essentials have to be registered in plugin.yml
 				var oldcmd = cmdmap.getCommand(command.getPlugin().getName() + ":" + mainPath); //The label with the fallback prefix is always registered
 				if (oldcmd == null) {
 					bukkitCommand = new BukkitCommand(mainPath);
