@@ -45,20 +45,20 @@ public class ScheduledRestartCommand extends ICommand2MC {
 		}
 		final int restarttime = restartCounter = seconds * 20;
 		restartbar = Bukkit.createBossBar("Server restart in " + seconds + "s", BarColor.RED, BarStyle.SOLID,
-				BarFlag.DARKEN_SKY);
+			BarFlag.DARKEN_SKY);
 		restartbar.setProgress(1);
-        Bukkit.getOnlinePlayers().forEach(p -> restartbar.addPlayer(p));
+		Bukkit.getOnlinePlayers().forEach(p -> restartbar.addPlayer(p));
 		sender.sendMessage("Scheduled restart in " + seconds);
 		ScheduledServerRestartEvent e = new ScheduledServerRestartEvent(restarttime, this);
 		Bukkit.getPluginManager().callEvent(e);
 		restarttask = Bukkit.getScheduler().runTaskTimer(MainPlugin.Instance, () -> {
 			if (restartCounter < 0) {
 				restarttask.cancel();
-                restartbar.getPlayers().forEach(p -> restartbar.removePlayer(p));
+				restartbar.getPlayers().forEach(p -> restartbar.removePlayer(p));
 				Bukkit.spigot().restart();
 			}
-			if (restartCounter % 200 == 0 && Bukkit.getOnlinePlayers().size()>0)
-				TBMCChatAPI.SendSystemMessage(Channel.GlobalChat, Channel.RecipientTestResult.ALL, "§c-- The server is restarting in " + restartCounter / 20 + " seconds! (/press)", component.getRestartBroadcast());
+			if (restartCounter % 200 == 0 && Bukkit.getOnlinePlayers().size() > 0)
+				TBMCChatAPI.SendSystemMessage(Channel.GlobalChat, Channel.RecipientTestResult.ALL, "§c-- The server is restarting in " + restartCounter / 20 + " seconds!", component.getRestartBroadcast());
 			restartbar.setProgress(restartCounter / (double) restarttime);
 			restartbar.setTitle(String.format("Server restart in %.2f", restartCounter / 20f));
 			restartCounter--;
