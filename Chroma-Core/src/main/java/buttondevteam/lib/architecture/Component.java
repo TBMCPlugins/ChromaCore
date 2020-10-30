@@ -58,7 +58,7 @@ public abstract class Component<TP extends JavaPlugin> {
 	 * @param component The component to unregister
 	 * @return Whether the component is unregistered successfully (it also got disabled)
 	 */
-	public static <T extends ButtonPlugin> boolean unregisterComponent(T plugin, Component<T> component) {
+	public static <T extends JavaPlugin> boolean unregisterComponent(T plugin, Component<T> component) {
 		return registerUnregisterComponent(plugin, component, false);
 	}
 

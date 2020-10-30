@@ -57,19 +57,13 @@ public class RestartComponent extends Component<MainPlugin> implements Listener 
 	private int syncStart(int hour) {
 		var now = ZonedDateTime.now(ZoneId.ofOffset("", ZoneOffset.UTC));
 		int secs = now.getHour() * 3600 + now.getMinute() * 60 + now.getSecond();
-		//System.out.println("now: " + secs / 3600.);
 		int diff = secs - hour * 3600;
-		//System.out.println("diff: " + diff / 3600.);
 		if (diff < 0) {
 			diff += 24 * 3600;
 		}
-		//System.out.println("diff: " + diff / 3600.);
 		int count = diff / (24 * 3600);
-		//System.out.println("count: " + count);
 		int intervalPart = diff - count * 24 * 3600;
-		//System.out.println("intervalPart: " + intervalPart / 3600.);
 		int remaining = 24 * 3600 - intervalPart;
-		//System.out.println("remaining: " + remaining / 3600.);
 		return remaining * 20;
 	}
 

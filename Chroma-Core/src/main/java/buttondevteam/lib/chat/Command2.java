@@ -119,7 +119,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	protected final HashMap<String, SubcommandData<TC>> subcommands = new HashMap<>();
 	protected final HashMap<Class<?>, ParamConverter<?>> paramConverters = new HashMap<>();
 
-	private ArrayList<String> commandHelp = new ArrayList<>(); //Mainly needed by Discord
+	private final ArrayList<String> commandHelp = new ArrayList<>(); //Mainly needed by Discord
 
 	private char commandChar;
 

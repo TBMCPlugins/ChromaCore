@@ -31,12 +31,13 @@ public class PlayerListener implements Listener {
 	public void OnPlayerJoin(PlayerJoinEvent event) {
 		var p = event.getPlayer();
 		TBMCPlayer player = TBMCPlayerBase.getPlayer(p.getUniqueId(), TBMCPlayer.class);
-		if (player.PlayerName.get() == null) {
+		String pname = player.PlayerName.get();
+		if (pname.length() == 0) {
 			player.PlayerName.set(p.getName());
 			MainPlugin.Instance.getLogger().info("Player name saved: " + player.PlayerName.get());
-		} else if (!p.getName().equals(player.PlayerName.get())) {
-			TownyComponent.renameInTowny(player.PlayerName.get(), p.getName());
-			MainPlugin.Instance.getLogger().info(player.PlayerName.get() + " renamed to " + p.getName());
+		} else if (!p.getName().equals(pname)) {
+			TownyComponent.renameInTowny(pname, p.getName());
+			MainPlugin.Instance.getLogger().info(pname + " renamed to " + p.getName());
 			player.PlayerName.set(p.getName());
 		}
 	}
@@ -69,10 +70,6 @@ public class PlayerListener implements Listener {
 
 	private void handlePreprocess(CommandSender sender, String message, Cancellable event) {
 		if (event.isCancelled()) return;
-		/*val cg = Optional.ofNullable(ChromaGamerBase.getFromSender(sender));
-		val ch = cg.map(ChromaGamerBase::channel).map(ChannelPlayerData::get);
-		val rtr = ch.map(c -> c.getRTR(sender)).orElseGet(() -> new Channel.RecipientTestResult("Failed to get user"));
-		val ev = new TBMCCommandPreprocessEvent(sender, ch.orElse(Channel.GlobalChat), message, rtr.score, rtr.groupID);*/
 		val cg = ChromaGamerBase.getFromSender(sender);
 		if (cg == null) throw new RuntimeException("Couldn't get user from sender for " + sender.getName() + "!");
 		val ev = new TBMCCommandPreprocessEvent(sender, cg.channel.get(), message, sender);

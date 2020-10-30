@@ -193,11 +193,6 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		int i = commandline.indexOf(' ');
 		String mainpath = commandline.substring(1, i == -1 ? commandline.length() : i); //Without the slash
 		PluginCommand pcmd;
-		/*System.out.println("Command line: " + commandline);
-		System.out.println("Prioritize: " + MainPlugin.Instance.prioritizeCustomCommands().get());
-		System.out.println("PCMD: " + (pcmd = Bukkit.getPluginCommand(mainpath)));
-		if (pcmd != null)
-			System.out.println("ButtonPlugin: " + (pcmd.getPlugin() instanceof ButtonPlugin));*/
 		if (!checkPlugin
 			|| MainPlugin.Instance.prioritizeCustomCommands.get()
 			|| (pcmd = Bukkit.getPluginCommand(mainpath)) == null //Our commands aren't PluginCommands
@@ -249,7 +244,6 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			sender.sendMessage("§cAn internal error occurred.");
 			return true;
 		}
-		//System.out.println("Executing " + label + " which is actually " + command.getName());
 		handleCommand(new Command2MCSender(sender, user.channel.get(), sender),
 			("/" + command.getName() + " " + String.join(" ", args)).trim(), false); ///trim(): remove space if there are no args
 		return true;
@@ -267,13 +261,11 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 
 		@Override
 		public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
-			//System.out.println("Correct tabcomplete queried");
 			return Collections.emptyList();
 		}
 
 		@Override
 		public List<String> tabComplete(CommandSender sender, String alias, String[] args, Location location) throws IllegalArgumentException {
-			//System.out.println("Correct tabcomplete queried");
 			return Collections.emptyList();
 		}
 	}

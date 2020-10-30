@@ -85,7 +85,6 @@ public class MainPlugin extends ButtonPlugin {
 
 	@Override
 	public void pluginEnable() {
-		// Logs "Plugin Enabled", registers commands
 		Instance = this;
 		PluginDescriptionFile pdf = getDescription();
 		logger = getLogger();
