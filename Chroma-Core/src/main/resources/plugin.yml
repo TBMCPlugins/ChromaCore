@@ -9,10 +9,6 @@ commands:
     description: Schedules a restart for a given time.
   primerestart:
     description: Restarts the server as soon as nobody is online.
-  randomtp:
-    description: teleport player to random location within world border. Every five players teleport to the same general area, and then a new general area is randomly selected for the next five players.
-  member:
-    description: Add or remove a member
   component:
     description: Enable or disable or list components
   dontrunthiscmd:

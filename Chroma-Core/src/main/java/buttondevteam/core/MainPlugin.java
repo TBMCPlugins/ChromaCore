@@ -8,7 +8,6 @@ import buttondevteam.core.component.randomtp.RandomTPComponent;
 import buttondevteam.core.component.restart.RestartComponent;
 import buttondevteam.core.component.spawn.SpawnComponent;
 import buttondevteam.core.component.towny.TownyComponent;
-import buttondevteam.core.component.votifier.VotifierComponent;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
@@ -101,8 +100,8 @@ public class MainPlugin extends ButtonPlugin {
 			Component.registerComponent(this, new SpawnComponent());
 		if (Bukkit.getPluginManager().isPluginEnabled("Towny")) //It fails to load the component class otherwise
 			Component.registerComponent(this, new TownyComponent());
-		if (Bukkit.getPluginManager().isPluginEnabled("Votifier") && economy != null)
-			Component.registerComponent(this, new VotifierComponent(economy));
+		/*if (Bukkit.getPluginManager().isPluginEnabled("Votifier") && economy != null)
+			Component.registerComponent(this, new VotifierComponent(economy));*/
 		ComponentManager.enableComponents();
 		registerCommand(new ComponentCommand());
 		registerCommand(new ChromaCommand());
