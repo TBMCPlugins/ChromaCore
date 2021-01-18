@@ -1,6 +1,5 @@
 package buttondevteam.core;
 
-import buttondevteam.core.component.towny.TownyComponent;
 import buttondevteam.lib.*;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.chat.ChatMessage;
@@ -36,7 +35,6 @@ public class PlayerListener implements Listener {
 			player.PlayerName.set(p.getName());
 			MainPlugin.Instance.getLogger().info("Player name saved: " + player.PlayerName.get());
 		} else if (!p.getName().equals(pname)) {
-			TownyComponent.renameInTowny(pname, p.getName());
 			MainPlugin.Instance.getLogger().info(pname + " renamed to " + p.getName());
 			player.PlayerName.set(p.getName());
 		}
