@@ -201,6 +201,13 @@ public final class IHaveConfig {
 		val ms = obj.getClass().getDeclaredMethods();
 		for (val m : ms) {
 			if (!m.getReturnType().getName().equals(ConfigData.class.getName())) continue;
+			final String mName;
+			{
+				var name = m.getName();
+				var ind = name.lastIndexOf('$');
+				if (ind == -1) mName = name;
+				else mName = name.substring(ind + 1);
+			}
 			try {
 				m.setAccessible(true);
 				List<ConfigData<?>> configList;
@@ -213,7 +220,7 @@ public final class IHaveConfig {
 						try {
 							return (ConfigData<?>) m.invoke(obj, kv.getValue());
 						} catch (IllegalAccessException | InvocationTargetException e) {
-							String msg = "Failed to pregenerate " + m.getName() + " for " + obj + " using config " + kv.getKey() + "!";
+							String msg = "Failed to pregenerate " + mName + " for " + obj + " using config " + kv.getKey() + "!";
 							if (obj instanceof Component<?>)
 								TBMCCoreAPI.SendException(msg, e, (Component<?>) obj);
 							else if (obj instanceof JavaPlugin)
@@ -225,18 +232,18 @@ public final class IHaveConfig {
 					}).filter(Objects::nonNull).collect(Collectors.toList());
 				} else {
 					if (TBMCCoreAPI.IsTestServer())
-						MainPlugin.Instance.getLogger().warning("Method " + m.getName() + " returns a config but its parameters are unknown: " + Arrays.toString(m.getParameterTypes()));
+						MainPlugin.Instance.getLogger().warning("Method " + mName + " returns a config but its parameters are unknown: " + Arrays.toString(m.getParameterTypes()));
 					continue;
 				}
 				for (val c : configList) {
 					if (c.getPath().length() == 0)
-						c.setPath(m.getName());
-					else if (!c.getPath().equals(m.getName()))
-						MainPlugin.Instance.getLogger().warning("Config name does not match: " + c.getPath() + " instead of " + m.getName());
+						c.setPath(mName);
+					else if (!c.getPath().equals(mName))
+						MainPlugin.Instance.getLogger().warning("Config name does not match: " + c.getPath() + " instead of " + mName);
 					c.get(); //Saves the default value if needed - also checks validity
 				}
 			} catch (Exception e) {
-				String msg = "Failed to pregenerate " + m.getName() + " for " + obj + "!";
+				String msg = "Failed to pregenerate " + mName + " for " + obj + "!";
 				if (obj instanceof Component<?>)
 					TBMCCoreAPI.SendException(msg, e, (Component<?>) obj);
 				else if (obj instanceof JavaPlugin)
