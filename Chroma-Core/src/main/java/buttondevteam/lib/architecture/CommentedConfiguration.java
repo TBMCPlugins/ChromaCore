@@ -10,6 +10,7 @@ import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 
@@ -174,7 +175,7 @@ public class CommentedConfiguration extends YamlConfiguration {
 			while (newContents.toString().startsWith(" " + System.getProperty("line.separator"))) {
 				newContents = new StringBuilder(newContents.toString().replaceFirst(" " + System.getProperty("line.separator"), ""));
 			}
-			Files.write(file.toPath(), newContents.toString().getBytes());
+			Files.write(file.toPath(), newContents.toString().getBytes(StandardCharsets.UTF_8));
 		}
 	}
 
