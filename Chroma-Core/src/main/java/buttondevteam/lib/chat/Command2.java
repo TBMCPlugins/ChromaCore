@@ -6,6 +6,10 @@ import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.player.ChromaGamerBase;
 import com.google.common.base.Defaults;
 import com.google.common.primitives.Primitives;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.ParseResults;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -20,6 +24,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -28,6 +33,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import static com.mojang.brigadier.builder.LiteralArgumentBuilder.literal;
 
 /**
  * The method name is the subcommand, use underlines (_) to add further subcommands.
@@ -80,7 +87,6 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	protected static class SubcommandData<T extends ICommand2<?>> {
 		public final Method method;
 		public final T command;
-		public final String[] parameters;
 		public String[] helpText;
 	}
 
@@ -116,10 +122,9 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		public final Supplier<Iterable<String>> allSupplier;
 	}
 
-	protected final HashMap<String, SubcommandData<TC>> subcommands = new HashMap<>();
 	protected final HashMap<Class<?>, ParamConverter<?>> paramConverters = new HashMap<>();
-
 	private final ArrayList<String> commandHelp = new ArrayList<>(); //Mainly needed by Discord
+	private final CommandDispatcher<TP> dispatcher = new CommandDispatcher<>();
 
 	private char commandChar;
 
@@ -138,21 +143,16 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	}
 
 	public boolean handleCommand(TP sender, String commandline) {
-		for (int i = commandline.length(); i != -1; i = commandline.lastIndexOf(' ', i - 1)) {
-			String subcommand = commandline.substring(0, i).toLowerCase();
-			SubcommandData<TC> sd = subcommands.get(subcommand);
-			if (sd == null) continue;
-			boolean sync = Bukkit.isPrimaryThread();
-			Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, () -> {
-				try {
-					handleCommandAsync(sender, commandline, sd, subcommand, sync);
-				} catch (Exception e) {
-					TBMCCoreAPI.SendException("Command execution failed for sender " + sender.getName() + "(" + sender.getClass().getCanonicalName() + ") and message " + commandline, e, MainPlugin.Instance);
-				}
-			});
-			return true; //We found a method
-		}
-		return false;
+		var results = dispatcher.parse(commandline, sender);
+		boolean sync = Bukkit.isPrimaryThread();
+		Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, () -> {
+			try {
+				handleCommandAsync(sender, results, results.getContext().getNodes(), sync);
+			} catch (Exception e) {
+				TBMCCoreAPI.SendException("Command execution failed for sender " + sender.getName() + "(" + sender.getClass().getCanonicalName() + ") and message " + commandline, e, MainPlugin.Instance);
+			}
+		});
+		return true; //We found a method - TODO
 	}
 
 	//Needed because permission checking may load the (perhaps offline) sender's file which is disallowed on the main thread
@@ -161,13 +161,12 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	 * Handles a command asynchronously
 	 *
 	 * @param sender      The command sender
-	 * @param commandline The command line the sender sent
+	 * @param commandNode The processed command the sender sent
 	 * @param sd          The subcommand data
-	 * @param subcommand  The subcommand text
 	 * @param sync        Whether the command was originally sync
 	 * @throws Exception If something's not right
 	 */
-	private void handleCommandAsync(TP sender, String commandline, SubcommandData<TC> sd, String subcommand, boolean sync) throws Exception {
+	private void handleCommandAsync(TP sender, ParseResults<?> parsed, SubcommandData<TC> sd, boolean sync) throws Exception {
 		if (sd.method == null || sd.command == null) { //Main command not registered, but we have subcommands
 			sender.sendMessage(sd.helpText);
 			return;
@@ -177,28 +176,12 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			return;
 		}
 		val params = new ArrayList<Object>(sd.method.getParameterCount());
-		int j = subcommand.length(), pj;
 		Class<?>[] parameterTypes = sd.method.getParameterTypes();
 		if (parameterTypes.length == 0)
 			throw new Exception("No sender parameter for method '" + sd.method + "'");
-		val sendertype = parameterTypes[0];
-		final ChromaGamerBase cg;
-		if (sendertype.isAssignableFrom(sender.getClass()))
-			params.add(sender); //The command either expects a CommandSender or it is a Player, or some other expected type
-		else if (sender instanceof Command2MCSender
-			&& sendertype.isAssignableFrom(((Command2MCSender) sender).getSender().getClass()))
-			params.add(((Command2MCSender) sender).getSender());
-		else if (ChromaGamerBase.class.isAssignableFrom(sendertype)
-			&& sender instanceof Command2MCSender
-			&& (cg = ChromaGamerBase.getFromSender(((Command2MCSender) sender).getSender())) != null
-			&& cg.getClass() == sendertype) //The command expects a user of our system
-			params.add(cg);
-		else {
-			sender.sendMessage("§cYou need to be a " + sendertype.getSimpleName() + " to use this command.");
-			sender.sendMessage(sd.helpText); //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
-			return;
-		}
+		if (processSenderType(sender, sd, params, parameterTypes)) return; // Checks if the sender is the wrong type
 		val paramArr = sd.method.getParameters();
+		val args = parsed.getContext().getArguments();
 		for (int i1 = 1; i1 < parameterTypes.length; i1++) {
 			Class<?> cl = parameterTypes[i1];
 			pj = j + 1; //Start index
@@ -261,7 +244,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			}
 			params.add(cparam);
 		}
-		Runnable lol = () -> {
+		Runnable invokeCommand = () -> {
 			try {
 				sd.method.setAccessible(true); //It may be part of a private class
 				val ret = sd.method.invoke(sd.command, params.toArray()); //I FORGOT TO TURN IT INTO AN ARRAY (for a long time)
@@ -277,23 +260,76 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			}
 		};
 		if (sync)
-			Bukkit.getScheduler().runTask(MainPlugin.Instance, lol);
+			Bukkit.getScheduler().runTask(MainPlugin.Instance, invokeCommand);
 		else
-			lol.run();
+			invokeCommand.run();
 	} //TODO: Add to the help
+
+	private boolean processSenderType(TP sender, SubcommandData<TC> sd, ArrayList<Object> params, Class<?>[] parameterTypes) {
+		val sendertype = parameterTypes[0];
+		final ChromaGamerBase cg;
+		if (sendertype.isAssignableFrom(sender.getClass()))
+			params.add(sender); //The command either expects a CommandSender or it is a Player, or some other expected type
+		else if (sender instanceof Command2MCSender
+			&& sendertype.isAssignableFrom(((Command2MCSender) sender).getSender().getClass()))
+			params.add(((Command2MCSender) sender).getSender());
+		else if (ChromaGamerBase.class.isAssignableFrom(sendertype)
+			&& sender instanceof Command2MCSender
+			&& (cg = ChromaGamerBase.getFromSender(((Command2MCSender) sender).getSender())) != null
+			&& cg.getClass() == sendertype) //The command expects a user of our system
+			params.add(cg);
+		else {
+			sender.sendMessage("§cYou need to be a " + sendertype.getSimpleName() + " to use this command.");
+			sender.sendMessage(sd.helpText); //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
+			return true;
+		}
+		return false;
+	}
 
 	public abstract void registerCommand(TC command);
 
 	protected List<SubcommandData<TC>> registerCommand(TC command, char commandChar) {
-		return registerCommand(command, command.getCommandPath(), commandChar);
+		return registerCommand(command, dispatcher.register(getCommandNode(command)), commandChar);
 	}
 
-	protected List<SubcommandData<TC>> registerCommand(TC command, String path, @SuppressWarnings("SameParameterValue") char commandChar) {
+	private LiteralArgumentBuilder<TP> getCommandNode(TC command) {
+		var path = command.getCommandPath().split(" ");
+		if (path.length == 0)
+			throw new IllegalArgumentException("Attempted to register a command with no command path!");
+		LiteralArgumentBuilder<TP> inner = literal(path[0]);
+		var outer = inner;
+		for (int i = path.length - 1; i >= 0; i--) {
+			LiteralArgumentBuilder<TP> literal = literal(path[i]);
+			outer = literal.executes(this::executeHelpText).then(outer);
+		}
+		var subcommandMethods = command.getClass().getMethods();
+		for (var subcommandMethod : subcommandMethods) {
+			var ann = subcommandMethod.getAnnotation(Subcommand.class);
+			if (ann == null) continue;
+			inner.then(getSubcommandNode(subcommandMethod, ann.helpText()));
+		}
+		return outer;
+	}
+
+	private LiteralArgumentBuilder<TP> getSubcommandNode(Method method, String[] helpText) {
+		LiteralArgumentBuilder<TP> ret = literal(method.getName());
+		return ret.executes(this::executeCommand); // TODO: CoreCommandNode helpText
+	}
+
+	private CoreArgumentBuilder<TP, ?> getCommandParameters(Parameter[] parameters) {
+
+	}
+
+	private int executeHelpText(CommandContext<TP> context) {
+
+	}
+
+	private int executeCommand(CommandContext<TP> context) {
+
+	}
+
+	protected List<SubcommandData<TC>> registerCommand(TC command, @SuppressWarnings("SameParameterValue") char commandChar) {
 		this.commandChar = commandChar;
-		int x = path.indexOf(' ');
-		val mainPath = commandChar + path.substring(0, x == -1 ? path.length() : x);
-		//var scmdmap = subcommandStrings.computeIfAbsent(mainPath, k -> new HashSet<>()); //Used to display subcommands
-		val scmdHelpList = new ArrayList<String>();
 		Method mainMethod = null;
 		boolean nosubs = true;
 		boolean isSubcommand = x != -1;
