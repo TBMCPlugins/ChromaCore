@@ -10,6 +10,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -30,11 +31,11 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import static com.mojang.brigadier.builder.LiteralArgumentBuilder.literal;
+import static buttondevteam.lib.chat.CoreCommandBuilder.literal;
 
 /**
  * The method name is the subcommand, use underlines (_) to add further subcommands.
@@ -288,19 +289,19 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 
 	public abstract void registerCommand(TC command);
 
-	protected List<SubcommandData<TC>> registerCommand(TC command, char commandChar) {
-		return registerCommand(command, dispatcher.register(getCommandNode(command)), commandChar);
+	protected LiteralCommandNode<TP> registerCommand(TC command, char commandChar) {
+		return dispatcher.register(getCommandNode(command));
 	}
 
 	private LiteralArgumentBuilder<TP> getCommandNode(TC command) {
 		var path = command.getCommandPath().split(" ");
 		if (path.length == 0)
 			throw new IllegalArgumentException("Attempted to register a command with no command path!");
-		LiteralArgumentBuilder<TP> inner = literal(path[0]);
+		CoreCommandBuilder<TP> inner = literal(path[0]);
 		var outer = inner;
 		for (int i = path.length - 1; i >= 0; i--) {
-			LiteralArgumentBuilder<TP> literal = literal(path[i]);
-			outer = literal.executes(this::executeHelpText).then(outer);
+			CoreCommandBuilder<TP> literal = literal(path[i]);
+			outer = (CoreCommandBuilder<TP>) literal.executes(this::executeHelpText).then(outer);
 		}
 		var subcommandMethods = command.getClass().getMethods();
 		for (var subcommandMethod : subcommandMethods) {
@@ -312,23 +313,25 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	}
 
 	private LiteralArgumentBuilder<TP> getSubcommandNode(Method method, String[] helpText) {
-		LiteralArgumentBuilder<TP> ret = literal(method.getName());
-		return ret.executes(this::executeCommand); // TODO: CoreCommandNode helpText
+		CoreCommandBuilder<TP> ret = literal(method.getName());
+		return ret.helps(helpText).executes(this::executeCommand);
 	}
 
 	private CoreArgumentBuilder<TP, ?> getCommandParameters(Parameter[] parameters) {
-
+		return null; // TODO
 	}
 
 	private int executeHelpText(CommandContext<TP> context) {
-
+		System.out.println("Nodes:\n" + context.getNodes().stream().map(node -> node.getNode().getName() + "@" + node.getRange()).collect(Collectors.joining("\n")));
+		return 0;
 	}
 
 	private int executeCommand(CommandContext<TP> context) {
-
+		System.out.println("Execute command");
+		return 0;
 	}
 
-	protected List<SubcommandData<TC>> registerCommand(TC command, @SuppressWarnings("SameParameterValue") char commandChar) {
+	/*protected List<SubcommandData<TC>> registerCommand(TC command, @SuppressWarnings("SameParameterValue") char commandChar) {
 		this.commandChar = commandChar;
 		Method mainMethod = null;
 		boolean nosubs = true;
@@ -381,7 +384,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			scmd.helpText = scmdHelp;
 		}
 		return addedSubcommands;
-	}
+	}*/
 
 	private String[] getParameterHelp(Method method, String[] ht, String subcommand, String[] parameters) {
 		val str = method.getDeclaringClass().getResourceAsStream("/commands.yml");
