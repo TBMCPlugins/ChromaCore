@@ -41,6 +41,7 @@ public abstract class ChromaGamerBase {
 
 	/**
 	 * Used for connecting with every type of user ({@link #connectWith(ChromaGamerBase)}) and to init the configs.
+	 * Also, to construct an instance if an abstract class is provided.
 	 */
 	public static <T extends ChromaGamerBase> void RegisterPluginUserClass(Class<T> userclass, Supplier<T> constructor) {
 		Class<? extends T> cl;

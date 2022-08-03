@@ -38,6 +38,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implements Listener {
+	public Command2MC() {
+		super('/');
+	}
+
 	/**
 	 * Don't use directly, use the method in Component and ButtonPlugin to automatically unregister the command when needed.
 	 *
@@ -52,7 +56,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			int i = cpath.indexOf(' ');
 			mainpath = cpath.substring(0, i == -1 ? cpath.length() : i);
 		}*/
-		var subcmds = super.registerCommand(command, '/');
+		var subcmds = super.registerCommandSuper(command);
 		var bcmd = registerOfficially(command, subcmds);
 		if (bcmd != null)
 			for (String alias : bcmd.getAliases())

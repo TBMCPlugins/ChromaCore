@@ -1,17 +1,16 @@
 package buttondevteam.lib.chat;
 
 import buttondevteam.core.MainPlugin;
-import buttondevteam.lib.ChromaUtils;
 import buttondevteam.lib.TBMCCoreAPI;
+import buttondevteam.lib.chat.commands.CommandArgument;
+import buttondevteam.lib.chat.commands.ParameterData;
+import buttondevteam.lib.chat.commands.SubcommandData;
 import buttondevteam.lib.player.ChromaGamerBase;
-import com.google.common.base.Defaults;
-import com.google.common.primitives.Primitives;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Bukkit;
@@ -26,8 +25,6 @@ import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.text.NumberFormat;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,13 +38,10 @@ import static buttondevteam.lib.chat.CoreCommandBuilder.literal;
  * The method name is the subcommand, use underlines (_) to add further subcommands.
  * The args may be null if the conversion failed and it's optional.
  */
+@RequiredArgsConstructor
 public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Sender> {
-	protected Command2() {
-		commandHelp.add("§6---- Commands ----");
-	}
-
 	/**
-	 * Parameters annotated with this receive all of the remaining arguments
+	 * Parameters annotated with this receive all the remaining arguments
 	 */
 	@Target(ElementType.PARAMETER)
 	@Retention(RetentionPolicy.RUNTIME)
@@ -82,13 +76,6 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	@Target(ElementType.PARAMETER)
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface OptionalArg {
-	}
-
-	@AllArgsConstructor
-	protected static class SubcommandData<T extends ICommand2<?>> {
-		public final Method method;
-		public final T command;
-		public String[] helpText;
 	}
 
 	/*protected static class SubcommandHelpData<T extends ICommand2> extends SubcommandData<T> {
@@ -127,7 +114,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	private final ArrayList<String> commandHelp = new ArrayList<>(); //Mainly needed by Discord
 	private final CommandDispatcher<TP> dispatcher = new CommandDispatcher<>();
 
-	private char commandChar;
+	private final char commandChar;
 
 	/**
 	 * Adds a param converter that obtains a specific object from a string parameter.
@@ -165,9 +152,8 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	 * @param commandNode The processed command the sender sent
 	 * @param sd          The subcommand data
 	 * @param sync        Whether the command was originally sync
-	 * @throws Exception If something's not right
 	 */
-	private void handleCommandAsync(TP sender, ParseResults<?> parsed, SubcommandData<TC> sd, boolean sync) throws Exception {
+	private void handleCommandAsync(TP sender, ParseResults<?> parsed, SubcommandData<TC> sd, boolean sync) {
 		if (sd.method == null || sd.command == null) { //Main command not registered, but we have subcommands
 			sender.sendMessage(sd.helpText);
 			return;
@@ -176,17 +162,12 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			sender.sendMessage("§cYou don't have permission to use this command");
 			return;
 		}
-		val params = new ArrayList<Object>(sd.method.getParameterCount());
-		Class<?>[] parameterTypes = sd.method.getParameterTypes();
-		if (parameterTypes.length == 0)
-			throw new Exception("No sender parameter for method '" + sd.method + "'");
+		// TODO: WIP
 		if (processSenderType(sender, sd, params, parameterTypes)) return; // Checks if the sender is the wrong type
-		val paramArr = sd.method.getParameters();
 		val args = parsed.getContext().getArguments();
-		for (int i1 = 1; i1 < parameterTypes.length; i1++) {
-			Class<?> cl = parameterTypes[i1];
-			pj = j + 1; //Start index
-			if (pj == commandline.length() + 1) { //No param given
+		for (var arg : sd.arguments.entrySet()) {
+			// TODO: Invoke using custom method
+			/*if (pj == commandline.length() + 1) { //No param given
 				if (paramArr[i1].isAnnotationPresent(OptionalArg.class)) {
 					if (cl.isPrimitive())
 						params.add(Defaults.defaultValue(cl));
@@ -200,50 +181,13 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 					sender.sendMessage(sd.helpText); //Required param missing
 					return;
 				}
-			}
-			if (paramArr[i1].isVarArgs()) {
+			}*/
+			/*if (paramArr[i1].isVarArgs()) { - TODO: Varargs support? (colors?)
 				params.add(commandline.substring(j + 1).split(" +"));
 				continue;
-			}
-			j = commandline.indexOf(' ', j + 1); //End index
-			if (j == -1 || paramArr[i1].isAnnotationPresent(TextArg.class)) //Last parameter
-				j = commandline.length();
-			String param = commandline.substring(pj, j);
-			if (cl == String.class) {
-				params.add(param);
-				continue;
-			} else if (Number.class.isAssignableFrom(cl) || cl.isPrimitive()) {
-				try {
-					if (cl == boolean.class) {
-						params.add(Boolean.parseBoolean(param));
-						continue;
-					}
-					if (cl == char.class) {
-						if (param.length() != 1) {
-							sender.sendMessage("§c'" + param + "' is not a character.");
-							return;
-						}
-						params.add(param.charAt(0));
-						continue;
-					}
-					//noinspection unchecked
-					Number n = ChromaUtils.convertNumber(NumberFormat.getInstance().parse(param), (Class<? extends Number>) cl);
-					params.add(n);
-				} catch (ParseException e) {
-					sender.sendMessage("§c'" + param + "' is not a number.");
-					return;
-				}
-				continue;
-			}
-			val conv = paramConverters.get(cl);
-			if (conv == null)
-				throw new Exception("No suitable converter found for parameter type '" + cl.getCanonicalName() + "' for command '" + sd.method + "'");
-			val cparam = conv.converter.apply(param);
-			if (cparam == null) {
-				sender.sendMessage(conv.errormsg); //Param conversion failed - ex. plugin not found
-				return;
-			}
-			params.add(cparam);
+			}*/
+			// TODO: Character handling (strlen)
+			// TODO: Param converter
 		}
 		Runnable invokeCommand = () -> {
 			try {
@@ -266,12 +210,12 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			invokeCommand.run();
 	} //TODO: Add to the help
 
-	private boolean processSenderType(TP sender, SubcommandData<TC> sd, ArrayList<Object> params, Class<?>[] parameterTypes) {
-		val sendertype = parameterTypes[0];
+	private boolean processSenderType(TP sender, SubcommandData<TC> sd, ArrayList<Object> params) {
+		val sendertype = sd.senderType;
 		final ChromaGamerBase cg;
 		if (sendertype.isAssignableFrom(sender.getClass()))
 			params.add(sender); //The command either expects a CommandSender or it is a Player, or some other expected type
-		else if (sender instanceof Command2MCSender
+		else if (sender instanceof Command2MCSender // TODO: This is Minecraft only
 			&& sendertype.isAssignableFrom(((Command2MCSender) sender).getSender().getClass()))
 			params.add(((Command2MCSender) sender).getSender());
 		else if (ChromaGamerBase.class.isAssignableFrom(sendertype)
@@ -281,15 +225,54 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			params.add(cg);
 		else {
 			sender.sendMessage("§cYou need to be a " + sendertype.getSimpleName() + " to use this command.");
-			sender.sendMessage(sd.helpText); //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
+			sender.sendMessage(sd.getHelpText(sender)); //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
 			return true;
 		}
 		return false;
 	}
 
+	protected LiteralCommandNode<TP> processSubcommand(TC command, Method method) throws Exception {
+		val params = new ArrayList<Object>(method.getParameterCount());
+		Class<?>[] parameterTypes = method.getParameterTypes();
+		if (parameterTypes.length == 0)
+			throw new Exception("No sender parameter for method '" + method + "'");
+		val paramArr = method.getParameters();
+		val arguments = new HashMap<String, CommandArgument>(parameterTypes.length - 1);
+		for (int i1 = 1; i1 < parameterTypes.length; i1++) {
+			Class<?> cl = parameterTypes[i1];
+			var pdata = getParameterData(method, i1);
+			arguments.put(pdata.name, new CommandArgument(pdata.name, cl, pdata.description));
+		}
+		var sd = new SubcommandData<TC>(parameterTypes[0], arguments, command, command.getHelpText(method, method.getAnnotation(Subcommand.class)), null); // TODO: Help text
+		return getSubcommandNode(method, sd); // TODO: Integrate with getCommandNode and store SubcommandData instead of help text
+	}
+
+	/**
+	 * Get parameter data for the given subcommand. Attempts to read it from the commands file, if it fails, it will return generic info.
+	 *
+	 * @param method The method the subcommand is created from
+	 * @param i      The index to use if no name was found
+	 * @return Parameter data object
+	 */
+	private ParameterData getParameterData(Method method, int i) {
+		return null; // TODO: Parameter data (from help text method)
+	}
+
+	/**
+	 * Register a command in the command system. The way this command gets registered may change depending on the implementation.
+	 * Always invoke {@link #registerCommandSuper(ICommand2)} when implementing this method.
+	 *
+	 * @param command The command to register
+	 */
 	public abstract void registerCommand(TC command);
 
-	protected LiteralCommandNode<TP> registerCommand(TC command, char commandChar) {
+	/**
+	 * Registers a command in the Command2 system, so it can be looked up and executed.
+	 *
+	 * @param command The command to register
+	 * @return The Brigadier command node if you need it for something (like tab completion)
+	 */
+	protected LiteralCommandNode<TP> registerCommandSuper(TC command) {
 		return dispatcher.register(getCommandNode(command));
 	}
 
