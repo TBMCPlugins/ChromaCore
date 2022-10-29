@@ -224,13 +224,24 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			&& cg.getClass() == sendertype) //The command expects a user of our system
 			params.add(cg);
 		else {
-			sender.sendMessage("§cYou need to be a " + sendertype.getSimpleName() + " to use this command.");
+			String type = sendertype.getSimpleName().chars().mapToObj(ch -> Character.isUpperCase(ch)
+				? " " + Character.toLowerCase(ch)
+				: ch + "").collect(Collectors.joining());
+			sender.sendMessage("§cYou need to be a " + type + " to use this command.");
 			sender.sendMessage(sd.getHelpText(sender)); //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
 			return true;
 		}
 		return false;
 	}
 
+	/**
+	 * Constructs a command node for the given subcommand that can be used for a custom registering logic (Discord).
+	 *
+	 * @param command The command object
+	 * @param method  The subcommand method
+	 * @return The processed command node
+	 * @throws Exception Something broke
+	 */
 	protected LiteralCommandNode<TP> processSubcommand(TC command, Method method) throws Exception {
 		val params = new ArrayList<Object>(method.getParameterCount());
 		Class<?>[] parameterTypes = method.getParameterTypes();
