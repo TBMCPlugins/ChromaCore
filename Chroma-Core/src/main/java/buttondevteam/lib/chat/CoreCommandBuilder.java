@@ -25,6 +25,10 @@ public class CoreCommandBuilder<S, TC extends ICommand2<?>> extends LiteralArgum
 		return new CoreCommandBuilder<>(name, senderType, arguments, command);
 	}
 
+	public static <S, TC extends ICommand2<?>> CoreCommandBuilder<S, TC> literalNoOp(String name) {
+		return literal(name, Command2Sender.class, Map.of(), null);
+	}
+
 	/**
 	 * Static help text added through annotations. May be overwritten with the getter.
 	 *

@@ -4,6 +4,7 @@ import buttondevteam.lib.chat.ICommand2;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -27,8 +28,9 @@ public final class SubcommandData<TC extends ICommand2<?>> {
 	 */
 	public final Map<String, CommandArgument> arguments;
 	/**
-	 * The original command class that this data belongs to.
+	 * The original command class that this data belongs to. If null, that meaans only the help text can be used.
 	 */
+	@Nullable
 	public final TC command;
 
 	/**

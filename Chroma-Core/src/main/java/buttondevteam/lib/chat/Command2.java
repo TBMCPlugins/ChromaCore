@@ -28,11 +28,13 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static buttondevteam.lib.chat.CoreCommandBuilder.literal;
+import static buttondevteam.lib.chat.CoreCommandBuilder.literalNoOp;
 
 /**
  * The method name is the subcommand, use underlines (_) to add further subcommands.
@@ -242,7 +244,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	 * @return The processed command node
 	 * @throws Exception Something broke
 	 */
-	protected LiteralCommandNode<TP> processSubcommand(TC command, Method method) throws Exception {
+	protected LiteralCommandNode<TP> processSubcommand(TC command, Method method, Subcommand subcommand) throws Exception {
 		val params = new ArrayList<Object>(method.getParameterCount());
 		Class<?>[] parameterTypes = method.getParameterTypes();
 		if (parameterTypes.length == 0)
@@ -254,8 +256,8 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			var pdata = getParameterData(method, i1);
 			arguments.put(pdata.name, new CommandArgument(pdata.name, cl, pdata.description));
 		}
-		var sd = new SubcommandData<TC>(parameterTypes[0], arguments, command, command.getHelpText(method, method.getAnnotation(Subcommand.class)), null); // TODO: Help text
-		return getSubcommandNode(method, sd); // TODO: Integrate with getCommandNode and store SubcommandData instead of help text
+		// TODO: Dynamic help text
+		return getSubcommandNode(method, parameterTypes[0], command).helps(command.getHelpText(method, subcommand)).build();
 	}
 
 	/**
@@ -291,27 +293,28 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		var path = command.getCommandPath().split(" ");
 		if (path.length == 0)
 			throw new IllegalArgumentException("Attempted to register a command with no command path!");
-		CoreCommandBuilder<TP> inner = literal(path[0]);
+		CoreCommandBuilder<TP, TC> inner = literalNoOp(path[0]);
 		var outer = inner;
 		for (int i = path.length - 1; i >= 0; i--) {
-			CoreCommandBuilder<TP> literal = literal(path[i]);
-			outer = (CoreCommandBuilder<TP>) literal.executes(this::executeHelpText).then(outer);
+			// TODO: This looks like it will duplicate the first node
+			CoreCommandBuilder<TP, TC> literal = literalNoOp(path[i]);
+			outer = (CoreCommandBuilder<TP, TC>) literal.executes(this::executeHelpText).then(outer);
 		}
 		var subcommandMethods = command.getClass().getMethods();
 		for (var subcommandMethod : subcommandMethods) {
 			var ann = subcommandMethod.getAnnotation(Subcommand.class);
-			if (ann == null) continue;
+			if (ann == null) continue; // TODO: Replace def nodes with executing ones if needed
 			inner.then(getSubcommandNode(subcommandMethod, ann.helpText()));
 		}
 		return outer;
 	}
 
-	private LiteralArgumentBuilder<TP> getSubcommandNode(Method method, String[] helpText) {
-		CoreCommandBuilder<TP> ret = literal(method.getName());
-		return ret.helps(helpText).executes(this::executeCommand);
+	private CoreCommandBuilder<TP, TC> getSubcommandNode(Method method, Class<?> senderType, TC command) {
+		CoreCommandBuilder<TP, TC> ret = literal(method.getName(), senderType, getCommandParameters(method.getParameters()), command);
+		return (CoreCommandBuilder<TP, TC>) ret.executes(this::executeCommand);
 	}
 
-	private CoreArgumentBuilder<TP, ?> getCommandParameters(Parameter[] parameters) {
+	private Map<String, CommandArgument> getCommandParameters(Parameter[] parameters) {
 		return null; // TODO
 	}
 
