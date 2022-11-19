@@ -71,7 +71,7 @@ public abstract class ICommand2<TP extends Command2Sender> {
 	 *
 	 * @return The full command paths that this command should be registered under in addition to the default one.
 	 */
-	public String[] getCommandPaths() {
+	public String[] getCommandPaths() { // TODO: Deal with this (used for channel IDs)
 		return EMPTY_PATHS;
 	}
 

@@ -3,13 +3,14 @@ package buttondevteam.lib.chat;
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.commands.CommandArgument;
-import buttondevteam.lib.chat.commands.ParameterData;
 import buttondevteam.lib.chat.commands.SubcommandData;
 import buttondevteam.lib.player.ChromaGamerBase;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -24,17 +25,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import static buttondevteam.lib.chat.CoreCommandBuilder.literal;
-import static buttondevteam.lib.chat.CoreCommandBuilder.literalNoOp;
 
 /**
  * The method name is the subcommand, use underlines (_) to add further subcommands.
@@ -42,6 +38,9 @@ import static buttondevteam.lib.chat.CoreCommandBuilder.literalNoOp;
  */
 @RequiredArgsConstructor
 public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Sender> {
+
+	private static final String SENDER_ARG_NAME = "#$@Sender";
+
 	/**
 	 * Parameters annotated with this receive all the remaining arguments
 	 */
@@ -137,7 +136,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		boolean sync = Bukkit.isPrimaryThread();
 		Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, () -> {
 			try {
-				handleCommandAsync(sender, results, results.getContext().getNodes(), sync);
+				handleCommandAsync(sender, results, sync);
 			} catch (Exception e) {
 				TBMCCoreAPI.SendException("Command execution failed for sender " + sender.getName() + "(" + sender.getClass().getCanonicalName() + ") and message " + commandline, e, MainPlugin.Instance);
 			}
@@ -155,7 +154,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	 * @param sd          The subcommand data
 	 * @param sync        Whether the command was originally sync
 	 */
-	private void handleCommandAsync(TP sender, ParseResults<?> parsed, SubcommandData<TC> sd, boolean sync) {
+	private void handleCommandAsync(TP sender, ParseResults<?> parsed, boolean sync) {
 		if (sd.method == null || sd.command == null) { //Main command not registered, but we have subcommands
 			sender.sendMessage(sd.helpText);
 			return;
@@ -244,20 +243,15 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	 * @return The processed command node
 	 * @throws Exception Something broke
 	 */
-	protected LiteralCommandNode<TP> processSubcommand(TC command, Method method, Subcommand subcommand) throws Exception {
-		val params = new ArrayList<Object>(method.getParameterCount());
-		Class<?>[] parameterTypes = method.getParameterTypes();
-		if (parameterTypes.length == 0)
-			throw new Exception("No sender parameter for method '" + method + "'");
-		val paramArr = method.getParameters();
-		val arguments = new HashMap<String, CommandArgument>(parameterTypes.length - 1);
-		for (int i1 = 1; i1 < parameterTypes.length; i1++) {
-			Class<?> cl = parameterTypes[i1];
-			var pdata = getParameterData(method, i1);
-			arguments.put(pdata.name, new CommandArgument(pdata.name, cl, pdata.description));
+	protected CoreCommandNode<TP, TC> getSubcommandNode(TC command, Method method, Subcommand subcommand) throws Exception {
+		var pdata = getParameterData(method);
+		val arguments = new HashMap<String, CommandArgument>(pdata.length - 1);
+		for (var param : pdata) {
+			arguments.put(param.name, param);
 		}
 		// TODO: Dynamic help text
-		return getSubcommandNode(method, parameterTypes[0], command).helps(command.getHelpText(method, subcommand)).build();
+		//return new SubcommandData<>(pdata[0].type, command.getCommandPath() + getCommandPath(method.getName(), ' '), arguments, command, command.getHelpText(method, subcommand), null);
+		return getSubcommandNode(method, pdata[0].type, command).helps(command.getHelpText(method, subcommand)).build();
 	}
 
 	/**
@@ -267,9 +261,6 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	 * @param i      The index to use if no name was found
 	 * @return Parameter data object
 	 */
-	private ParameterData getParameterData(Method method, int i) {
-		return null; // TODO: Parameter data (from help text method)
-	}
 
 	/**
 	 * Register a command in the command system. The way this command gets registered may change depending on the implementation.
@@ -286,36 +277,87 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	 * @return The Brigadier command node if you need it for something (like tab completion)
 	 */
 	protected LiteralCommandNode<TP> registerCommandSuper(TC command) {
-		return dispatcher.register(getCommandNode(command));
-	}
-
-	private LiteralArgumentBuilder<TP> getCommandNode(TC command) {
-		var path = command.getCommandPath().split(" ");
-		if (path.length == 0)
-			throw new IllegalArgumentException("Attempted to register a command with no command path!");
-		CoreCommandBuilder<TP, TC> inner = literalNoOp(path[0]);
-		var outer = inner;
-		for (int i = path.length - 1; i >= 0; i--) {
-			// TODO: This looks like it will duplicate the first node
-			CoreCommandBuilder<TP, TC> literal = literalNoOp(path[i]);
-			outer = (CoreCommandBuilder<TP, TC>) literal.executes(this::executeHelpText).then(outer);
+		for (val meth : command.getClass().getMethods()) {
+			val ann = meth.getAnnotation(Subcommand.class);
+			if (ann == null) continue;
+			String methodPath = getCommandPath(meth.getName(), ' ');
+			registerNodeFromPath(command.getCommandPath() + methodPath)
+				.addChild(getExecutableNode(meth, command, methodPath.substring(methodPath.lastIndexOf(' ') + 1)));
 		}
-		var subcommandMethods = command.getClass().getMethods();
-		for (var subcommandMethod : subcommandMethods) {
-			var ann = subcommandMethod.getAnnotation(Subcommand.class);
-			if (ann == null) continue; // TODO: Replace def nodes with executing ones if needed
-			inner.then(getSubcommandNode(subcommandMethod, ann.helpText()));
+	}
+
+	/**
+	 * Returns the node that can actually execute the given subcommand.
+	 *
+	 * @param method  The subcommand method
+	 * @param command The command object
+	 * @param path    The command path
+	 * @return The executable node
+	 */
+	private LiteralCommandNode<TP> getExecutableNode(Method method, TC command, String path) {
+		val params = getCommandParameters(method); // Param order is important
+		val paramMap = new HashMap<String, CommandArgument>();
+		for (val param : params) {
+			if (!Objects.equals(param.name, SENDER_ARG_NAME))
+				paramMap.put(param.name, param);
 		}
-		return outer;
+		val node = CoreCommandBuilder.<TP, TC>literal(path, params[0].type, paramMap, command).executes(this::executeCommand);
+		ArgumentBuilder<TP, ?> parent = node;
+		for (val param : params) { // Register parameters in the right order
+			parent.then(parent = CoreArgumentBuilder.argument(param.name, getParameterType(param.type), false)); // TODO: Optional arg
+		}
+		return node.build();
 	}
 
-	private CoreCommandBuilder<TP, TC> getSubcommandNode(Method method, Class<?> senderType, TC command) {
-		CoreCommandBuilder<TP, TC> ret = literal(method.getName(), senderType, getCommandParameters(method.getParameters()), command);
-		return (CoreCommandBuilder<TP, TC>) ret.executes(this::executeCommand);
+	/**
+	 * Registers all necessary no-op nodes for the given path.
+	 *
+	 * @param path The full command path
+	 * @return The last no-op node that can be used to register the executable node
+	 */
+	private CommandNode<TP> registerNodeFromPath(String path) {
+		String[] split = path.split(" ");
+		CommandNode<TP> parent = dispatcher.getRoot();
+		for (int i = 0; i < split.length - 1; i++) {
+			String part = split[i];
+			var child = parent.getChild(part);
+			if (child == null)
+				parent.addChild(parent = CoreCommandBuilder.<TP, TC>literalNoOp(part).executes(this::executeHelpText).build());
+			else parent = child;
+		}
+		return parent;
 	}
 
-	private Map<String, CommandArgument> getCommandParameters(Parameter[] parameters) {
-		return null; // TODO
+	/**
+	 * Get parameter data for the given subcommand. Attempts to read it from the commands file, if it fails, it will return generic info.
+	 * The first parameter is always the sender both in the methods themselves and in the returned array.
+	 *
+	 * @param method The method the subcommand is created from
+	 * @return Parameter data objects
+	 * @throws RuntimeException If there is no sender parameter declared in the method
+	 */
+	private CommandArgument[] getCommandParameters(Method method) {
+		val parameters = method.getParameterTypes();
+		if (parameters.length == 0)
+			throw new RuntimeException("No sender parameter for method '" + method + "'");
+		val ret = new CommandArgument[parameters.length];
+		val usage = getParameterHelp(method);
+		ret[0] = new CommandArgument(SENDER_ARG_NAME, parameters[0], "Sender");
+		if (usage == null) {
+			for (int i = 1; i < parameters.length; i++) {
+				ret[i] = new CommandArgument("param" + i, parameters[i], "param" + i);
+			}
+		} else {
+			val paramNames = usage.split(" ");
+			for (int i = 1; i < parameters.length; i++) {
+				ret[i] = new CommandArgument(paramNames[i], parameters[i], paramNames[i]); // TODO: Description (JavaDoc?)
+			}
+		}
+		return ret;
+	}
+
+	private ArgumentType<?> getParameterType(Class<?> type) {
+		// TODO: Move from registerTabcomplete
 	}
 
 	private int executeHelpText(CommandContext<TP> context) {
@@ -383,13 +425,11 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		return addedSubcommands;
 	}*/
 
-	private String[] getParameterHelp(Method method, String[] ht, String subcommand, String[] parameters) {
+	private String getParameterHelp(Method method) {
 		val str = method.getDeclaringClass().getResourceAsStream("/commands.yml");
 		if (str == null)
 			TBMCCoreAPI.SendException("Error while getting command data!", new Exception("Resource not found!"), MainPlugin.Instance);
 		else {
-			if (ht.length > 0)
-				ht[0] = "§6---- " + ht[0] + " ----";
 			YamlConfiguration yc = YamlConfiguration.loadConfiguration(new InputStreamReader(str)); //Generated by ButtonProcessor
 			val ccs = yc.getConfigurationSection(method.getDeclaringClass().getCanonicalName().replace('$', '.'));
 			if (ccs != null) {
@@ -397,15 +437,9 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 				if (cs != null) {
 					val mname = cs.getString("method");
 					val params = cs.getString("params");
-					//val goodname = method.getName() + "(" + Arrays.stream(method.getGenericParameterTypes()).map(cl -> cl.getTypeName()).collect(Collectors.joining(",")) + ")";
 					int i = mname.indexOf('('); //Check only the name - the whole method is still stored for backwards compatibility and in case it may be useful
 					if (i != -1 && method.getName().equals(mname.substring(0, i)) && params != null) {
-						String[] both = Arrays.copyOf(ht, ht.length + 1);
-						both[ht.length] = "§6Usage:§r " + subcommand + " " + params;
-						ht = both;
-						var paramArray = params.split(" ");
-						for (int j = 0; j < paramArray.length && j < parameters.length; j++)
-							parameters[j] = paramArray[j];
+						return params;
 					} else
 						TBMCCoreAPI.SendException("Error while getting command data for " + method + "!", new Exception("Method '" + method + "' != " + mname + " or params is " + params), MainPlugin.Instance);
 				} else
@@ -413,7 +447,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			} else
 				MainPlugin.Instance.getLogger().warning("Failed to get command data for " + method + " (ccs is null)! Make sure to use 'clean install' when building the project.");
 		}
-		return ht;
+		return null;
 	}
 
 	private void registerCommand(String path, String methodName, Subcommand ann, SubcommandData<TC> sd) {
@@ -428,16 +462,6 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	public String[] getCommandsText() {
 		return commandHelp.toArray(new String[0]);
 	}
-
-	public String[] getHelpText(String path) {
-		val scmd = subcommands.get(path);
-		if (scmd == null) return null;
-		return scmd.helpText;
-	}
-
-	/*public Set<String> getAllSubcommands() {
-		return Collections.unmodifiableSet(subcommands.keySet());
-	}*/
 
 	/**
 	 * Unregisters all of the subcommands in the given command.

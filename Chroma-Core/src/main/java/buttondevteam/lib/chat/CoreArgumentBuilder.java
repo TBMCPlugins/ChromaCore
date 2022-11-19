@@ -11,15 +11,13 @@ public class CoreArgumentBuilder<S, T> extends ArgumentBuilder<S, CoreArgumentBu
 	private final ArgumentType<T> type;
 	private final boolean optional;
 	private SuggestionProvider<S> suggestionsProvider = null;
-	private String[] helpText = null; // TODO: Don't need the help text for arguments
+
+	public static <S, T> CoreArgumentBuilder<S, T> argument(String name, ArgumentType<T> type, boolean optional) {
+		return new CoreArgumentBuilder<S, T>(name, type, optional);
+	}
 
 	public CoreArgumentBuilder<S, T> suggests(SuggestionProvider<S> provider) {
 		this.suggestionsProvider = provider;
-		return this;
-	}
-
-	public CoreArgumentBuilder<S, T> helps(String[] helpText) {
-		this.helpText = helpText;
 		return this;
 	}
 
@@ -30,6 +28,6 @@ public class CoreArgumentBuilder<S, T> extends ArgumentBuilder<S, CoreArgumentBu
 
 	@Override
 	public CoreArgumentCommandNode<S, T> build() {
-		return new CoreArgumentCommandNode<>(name, type, getCommand(), getRequirement(), getRedirect(), getRedirectModifier(), isFork(), suggestionsProvider, optional, helpText);
+		return new CoreArgumentCommandNode<>(name, type, getCommand(), getRequirement(), getRedirect(), getRedirectModifier(), isFork(), suggestionsProvider, optional);
 	}
 }

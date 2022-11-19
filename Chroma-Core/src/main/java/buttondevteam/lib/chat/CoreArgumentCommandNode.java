@@ -12,12 +12,10 @@ import java.util.function.Predicate;
 
 public class CoreArgumentCommandNode<S, T> extends ArgumentCommandNode<S, T> {
 	private final boolean optional;
-	@lombok.Getter private final String[] helpText;
 
-	public CoreArgumentCommandNode(String name, ArgumentType<T> type, Command<S> command, Predicate<S> requirement, CommandNode<S> redirect, RedirectModifier<S> modifier, boolean forks, SuggestionProvider<S> customSuggestions, boolean optional, String[] helpText) {
+	public CoreArgumentCommandNode(String name, ArgumentType<T> type, Command<S> command, Predicate<S> requirement, CommandNode<S> redirect, RedirectModifier<S> modifier, boolean forks, SuggestionProvider<S> customSuggestions, boolean optional) {
 		super(name, type, command, requirement, redirect, modifier, forks, customSuggestions);
 		this.optional = optional;
-		this.helpText = helpText;
 	}
 
 	@Override
