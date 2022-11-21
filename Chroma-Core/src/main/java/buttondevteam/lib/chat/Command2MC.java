@@ -5,7 +5,7 @@ import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
 import buttondevteam.lib.player.ChromaGamerBase;
-import com.mojang.brigadier.arguments.*;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
@@ -333,38 +333,8 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 				Parameter[] parameters = subcmd.method.getParameters();
 				for (int i = 1; i < parameters.length; i++) { //Skip sender
 					Parameter parameter = parameters[i];
-					ArgumentType<?> type;
-					final Class<?> ptype = parameter.getType();
 					final boolean customParamType;
-					{
-						boolean customParamTypeTemp = false;
-						if (ptype == String.class)
-							if (parameter.isAnnotationPresent(TextArg.class))
-								type = StringArgumentType.greedyString();
-							else
-								type = StringArgumentType.word();
-						else if (ptype == int.class || ptype == Integer.class
-							|| ptype == byte.class || ptype == Byte.class
-							|| ptype == short.class || ptype == Short.class)
-							type = IntegerArgumentType.integer(); //TODO: Min, max
-						else if (ptype == long.class || ptype == Long.class)
-							type = LongArgumentType.longArg();
-						else if (ptype == float.class || ptype == Float.class)
-							type = FloatArgumentType.floatArg();
-						else if (ptype == double.class || ptype == Double.class)
-							type = DoubleArgumentType.doubleArg();
-						else if (ptype == char.class || ptype == Character.class)
-							type = StringArgumentType.word();
-						else if (ptype == boolean.class || ptype == Boolean.class)
-							type = BoolArgumentType.bool();
-						else if (parameter.isVarArgs())
-							type = StringArgumentType.greedyString();
-						else {
-							type = StringArgumentType.word();
-							customParamTypeTemp = true;
-						}
-						customParamType = customParamTypeTemp;
-					}
+					// TODO: Arg type
 					val param = subcmd.parameters[i - 1];
 					val customTC = Optional.ofNullable(parameter.getAnnotation(CustomTabComplete.class))
 						.map(CustomTabComplete::value);
