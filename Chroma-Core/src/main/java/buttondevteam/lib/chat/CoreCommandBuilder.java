@@ -8,12 +8,13 @@ import com.mojang.brigadier.tree.CommandNode;
 import java.util.Map;
 import java.util.function.Function;
 
-public class CoreCommandBuilder<S, TC extends ICommand2<?>> extends LiteralArgumentBuilder<S> {
-	private final SubcommandData.SubcommandDataBuilder<TC> dataBuilder;
+public class CoreCommandBuilder<S extends Command2Sender, TC extends ICommand2<?>> extends LiteralArgumentBuilder<S> {
+	private final SubcommandData.SubcommandDataBuilder<TC, S> dataBuilder;
 
-	protected CoreCommandBuilder(String literal, Class<?> senderType, Map<String, CommandArgument> arguments, TC command) {
+	protected CoreCommandBuilder(String literal, Class<?> senderType, Map<String, CommandArgument> arguments, CommandArgument[] argumentsInOrder, TC command) {
 		super(literal);
-		dataBuilder = SubcommandData.<TC>builder().senderType(senderType).arguments(arguments).command(command);
+		dataBuilder = SubcommandData.<TC, S>builder().senderType(senderType).arguments(arguments)
+			.argumentsInOrder(argumentsInOrder).command(command);
 	}
 
 	@Override
@@ -21,12 +22,12 @@ public class CoreCommandBuilder<S, TC extends ICommand2<?>> extends LiteralArgum
 		return this;
 	}
 
-	public static <S, TC extends ICommand2<?>> CoreCommandBuilder<S, TC> literal(String name, Class<?> senderType, Map<String, CommandArgument> arguments, TC command) {
-		return new CoreCommandBuilder<>(name, senderType, arguments, command);
+	public static <S extends Command2Sender, TC extends ICommand2<?>> CoreCommandBuilder<S, TC> literal(String name, Class<?> senderType, Map<String, CommandArgument> arguments, CommandArgument[] argumentsInOrder, TC command) {
+		return new CoreCommandBuilder<>(name, senderType, arguments, argumentsInOrder, command);
 	}
 
-	public static <S, TC extends ICommand2<?>> CoreCommandBuilder<S, TC> literalNoOp(String name) {
-		return literal(name, Command2Sender.class, Map.of(), null);
+	public static <S extends Command2Sender, TC extends ICommand2<?>> CoreCommandBuilder<S, TC> literalNoOp(String name) {
+		return literal(name, Command2Sender.class, Map.of(), new CommandArgument[0], null);
 	}
 
 	/**
@@ -53,9 +54,14 @@ public class CoreCommandBuilder<S, TC extends ICommand2<?>> extends LiteralArgum
 		return this;
 	}
 
+	public CoreCommandBuilder<S, TC> permits(Function<S, Boolean> permChecker) {
+		dataBuilder.hasPermission(permChecker);
+		return this;
+	}
+
 	@Override
 	public CoreCommandNode<S, TC> build() {
-		var result = new CoreCommandNode<>(this.getLiteral(), this.getCommand(), this.getRequirement(),
+		var result = new CoreCommandNode<S, TC>(this.getLiteral(), this.getCommand(), this.getRequirement(),
 			this.getRedirect(), this.getRedirectModifier(), this.isFork(),
 			dataBuilder.build());
 

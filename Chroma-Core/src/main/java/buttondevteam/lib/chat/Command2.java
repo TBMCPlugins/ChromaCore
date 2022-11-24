@@ -7,10 +7,10 @@ import buttondevteam.lib.chat.commands.NumberArg;
 import buttondevteam.lib.chat.commands.SubcommandData;
 import buttondevteam.lib.player.ChromaGamerBase;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +26,9 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -41,8 +39,6 @@ import java.util.stream.Collectors;
  */
 @RequiredArgsConstructor
 public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Sender> {
-
-	private static final String SENDER_ARG_NAME = "#$@Sender";
 
 	/**
 	 * Parameters annotated with this receive all the remaining arguments
@@ -118,7 +114,14 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	private final ArrayList<String> commandHelp = new ArrayList<>(); //Mainly needed by Discord
 	private final CommandDispatcher<TP> dispatcher = new CommandDispatcher<>();
 
+	/**
+	 * The first character in the command line that shows that it's a command.
+	 */
 	private final char commandChar;
+	/**
+	 * Whether the command's actual code has to be run on the primary thread.
+	 */
+	private final boolean runOnPrimaryThread;
 
 	/**
 	 * Adds a param converter that obtains a specific object from a string parameter.
@@ -136,85 +139,26 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 
 	public boolean handleCommand(TP sender, String commandline) {
 		var results = dispatcher.parse(commandline, sender);
-		boolean sync = Bukkit.isPrimaryThread();
+		if (results.getReader().canRead()) {
+			return false; // Unknown command
+		}
 		Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, () -> {
 			try {
-				handleCommandAsync(sender, results, sync);
+				dispatcher.execute(results);
+			} catch (CommandSyntaxException e) {
+				sender.sendMessage(e.getMessage());
 			} catch (Exception e) {
 				TBMCCoreAPI.SendException("Command execution failed for sender " + sender.getName() + "(" + sender.getClass().getCanonicalName() + ") and message " + commandline, e, MainPlugin.Instance);
 			}
 		});
-		return true; //We found a method - TODO
+		return true; //We found a method
 	}
 
 	//Needed because permission checking may load the (perhaps offline) sender's file which is disallowed on the main thread
 
-	/**
-	 * Handles a command asynchronously
-	 *
-	 * @param sender      The command sender
-	 * @param commandNode The processed command the sender sent
-	 * @param sd          The subcommand data
-	 * @param sync        Whether the command was originally sync
-	 */
-	private void handleCommandAsync(TP sender, ParseResults<?> parsed, boolean sync) {
-		if (sd.method == null || sd.command == null) { //Main command not registered, but we have subcommands
-			sender.sendMessage(sd.helpText);
-			return;
-		}
-		if (!hasPermission(sender, sd.command, sd.method)) {
-			sender.sendMessage("§cYou don't have permission to use this command");
-			return;
-		}
-		// TODO: WIP
-		if (processSenderType(sender, sd, params, parameterTypes)) return; // Checks if the sender is the wrong type
-		val args = parsed.getContext().getArguments();
-		for (var arg : sd.arguments.entrySet()) {
-			// TODO: Invoke using custom method
-			/*if (pj == commandline.length() + 1) { //No param given
-				if (paramArr[i1].isAnnotationPresent(OptionalArg.class)) {
-					if (cl.isPrimitive())
-						params.add(Defaults.defaultValue(cl));
-					else if (Number.class.isAssignableFrom(cl)
-						|| Number.class.isAssignableFrom(cl))
-						params.add(Defaults.defaultValue(Primitives.unwrap(cl)));
-					else
-						params.add(null);
-					continue; //Fill the remaining params with nulls
-				} else {
-					sender.sendMessage(sd.helpText); //Required param missing
-					return;
-				}
-			}*/
-			/*if (paramArr[i1].isVarArgs()) { - TODO: Varargs support? (colors?)
-				params.add(commandline.substring(j + 1).split(" +"));
-				continue;
-			}*/
-			// TODO: Character handling (strlen)
-			// TODO: Param converter
-		}
-		Runnable invokeCommand = () -> {
-			try {
-				sd.method.setAccessible(true); //It may be part of a private class
-				val ret = sd.method.invoke(sd.command, params.toArray()); //I FORGOT TO TURN IT INTO AN ARRAY (for a long time)
-				if (ret instanceof Boolean) {
-					if (!(boolean) ret) //Show usage
-						sender.sendMessage(sd.helpText);
-				} else if (ret != null)
-					throw new Exception("Wrong return type! Must return a boolean or void. Return value: " + ret);
-			} catch (InvocationTargetException e) {
-				TBMCCoreAPI.SendException("An error occurred in a command handler for " + subcommand + "!", e.getCause(), MainPlugin.Instance);
-			} catch (Exception e) {
-				TBMCCoreAPI.SendException("Command handling failed for sender " + sender + " and subcommand " + subcommand, e, MainPlugin.Instance);
-			}
-		};
-		if (sync)
-			Bukkit.getScheduler().runTask(MainPlugin.Instance, invokeCommand);
-		else
-			invokeCommand.run();
-	} //TODO: Add to the help
+	//TODO: Add to the help
 
-	private boolean processSenderType(TP sender, SubcommandData<TC> sd, ArrayList<Object> params) {
+	private boolean processSenderType(TP sender, SubcommandData<TC, TP> sd, ArrayList<Object> params) {
 		val sendertype = sd.senderType;
 		final ChromaGamerBase cg;
 		if (sendertype.isAssignableFrom(sender.getClass()))
@@ -280,18 +224,18 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	 * @return The executable node
 	 */
 	private LiteralCommandNode<TP> getExecutableNode(Method method, TC command, Subcommand ann, String path) {
-		val params = getCommandParameters(method); // Param order is important
+		val paramsAndSenderType = getCommandParameters(method); // Param order is important
+		val params = paramsAndSenderType.getValue0();
 		val paramMap = new HashMap<String, CommandArgument>();
 		for (val param : params) {
-			if (!Objects.equals(param.name, SENDER_ARG_NAME))
-				paramMap.put(param.name, param);
+			paramMap.put(param.name, param);
 		}
-		val node = CoreCommandBuilder.<TP, TC>literal(path, params[0].type, paramMap, command)
-			.helps(command.getHelpText(method, ann)).executes(this::executeCommand);
+		val node = CoreCommandBuilder.<TP, TC>literal(path, params[0].type, paramMap, params, command)
+			.helps(command.getHelpText(method, ann)).permits(sender -> hasPermission(sender, command, method))
+			.executes(this::executeCommand);
 		ArgumentBuilder<TP, ?> parent = node;
 		for (val param : params) { // Register parameters in the right order
-			if (!Objects.equals(param.name, SENDER_ARG_NAME))
-				parent.then(parent = CoreArgumentBuilder.argument(param.name, getParameterType(param), param.optional));
+			parent.then(parent = CoreArgumentBuilder.argument(param.name, getParameterType(param), param.optional));
 		}
 		return node.build();
 	}
@@ -323,32 +267,31 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	 * The first parameter is always the sender both in the methods themselves and in the returned array.
 	 *
 	 * @param method The method the subcommand is created from
-	 * @return Parameter data objects
+	 * @return Parameter data objects and the sender type
 	 * @throws RuntimeException If there is no sender parameter declared in the method
 	 */
-	private CommandArgument[] getCommandParameters(Method method) {
+	private Pair<CommandArgument[], Class<?>> getCommandParameters(Method method) {
 		val parameters = method.getParameters();
 		if (parameters.length == 0)
 			throw new RuntimeException("No sender parameter for method '" + method + "'");
 		val ret = new CommandArgument[parameters.length];
 		val usage = getParameterHelp(method);
-		ret[0] = new CommandArgument(SENDER_ARG_NAME, parameters[0].getType(), false, null, false, "Sender");
 		if (usage == null) {
 			for (int i = 1; i < parameters.length; i++) {
-				ret[i] = new CommandArgument("param" + i, parameters[i].getType(), false, null, false, "param" + i);
+				ret[i - 1] = new CommandArgument("param" + i, parameters[i].getType(), false, null, false, "param" + i);
 			}
 		} else {
 			val paramNames = usage.split(" ");
 			for (int i = 1; i < parameters.length; i++) {
 				val numAnn = parameters[i].getAnnotation(NumberArg.class);
-				ret[i] = new CommandArgument(paramNames[i], parameters[i].getType(),
+				ret[i - 1] = new CommandArgument(paramNames[i], parameters[i].getType(),
 					parameters[i].isVarArgs() || parameters[i].isAnnotationPresent(TextArg.class),
 					numAnn == null ? null : new Pair<>(numAnn.lowerLimit(), numAnn.upperLimit()),
 					parameters[i].isAnnotationPresent(OptionalArg.class),
 					paramNames[i]); // TODO: Description (JavaDoc?)
 			}
 		}
-		return ret;
+		return new Pair<>(ret, parameters[0].getType());
 	}
 
 	private ArgumentType<?> getParameterType(CommandArgument arg) {
@@ -384,6 +327,58 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 
 	private int executeCommand(CommandContext<TP> context) {
 		System.out.println("Execute command");
+		System.out.println("Should be running sync: " + runOnPrimaryThread);
+
+		/*if (!hasPermission(sender, sd.command, sd.method)) {
+			sender.sendMessage("§cYou don't have permission to use this command");
+			return;
+		}
+		// TODO: WIP
+		if (processSenderType(sender, sd, params, parameterTypes)) return; // Checks if the sender is the wrong type
+		val args = parsed.getContext().getArguments();
+		for (var arg : sd.arguments.entrySet()) {*/
+		// TODO: Invoke using custom method
+			/*if (pj == commandline.length() + 1) { //No param given
+				if (paramArr[i1].isAnnotationPresent(OptionalArg.class)) {
+					if (cl.isPrimitive())
+						params.add(Defaults.defaultValue(cl));
+					else if (Number.class.isAssignableFrom(cl)
+						|| Number.class.isAssignableFrom(cl))
+						params.add(Defaults.defaultValue(Primitives.unwrap(cl)));
+					else
+						params.add(null);
+					continue; //Fill the remaining params with nulls
+				} else {
+					sender.sendMessage(sd.helpText); //Required param missing
+					return;
+				}
+			}*/
+			/*if (paramArr[i1].isVarArgs()) { - TODO: Varargs support? (colors?)
+				params.add(commandline.substring(j + 1).split(" +"));
+				continue;
+			}*/
+		// TODO: Character handling (strlen)
+		// TODO: Param converter
+		/*}
+		Runnable invokeCommand = () -> {
+			try {
+				sd.method.setAccessible(true); //It may be part of a private class
+				val ret = sd.method.invoke(sd.command, params.toArray()); //I FORGOT TO TURN IT INTO AN ARRAY (for a long time)
+				if (ret instanceof Boolean) {
+					if (!(boolean) ret) //Show usage
+						sender.sendMessage(sd.helpText);
+				} else if (ret != null)
+					throw new Exception("Wrong return type! Must return a boolean or void. Return value: " + ret);
+			} catch (InvocationTargetException e) {
+				TBMCCoreAPI.SendException("An error occurred in a command handler for " + subcommand + "!", e.getCause(), MainPlugin.Instance);
+			} catch (Exception e) {
+				TBMCCoreAPI.SendException("Command handling failed for sender " + sender + " and subcommand " + subcommand, e, MainPlugin.Instance);
+			}
+		};
+		if (sync)
+			Bukkit.getScheduler().runTask(MainPlugin.Instance, invokeCommand);
+		else
+			invokeCommand.run();*/
 		return 0;
 	}
 

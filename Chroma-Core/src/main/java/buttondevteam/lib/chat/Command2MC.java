@@ -4,6 +4,7 @@ import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.architecture.ButtonPlugin;
 import buttondevteam.lib.architecture.Component;
+import buttondevteam.lib.chat.commands.SubcommandData;
 import buttondevteam.lib.player.ChromaGamerBase;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -39,7 +40,7 @@ import java.util.stream.Stream;
 
 public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implements Listener {
 	public Command2MC() {
-		super('/');
+		super('/', true);
 	}
 
 	/**
@@ -56,8 +57,8 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			int i = cpath.indexOf(' ');
 			mainpath = cpath.substring(0, i == -1 ? cpath.length() : i);
 		}*/
-		var subcmds = super.registerCommandSuper(command);
-		var bcmd = registerOfficially(command, subcmds);
+		var commandNode = super.registerCommandSuper(command);
+		var bcmd = registerOfficially(command, commandNode);
 		if (bcmd != null)
 			for (String alias : bcmd.getAliases())
 				super.registerCommand(command, command.getCommandPath().replaceFirst("^" + bcmd.getName(), Matcher.quoteReplacement(alias)), '/');
@@ -208,7 +209,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 
 	private boolean shouldRegisterOfficially = true;
 
-	private Command registerOfficially(ICommand2MC command, List<SubcommandData<ICommand2MC>> subcmds) {
+	private Command registerOfficially(ICommand2MC command, LiteralCommandNode<Command2MCSender> node) {
 		if (!shouldRegisterOfficially || command.getPlugin() == null) return null;
 		try {
 			var cmdmap = (SimpleCommandMap) Bukkit.getServer().getClass().getMethod("getCommandMap").invoke(Bukkit.getServer());
@@ -229,7 +230,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 				bukkitCommand = oldcmd == null ? new BukkitCommand(mainPath) : oldcmd;
 			}
 			if (CommodoreProvider.isSupported())
-				TabcompleteHelper.registerTabcomplete(command, subcmds, bukkitCommand);
+				TabcompleteHelper.registerTabcomplete(command, node, bukkitCommand);
 			return bukkitCommand;
 		} catch (Exception e) {
 			if (command.getComponent() == null)
@@ -286,14 +287,14 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			if (subcommand != null)
 				scmdBuilder.requires(o -> {
 					var sender = commodore.getBukkitSender(o);
-					return ButtonPlugin.getCommand2MC().hasPermission(sender, subcommand.command, subcommand.method);
+					return subcommand.hasPermission(sender);
 				});
 			scmd = scmdBuilder.build();
 			parent.addChild(scmd);
 			return scmd;
 		}
 
-		private static void registerTabcomplete(ICommand2MC command2MC, List<SubcommandData<ICommand2MC>> subcmds, Command bukkitCommand) {
+		private static void registerTabcomplete(ICommand2MC command2MC, LiteralCommandNode<Command2MCSender> commandNode, Command bukkitCommand) {
 			if (commodore == null) {
 				commodore = CommodoreProvider.getCommodore(MainPlugin.Instance); //Register all to the Core, it's easier
 				commodore.register(LiteralArgumentBuilder.literal("un").redirect(RequiredArgumentBuilder.argument("unsomething",
@@ -303,7 +304,7 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			var shouldRegister = new AtomicBoolean(true);
 			@SuppressWarnings("unchecked") var maincmd = commodore.getRegisteredNodes().stream()
 				.filter(node -> node.getLiteral().equalsIgnoreCase(path[0]))
-				.filter(node -> { shouldRegister.set(false); return true; })
+				.filter(node -> {shouldRegister.set(false); return true;})
 				.map(node -> (LiteralCommandNode<Object>) node).findAny()
 				.orElseGet(() -> LiteralArgumentBuilder.literal(path[0]).build()); //Commodore 1.8 removes previous nodes
 			var cmd = maincmd;

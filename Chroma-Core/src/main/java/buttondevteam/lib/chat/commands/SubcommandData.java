@@ -1,5 +1,6 @@
 package buttondevteam.lib.chat.commands;
 
+import buttondevteam.lib.chat.Command2Sender;
 import buttondevteam.lib.chat.ICommand2;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,7 @@ import java.util.function.Function;
  */
 @Builder
 @RequiredArgsConstructor
-public final class SubcommandData<TC extends ICommand2<?>> {
+public final class SubcommandData<TC extends ICommand2<?>, TP extends Command2Sender> {
 	/**
 	 * The type of the sender running the command.
 	 * The actual sender type may not be represented by Command2Sender (TP).
@@ -27,6 +28,10 @@ public final class SubcommandData<TC extends ICommand2<?>> {
 	 * Used to construct the arguments for Brigadier and to hold extra information.
 	 */
 	public final Map<String, CommandArgument> arguments;
+	/**
+	 * Command arguments in the order they appear in code and in game.
+	 */
+	public final CommandArgument[] argumentsInOrder;
 	/**
 	 * The original command class that this data belongs to. If null, that meaans only the help text can be used.
 	 */
@@ -43,6 +48,10 @@ public final class SubcommandData<TC extends ICommand2<?>> {
 	 * It will either match or be a Command2Sender, however.
 	 */
 	private final Function<Object, String[]> helpTextGetter;
+	/**
+	 * A function that determines whether the user has permission to run this subcommand.
+	 */
+	private final Function<TP, Boolean> hasPermission;
 
 	/**
 	 * Get help text for this subcommand.
@@ -52,5 +61,15 @@ public final class SubcommandData<TC extends ICommand2<?>> {
 	 */
 	public String[] getHelpText(Object sender) {
 		return staticHelpText == null ? helpTextGetter.apply(sender) : staticHelpText;
+	}
+
+	/**
+	 * Check if the user has permission to execute this subcommand.
+	 *
+	 * @param sender The sender running the command
+	 * @return Whether the user has permission
+	 */
+	public boolean hasPermission(TP sender) {
+		return hasPermission.apply(sender);
 	}
 }
