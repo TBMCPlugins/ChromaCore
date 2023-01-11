@@ -29,7 +29,9 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -276,27 +278,21 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			throw new RuntimeException("No sender parameter for method '" + method + "'");
 		val ret = new CommandArgument[parameters.length];
 		val usage = getParameterHelp(method);
-		if (usage == null) {
-			for (int i = 1; i < parameters.length; i++) {
-				ret[i - 1] = new CommandArgument("param" + i, parameters[i].getType(), false, null, false, "param" + i);
-			}
-		} else {
-			val paramNames = usage.split(" ");
-			for (int i = 1; i < parameters.length; i++) {
-				val numAnn = parameters[i].getAnnotation(NumberArg.class);
-				ret[i - 1] = new CommandArgument(paramNames[i], parameters[i].getType(),
-					parameters[i].isVarArgs() || parameters[i].isAnnotationPresent(TextArg.class),
-					numAnn == null ? null : new Pair<>(numAnn.lowerLimit(), numAnn.upperLimit()),
-					parameters[i].isAnnotationPresent(OptionalArg.class),
-					paramNames[i]); // TODO: Description (JavaDoc?)
-			}
+		val paramNames = usage != null ? usage.split(" ") : null;
+		for (int i = 1; i < parameters.length; i++) {
+			val numAnn = parameters[i].getAnnotation(NumberArg.class);
+			ret[i - 1] = new CommandArgument(paramNames == null ? "param" + i : paramNames[i], parameters[i].getType(),
+				parameters[i].isVarArgs() || parameters[i].isAnnotationPresent(TextArg.class),
+				numAnn == null ? null : new Pair<>(numAnn.lowerLimit(), numAnn.upperLimit()),
+				parameters[i].isAnnotationPresent(OptionalArg.class),
+				paramNames == null ? "param" + i : paramNames[i]); // TODO: Description (JavaDoc?)
 		}
 		return new Pair<>(ret, parameters[0].getType());
 	}
 
 	private ArgumentType<?> getParameterType(CommandArgument arg) {
 		final Class<?> ptype = arg.type;
-		Number lowerLimit = Double.NEGATIVE_INFINITY, upperLimit = Double.POSITIVE_INFINITY;
+		Number lowerLimit = arg.limits.getValue0(), upperLimit = arg.limits.getValue1();
 		if (arg.greedy)
 			return StringArgumentType.greedyString();
 		else if (ptype == String.class)
@@ -382,61 +378,6 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		return 0;
 	}
 
-	/*protected List<SubcommandData<TC>> registerCommand(TC command, @SuppressWarnings("SameParameterValue") char commandChar) {
-		this.commandChar = commandChar;
-		Method mainMethod = null;
-		boolean nosubs = true;
-		boolean isSubcommand = x != -1;
-		try { //Register the default handler first so it can be reliably overwritten
-			mainMethod = command.getClass().getMethod("def", Command2Sender.class);
-			val cc = command.getClass().getAnnotation(CommandClass.class);
-			var ht = cc == null || isSubcommand ? new String[0] : cc.helpText(); //If it's not the main command, don't add it
-			if (ht.length > 0)
-				ht[0] = "§6---- " + ht[0] + " ----";
-			scmdHelpList.addAll(Arrays.asList(ht));
-			if (!isSubcommand)
-				scmdHelpList.add("§6Subcommands:");
-			if (!commandHelp.contains(mainPath))
-				commandHelp.add(mainPath);
-		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Could not register default handler for command /" + path, e, MainPlugin.Instance);
-		}
-		var addedSubcommands = new ArrayList<SubcommandData<TC>>();
-		for (val method : command.getClass().getMethods()) {
-			val ann = method.getAnnotation(Subcommand.class);
-			if (ann == null) continue; //Don't call the method on non-subcommands because they're not in the yaml
-			var ht = command.getHelpText(method, ann);
-			if (ht != null) { //The method is a subcommand
-				val subcommand = commandChar + path + //Add command path (class name by default)
-					getCommandPath(method.getName(), ' '); //Add method name, unless it's 'def'
-				var params = new String[method.getParameterCount() - 1];
-				ht = getParameterHelp(method, ht, subcommand, params);
-				var sd = new SubcommandData<>(method, command, params, ht);
-				registerCommand(path, method.getName(), ann, sd);
-				for (String p : command.getCommandPaths())
-					registerCommand(p, method.getName(), ann, sd);
-				addedSubcommands.add(sd);
-				scmdHelpList.add(subcommand);
-				nosubs = false;
-			}
-		}
-		if (nosubs && scmdHelpList.size() > 0)
-			scmdHelpList.remove(scmdHelpList.size() - 1); //Remove Subcommands header
-		if (mainMethod != null && !subcommands.containsKey(commandChar + path)) { //Command specified by the class
-			var sd = new SubcommandData<>(mainMethod, command, null, scmdHelpList.toArray(new String[0]));
-			subcommands.put(commandChar + path, sd);
-			addedSubcommands.add(sd);
-		}
-		if (isSubcommand) { //The class itself is a subcommand
-			val scmd = subcommands.computeIfAbsent(mainPath, p -> new SubcommandData<>(null, null, new String[0], new String[]{"§6---- Subcommands ----"}));
-			val scmdHelp = Arrays.copyOf(scmd.helpText, scmd.helpText.length + scmdHelpList.size());
-			for (int i = 0; i < scmdHelpList.size(); i++)
-				scmdHelp[scmd.helpText.length + i] = scmdHelpList.get(i);
-			scmd.helpText = scmdHelp;
-		}
-		return addedSubcommands;
-	}*/
-
 	private String getParameterHelp(Method method) {
 		val str = method.getDeclaringClass().getResourceAsStream("/commands.yml");
 		if (str == null)
@@ -469,7 +410,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	}
 
 	/**
-	 * It will start with the given replace char.
+	 * Returns the path of the given subcommand excluding the class' path. It will start with the given replace char.
 	 *
 	 * @param methodName  The method's name, method.getName()
 	 * @param replaceChar The character to use between subcommands
@@ -478,5 +419,52 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	@NotNull
 	public String getCommandPath(String methodName, char replaceChar) {
 		return methodName.equals("def") ? "" : replaceChar + methodName.replace('_', replaceChar).toLowerCase();
+	}
+
+	/**
+	 * Get all registered command nodes. This returns all registered Chroma commands with all the information about them.
+	 *
+	 * @return A set of command node objects containing the commands
+	 */
+	public Set<CoreCommandNode<TP, TC>> getCommandNodes() {
+		return dispatcher.getRoot().getChildren().stream().map(node -> (CoreCommandNode<TP, TC>) node).collect(Collectors.toUnmodifiableSet());
+	}
+
+	/**
+	 * Get a node that belongs to the given command.
+	 *
+	 * @param command The exact name of the command
+	 * @return A command node
+	 */
+	public CoreCommandNode<TP, TC> getCommandNode(String command) {
+		return (CoreCommandNode<TP, TC>) dispatcher.getRoot().getChild(command);
+	}
+
+	/**
+	 * Unregister all subcommands that were registered with the given command class.
+	 *
+	 * @param command The command class (object) to unregister
+	 */
+	public void unregisterCommand(ICommand2<TP> command) {
+		dispatcher.getRoot().getChildren().removeIf(node -> ((CoreCommandNode<TP, TC>) node).getData().command == command);
+	}
+
+	/**
+	 * Unregisters all commands that match the given predicate.
+	 *
+	 * @param condition The condition for removing a given command
+	 */
+	public void unregisterCommandIf(Predicate<CoreCommandNode<TP, TC>> condition, boolean nested) {
+		dispatcher.getRoot().getChildren().removeIf(node -> condition.test((CoreCommandNode<TP, TC>) node));
+		if (nested)
+			for (var child : dispatcher.getRoot().getChildren())
+				unregisterCommandIf(condition, (CoreCommandNode<TP, TC>) child);
+	}
+
+	private void unregisterCommandIf(Predicate<CoreCommandNode<TP, TC>> condition, CoreCommandNode<TP, TC> root) {
+		// Can't use getCoreChildren() here because the collection needs to be modifiable
+		root.getChildren().removeIf(node -> condition.test((CoreCommandNode<TP, TC>) node));
+		for (var child : root.getCoreChildren())
+			unregisterCommandIf(condition, child);
 	}
 }

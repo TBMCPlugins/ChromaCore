@@ -34,7 +34,6 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -59,9 +58,8 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 		}*/
 		var commandNode = super.registerCommandSuper(command);
 		var bcmd = registerOfficially(command, commandNode);
-		if (bcmd != null)
-			for (String alias : bcmd.getAliases())
-				super.registerCommand(command, command.getCommandPath().replaceFirst("^" + bcmd.getName(), Matcher.quoteReplacement(alias)), '/');
+		if (bcmd != null) // TODO: Support aliases
+			super.registerCommandSuper(command);
 
 		var perm = "chroma.command." + command.getCommandPath().replace(' ', '.');
 		if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
@@ -164,18 +162,12 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 	}
 
 	public void unregisterCommands(ButtonPlugin plugin) {
-		/*var cmds = subcommands.values().stream().map(sd -> sd.command).filter(cmd -> plugin.equals(cmd.getPlugin())).toArray(ICommand2MC[]::new);
-		for (var cmd : cmds)
-			unregisterCommand(cmd);*/
-		subcommands.values().removeIf(sd -> Optional.ofNullable(sd.command).map(ICommand2MC::getPlugin).map(plugin::equals).orElse(false));
+		unregisterCommandIf(node -> Optional.ofNullable(node.getData().command).map(ICommand2MC::getPlugin).map(plugin::equals).orElse(false), true);
 	}
 
 	public void unregisterCommands(Component<?> component) {
-		/*var cmds = subcommands.values().stream().map(sd -> sd.command).filter(cmd -> component.equals(cmd.getComponent())).toArray(ICommand2MC[]::new);
-		for (var cmd : cmds)
-			unregisterCommand(cmd);*/
-		subcommands.values().removeIf(sd -> Optional.ofNullable(sd.command).map(ICommand2MC::getComponent)
-			.map(comp -> component.getClass().getSimpleName().equals(comp.getClass().getSimpleName())).orElse(false));
+		unregisterCommandIf(node -> Optional.ofNullable(node.getData().command).map(ICommand2MC::getPlugin)
+			.map(comp -> component.getClass().getSimpleName().equals(comp.getClass().getSimpleName())).orElse(false), true);
 	}
 
 	/*@EventHandler
