@@ -170,17 +170,6 @@ public class Command2MC extends Command2<ICommand2MC, Command2MCSender> implemen
 			.map(comp -> component.getClass().getSimpleName().equals(comp.getClass().getSimpleName())).orElse(false), true);
 	}
 
-	/*@EventHandler
-	public void onTabComplete(TabCompleteEvent event) {
-		try {
-			event.getCompletions().clear(); //Remove player names
-		} catch (UnsupportedOperationException e) {
-			//System.out.println("Tabcomplete: " + event.getBuffer());
-			//System.out.println("First completion: " + event.getCompletions().stream().findFirst().orElse("no completions"));
-			//System.out.println("Listeners: " + Arrays.toString(event.getHandlers().getRegisteredListeners()));
-		}
-	}*/
-
 	@Override
 	public boolean handleCommand(Command2MCSender sender, String commandline) {
 		return handleCommand(sender, commandline, true);

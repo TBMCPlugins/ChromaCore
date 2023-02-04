@@ -3,6 +3,7 @@ package buttondevteam.lib.chat;
 import buttondevteam.core.MainPlugin;
 import buttondevteam.lib.TBMCCoreAPI;
 import buttondevteam.lib.chat.commands.CommandArgument;
+import buttondevteam.lib.chat.commands.CommandArgumentHelpManager;
 import buttondevteam.lib.chat.commands.NumberArg;
 import buttondevteam.lib.chat.commands.SubcommandData;
 import buttondevteam.lib.player.ChromaGamerBase;
@@ -16,12 +17,10 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.javatuples.Pair;
 import org.javatuples.Triplet;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.InputStreamReader;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -79,31 +78,6 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface OptionalArg {
 	}
-
-	/*protected static class SubcommandHelpData<T extends ICommand2> extends SubcommandData<T> {
-		private final TreeSet<String> ht = new TreeSet<>();
-		private BukkitTask task;
-
-		public SubcommandHelpData(Method method, T command, String[] helpText) {
-			super(method, command, helpText);
-		}
-
-		public void addSubcommand(String command) {
-			ht.add(command);
-			if (task == null)
-				task = Bukkit.getScheduler().runTask(MainPlugin.Instance, () -> {
-					helpText = new String[ht.size() + 1]; //This will only run after the server is started  List<E> list = new ArrayList<E>(size());
-					helpText[0] = "§6---- Subcommands ----"; //TODO: There may be more to the help text
-					int i = 1;
-					for (Iterator<String> iterator = ht.iterator();
-					     iterator.hasNext() && i < helpText.length; i++) {
-						String e = iterator.next();
-						helpText[i] = e;
-					}
-					task = null; //Run again, if needed
-				});
-		}
-	}*/
 
 	@RequiredArgsConstructor
 	protected static class ParamConverter<T> {
@@ -205,7 +179,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			if (ann == null) continue;
 			String methodPath = getCommandPath(meth.getName(), ' ');
 			val result = registerNodeFromPath(command.getCommandPath() + methodPath);
-			result.getValue0().addChild(getExecutableNode(meth, command, ann, result.getValue2()));
+			result.getValue0().addChild(getExecutableNode(meth, command, ann, result.getValue2(), new CommandArgumentHelpManager<>(command)));
 			if (mainCommandNode == null) mainCommandNode = result.getValue1();
 			else if (!result.getValue1().getName().equals(mainCommandNode.getName())) {
 				MainPlugin.Instance.getLogger().warning("Multiple commands are defined in the same class! This is not supported. Class: " + command.getClass().getSimpleName());
@@ -225,8 +199,8 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	 * @param path    The command path
 	 * @return The executable node
 	 */
-	private LiteralCommandNode<TP> getExecutableNode(Method method, TC command, Subcommand ann, String path) {
-		val paramsAndSenderType = getCommandParameters(method); // Param order is important
+	private LiteralCommandNode<TP> getExecutableNode(Method method, TC command, Subcommand ann, String path, CommandArgumentHelpManager<TC, TP> argHelpManager) {
+		val paramsAndSenderType = getCommandParametersAndSender(method, argHelpManager); // Param order is important
 		val params = paramsAndSenderType.getValue0();
 		val paramMap = new HashMap<String, CommandArgument>();
 		for (val param : params) {
@@ -237,7 +211,7 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 			.executes(this::executeCommand);
 		ArgumentBuilder<TP, ?> parent = node;
 		for (val param : params) { // Register parameters in the right order
-			parent.then(parent = CoreArgumentBuilder.argument(param.name, getParameterType(param), param.optional));
+			parent.then(parent = CoreArgumentBuilder.argument(param.name, getArgumentType(param), param.optional));
 		}
 		return node.build();
 	}
@@ -272,12 +246,12 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 	 * @return Parameter data objects and the sender type
 	 * @throws RuntimeException If there is no sender parameter declared in the method
 	 */
-	private Pair<CommandArgument[], Class<?>> getCommandParameters(Method method) {
+	private Pair<CommandArgument[], Class<?>> getCommandParametersAndSender(Method method, CommandArgumentHelpManager<TC, TP> argHelpManager) {
 		val parameters = method.getParameters();
 		if (parameters.length == 0)
 			throw new RuntimeException("No sender parameter for method '" + method + "'");
 		val ret = new CommandArgument[parameters.length];
-		val usage = getParameterHelp(method);
+		val usage = argHelpManager.getParameterHelpForMethod(method);
 		val paramNames = usage != null ? usage.split(" ") : null;
 		for (int i = 1; i < parameters.length; i++) {
 			val numAnn = parameters[i].getAnnotation(NumberArg.class);
@@ -290,7 +264,14 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		return new Pair<>(ret, parameters[0].getType());
 	}
 
-	private ArgumentType<?> getParameterType(CommandArgument arg) {
+	/**
+	 * Converts the Chroma representation of the argument declaration into Brigadier format.
+	 * It does part of the command argument type processing.
+	 *
+	 * @param arg Our representation of the command argument
+	 * @return The Brigadier representation of the command argument
+	 */
+	private ArgumentType<?> getArgumentType(CommandArgument arg) {
 		final Class<?> ptype = arg.type;
 		Number lowerLimit = arg.limits.getValue0(), upperLimit = arg.limits.getValue1();
 		if (arg.greedy)
@@ -316,11 +297,24 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		}
 	}
 
+	/**
+	 * Displays the help text based on the executed command. Each command node might have a help text stored.
+	 * The help text is displayed either because of incorrect usage or it's explicitly requested.
+	 *
+	 * @param context The command context
+	 * @return Vanilla command success level (0)
+	 */
 	private int executeHelpText(CommandContext<TP> context) {
 		System.out.println("Nodes:\n" + context.getNodes().stream().map(node -> node.getNode().getName() + "@" + node.getRange()).collect(Collectors.joining("\n")));
 		return 0;
 	}
 
+	/**
+	 * Executes the command itself by calling the subcommand method associated with the input command node.
+	 *
+	 * @param context The command context
+	 * @return Vanilla command success level (0)
+	 */
 	private int executeCommand(CommandContext<TP> context) {
 		System.out.println("Execute command");
 		System.out.println("Should be running sync: " + runOnPrimaryThread);
@@ -376,31 +370,6 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		else
 			invokeCommand.run();*/
 		return 0;
-	}
-
-	private String getParameterHelp(Method method) {
-		val str = method.getDeclaringClass().getResourceAsStream("/commands.yml");
-		if (str == null)
-			TBMCCoreAPI.SendException("Error while getting command data!", new Exception("Resource not found!"), MainPlugin.Instance);
-		else {
-			YamlConfiguration yc = YamlConfiguration.loadConfiguration(new InputStreamReader(str)); //Generated by ButtonProcessor
-			val ccs = yc.getConfigurationSection(method.getDeclaringClass().getCanonicalName().replace('$', '.'));
-			if (ccs != null) {
-				val cs = ccs.getConfigurationSection(method.getName());
-				if (cs != null) {
-					val mname = cs.getString("method");
-					val params = cs.getString("params");
-					int i = mname.indexOf('('); //Check only the name - the whole method is still stored for backwards compatibility and in case it may be useful
-					if (i != -1 && method.getName().equals(mname.substring(0, i)) && params != null) {
-						return params;
-					} else
-						TBMCCoreAPI.SendException("Error while getting command data for " + method + "!", new Exception("Method '" + method + "' != " + mname + " or params is " + params), MainPlugin.Instance);
-				} else
-					MainPlugin.Instance.getLogger().warning("Failed to get command data for " + method + " (cs is null)! Make sure to use 'clean install' when building the project.");
-			} else
-				MainPlugin.Instance.getLogger().warning("Failed to get command data for " + method + " (ccs is null)! Make sure to use 'clean install' when building the project.");
-		}
-		return null;
 	}
 
 	public abstract boolean hasPermission(TP sender, TC command, Method subcommand);

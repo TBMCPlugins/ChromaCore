@@ -7,6 +7,13 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.function.Function;
 
+/**
+ * This class is used as a base class for all the specific command implementations.
+ * It primarily holds information about the command itself and how it should be run, ideally in a programmer-friendly way.
+ * Any inferred and processed information about this command will be stored in the command manager (Command2*).
+ *
+ * @param <TP> The sender's type
+ */
 public abstract class ICommand2<TP extends Command2Sender> {
 	/**
 	 * Default handler for commands, can be used to copy the args too.
@@ -14,6 +21,7 @@ public abstract class ICommand2<TP extends Command2Sender> {
 	 * @param sender The sender which ran the command
 	 * @return The success of the command
 	 */
+	@SuppressWarnings("unused")
 	public boolean def(TP sender) {
 		return false;
 	}
