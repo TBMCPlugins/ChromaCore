@@ -28,7 +28,6 @@ import org.bukkit.entity.Player
 import org.bukkit.event.Listener
 import org.bukkit.permissions.Permission
 import org.bukkit.permissions.PermissionDefault
-import org.javatuples.Triplet
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 import java.util.*
@@ -36,7 +35,7 @@ import java.util.function.BiConsumer
 import java.util.function.Function
 import java.util.function.Supplier
 
-class Command2MC : Command2<ICommand2MC?, Command2MCSender?>('/', true), Listener {
+class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener {
     /**
      * Don't use directly, use the method in Component and ButtonPlugin to automatically unregister the command when needed.
      *
@@ -149,8 +148,25 @@ class Command2MC : Command2<ICommand2MC?, Command2MCSender?>('/', true), Listene
         super.addParamConverter(cl, converter, "§c$errormsg", allSupplier)
     }
 
+    override fun convertSenderType(sender: Command2MCSender, senderType: Class<*>): Any? {
+        val original = super.convertSenderType(sender, senderType)
+        if (original != null) {
+            return original
+        }
+        // Check Bukkit sender type
+        if (senderType.isAssignableFrom(sender.sender.javaClass))
+            return sender.sender
+        //The command expects a user of our system
+        if (ChromaGamerBase::class.java.isAssignableFrom(senderType)) {
+            val cg = ChromaGamerBase.getFromSender(sender.sender)
+            if (cg?.javaClass == senderType)
+                return cg
+        }
+        return null
+    }
+
     fun unregisterCommands(plugin: ButtonPlugin) {
-        unregisterCommandIf({ node: CoreCommandNode<Command2MCSender?, ICommand2MC?> -> Optional.ofNullable(node.data.command).map { obj: ICommand2MC -> obj.plugin }.map { obj: ButtonPlugin? -> plugin.equals(obj) }.orElse(false) }, true)
+        unregisterCommandIf({ node -> Optional.ofNullable(node.data.command).map { obj -> obj.plugin }.map { obj -> plugin == obj }.orElse(false) }, true)
     }
 
     fun unregisterCommands(component: Component<*>) {

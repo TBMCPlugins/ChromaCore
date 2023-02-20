@@ -153,7 +153,7 @@ public abstract class ChromaGamerBase {
 	 * @param sender The sender to use
 	 * @return A user as returned by a converter or null if none can supply it
 	 */
-	public static ChromaGamerBase getFromSender(CommandSender sender) {
+	public static ChromaGamerBase getFromSender(CommandSender sender) { // TODO: Use Command2Sender
 		for (val converter : senderConverters) {
 			val ocg = converter.apply(sender);
 			if (ocg.isPresent())

@@ -106,7 +106,7 @@ public class MainPlugin extends ButtonPlugin {
 		registerCommand(new ComponentCommand());
 		registerCommand(new ChromaCommand());
 		TBMCCoreAPI.RegisterEventsForExceptions(new PlayerListener(), this);
-		TBMCCoreAPI.RegisterEventsForExceptions(getCommand2MC(), this);
+		TBMCCoreAPI.RegisterEventsForExceptions(Companion.getCommand2MC(), this);
 		ChromaGamerBase.addConverter(commandSender -> Optional.ofNullable(commandSender instanceof ConsoleCommandSender || commandSender instanceof BlockCommandSender
 			? TBMCPlayer.getPlayer(new UUID(0, 0), TBMCPlayer.class) : null)); //Console & cmdblocks
 		ChromaGamerBase.addConverter(sender -> Optional.ofNullable(sender instanceof Player
@@ -125,8 +125,8 @@ public class MainPlugin extends ButtonPlugin {
 		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§bBLUE§f", Color.Blue, "blue"));
 		TBMCChatAPI.RegisterChatChannel(new ChatRoom("§5PURPLE§f", Color.DarkPurple, "purple"));
 		Supplier<Iterable<String>> playerSupplier = () -> Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName)::iterator;
-		getCommand2MC().addParamConverter(OfflinePlayer.class, Bukkit::getOfflinePlayer, "Player not found!", playerSupplier);
-		getCommand2MC().addParamConverter(Player.class, Bukkit::getPlayer, "Online player not found!", playerSupplier);
+		Companion.getCommand2MC().addParamConverter(OfflinePlayer.class, Bukkit::getOfflinePlayer, "Player not found!", playerSupplier);
+		Companion.getCommand2MC().addParamConverter(Player.class, Bukkit::getPlayer, "Online player not found!", playerSupplier);
 		if (writePluginList.get()) {
 			try {
 				Files.write(new File("plugins", "plugins.txt").toPath(), Arrays.stream(Bukkit.getPluginManager().getPlugins()).map(p -> (CharSequence) p.getDataFolder().getName())::iterator);

@@ -5,8 +5,6 @@ import buttondevteam.core.ComponentManager
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.Component.Companion.updateConfig
 import buttondevteam.lib.chat.Command2MC
-import buttondevteam.lib.chat.Command2MC.registerCommand
-import buttondevteam.lib.chat.Command2MC.unregisterCommands
 import buttondevteam.lib.chat.ICommand2MC
 import lombok.AccessLevel
 import lombok.Getter
@@ -22,8 +20,7 @@ import java.util.function.Function
 
 @HasConfig(global = true)
 abstract class ButtonPlugin : JavaPlugin() {
-    @Getter(AccessLevel.PROTECTED)
-    private val iConfig = IHaveConfig { saveConfig() }
+    protected val iConfig = IHaveConfig { saveConfig() }
     private var yaml: CommentedConfiguration? = null
 
     @Getter(AccessLevel.PROTECTED)
@@ -74,7 +71,7 @@ abstract class ButtonPlugin : JavaPlugin() {
             ComponentManager.unregComponents(this)
             pluginDisable()
             if (ConfigData.saveNow(config)) logger.info("Saved configuration changes.")
-            ButtonPlugin.getCommand2MC().unregisterCommands(this)
+            command2MC.unregisterCommands(this)
         } catch (e: Exception) {
             TBMCCoreAPI.SendException("Error while disabling plugin $name!", e, this)
         }
@@ -122,7 +119,7 @@ abstract class ButtonPlugin : JavaPlugin() {
 
     override fun getConfig(): FileConfiguration {
         if (yaml == null) justReload()
-        return if (yaml == null) YamlConfiguration() else yaml //Return a temporary instance
+        return yaml ?: YamlConfiguration() //Return a temporary instance
     }
 
     override fun saveConfig() {
@@ -140,16 +137,15 @@ abstract class ButtonPlugin : JavaPlugin() {
      */
     fun registerCommand(command: ICommand2MC) {
         command.registerToPlugin(this)
-        ButtonPlugin.getCommand2MC().registerCommand(command)
+        command2MC.registerCommand(command)
     }
 
     @Retention(AnnotationRetention.RUNTIME)
     @Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.CLASS)
     annotation class ConfigOpts(val disableConfigGen: Boolean = false)
     companion object {
-        @Getter //Needs to be static as we don't know the plugin when a command is handled
-
-        private val command2MC = Command2MC()
+        //Needs to be static as we don't know the plugin when a command is handled
+        val command2MC = Command2MC()
         fun configGenAllowed(obj: Any): Boolean {
             return !Optional.ofNullable(obj.javaClass.getAnnotation(ConfigOpts::class.java))
                 .map(Function<ConfigOpts, Boolean> { obj: ConfigOpts -> obj.disableConfigGen() }).orElse(false)

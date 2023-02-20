@@ -72,7 +72,6 @@
 							<artifactSet>
 								<includes>
 									<include>me.lucko:commodore</include>
-									<include>org.javatuples:javatuples</include>
 								</includes>
 							</artifactSet>
 							<relocations>
@@ -225,11 +224,6 @@
 			<artifactId>commodore</artifactId>
 			<version>1.11</version>
 			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.javatuples</groupId>
-			<artifactId>javatuples</artifactId>
-			<version>1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
