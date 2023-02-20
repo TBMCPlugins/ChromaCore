@@ -1,171 +1,158 @@
-package buttondevteam.lib.architecture;
+package buttondevteam.lib.architecture
 
-import buttondevteam.buttonproc.HasConfig;
-import buttondevteam.core.ComponentManager;
-import buttondevteam.lib.TBMCCoreAPI;
-import buttondevteam.lib.chat.Command2MC;
-import buttondevteam.lib.chat.ICommand2MC;
-import lombok.AccessLevel;
-import lombok.Getter;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.Stack;
+import buttondevteam.buttonproc.HasConfig
+import buttondevteam.core.ComponentManager
+import buttondevteam.lib.TBMCCoreAPI
+import buttondevteam.lib.architecture.Component.Companion.updateConfig
+import buttondevteam.lib.chat.Command2MC
+import buttondevteam.lib.chat.Command2MC.registerCommand
+import buttondevteam.lib.chat.Command2MC.unregisterCommands
+import buttondevteam.lib.chat.ICommand2MC
+import lombok.AccessLevel
+import lombok.Getter
+import org.bukkit.configuration.InvalidConfigurationException
+import org.bukkit.configuration.file.FileConfiguration
+import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.plugin.java.JavaPlugin
+import java.io.File
+import java.io.IOException
+import java.util.*
+import java.util.function.Consumer
+import java.util.function.Function
 
 @HasConfig(global = true)
-public abstract class ButtonPlugin extends JavaPlugin {
-	@Getter //Needs to be static as we don't know the plugin when a command is handled
-	private static final Command2MC command2MC = new Command2MC();
-	@Getter(AccessLevel.PROTECTED)
-	private final IHaveConfig iConfig = new IHaveConfig(this::saveConfig);
-	private CommentedConfiguration yaml;
-	@Getter(AccessLevel.PROTECTED)
-	private IHaveConfig data; //TODO
-	/**
-	 * Used to unregister components in the right order - and to reload configs
-	 */
-	@Getter
-	private final Stack<Component<?>> componentStack = new Stack<>();
+abstract class ButtonPlugin : JavaPlugin() {
+    @Getter(AccessLevel.PROTECTED)
+    private val iConfig = IHaveConfig { saveConfig() }
+    private var yaml: CommentedConfiguration? = null
 
-	protected abstract void pluginEnable();
+    @Getter(AccessLevel.PROTECTED)
+    private val data //TODO
+        : IHaveConfig? = null
 
-	/**
-	 * Called after the components are unregistered
-	 */
-	protected abstract void pluginDisable();
+    /**
+     * Used to unregister components in the right order - and to reload configs
+     */
+    @Getter
+    private val componentStack = Stack<Component<*>>()
+    protected abstract fun pluginEnable()
 
-	/**
-	 * Called before the components are unregistered
-	 */
-	protected void pluginPreDisable() {
-	}
+    /**
+     * Called after the components are unregistered
+     */
+    protected abstract fun pluginDisable()
 
-	@Override
-	public final void onEnable() {
-		if (!loadConfig()) {
-			getLogger().warning("Please fix the issues and restart the server to load the plugin.");
-			return;
-		}
-		try {
-			pluginEnable();
-		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Error while enabling plugin " + getName() + "!", e, this);
-		}
-		if (configGenAllowed(this)) //If it's not disabled (by default it's not)
-			IHaveConfig.pregenConfig(this, null);
-	}
+    /**
+     * Called before the components are unregistered
+     */
+    protected fun pluginPreDisable() {}
+    override fun onEnable() {
+        if (!loadConfig()) {
+            logger.warning("Please fix the issues and restart the server to load the plugin.")
+            return
+        }
+        try {
+            pluginEnable()
+        } catch (e: Exception) {
+            TBMCCoreAPI.SendException("Error while enabling plugin $name!", e, this)
+        }
+        if (configGenAllowed(this)) //If it's not disabled (by default it's not)
+            IHaveConfig.pregenConfig(this, null)
+    }
 
-	private boolean loadConfig() {
-		var config = getConfig();
-		if (config == null)
-			return false;
-		var section = config.getConfigurationSection("global");
-		if (section == null) section = config.createSection("global");
-		iConfig.reset(section);
-		return true;
-	}
+    private fun loadConfig(): Boolean {
+        val config = config ?: return false
+        var section = config.getConfigurationSection("global")
+        if (section == null) section = config.createSection("global")
+        iConfig.reset(section)
+        return true
+    }
 
-	@Override
-	public final void onDisable() {
-		try {
-			pluginPreDisable();
-			ComponentManager.unregComponents(this);
-			pluginDisable();
-			if (ConfigData.saveNow(getConfig()))
-				getLogger().info("Saved configuration changes.");
-			getCommand2MC().unregisterCommands(this);
-		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Error while disabling plugin " + getName() + "!", e, this);
-		}
-	}
+    override fun onDisable() {
+        try {
+            pluginPreDisable()
+            ComponentManager.unregComponents(this)
+            pluginDisable()
+            if (ConfigData.saveNow(config)) logger.info("Saved configuration changes.")
+            ButtonPlugin.getCommand2MC().unregisterCommands(this)
+        } catch (e: Exception) {
+            TBMCCoreAPI.SendException("Error while disabling plugin $name!", e, this)
+        }
+    }
 
-	@Override
-	public void reloadConfig() {
-		tryReloadConfig();
-	}
+    override fun reloadConfig() {
+        tryReloadConfig()
+    }
 
-	public boolean tryReloadConfig() {
-		if (!justReload()) return false;
-		loadConfig();
-		componentStack.forEach(c -> Component.updateConfig(this, c));
-		return true;
-	}
+    fun tryReloadConfig(): Boolean {
+        if (!justReload()) return false
+        loadConfig()
+        componentStack.forEach(Consumer { c: Component<*>? -> updateConfig(this, c!!) })
+        return true
+    }
 
-	public boolean justReload() {
-		if (yaml != null && ConfigData.saveNow(getConfig())) {
-			getLogger().warning("Saved pending configuration changes to the file, didn't reload. Apply your changes again.");
-			return false;
-		}
-		var file = new File(getDataFolder(), "config.yml");
-		var yaml = new CommentedConfiguration(file);
-		if (file.exists()) {
-			try {
-				yaml.load(file);
-			} catch (IOException | InvalidConfigurationException e) {
-				getLogger().warning("Failed to load config! Check for syntax errors.");
-				e.printStackTrace();
-				return false;
-			}
-		}
-		this.yaml = yaml;
-		var res = getTextResource("configHelp.yml");
-		if (res == null)
-			return true;
-		var yc = YamlConfiguration.loadConfiguration(res);
-		for (var kv : yc.getValues(true).entrySet())
-			if (kv.getValue() instanceof String)
-				yaml.addComment(kv.getKey().replace(".generalDescriptionInsteadOfAConfig", ""),
-					Arrays.stream(((String) kv.getValue()).split("\n"))
-						.map(str -> "# " + str.trim()).toArray(String[]::new));
-		return true;
-	}
+    fun justReload(): Boolean {
+        if (yaml != null && ConfigData.saveNow(config)) {
+            logger.warning("Saved pending configuration changes to the file, didn't reload. Apply your changes again.")
+            return false
+        }
+        val file = File(dataFolder, "config.yml")
+        val yaml = CommentedConfiguration(file)
+        if (file.exists()) {
+            try {
+                yaml.load(file)
+            } catch (e: IOException) {
+                logger.warning("Failed to load config! Check for syntax errors.")
+                e.printStackTrace()
+                return false
+            } catch (e: InvalidConfigurationException) {
+                logger.warning("Failed to load config! Check for syntax errors.")
+                e.printStackTrace()
+                return false
+            }
+        }
+        this.yaml = yaml
+        val res = getTextResource("configHelp.yml") ?: return true
+        val yc = YamlConfiguration.loadConfiguration(res)
+        for ((key, value) in yc.getValues(true)) if (value is String) yaml.addComment(key.replace(".generalDescriptionInsteadOfAConfig", ""),
+            *Arrays.stream<String>(value.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
+                .map<String> { str: String -> "# " + str.trim { it <= ' ' } }.toArray<String> { _Dummy_.__Array__() })
+        return true
+    }
 
-	@Override
-	public FileConfiguration getConfig() {
-		if (yaml == null)
-			justReload();
-		if (yaml == null) return new YamlConfiguration(); //Return a temporary instance
-		return yaml;
-	}
+    override fun getConfig(): FileConfiguration {
+        if (yaml == null) justReload()
+        return if (yaml == null) YamlConfiguration() else yaml //Return a temporary instance
+    }
 
-	@Override
-	public void saveConfig() {
-		try {
-			if (yaml != null)
-				yaml.save();
-		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Failed to save config", e, this);
-		}
-	}
+    override fun saveConfig() {
+        try {
+            if (yaml != null) yaml!!.save()
+        } catch (e: Exception) {
+            TBMCCoreAPI.SendException("Failed to save config", e, this)
+        }
+    }
 
-	/**
-	 * Registers command and sets its plugin.
-	 *
-	 * @param command The command to register
-	 */
-	protected void registerCommand(ICommand2MC command) {
-		command.registerToPlugin(this);
-		getCommand2MC().registerCommand(command);
-	}
+    /**
+     * Registers command and sets its plugin.
+     *
+     * @param command The command to register
+     */
+    fun registerCommand(command: ICommand2MC) {
+        command.registerToPlugin(this)
+        ButtonPlugin.getCommand2MC().registerCommand(command)
+    }
 
-	@Retention(RetentionPolicy.RUNTIME)
-	@Target(ElementType.TYPE)
-	public @interface ConfigOpts {
-		boolean disableConfigGen() default false;
-	}
+    @Retention(AnnotationRetention.RUNTIME)
+    @Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.CLASS)
+    annotation class ConfigOpts(val disableConfigGen: Boolean = false)
+    companion object {
+        @Getter //Needs to be static as we don't know the plugin when a command is handled
 
-	public static boolean configGenAllowed(Object obj) {
-		return !Optional.ofNullable(obj.getClass().getAnnotation(ConfigOpts.class))
-			.map(ConfigOpts::disableConfigGen).orElse(false);
-	}
+        private val command2MC = Command2MC()
+        fun configGenAllowed(obj: Any): Boolean {
+            return !Optional.ofNullable(obj.javaClass.getAnnotation(ConfigOpts::class.java))
+                .map(Function<ConfigOpts, Boolean> { obj: ConfigOpts -> obj.disableConfigGen() }).orElse(false)
+        }
+    }
 }

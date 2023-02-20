@@ -9,7 +9,7 @@
 	<packaging>pom</packaging>
 	<version>master-SNAPSHOT</version>
 	<properties>
-		<lombok.version>1.18.10</lombok.version>
+		<lombok.version>1.18.26</lombok.version>
 	</properties>
 	<name>Core POM for Chroma</name>
 
@@ -21,30 +21,14 @@
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.8.1</version>
 					<configuration>
-						<release>8</release>
+						<release>17</release>
 						<annotationProcessorPaths>
-							<annotationProcessorPath>
-								<groupId>com.github.bsideup.jabel</groupId>
-								<artifactId>jabel-javac-plugin</artifactId>
-								<version>0.2.0</version>
-							</annotationProcessorPath>
-							<annotationProcessorPath>
+							<path>
 								<groupId>org.projectlombok</groupId>
 								<artifactId>lombok</artifactId>
-								<version>${lombok.version}</version>
-							</annotationProcessorPath>
-							<annotationProcessorPath>
-								<groupId>com.github.TBMCPlugins.ChromaCore</groupId>
-								<artifactId>ButtonProcessor</artifactId>
-								<version>master-SNAPSHOT</version>
-							</annotationProcessorPath>
+								<version>1.18.26</version>
+							</path>
 						</annotationProcessorPaths>
-						<annotationProcessors> <!-- Order is important, so these lines are needed -->
-							<annotationProcessor>com.github.bsideup.jabel.JabelJavacProcessor</annotationProcessor>
-							<annotationProcessor>lombok.launch.AnnotationProcessorHider$AnnotationProcessor
-							</annotationProcessor>
-							<annotationProcessor>buttondevteam.buttonproc.ButtonProcessor</annotationProcessor>
-						</annotationProcessors>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -97,31 +81,4 @@
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
-
-	<profiles>
-		<profile>
-			<id>intellij-idea-only</id>
-			<activation>
-				<property>
-					<name>idea.maven.embedder.version</name>
-				</property>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-compiler-plugin</artifactId>
-						<configuration>
-							<release>11</release>
-							<!--
-							<compilerArgs>
-								<arg>HYPHENHYPHENenable-preview</arg>
-							</compilerArgs>
-							-->
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 </project>

@@ -1,325 +1,278 @@
-package buttondevteam.lib.chat;
+package buttondevteam.lib.chat
 
-import buttondevteam.core.MainPlugin;
-import buttondevteam.lib.TBMCCoreAPI;
-import buttondevteam.lib.chat.commands.CommandArgument;
-import buttondevteam.lib.chat.commands.CommandArgumentHelpManager;
-import buttondevteam.lib.chat.commands.NumberArg;
-import buttondevteam.lib.chat.commands.SubcommandData;
-import buttondevteam.lib.player.ChromaGamerBase;
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.*;
-import com.mojang.brigadier.builder.ArgumentBuilder;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.tree.CommandNode;
-import com.mojang.brigadier.tree.LiteralCommandNode;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
-import org.bukkit.Bukkit;
-import org.javatuples.Pair;
-import org.javatuples.Triplet;
-import org.jetbrains.annotations.NotNull;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import buttondevteam.core.MainPlugin
+import buttondevteam.lib.TBMCCoreAPI
+import buttondevteam.lib.chat.Command2.Subcommand
+import buttondevteam.lib.chat.commands.*
+import buttondevteam.lib.player.ChromaGamerBase
+import com.mojang.brigadier.CommandDispatcher
+import com.mojang.brigadier.arguments.*
+import com.mojang.brigadier.builder.ArgumentBuilder
+import com.mojang.brigadier.context.CommandContext
+import com.mojang.brigadier.context.ParsedCommandNode
+import com.mojang.brigadier.exceptions.CommandSyntaxException
+import com.mojang.brigadier.tree.CommandNode
+import com.mojang.brigadier.tree.LiteralCommandNode
+import lombok.RequiredArgsConstructor
+import org.bukkit.Bukkit
+import org.javatuples.Pair
+import org.javatuples.Triplet
+import java.lang.reflect.Method
+import java.util.function.Function
+import java.util.function.Predicate
+import java.util.function.Supplier
+import java.util.stream.Collectors
 
 /**
  * The method name is the subcommand, use underlines (_) to add further subcommands.
  * The args may be null if the conversion failed and it's optional.
  */
 @RequiredArgsConstructor
-public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Sender> {
+abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
+    /**
+     * Parameters annotated with this receive all the remaining arguments
+     */
+    @Target(AnnotationTarget.VALUE_PARAMETER)
+    @Retention(AnnotationRetention.RUNTIME)
+    annotation class TextArg
 
-	/**
-	 * Parameters annotated with this receive all the remaining arguments
-	 */
-	@Target(ElementType.PARAMETER)
-	@Retention(RetentionPolicy.RUNTIME)
-	public @interface TextArg {
-	}
+    /**
+     * Methods annotated with this will be recognised as subcommands
+     */
+    @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
+    @Retention(AnnotationRetention.RUNTIME)
+    annotation class Subcommand(
+        /**
+         * Help text to show players. A usage message will be also shown below it.
+         */
+        val helpText: Array<String> = [],
+        /**
+         * The main permission which allows using this command (individual access can be still revoked with "chroma.command.X").
+         * Used to be "tbmc.admin". The [.MOD_GROUP] is provided to use with this.
+         */
+        val permGroup: String = "", val aliases: Array<String> = []) {
+        companion object {
+            /**
+             * Allowed for OPs only by default
+             */
+            const val MOD_GROUP = "mod"
+        }
+    }
 
-	/**
-	 * Methods annotated with this will be recognised as subcommands
-	 */
-	@Target(ElementType.METHOD)
-	@Retention(RetentionPolicy.RUNTIME)
-	public @interface Subcommand {
-		/**
-		 * Allowed for OPs only by default
-		 */
-		String MOD_GROUP = "mod";
+    @Target(AnnotationTarget.VALUE_PARAMETER)
+    @Retention(AnnotationRetention.RUNTIME)
+    annotation class OptionalArg
 
-		/**
-		 * Help text to show players. A usage message will be also shown below it.
-		 */
-		String[] helpText() default {};
+    protected class ParamConverter<T>(val converter: Function<String, T>, val errormsg: String, val allSupplier: Supplier<Iterable<String>>)
 
-		/**
-		 * The main permission which allows using this command (individual access can be still revoked with "chroma.command.X").
-		 * Used to be "tbmc.admin". The {@link #MOD_GROUP} is provided to use with this.
-		 */
-		String permGroup() default "";
+    protected val paramConverters = HashMap<Class<*>, ParamConverter<*>>()
+    private val commandHelp = ArrayList<String>() //Mainly needed by Discord
+    private val dispatcher = CommandDispatcher<TP>()
 
-		String[] aliases() default {};
-	}
+    /**
+     * The first character in the command line that shows that it's a command.
+     */
+    private val commandChar = 0.toChar()
 
-	@Target(ElementType.PARAMETER)
-	@Retention(RetentionPolicy.RUNTIME)
-	public @interface OptionalArg {
-	}
+    /**
+     * Whether the command's actual code has to be run on the primary thread.
+     */
+    private val runOnPrimaryThread = false
 
-	@RequiredArgsConstructor
-	protected static class ParamConverter<T> {
-		public final Function<String, T> converter;
-		public final String errormsg;
-		public final Supplier<Iterable<String>> allSupplier;
-	}
+    /**
+     * Adds a param converter that obtains a specific object from a string parameter.
+     * The converter may return null.
+     *
+     * @param <T>         The type of the result
+     * @param cl          The class of the result object
+     * @param converter   The converter to use
+     * @param allSupplier The supplier of all possible values (ideally)
+    </T> */
+    open fun <T> addParamConverter(cl: Class<T>, converter: Function<String, T>, errormsg: String,
+                                   allSupplier: Supplier<Iterable<String>>) {
+        paramConverters[cl] = ParamConverter<T>(converter, errormsg, allSupplier)
+    }
 
-	protected final HashMap<Class<?>, ParamConverter<?>> paramConverters = new HashMap<>();
-	private final ArrayList<String> commandHelp = new ArrayList<>(); //Mainly needed by Discord
-	private final CommandDispatcher<TP> dispatcher = new CommandDispatcher<>();
+    open fun handleCommand(sender: TP, commandline: String): Boolean {
+        val results = dispatcher.parse(commandline, sender)
+        if (results.reader.canRead()) {
+            return false // Unknown command
+        }
+        //Needed because permission checking may load the (perhaps offline) sender's file which is disallowed on the main thread
+        Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance) {
+            try {
+                dispatcher.execute(results)
+            } catch (e: CommandSyntaxException) {
+                sender.sendMessage(e.message)
+            } catch (e: Exception) {
+                TBMCCoreAPI.SendException("Command execution failed for sender " + sender.name + "(" + sender.javaClass.canonicalName + ") and message " + commandline, e, MainPlugin.Instance)
+            }
+        }
+        return true //We found a method
+    }
 
-	/**
-	 * The first character in the command line that shows that it's a command.
-	 */
-	private final char commandChar;
-	/**
-	 * Whether the command's actual code has to be run on the primary thread.
-	 */
-	private final boolean runOnPrimaryThread;
+    //TODO: Add to the help
+    private fun processSenderType(sender: TP, sd: SubcommandData<TC, TP>, params: ArrayList<Any>): Boolean {
+        val sendertype = sd.senderType
+        val cg: ChromaGamerBase
+        if (sendertype.isAssignableFrom(sender.javaClass)) params.add(sender) //The command either expects a CommandSender or it is a Player, or some other expected type
+        else if (sender is Command2MCSender // TODO: This is Minecraft only
+            && sendertype.isAssignableFrom((sender as Command2MCSender).sender.javaClass))
+            params.add((sender as Command2MCSender).sender)
+        else if ((ChromaGamerBase::class.java.isAssignableFrom(sendertype) && sender is Command2MCSender)
+            && ChromaGamerBase.getFromSender((sender as Command2MCSender).sender).also { cg = it } != null && cg.javaClass == sendertype) //The command expects a user of our system
+            params.add(cg) else {
+            val type = sendertype.simpleName.fold("") { s, ch -> s + if (ch.isUpperCase()) " " + ch.lowercase() else ch }
+            sender.sendMessage("§cYou need to be a $type to use this command.")
+            sender.sendMessage(sd.getHelpText(sender)) //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
+            return true
+        }
+        return false
+    }
 
-	/**
-	 * Adds a param converter that obtains a specific object from a string parameter.
-	 * The converter may return null.
-	 *
-	 * @param <T>         The type of the result
-	 * @param cl          The class of the result object
-	 * @param converter   The converter to use
-	 * @param allSupplier The supplier of all possible values (ideally)
-	 */
-	public <T> void addParamConverter(Class<T> cl, Function<String, T> converter, String errormsg,
-	                                  Supplier<Iterable<String>> allSupplier) {
-		paramConverters.put(cl, new ParamConverter<>(converter, errormsg, allSupplier));
-	}
+    /**
+     * Register a command in the command system. The way this command gets registered may change depending on the implementation.
+     * Always invoke [.registerCommandSuper] when implementing this method.
+     *
+     * @param command The command to register
+     */
+    abstract fun registerCommand(command: TC)
 
-	public boolean handleCommand(TP sender, String commandline) {
-		var results = dispatcher.parse(commandline, sender);
-		if (results.getReader().canRead()) {
-			return false; // Unknown command
-		}
-		Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, () -> {
-			try {
-				dispatcher.execute(results);
-			} catch (CommandSyntaxException e) {
-				sender.sendMessage(e.getMessage());
-			} catch (Exception e) {
-				TBMCCoreAPI.SendException("Command execution failed for sender " + sender.getName() + "(" + sender.getClass().getCanonicalName() + ") and message " + commandline, e, MainPlugin.Instance);
-			}
-		});
-		return true; //We found a method
-	}
+    /**
+     * Registers a command in the Command2 system, so it can be looked up and executed.
+     *
+     * @param command The command to register
+     * @return The Brigadier command node if you need it for something (like tab completion)
+     */
+    protected fun registerCommandSuper(command: TC): LiteralCommandNode<TP> {
+        var mainCommandNode: LiteralCommandNode<TP>? = null
+        for (meth in command.javaClass.getMethods()) {
+            val ann = meth.getAnnotation<Subcommand>(Subcommand::class.java) ?: continue
+            val methodPath = CommandUtils.getCommandPath(meth.name, ' ')
+            val result = registerNodeFromPath(command!!.commandPath + methodPath)
+            result.value0.addChild(getExecutableNode(meth, command, ann, result.value2, CommandArgumentHelpManager(command)))
+            if (mainCommandNode == null) mainCommandNode = result.value1 else if (result.value1!!.name != mainCommandNode.name) {
+                MainPlugin.Instance.logger.warning("Multiple commands are defined in the same class! This is not supported. Class: " + command.javaClass.simpleName)
+            }
+        }
+        if (mainCommandNode == null) {
+            throw RuntimeException("There are no subcommands defined in the command class " + command.javaClass.getSimpleName() + "!")
+        }
+        return mainCommandNode
+    }
 
-	//Needed because permission checking may load the (perhaps offline) sender's file which is disallowed on the main thread
+    /**
+     * Returns the node that can actually execute the given subcommand.
+     *
+     * @param method  The subcommand method
+     * @param command The command object
+     * @param path    The command path
+     * @return The executable node
+     */
+    private fun getExecutableNode(method: Method, command: TC, ann: Subcommand, path: String, argHelpManager: CommandArgumentHelpManager<TC, TP>): LiteralCommandNode<TP> {
+        val paramsAndSenderType = getCommandParametersAndSender(method, argHelpManager) // Param order is important
+        val params = paramsAndSenderType.value0
+        val paramMap = HashMap<String, CommandArgument?>()
+        for (param in params) {
+            paramMap[param!!.name] = param
+        }
+        val node = CoreCommandBuilder.literal<TP, TC>(path, params[0]!!.type, paramMap, params, command)
+            .helps(command!!.getHelpText(method, ann)).permits { sender: TP -> hasPermission(sender, command, method) }
+            .executes { context: CommandContext<TP> -> executeCommand(context) }
+        var parent: ArgumentBuilder<TP, *> = node
+        for (param in params) { // Register parameters in the right order
+            parent.then(CoreArgumentBuilder.argument(param!!.name, getArgumentType(param), param.optional).also { parent = it })
+        }
+        return node.build()
+    }
 
-	//TODO: Add to the help
+    /**
+     * Registers all necessary no-op nodes for the given path.
+     *
+     * @param path The full command path
+     * @return The last no-op node that can be used to register the executable node,
+     * the main command node and the last part of the command path (that isn't registered yet)
+     */
+    private fun registerNodeFromPath(path: String): Triplet<CommandNode<TP>, LiteralCommandNode<TP>?, String> {
+        val split = path.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        var parent: CommandNode<TP> = dispatcher.root
+        var mainCommand: LiteralCommandNode<TP>? = null
+        for (i in 0 until split.size - 1) {
+            val part = split[i]
+            val child = parent.getChild(part)
+            if (child == null) parent.addChild(CoreCommandBuilder.literalNoOp<TP, TC>(part).executes { context: CommandContext<TP> -> executeHelpText(context) }.build().also { parent = it }) else parent = child
+            if (i == 0) mainCommand = parent as LiteralCommandNode<TP> // Has to be a literal, if not, well, error
+        }
+        return Triplet(parent, mainCommand, split[split.size - 1])
+    }
 
-	private boolean processSenderType(TP sender, SubcommandData<TC, TP> sd, ArrayList<Object> params) {
-		val sendertype = sd.senderType;
-		final ChromaGamerBase cg;
-		if (sendertype.isAssignableFrom(sender.getClass()))
-			params.add(sender); //The command either expects a CommandSender or it is a Player, or some other expected type
-		else if (sender instanceof Command2MCSender // TODO: This is Minecraft only
-			&& sendertype.isAssignableFrom(((Command2MCSender) sender).getSender().getClass()))
-			params.add(((Command2MCSender) sender).getSender());
-		else if (ChromaGamerBase.class.isAssignableFrom(sendertype)
-			&& sender instanceof Command2MCSender
-			&& (cg = ChromaGamerBase.getFromSender(((Command2MCSender) sender).getSender())) != null
-			&& cg.getClass() == sendertype) //The command expects a user of our system
-			params.add(cg);
-		else {
-			String type = sendertype.getSimpleName().chars().mapToObj(ch -> Character.isUpperCase(ch)
-				? " " + Character.toLowerCase(ch)
-				: ch + "").collect(Collectors.joining());
-			sender.sendMessage("§cYou need to be a " + type + " to use this command.");
-			sender.sendMessage(sd.getHelpText(sender)); //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
-			return true;
-		}
-		return false;
-	}
+    /**
+     * Get parameter data for the given subcommand. Attempts to read it from the commands file, if it fails, it will return generic info.
+     * The first parameter is always the sender both in the methods themselves and in the returned array.
+     *
+     * @param method The method the subcommand is created from
+     * @return Parameter data objects and the sender type
+     * @throws RuntimeException If there is no sender parameter declared in the method
+     */
+    private fun getCommandParametersAndSender(method: Method, argHelpManager: CommandArgumentHelpManager<TC, TP>): Pair<Array<CommandArgument?>, Class<*>> {
+        val parameters = method.parameters
+        if (parameters.size == 0) throw RuntimeException("No sender parameter for method '$method'")
+        val ret = arrayOfNulls<CommandArgument>(parameters.size)
+        val usage = argHelpManager.getParameterHelpForMethod(method)
+        val paramNames = usage?.split(" ".toRegex())?.dropLastWhile { it.isEmpty() }?.toTypedArray()
+        for (i in 1 until parameters.size) {
+            val numAnn = parameters[i].getAnnotation(NumberArg::class.java)
+            ret[i - 1] = CommandArgument(paramNames?.get(i) ?: "param$i", parameters[i].type,
+                parameters[i].isVarArgs || parameters[i].isAnnotationPresent(TextArg::class.java),
+                if (numAnn == null) null else Pair(numAnn.lowerLimit(), numAnn.upperLimit()),
+                parameters[i].isAnnotationPresent(OptionalArg::class.java),
+                paramNames?.get(i) ?: "param$i") // TODO: Description (JavaDoc?)
+        }
+        return Pair(ret, parameters[0].type)
+    }
 
-	/**
-	 * Register a command in the command system. The way this command gets registered may change depending on the implementation.
-	 * Always invoke {@link #registerCommandSuper(ICommand2)} when implementing this method.
-	 *
-	 * @param command The command to register
-	 */
-	public abstract void registerCommand(TC command);
+    /**
+     * Converts the Chroma representation of the argument declaration into Brigadier format.
+     * It does part of the command argument type processing.
+     *
+     * @param arg Our representation of the command argument
+     * @return The Brigadier representation of the command argument
+     */
+    private fun getArgumentType(arg: CommandArgument?): ArgumentType<*> {
+        val ptype = arg!!.type
+        val lowerLimit: Number = arg.limits.value0
+        val upperLimit: Number = arg.limits.value1
+        return if (arg.greedy) StringArgumentType.greedyString() else if (ptype == String::class.java) StringArgumentType.word() else if (ptype == Int::class.javaPrimitiveType || ptype == Int::class.java || ptype == Byte::class.javaPrimitiveType || ptype == Byte::class.java || ptype == Short::class.javaPrimitiveType || ptype == Short::class.java) IntegerArgumentType.integer(lowerLimit.toInt(), upperLimit.toInt()) else if (ptype == Long::class.javaPrimitiveType || ptype == Long::class.java) LongArgumentType.longArg(lowerLimit.toLong(), upperLimit.toLong()) else if (ptype == Float::class.javaPrimitiveType || ptype == Float::class.java) FloatArgumentType.floatArg(lowerLimit.toFloat(), upperLimit.toFloat()) else if (ptype == Double::class.javaPrimitiveType || ptype == Double::class.java) DoubleArgumentType.doubleArg(lowerLimit.toDouble(), upperLimit.toDouble()) else if (ptype == Char::class.javaPrimitiveType || ptype == Char::class.java) StringArgumentType.word() else if (ptype == Boolean::class.javaPrimitiveType || ptype == Boolean::class.java) BoolArgumentType.bool() else {
+            StringArgumentType.word()
+        }
+    }
 
-	/**
-	 * Registers a command in the Command2 system, so it can be looked up and executed.
-	 *
-	 * @param command The command to register
-	 * @return The Brigadier command node if you need it for something (like tab completion)
-	 */
-	protected LiteralCommandNode<TP> registerCommandSuper(TC command) {
-		LiteralCommandNode<TP> mainCommandNode = null;
-		for (val meth : command.getClass().getMethods()) {
-			val ann = meth.getAnnotation(Subcommand.class);
-			if (ann == null) continue;
-			String methodPath = getCommandPath(meth.getName(), ' ');
-			val result = registerNodeFromPath(command.getCommandPath() + methodPath);
-			result.getValue0().addChild(getExecutableNode(meth, command, ann, result.getValue2(), new CommandArgumentHelpManager<>(command)));
-			if (mainCommandNode == null) mainCommandNode = result.getValue1();
-			else if (!result.getValue1().getName().equals(mainCommandNode.getName())) {
-				MainPlugin.Instance.getLogger().warning("Multiple commands are defined in the same class! This is not supported. Class: " + command.getClass().getSimpleName());
-			}
-		}
-		if (mainCommandNode == null) {
-			throw new RuntimeException("There are no subcommands defined in the command class " + command.getClass().getSimpleName() + "!");
-		}
-		return mainCommandNode;
-	}
+    /**
+     * Displays the help text based on the executed command. Each command node might have a help text stored.
+     * The help text is displayed either because of incorrect usage or it's explicitly requested.
+     *
+     * @param context The command context
+     * @return Vanilla command success level (0)
+     */
+    private fun executeHelpText(context: CommandContext<TP>): Int {
+        println("""
+    Nodes:
+    ${context.nodes.stream().map { node: ParsedCommandNode<TP> -> node.node.name + "@" + node.range }.collect(Collectors.joining("\n"))}
+    """.trimIndent())
+        return 0
+    }
 
-	/**
-	 * Returns the node that can actually execute the given subcommand.
-	 *
-	 * @param method  The subcommand method
-	 * @param command The command object
-	 * @param path    The command path
-	 * @return The executable node
-	 */
-	private LiteralCommandNode<TP> getExecutableNode(Method method, TC command, Subcommand ann, String path, CommandArgumentHelpManager<TC, TP> argHelpManager) {
-		val paramsAndSenderType = getCommandParametersAndSender(method, argHelpManager); // Param order is important
-		val params = paramsAndSenderType.getValue0();
-		val paramMap = new HashMap<String, CommandArgument>();
-		for (val param : params) {
-			paramMap.put(param.name, param);
-		}
-		val node = CoreCommandBuilder.<TP, TC>literal(path, params[0].type, paramMap, params, command)
-			.helps(command.getHelpText(method, ann)).permits(sender -> hasPermission(sender, command, method))
-			.executes(this::executeCommand);
-		ArgumentBuilder<TP, ?> parent = node;
-		for (val param : params) { // Register parameters in the right order
-			parent.then(parent = CoreArgumentBuilder.argument(param.name, getArgumentType(param), param.optional));
-		}
-		return node.build();
-	}
+    /**
+     * Executes the command itself by calling the subcommand method associated with the input command node.
+     *
+     * @param context The command context
+     * @return Vanilla command success level (0)
+     */
+    private fun executeCommand(context: CommandContext<TP>): Int {
+        println("Execute command")
+        println("Should be running sync: $runOnPrimaryThread")
 
-	/**
-	 * Registers all necessary no-op nodes for the given path.
-	 *
-	 * @param path The full command path
-	 * @return The last no-op node that can be used to register the executable node,
-	 * the main command node and the last part of the command path (that isn't registered yet)
-	 */
-	private Triplet<CommandNode<TP>, LiteralCommandNode<TP>, String> registerNodeFromPath(String path) {
-		String[] split = path.split(" ");
-		CommandNode<TP> parent = dispatcher.getRoot();
-		LiteralCommandNode<TP> mainCommand = null;
-		for (int i = 0; i < split.length - 1; i++) {
-			String part = split[i];
-			var child = parent.getChild(part);
-			if (child == null)
-				parent.addChild(parent = CoreCommandBuilder.<TP, TC>literalNoOp(part).executes(this::executeHelpText).build());
-			else parent = child;
-			if (i == 0) mainCommand = (LiteralCommandNode<TP>) parent; // Has to be a literal, if not, well, error
-		}
-		return new Triplet<>(parent, mainCommand, split[split.length - 1]);
-	}
-
-	/**
-	 * Get parameter data for the given subcommand. Attempts to read it from the commands file, if it fails, it will return generic info.
-	 * The first parameter is always the sender both in the methods themselves and in the returned array.
-	 *
-	 * @param method The method the subcommand is created from
-	 * @return Parameter data objects and the sender type
-	 * @throws RuntimeException If there is no sender parameter declared in the method
-	 */
-	private Pair<CommandArgument[], Class<?>> getCommandParametersAndSender(Method method, CommandArgumentHelpManager<TC, TP> argHelpManager) {
-		val parameters = method.getParameters();
-		if (parameters.length == 0)
-			throw new RuntimeException("No sender parameter for method '" + method + "'");
-		val ret = new CommandArgument[parameters.length];
-		val usage = argHelpManager.getParameterHelpForMethod(method);
-		val paramNames = usage != null ? usage.split(" ") : null;
-		for (int i = 1; i < parameters.length; i++) {
-			val numAnn = parameters[i].getAnnotation(NumberArg.class);
-			ret[i - 1] = new CommandArgument(paramNames == null ? "param" + i : paramNames[i], parameters[i].getType(),
-				parameters[i].isVarArgs() || parameters[i].isAnnotationPresent(TextArg.class),
-				numAnn == null ? null : new Pair<>(numAnn.lowerLimit(), numAnn.upperLimit()),
-				parameters[i].isAnnotationPresent(OptionalArg.class),
-				paramNames == null ? "param" + i : paramNames[i]); // TODO: Description (JavaDoc?)
-		}
-		return new Pair<>(ret, parameters[0].getType());
-	}
-
-	/**
-	 * Converts the Chroma representation of the argument declaration into Brigadier format.
-	 * It does part of the command argument type processing.
-	 *
-	 * @param arg Our representation of the command argument
-	 * @return The Brigadier representation of the command argument
-	 */
-	private ArgumentType<?> getArgumentType(CommandArgument arg) {
-		final Class<?> ptype = arg.type;
-		Number lowerLimit = arg.limits.getValue0(), upperLimit = arg.limits.getValue1();
-		if (arg.greedy)
-			return StringArgumentType.greedyString();
-		else if (ptype == String.class)
-			return StringArgumentType.word();
-		else if (ptype == int.class || ptype == Integer.class
-			|| ptype == byte.class || ptype == Byte.class
-			|| ptype == short.class || ptype == Short.class)
-			return IntegerArgumentType.integer(lowerLimit.intValue(), upperLimit.intValue());
-		else if (ptype == long.class || ptype == Long.class)
-			return LongArgumentType.longArg(lowerLimit.longValue(), upperLimit.longValue());
-		else if (ptype == float.class || ptype == Float.class)
-			return FloatArgumentType.floatArg(lowerLimit.floatValue(), upperLimit.floatValue());
-		else if (ptype == double.class || ptype == Double.class)
-			return DoubleArgumentType.doubleArg(lowerLimit.doubleValue(), upperLimit.doubleValue());
-		else if (ptype == char.class || ptype == Character.class)
-			return StringArgumentType.word();
-		else if (ptype == boolean.class || ptype == Boolean.class)
-			return BoolArgumentType.bool();
-		else {
-			return StringArgumentType.word();
-		}
-	}
-
-	/**
-	 * Displays the help text based on the executed command. Each command node might have a help text stored.
-	 * The help text is displayed either because of incorrect usage or it's explicitly requested.
-	 *
-	 * @param context The command context
-	 * @return Vanilla command success level (0)
-	 */
-	private int executeHelpText(CommandContext<TP> context) {
-		System.out.println("Nodes:\n" + context.getNodes().stream().map(node -> node.getNode().getName() + "@" + node.getRange()).collect(Collectors.joining("\n")));
-		return 0;
-	}
-
-	/**
-	 * Executes the command itself by calling the subcommand method associated with the input command node.
-	 *
-	 * @param context The command context
-	 * @return Vanilla command success level (0)
-	 */
-	private int executeCommand(CommandContext<TP> context) {
-		System.out.println("Execute command");
-		System.out.println("Should be running sync: " + runOnPrimaryThread);
-
-		/*if (!hasPermission(sender, sd.command, sd.method)) {
+        /*if (!hasPermission(sender, sd.command, sd.method)) {
 			sender.sendMessage("§cYou don't have permission to use this command");
 			return;
 		}
@@ -327,8 +280,8 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		if (processSenderType(sender, sd, params, parameterTypes)) return; // Checks if the sender is the wrong type
 		val args = parsed.getContext().getArguments();
 		for (var arg : sd.arguments.entrySet()) {*/
-		// TODO: Invoke using custom method
-			/*if (pj == commandline.length() + 1) { //No param given
+        // TODO: Invoke using custom method
+        /*if (pj == commandline.length() + 1) { //No param given
 				if (paramArr[i1].isAnnotationPresent(OptionalArg.class)) {
 					if (cl.isPrimitive())
 						params.add(Defaults.defaultValue(cl));
@@ -343,13 +296,13 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 					return;
 				}
 			}*/
-			/*if (paramArr[i1].isVarArgs()) { - TODO: Varargs support? (colors?)
+        /*if (paramArr[i1].isVarArgs()) { - TODO: Varargs support? (colors?)
 				params.add(commandline.substring(j + 1).split(" +"));
 				continue;
 			}*/
-		// TODO: Character handling (strlen)
-		// TODO: Param converter
-		/*}
+        // TODO: Character handling (strlen)
+        // TODO: Param converter
+        /*}
 		Runnable invokeCommand = () -> {
 			try {
 				sd.method.setAccessible(true); //It may be part of a private class
@@ -368,72 +321,53 @@ public abstract class Command2<TC extends ICommand2<TP>, TP extends Command2Send
 		if (sync)
 			Bukkit.getScheduler().runTask(MainPlugin.Instance, invokeCommand);
 		else
-			invokeCommand.run();*/
-		return 0;
-	}
+			invokeCommand.run();*/return 0
+    }
 
-	public abstract boolean hasPermission(TP sender, TC command, Method subcommand);
+    abstract fun hasPermission(sender: TP, command: TC, subcommand: Method?): Boolean
+    val commandsText: Array<String>
+        get() = commandHelp.toTypedArray()
 
-	public String[] getCommandsText() {
-		return commandHelp.toArray(new String[0]);
-	}
+    /**
+     * Get all registered command nodes. This returns all registered Chroma commands with all the information about them.
+     *
+     * @return A set of command node objects containing the commands
+     */
+    val commandNodes: Set<CoreCommandNode<TP, TC?>?>
+        get() = dispatcher.root.children.stream().map { node: CommandNode<TP>? -> node as CoreCommandNode<TP, TC?>? }.collect(Collectors.toUnmodifiableSet())
 
-	/**
-	 * Returns the path of the given subcommand excluding the class' path. It will start with the given replace char.
-	 *
-	 * @param methodName  The method's name, method.getName()
-	 * @param replaceChar The character to use between subcommands
-	 * @return The command path starting with the replace char.
-	 */
-	@NotNull
-	public String getCommandPath(String methodName, char replaceChar) {
-		return methodName.equals("def") ? "" : replaceChar + methodName.replace('_', replaceChar).toLowerCase();
-	}
+    /**
+     * Get a node that belongs to the given command.
+     *
+     * @param command The exact name of the command
+     * @return A command node
+     */
+    fun getCommandNode(command: String?): CoreCommandNode<TP, TC> {
+        return dispatcher.root.getChild(command) as CoreCommandNode<TP, TC>
+    }
 
-	/**
-	 * Get all registered command nodes. This returns all registered Chroma commands with all the information about them.
-	 *
-	 * @return A set of command node objects containing the commands
-	 */
-	public Set<CoreCommandNode<TP, TC>> getCommandNodes() {
-		return dispatcher.getRoot().getChildren().stream().map(node -> (CoreCommandNode<TP, TC>) node).collect(Collectors.toUnmodifiableSet());
-	}
+    /**
+     * Unregister all subcommands that were registered with the given command class.
+     *
+     * @param command The command class (object) to unregister
+     */
+    fun unregisterCommand(command: ICommand2<TP>) {
+        dispatcher.root.children.removeIf { node: CommandNode<TP> -> (node as CoreCommandNode<TP, TC>).data.command === command }
+    }
 
-	/**
-	 * Get a node that belongs to the given command.
-	 *
-	 * @param command The exact name of the command
-	 * @return A command node
-	 */
-	public CoreCommandNode<TP, TC> getCommandNode(String command) {
-		return (CoreCommandNode<TP, TC>) dispatcher.getRoot().getChild(command);
-	}
+    /**
+     * Unregisters all commands that match the given predicate.
+     *
+     * @param condition The condition for removing a given command
+     */
+    fun unregisterCommandIf(condition: Predicate<CoreCommandNode<TP, TC>?>, nested: Boolean) {
+        dispatcher.root.children.removeIf { node: CommandNode<TP>? -> condition.test(node as CoreCommandNode<TP, TC>?) }
+        if (nested) for (child in dispatcher.root.children) unregisterCommandIf(condition, child as CoreCommandNode<TP, TC>)
+    }
 
-	/**
-	 * Unregister all subcommands that were registered with the given command class.
-	 *
-	 * @param command The command class (object) to unregister
-	 */
-	public void unregisterCommand(ICommand2<TP> command) {
-		dispatcher.getRoot().getChildren().removeIf(node -> ((CoreCommandNode<TP, TC>) node).getData().command == command);
-	}
-
-	/**
-	 * Unregisters all commands that match the given predicate.
-	 *
-	 * @param condition The condition for removing a given command
-	 */
-	public void unregisterCommandIf(Predicate<CoreCommandNode<TP, TC>> condition, boolean nested) {
-		dispatcher.getRoot().getChildren().removeIf(node -> condition.test((CoreCommandNode<TP, TC>) node));
-		if (nested)
-			for (var child : dispatcher.getRoot().getChildren())
-				unregisterCommandIf(condition, (CoreCommandNode<TP, TC>) child);
-	}
-
-	private void unregisterCommandIf(Predicate<CoreCommandNode<TP, TC>> condition, CoreCommandNode<TP, TC> root) {
-		// Can't use getCoreChildren() here because the collection needs to be modifiable
-		root.getChildren().removeIf(node -> condition.test((CoreCommandNode<TP, TC>) node));
-		for (var child : root.getCoreChildren())
-			unregisterCommandIf(condition, child);
-	}
+    private fun unregisterCommandIf(condition: Predicate<CoreCommandNode<TP, TC>?>, root: CoreCommandNode<TP, TC>) {
+        // Can't use getCoreChildren() here because the collection needs to be modifiable
+        root.children.removeIf { node: CommandNode<TP>? -> condition.test(node as CoreCommandNode<TP, TC>?) }
+        for (child in root.coreChildren) unregisterCommandIf(condition, child)
+    }
 }

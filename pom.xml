@@ -9,8 +9,8 @@
     <packaging>pom</packaging>
     <version>master-SNAPSHOT</version>
     <properties>
-        <lombok.version>1.18.12</lombok.version>
-    </properties>
+		<lombok.version>1.18.26</lombok.version>
+	</properties>
     <name>Chroma Parent</name>
 
     <modules>
@@ -27,7 +27,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.8.1</version>
                     <configuration>
-                        <release>8</release>
+						<release>17</release>
                     </configuration>
                 </plugin>
                 <plugin>
