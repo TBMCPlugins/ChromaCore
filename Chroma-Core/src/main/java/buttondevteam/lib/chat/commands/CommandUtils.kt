@@ -15,11 +15,23 @@ object CommandUtils {
      * @return The command path starting with the replacement char.
      */
     fun getCommandPath(methodName: String, replaceChar: Char): String {
-        return if (methodName == "def") "" else replaceChar.toString() + methodName.replace('_', replaceChar).lowercase(Locale.getDefault())
+        return if (methodName == "def") "" else replaceChar.toString() + methodName.replace('_', replaceChar)
+            .lowercase(Locale.getDefault())
     }
 
+    /**
+     * Casts the node to whatever you say. Use responsibly.
+     */
     @Suppress("UNCHECKED_CAST")
-    fun <TP : Command2Sender, TC : ICommand2<*>> CommandNode<TP>.core(): CoreCommandNode<TP, TC> {
-        return this as CoreCommandNode<TP, TC>
+    fun <TP : Command2Sender, TC : ICommand2<*>, TSD : NoOpSubcommandData> CommandNode<TP>.core(): CoreCommandNode<TP, TC, TSD> {
+        return this as CoreCommandNode<TP, TC, TSD>
+    }
+
+    /**
+     * Returns the node as an executable core command node or returns null if it's a no-op node.
+     */
+    fun <TP : Command2Sender, TC : ICommand2<*>> CommandNode<TP>.coreExecutable(): CoreCommandNode<TP, TC, SubcommandData<TC, TP>>? {
+        val ret = core<TP, TC, NoOpSubcommandData>()
+        return if (ret.data is SubcommandData<*, *>) ret.core() else null
     }
 }

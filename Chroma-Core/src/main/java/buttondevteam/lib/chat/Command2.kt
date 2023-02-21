@@ -4,11 +4,11 @@ import buttondevteam.core.MainPlugin
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.chat.commands.*
 import buttondevteam.lib.chat.commands.CommandUtils.core
+import buttondevteam.lib.chat.commands.CommandUtils.coreExecutable
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.*
 import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
-import com.mojang.brigadier.context.ParsedCommandNode
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import com.mojang.brigadier.tree.CommandNode
 import com.mojang.brigadier.tree.LiteralCommandNode
@@ -157,12 +157,14 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
      */
     private fun getExecutableNode(method: Method, command: TC, ann: Subcommand, path: String, argHelpManager: CommandArgumentHelpManager<TC, TP>): LiteralCommandNode<TP> {
         val (params, _) = getCommandParametersAndSender(method, argHelpManager) // Param order is important
-        val paramMap = HashMap<String, CommandArgument?>()
+        val paramMap = HashMap<String, CommandArgument>()
         for (param in params) {
             paramMap[param.name] = param
         }
-        val node = CoreCommandBuilder.literal<TP, TC>(path, params[0].type, paramMap, params, command)
-            .helps(command.getHelpText(method, ann)).permits { sender: TP -> hasPermission(sender, command, method) }
+        val helpText = command.getHelpText(method, ann)
+        val node = CoreCommandBuilder.literal(path, params[0].type, paramMap, params, command,
+            { helpText }, // TODO: Help text getter support
+            { sender: TP -> hasPermission(sender, command, method) })
             .executes { context: CommandContext<TP> -> executeCommand(context) }
         var parent: ArgumentBuilder<TP, *> = node
         for (param in params) { // Register parameters in the right order
@@ -180,16 +182,23 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
      * the main command node and the last part of the command path (that isn't registered yet)
      */
     private fun registerNodeFromPath(path: String): Triple<CommandNode<TP>, LiteralCommandNode<TP>?, String> {
-        val split = path.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val split = path.split(" ")
         var parent: CommandNode<TP> = dispatcher.root
         var mainCommand: LiteralCommandNode<TP>? = null
-        for (i in 0 until split.size - 1) {
-            val part = split[i]
+        split.forEachIndexed { i, part ->
             val child = parent.getChild(part)
-            if (child == null) parent.addChild(CoreCommandBuilder.literalNoOp<TP, TC>(part).executes { context: CommandContext<TP> -> executeHelpText(context) }.build().also { parent = it }) else parent = child
+            if (child == null) parent.addChild(CoreCommandBuilder.literalNoOp<TP, TC>(part, getSubcommandList())
+                .executes(::executeHelpText).build().also { parent = it })
+            else parent = child
             if (i == 0) mainCommand = parent as LiteralCommandNode<TP> // Has to be a literal, if not, well, error
         }
-        return Triple(parent, mainCommand, split[split.size - 1])
+        return Triple(parent, mainCommand, split.last())
+    }
+
+    private fun getSubcommandList(): (Any) -> Array<String> {
+        return {
+            arrayOf("TODO") // TODO: Subcommand list
+        }
     }
 
     /**
@@ -200,17 +209,25 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
      * @return Parameter data objects and the sender type
      * @throws RuntimeException If there is no sender parameter declared in the method
      */
-    private fun getCommandParametersAndSender(method: Method, argHelpManager: CommandArgumentHelpManager<TC, TP>): Pair<List<CommandArgument>, Class<*>> {
+    private fun getCommandParametersAndSender(
+        method: Method,
+        argHelpManager: CommandArgumentHelpManager<TC, TP>
+    ): Pair<List<CommandArgument>, Class<*>> {
         val parameters = method.parameters
         if (parameters.isEmpty()) throw RuntimeException("No sender parameter for method '$method'")
         val usage = argHelpManager.getParameterHelpForMethod(method)
         val paramNames = usage?.split(" ")
-        return Pair(parameters.zip(paramNames ?: (1 until parameters.size).map { i -> "param$i" })
-            .map { (param, name) ->
-                val numAnn = param.getAnnotation(NumberArg::class.java)
-                CommandArgument(name, param.type,
-                    param.isVarArgs || param.isAnnotationPresent(TextArg::class.java),
-                    if (numAnn == null) Pair(Double.MIN_VALUE, Double.MAX_VALUE) else Pair(numAnn.lowerLimit, numAnn.upperLimit),
+        return Pair(
+            parameters.zip(paramNames ?: (1 until parameters.size).map { i -> "param$i" })
+                .map { (param, name) ->
+                    val numAnn = param.getAnnotation(NumberArg::class.java)
+                    CommandArgument(
+                        name, param.type,
+                        param.isVarArgs || param.isAnnotationPresent(TextArg::class.java),
+                        if (numAnn == null) Pair(Double.MIN_VALUE, Double.MAX_VALUE) else Pair(
+                            numAnn.lowerLimit,
+                            numAnn.upperLimit
+                        ),
                     param.isAnnotationPresent(OptionalArg::class.java),
                     name)
             }, parameters[0].type)
@@ -253,7 +270,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
     private fun executeHelpText(context: CommandContext<TP>): Int {
         println("""
     Nodes:
-    ${context.nodes.stream().map { node: ParsedCommandNode<TP> -> node.node.name + "@" + node.range }.collect(Collectors.joining("\n"))}
+    ${context.nodes.stream().map { node -> node.node.name + "@" + node.range }.collect(Collectors.joining("\n"))}
     """.trimIndent())
         return 0
     }
@@ -333,8 +350,10 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
      *
      * @return A set of command node objects containing the commands
      */
-    val commandNodes: Set<CoreCommandNode<TP, TC>>
-        get() = dispatcher.root.children.stream().map { node: CommandNode<TP> -> node.core<TP, TC>() }.collect(Collectors.toUnmodifiableSet())
+    val commandNodes: Set<CoreCommandNode<TP, TC, NoOpSubcommandData>>
+        get() = dispatcher.root.children.stream()
+            .map { node: CommandNode<TP> -> node.core<TP, TC, NoOpSubcommandData>() }
+            .collect(Collectors.toUnmodifiableSet())
 
     /**
      * Get a node that belongs to the given command.
@@ -342,7 +361,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
      * @param command The exact name of the command
      * @return A command node
      */
-    fun getCommandNode(command: String?): CoreCommandNode<TP, TC> {
+    fun getCommandNode(command: String): CoreCommandNode<TP, TC, NoOpSubcommandData> { // TODO: What should this return? No-op? Executable? What's the use case?
         return dispatcher.root.getChild(command).core()
     }
 
@@ -352,7 +371,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
      * @param command The command class (object) to unregister
      */
     fun unregisterCommand(command: ICommand2<TP>) {
-        dispatcher.root.children.removeIf { node: CommandNode<TP> -> node.core<TP, TC>().data.command === command }
+        dispatcher.root.children.removeIf { node: CommandNode<TP> -> node.coreExecutable<TP, TC>()?.data?.command === command }
     }
 
     /**
@@ -360,14 +379,18 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
      *
      * @param condition The condition for removing a given command
      */
-    fun unregisterCommandIf(condition: Predicate<CoreCommandNode<TP, TC>>, nested: Boolean) {
-        dispatcher.root.children.removeIf { node: CommandNode<TP> -> condition.test(node.core()) }
+    fun unregisterCommandIf(condition: Predicate<CoreCommandNode<TP, TC, SubcommandData<TC, TP>>>, nested: Boolean) {
+        dispatcher.root.children.removeIf { node -> node.coreExecutable<TP, TC>()?.let { condition.test(it) } ?: false }
         if (nested) for (child in dispatcher.root.children) unregisterCommandIf(condition, child.core())
     }
 
-    private fun unregisterCommandIf(condition: Predicate<CoreCommandNode<TP, TC>>, root: CoreCommandNode<TP, TC>) {
+    private fun unregisterCommandIf(
+        condition: Predicate<CoreCommandNode<TP, TC, SubcommandData<TC, TP>>>,
+        root: CoreCommandNode<TP, TC, NoOpSubcommandData>
+    ) {
+        // TODO: Remvoe no-op nodes without children
         // Can't use getCoreChildren() here because the collection needs to be modifiable
-        root.children.removeIf { node: CommandNode<TP> -> condition.test(node.core()) }
-        for (child in root.coreChildren) unregisterCommandIf(condition, child)
+        root.children.removeIf { node -> node.coreExecutable<TP, TC>()?.let { condition.test(it) } ?: false }
+        for (child in root.children) unregisterCommandIf(condition, child.core())
     }
 }

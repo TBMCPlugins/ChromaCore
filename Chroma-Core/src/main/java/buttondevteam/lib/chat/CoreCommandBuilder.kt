@@ -1,74 +1,72 @@
-package buttondevteam.lib.chat;
+package buttondevteam.lib.chat
 
-import buttondevteam.lib.chat.commands.CommandArgument;
-import buttondevteam.lib.chat.commands.SubcommandData;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.tree.CommandNode;
+import buttondevteam.lib.chat.commands.CommandArgument
+import buttondevteam.lib.chat.commands.NoOpSubcommandData
+import buttondevteam.lib.chat.commands.SubcommandData
+import com.mojang.brigadier.builder.LiteralArgumentBuilder
 
-import java.util.Map;
-import java.util.function.Function;
+class CoreCommandBuilder<S : Command2Sender, TC : ICommand2<*>, TSD : NoOpSubcommandData> private constructor(
+    literal: String,
+    val data: TSD
+) : LiteralArgumentBuilder<S>(literal) {
 
-public class CoreCommandBuilder<S extends Command2Sender, TC extends ICommand2<?>> extends LiteralArgumentBuilder<S> {
-	private final SubcommandData.SubcommandDataBuilder<TC, S> dataBuilder;
+    override fun getThis(): CoreCommandBuilder<S, TC, TSD> {
+        return this
+    }
 
-	protected CoreCommandBuilder(String literal, Class<?> senderType, Map<String, CommandArgument> arguments, CommandArgument[] argumentsInOrder, TC command) {
-		super(literal);
-		dataBuilder = SubcommandData.<TC, S>builder().senderType(senderType).arguments(arguments)
-			.argumentsInOrder(argumentsInOrder).command(command);
-	}
+    override fun build(): CoreCommandNode<S, TC, TSD> {
+        val result = CoreCommandNode<_, TC, _>(
+            literal,
+            command,
+            requirement,
+            this.redirect,
+            this.redirectModifier,
+            this.isFork,
+            data
+        )
+        for (node in arguments) {
+            result.addChild(node)
+        }
+        return result
+    }
 
-	@Override
-	protected CoreCommandBuilder<S, TC> getThis() {
-		return this;
-	}
+    companion object {
+        /**
+         * Start building an executable command node.
+         *
+         * @param name The subcommand name as written by the user
+         * @param senderType The expected command sender type based on the subcommand method
+         * @param arguments A map of the command arguments with their names as keys
+         * @param argumentsInOrder A list of the command arguments in the order they are expected
+         * @param command The command object that has this subcommand
+         * @param helpTextGetter Custom help text that can depend on the context. The function receives the sender as the command itself receives it.
+         */
+        fun <S : Command2Sender, TC : ICommand2<*>> literal(
+            name: String,
+            senderType: Class<*>,
+            arguments: Map<String, CommandArgument>,
+            argumentsInOrder: List<CommandArgument>,
+            command: TC,
+            helpTextGetter: (Any) -> Array<String>,
+            hasPermission: (S) -> Boolean
+        ): CoreCommandBuilder<S, TC, SubcommandData<TC, S>> {
+            return CoreCommandBuilder(
+                name,
+                SubcommandData(senderType, arguments, argumentsInOrder, command, helpTextGetter, hasPermission)
+            )
+        }
 
-	public static <S extends Command2Sender, TC extends ICommand2<?>> CoreCommandBuilder<S, TC> literal(String name, Class<?> senderType, Map<String, CommandArgument> arguments, CommandArgument[] argumentsInOrder, TC command) {
-		return new CoreCommandBuilder<>(name, senderType, arguments, argumentsInOrder, command);
-	}
-
-	public static <S extends Command2Sender, TC extends ICommand2<?>> CoreCommandBuilder<S, TC> literalNoOp(String name) {
-		return literal(name, Command2Sender.class, Map.of(), new CommandArgument[0], null);
-	}
-
-	/**
-	 * Static help text added through annotations. May be overwritten with the getter.
-	 *
-	 * @param helpText Help text shown to the user
-	 * @return This instance
-	 */
-	public CoreCommandBuilder<S, TC> helps(String[] helpText) {
-		dataBuilder.staticHelpText(helpText);
-		return this;
-	}
-
-	/**
-	 * Custom help text that depends on the context. Overwrites the static one.
-	 * The function receives the sender but its type is not guaranteed to match the one at the subcommand.
-	 * It will either match or be a Command2Sender, however.
-	 *
-	 * @param getter The getter function receiving the sender and returning the help text
-	 * @return This instance
-	 */
-	public CoreCommandBuilder<S, TC> helps(Function<Object, String[]> getter) {
-		dataBuilder.helpTextGetter(getter);
-		return this;
-	}
-
-	public CoreCommandBuilder<S, TC> permits(Function<S, Boolean> permChecker) {
-		dataBuilder.hasPermission(permChecker);
-		return this;
-	}
-
-	@Override
-	public CoreCommandNode<S, TC> build() {
-		var result = new CoreCommandNode<S, TC>(this.getLiteral(), this.getCommand(), this.getRequirement(),
-			this.getRedirect(), this.getRedirectModifier(), this.isFork(),
-			dataBuilder.build());
-
-		for (CommandNode<S> node : this.getArguments()) {
-			result.addChild(node);
-		}
-
-		return result;
-	}
+        /**
+         * Start building a no-op command node.
+         *
+         * @param name The subcommand name as written by the user
+         * @param helpTextGetter Custom help text that can depend on the context. The function receives the sender as the command itself receives it.
+         */
+        fun <S : Command2Sender, TC : ICommand2<*>> literalNoOp(
+            name: String,
+            helpTextGetter: (Any) -> Array<String>,
+        ): CoreCommandBuilder<S, TC, NoOpSubcommandData> {
+            return CoreCommandBuilder(name, NoOpSubcommandData(helpTextGetter))
+        }
+    }
 }
