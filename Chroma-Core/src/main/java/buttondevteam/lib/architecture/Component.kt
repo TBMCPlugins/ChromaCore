@@ -11,38 +11,34 @@ import org.bukkit.event.Listener
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.*
 import java.util.function.Consumer
-import java.util.function.Function
 import java.util.stream.Collectors
 
 /**
  * Configuration is based on class name
  */
 @HasConfig(global = false) //Used for obtaining javadoc
-
 abstract class Component<TP : JavaPlugin?> {
-    @Getter
-    private var enabled = false
+    var isEnabled = false
 
-    @Getter
-    private var plugin: TP = null
+    var plugin: TP? = null
 
-    @Getter
-    private val config = IHaveConfig(null)
+    val config = IHaveConfig(null)
 
     @Getter
     private val data //TODO
         : IHaveConfig? = null
 
     @JvmField
-    val shouldBeEnabled = config.getData("enabled",
-        Optional.ofNullable(javaClass.getAnnotation(ComponentMetadata::class.java)).map(Function<ComponentMetadata, Boolean> { obj: ComponentMetadata -> obj.enabledByDefault() }).orElse(true))
+    val shouldBeEnabled: ConfigData<Boolean> = config.getData("enabled",
+        Optional.ofNullable(javaClass.getAnnotation(ComponentMetadata::class.java)).map { it.enabledByDefault }
+            .orElse(true))
 
     fun log(message: String) {
-        plugin!!.logger.info("[" + className + "] " + message)
+        plugin!!.logger.info("[$className] $message")
     }
 
     fun logWarn(message: String) {
-        plugin!!.logger.warning("[" + className + "] " + message)
+        plugin!!.logger.warning("[$className] $message")
     }
 
     /**
@@ -85,7 +81,7 @@ abstract class Component<TP : JavaPlugin?> {
     fun registerCommand(command: ICommand2MC) {
         if (plugin is ButtonPlugin) command.registerToPlugin(plugin as ButtonPlugin)
         command.registerToComponent(this)
-        ButtonPlugin.getCommand2MC().registerCommand(command)
+        ButtonPlugin.command2MC.registerCommand(command)
     }
 
     /**
@@ -107,18 +103,23 @@ abstract class Component<TP : JavaPlugin?> {
      * @return A map containing configs
      */
     fun getConfigMap(key: String?, defaultProvider: Map<String, Consumer<IHaveConfig?>>): Map<String, IHaveConfig> {
-        val c: ConfigurationSection = getConfig().getConfig()
+        val c: ConfigurationSection = config.config
         var cs = c.getConfigurationSection(key)
         if (cs == null) cs = c.createSection(key)
-        val res = cs!!.getValues(false).entries.stream().filter { (_, value): Map.Entry<String?, Any?> -> value is ConfigurationSection }
-            .collect(Collectors.toMap<Map.Entry<String?, Any?>, String, IHaveConfig>(Function<Map.Entry<String?, Any?>, String> { (key1, value) -> java.util.Map.Entry.key }, Function<Map.Entry<String?, Any?>, IHaveConfig> { (_, value): Map.Entry<String?, Any?> ->
-                val conf = IHaveConfig { getPlugin().saveConfig() }
-                conf.reset(value as ConfigurationSection?)
-                conf
-            }))
-        if (res.size == 0) {
+        val res = cs!!.getValues(false).entries.stream()
+            .filter { (_, value): Map.Entry<String?, Any?> -> value is ConfigurationSection }
+            .collect(
+                Collectors.toMap<Map.Entry<String?, Any?>, String, IHaveConfig>(
+                    { it.key },
+                    { (_, value): Map.Entry<String?, Any?> ->
+                        val conf = IHaveConfig { plugin!!.saveConfig() }
+                        conf.reset(value as ConfigurationSection?)
+                        conf
+                    })
+            )
+        if (res.isEmpty()) {
             for ((key1, value) in defaultProvider) {
-                val conf = IHaveConfig { getPlugin().saveConfig() }
+                val conf = IHaveConfig { plugin!!.saveConfig() }
                 conf.reset(cs.createSection(key1))
                 value.accept(conf)
                 res[key1] = conf
@@ -128,7 +129,7 @@ abstract class Component<TP : JavaPlugin?> {
     }
 
     private val className: String
-        private get() = javaClass.simpleName
+        get() = javaClass.simpleName
 
     companion object {
         private val components = HashMap<Class<out Component<*>>, Component<out JavaPlugin>>()
@@ -143,7 +144,7 @@ abstract class Component<TP : JavaPlugin?> {
          * @return Whether the component is registered successfully (it may have failed to enable)
          */
         @JvmStatic
-        fun <T : JavaPlugin?> registerComponent(plugin: T, component: Component<T>): Boolean {
+        fun <T : JavaPlugin> registerComponent(plugin: T, component: Component<T>): Boolean {
             return registerUnregisterComponent(plugin, component, true)
         }
 
@@ -156,29 +157,37 @@ abstract class Component<TP : JavaPlugin?> {
          * @return Whether the component is unregistered successfully (it also got disabled)
          */
         @JvmStatic
-        fun <T : JavaPlugin?> unregisterComponent(plugin: T, component: Component<T>): Boolean {
+        fun <T : JavaPlugin> unregisterComponent(plugin: T, component: Component<T>): Boolean {
             return registerUnregisterComponent(plugin, component, false)
         }
 
-        fun <T : JavaPlugin?> registerUnregisterComponent(plugin: T, component: Component<T>, register: Boolean): Boolean {
+        fun <T : JavaPlugin> registerUnregisterComponent(
+            plugin: T,
+            component: Component<T>,
+            register: Boolean
+        ): Boolean {
             return try {
                 val metaAnn = component.javaClass.getAnnotation(ComponentMetadata::class.java)
                 if (metaAnn != null) {
-                    val dependencies: Array<Class<out Component<*>>> = metaAnn.depends()
+                    val dependencies = metaAnn.depends
                     for (dep in dependencies) { //TODO: Support dependencies at enable/disable as well
-                        if (!components.containsKey(dep)) {
-                            plugin!!.logger.warning("Failed to " + (if (register) "" else "un") + "register component " + component.className + " as a required dependency is missing/disabled: " + dep.simpleName)
+                        if (!components.containsKey(dep.java)) {
+                            plugin.logger.warning("Failed to " + (if (register) "" else "un") + "register component " + component.className + " as a required dependency is missing/disabled: " + dep.simpleName)
                             return false
                         }
                     }
                 }
                 if (register) {
                     if (components.containsKey(component.javaClass)) {
-                        TBMCCoreAPI.SendException("Failed to register component " + component.className, IllegalArgumentException("The component is already registered!"), plugin)
+                        TBMCCoreAPI.SendException(
+                            "Failed to register component " + component.className,
+                            IllegalArgumentException("The component is already registered!"),
+                            plugin
+                        )
                         return false
                     }
-                    component.plugin = plugin
-                    component.config.saveAction = Runnable { plugin!!.saveConfig() }
+                    component.plugin = plugin // TODO: Perhaps construct a new object with these initialized
+                    component.config.saveAction = Runnable { plugin.saveConfig() }
                     updateConfig(plugin, component)
                     component.register(plugin)
                     components[component.javaClass] = component
@@ -188,7 +197,11 @@ abstract class Component<TP : JavaPlugin?> {
                             setComponentEnabled(component, true)
                             true
                         } catch (e: Exception) {
-                            TBMCCoreAPI.SendException("Failed to enable component " + component.className + "!", e, component)
+                            TBMCCoreAPI.SendException(
+                                "Failed to enable component " + component.className + "!",
+                                e,
+                                component
+                            )
                             true
                         } catch (e: NoClassDefFoundError) {
                             TBMCCoreAPI.SendException("Failed to enable component " + component.className + "!", e, component)
@@ -197,14 +210,22 @@ abstract class Component<TP : JavaPlugin?> {
                     }
                 } else {
                     if (!components.containsKey(component.javaClass)) return true //Already unregistered
-                    if (component.enabled) {
+                    if (component.isEnabled) {
                         try {
                             setComponentEnabled(component, false)
                         } catch (e: Exception) {
-                            TBMCCoreAPI.SendException("Failed to disable component " + component.className + "!", e, component)
+                            TBMCCoreAPI.SendException(
+                                "Failed to disable component " + component.className + "!",
+                                e,
+                                component
+                            )
                             return false //If failed to disable, won't unregister either
                         } catch (e: NoClassDefFoundError) {
-                            TBMCCoreAPI.SendException("Failed to disable component " + component.className + "!", e, component)
+                            TBMCCoreAPI.SendException(
+                                "Failed to disable component " + component.className + "!",
+                                e,
+                                component
+                            )
                             return false
                         }
                     }
@@ -228,10 +249,10 @@ abstract class Component<TP : JavaPlugin?> {
         @Throws(UnregisteredComponentException::class)
         fun setComponentEnabled(component: Component<*>, enabled: Boolean) {
             if (!components.containsKey(component.javaClass)) throw UnregisteredComponentException(component)
-            if (component.enabled == enabled) return  //Don't do anything
-            if (enabled.also { component.enabled = it }) {
+            if (component.isEnabled == enabled) return  //Don't do anything
+            if (enabled.also { component.isEnabled = it }) {
                 try {
-                    updateConfig(component.getPlugin(), component)
+                    updateConfig(component.plugin!!, component)
                     component.enable()
                     if (ButtonPlugin.configGenAllowed(component)) {
                         IHaveConfig.pregenConfig(component, null)
@@ -253,7 +274,7 @@ abstract class Component<TP : JavaPlugin?> {
                 }
             } else {
                 component.disable()
-                ButtonPlugin.getCommand2MC().unregisterCommands(component)
+                ButtonPlugin.command2MC.unregisterCommands(component)
             }
         }
 

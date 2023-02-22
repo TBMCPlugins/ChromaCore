@@ -6,8 +6,6 @@ import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.Component.Companion.updateConfig
 import buttondevteam.lib.chat.Command2MC
 import buttondevteam.lib.chat.ICommand2MC
-import lombok.AccessLevel
-import lombok.Getter
 import org.bukkit.configuration.InvalidConfigurationException
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration
@@ -16,22 +14,19 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.function.Consumer
-import java.util.function.Function
 
 @HasConfig(global = true)
 abstract class ButtonPlugin : JavaPlugin() {
     protected val iConfig = IHaveConfig { saveConfig() }
     private var yaml: CommentedConfiguration? = null
 
-    @Getter(AccessLevel.PROTECTED)
-    private val data //TODO
+    protected val data //TODO
         : IHaveConfig? = null
 
     /**
      * Used to unregister components in the right order - and to reload configs
      */
-    @Getter
-    private val componentStack = Stack<Component<*>>()
+    val componentStack = Stack<Component<*>>()
     protected abstract fun pluginEnable()
 
     /**
@@ -111,9 +106,12 @@ abstract class ButtonPlugin : JavaPlugin() {
         this.yaml = yaml
         val res = getTextResource("configHelp.yml") ?: return true
         val yc = YamlConfiguration.loadConfiguration(res)
-        for ((key, value) in yc.getValues(true)) if (value is String) yaml.addComment(key.replace(".generalDescriptionInsteadOfAConfig", ""),
-            *Arrays.stream<String>(value.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
-                .map<String> { str: String -> "# " + str.trim { it <= ' ' } }.toArray<String> { _Dummy_.__Array__() })
+        for ((key, value) in yc.getValues(true)) if (value is String) yaml.addComment(key.replace(
+            ".generalDescriptionInsteadOfAConfig",
+            ""
+        ),
+            *value.split("\n").map { str -> "# " + str.trim { it <= ' ' } }.toTypedArray()
+        )
         return true
     }
 
@@ -148,7 +146,7 @@ abstract class ButtonPlugin : JavaPlugin() {
         val command2MC = Command2MC()
         fun configGenAllowed(obj: Any): Boolean {
             return !Optional.ofNullable(obj.javaClass.getAnnotation(ConfigOpts::class.java))
-                .map(Function<ConfigOpts, Boolean> { obj: ConfigOpts -> obj.disableConfigGen() }).orElse(false)
+                .map { it.disableConfigGen }.orElse(false)
         }
     }
 }
