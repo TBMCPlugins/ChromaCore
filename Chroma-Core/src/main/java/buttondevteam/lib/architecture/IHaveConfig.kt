@@ -3,7 +3,6 @@ package buttondevteam.lib.architecture
 import buttondevteam.core.MainPlugin
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.ConfigData.ConfigDataBuilder
-import lombok.Getter
 import org.bukkit.Bukkit
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.plugin.java.JavaPlugin
@@ -26,8 +25,7 @@ class IHaveConfig(var saveAction: Runnable?) { // TODO: Make non-nullable after 
     /**
      * Returns the Bukkit ConfigurationSection. Use [.signalChange] after changing it.
      */
-    @Getter
-    private var config: ConfigurationSection? = null
+    var config: ConfigurationSection? = null // TODO: Make non-nullable after removing reset() method
 
     /**
      * Gets a config object for the given path. The def or primitiveDef must be set. If a getter is present, a setter must be present as well.
@@ -190,9 +188,9 @@ class IHaveConfig(var saveAction: Runnable?) { // TODO: Make non-nullable after 
     /**
      * Clears all caches and loads everything from yaml.
      */
-    fun reset(config: ConfigurationSection?) {
+    fun reset(config: ConfigurationSection?) { // TODO: Simply replace the object
         this.config = config
-        datamap.forEach { (path: String?, data: ConfigData<*>) -> data.reset() }
+        datamap.forEach { (_, data) -> data.reset() }
     }
 
     companion object {

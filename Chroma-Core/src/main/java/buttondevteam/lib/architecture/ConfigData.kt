@@ -2,7 +2,6 @@ package buttondevteam.lib.architecture
 
 import buttondevteam.core.MainPlugin
 import buttondevteam.lib.ChromaUtils
-import buttondevteam.lib.architecture.IHaveConfig.getConfig
 import lombok.*
 import org.bukkit.Bukkit
 import org.bukkit.configuration.Configuration
@@ -13,35 +12,19 @@ import java.util.function.Function
 /**
  * Use the getter/setter constructor if [T] isn't a primitive type or String.<br></br>
  * Use [Component.getConfig] or [ButtonPlugin.getIConfig] then [IHaveConfig.getData] to get an instance.
+ * @param config May be null for testing
+ * @param getter The parameter is of a primitive type as returned by [Configuration.get]
+ * @param setter The result should be a primitive type or string that can be retrieved correctly later
  */
 open class ConfigData<T> internal constructor(
-    config: IHaveConfig?,
-    path: String?,
-    def: T,
+    private val config: IHaveConfig?,
+    val path: String,
+    def: T?,
     primitiveDef: Any?,
-    getter: Function<Any?, T>?,
-    setter: Function<T, Any?>?
-) {
-    /**
-     * May be null for testing
-     */
-    private val config: IHaveConfig?
-
-    @Getter
-    @Setter(AccessLevel.PACKAGE)
-    private val path: String?
-    protected val def: T?
-    private val primitiveDef: Any?
-
-    /**
-     * The parameter is of a primitive type as returned by [YamlConfiguration.get]
-     */
-    private val getter: Function<Any?, T>?
-
-    /**
-     * The result should be a primitive type or string that can be retrieved correctly later
-     */
+    private val getter: Function<Any?, T>?,
     private val setter: Function<T, Any?>?
+) {
+    private val def: Any?
 
     /**
      * The config value should not change outside this instance
@@ -49,20 +32,9 @@ open class ConfigData<T> internal constructor(
     private var value: T? = null
 
     init {
-        var def: T? = def
-        var primitiveDef = primitiveDef
-        if (def == null) {
-            requireNotNull(primitiveDef) { "Either def or primitiveDef must be set." }
-            requireNotNull(getter) { "A getter and setter must be present when using primitiveDef." }
-            def = getter.apply(primitiveDef)
-        } else if (primitiveDef == null) primitiveDef = if (setter == null) def else setter.apply(def)
+        this.def = primitiveDef ?: def?.let { setter?.apply(it) }
+            ?: throw IllegalArgumentException("Either def or primitiveDef must be set. A getter and setter must be present when using primitiveDef.")
         require(getter == null == (setter == null)) { "Both setters and getters must be present (or none if def is primitive)." }
-        this.config = config
-        this.path = path
-        this.def = def
-        this.primitiveDef = primitiveDef
-        this.getter = getter
-        this.setter = setter
         get() //Generate config automatically
     }
 
@@ -76,10 +48,10 @@ open class ConfigData<T> internal constructor(
 
     fun get(): T? {
         if (value != null) return value //Speed things up
-        val config = config!!.getConfig<Any>()
+        val config = config?.config
         var `val`: Any?
         if (config == null || !config.isSet(path)) { //Call set() if config == null
-            `val` = primitiveDef
+            `val` = primitiveDef // TODO: primitiveDef --> def, def --> getter(primitiveDef)
             if ((def == null || this is ReadOnlyConfigData<*>) && config != null) //In Discord's case def may be null
                 setInternal(primitiveDef) //If read-only then we still need to save the default value so it can be set
             else set(def) //Save default value - def is always set
