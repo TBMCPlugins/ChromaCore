@@ -18,7 +18,7 @@ import java.util.function.Consumer
 @HasConfig(global = true)
 abstract class ButtonPlugin : JavaPlugin() {
     protected val iConfig = IHaveConfig { saveConfig() }
-    private var yaml: CommentedConfiguration? = null
+    private var yaml: YamlConfiguration? = null
 
     protected val data //TODO
         : IHaveConfig? = null
@@ -39,7 +39,7 @@ abstract class ButtonPlugin : JavaPlugin() {
      */
     protected fun pluginPreDisable() {}
     override fun onEnable() {
-        if (!loadConfig()) {
+        if (!reloadIConfig()) {
             logger.warning("Please fix the issues and restart the server to load the plugin.")
             return
         }
@@ -52,12 +52,12 @@ abstract class ButtonPlugin : JavaPlugin() {
             IHaveConfig.pregenConfig(this, null)
     }
 
-    private fun loadConfig(): Boolean {
-        val config = config ?: return false
+    private fun reloadIConfig(): Boolean {
+        val config = config
         var section = config.getConfigurationSection("global")
         if (section == null) section = config.createSection("global")
         iConfig.reset(section)
-        return true
+        return configLoaded // If loading fails, getConfig() returns a temporary instance
     }
 
     override fun onDisable() {
@@ -78,7 +78,7 @@ abstract class ButtonPlugin : JavaPlugin() {
 
     fun tryReloadConfig(): Boolean {
         if (!justReload()) return false
-        loadConfig()
+        reloadIConfig()
         componentStack.forEach(Consumer { c: Component<*>? -> updateConfig(this, c!!) })
         return true
     }
@@ -89,7 +89,7 @@ abstract class ButtonPlugin : JavaPlugin() {
             return false
         }
         val file = File(dataFolder, "config.yml")
-        val yaml = CommentedConfiguration(file)
+        val yaml = YamlConfiguration()
         if (file.exists()) {
             try {
                 yaml.load(file)
@@ -102,16 +102,17 @@ abstract class ButtonPlugin : JavaPlugin() {
                 e.printStackTrace()
                 return false
             }
+            this.yaml = yaml
+        } else {
+            return false
         }
-        this.yaml = yaml
         val res = getTextResource("configHelp.yml") ?: return true
         val yc = YamlConfiguration.loadConfiguration(res)
-        for ((key, value) in yc.getValues(true)) if (value is String) yaml.addComment(key.replace(
-            ".generalDescriptionInsteadOfAConfig",
-            ""
-        ),
-            *value.split("\n").map { str -> "# " + str.trim { it <= ' ' } }.toTypedArray()
-        )
+        for ((key, value) in yc.getValues(true))
+            if (value is String) yaml.setComments(
+                key.replace(".generalDescriptionInsteadOfAConfig", ""),
+                value.split("\n").map { str -> "# " + str.trim { it <= ' ' } }
+            )
         return true
     }
 
@@ -121,12 +122,10 @@ abstract class ButtonPlugin : JavaPlugin() {
     }
 
     override fun saveConfig() {
-        try {
-            if (yaml != null) yaml!!.save()
-        } catch (e: Exception) {
-            TBMCCoreAPI.SendException("Failed to save config", e, this)
-        }
+        if (configLoaded) super.saveConfig()
     }
+
+    val configLoaded get() = yaml != null
 
     /**
      * Registers command and sets its plugin.

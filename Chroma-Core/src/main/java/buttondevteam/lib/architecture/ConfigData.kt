@@ -6,7 +6,6 @@ import lombok.*
 import org.bukkit.Bukkit
 import org.bukkit.configuration.Configuration
 import org.bukkit.scheduler.BukkitTask
-import java.util.function.BiFunction
 import java.util.function.Function
 
 /**
@@ -21,10 +20,10 @@ open class ConfigData<T> internal constructor(
     val path: String,
     def: T?,
     primitiveDef: Any?,
-    private val getter: Function<Any?, T>?,
-    private val setter: Function<T, Any?>?
+    private val getter: Function<Any?, T>,
+    private val setter: Function<T, Any?>
 ) {
-    private val def: Any?
+    private val pdef: Any?
 
     /**
      * The config value should not change outside this instance
@@ -32,9 +31,8 @@ open class ConfigData<T> internal constructor(
     private var value: T? = null
 
     init {
-        this.def = primitiveDef ?: def?.let { setter?.apply(it) }
+        this.pdef = primitiveDef ?: def?.let { setter.apply(it) }
             ?: throw IllegalArgumentException("Either def or primitiveDef must be set. A getter and setter must be present when using primitiveDef.")
-        require(getter == null == (setter == null)) { "Both setters and getters must be present (or none if def is primitive)." }
         get() //Generate config automatically
     }
 
@@ -50,67 +48,46 @@ open class ConfigData<T> internal constructor(
         if (value != null) return value //Speed things up
         val config = config?.config
         var `val`: Any?
-        if (config == null || !config.isSet(path)) { //Call set() if config == null
-            `val` = primitiveDef // TODO: primitiveDef --> def, def --> getter(primitiveDef)
-            if ((def == null || this is ReadOnlyConfigData<*>) && config != null) //In Discord's case def may be null
-                setInternal(primitiveDef) //If read-only then we still need to save the default value so it can be set
-            else set(def) //Save default value - def is always set
+        if (config == null || !config.isSet(path)) {
+            `val` = pdef
+            setInternal(pdef) // Save default value even if read-only
         } else `val` = config.get(path) //config==null: testing
         if (`val` == null) //If it's set to null explicitly
-            `val` = primitiveDef
-        val convert = BiFunction { _val: Any?, _def: Any? ->
-            if (_def is Number) //If we expect a number
-                _val = if (_val is Number) ChromaUtils.convertNumber(
-                    _val as Number?,
-                    _def.javaClass as Class<out Number?>
-                ) else _def //If we didn't get a number, return default (which is a number)
-            else if (_val is List<*> && _def != null && _def.javaClass.isArray) _val = (_val as List<T>).toArray<T>(
-                java.lang.reflect.Array.newInstance(
-                    _def.javaClass.componentType,
-                    0
-                ) as Array<T>
-            )
-            _val
+            `val` = pdef
+        fun convert(_val: Any?, _pdef: Any?): Any? {
+            return if (_pdef is Number) //If we expect a number
+                if (_val is Number)
+                    ChromaUtils.convertNumber(_val as Number?, _pdef.javaClass as Class<out Number?>)
+                else _pdef //If we didn't get a number, return default (which is a number)
+            else if (_val is List<*> && _pdef != null && _pdef.javaClass.isArray)
+                _val.toTypedArray()
+            else _val
         }
-        if (getter != null) {
-            `val` = convert.apply(`val`, primitiveDef)
-            var hmm: T? = getter.apply(`val`)
-            if (hmm == null) hmm = def //Set if the getter returned null
-            return hmm
-        }
-        `val` = convert.apply(`val`, def)
-        return `val` as T?. also {
-            value = it //Always cache, if not cached yet
-        }
+        return getter.apply(convert(`val`, pdef)).also { value = it }
     }
 
     fun set(value: T?) {
         if (this is ReadOnlyConfigData<*>) return  //Safety for Discord channel/role data
-        val `val`: Any?
-        `val` = if (setter != null && value != null) setter.apply(value) else value
-        if (config!!.getConfig<Any>() != null) setInternal(`val`)
+        val `val` = value?.let { setter.apply(value) }
+        setInternal(`val`)
         this.value = value
     }
 
     private fun setInternal(`val`: Any?) {
-        config!!.getConfig<Any>().set(path, `val`)
+        if (config == null) return
+        config.config.set(path, `val`)
         signalChange(config)
     }
 
-    @AllArgsConstructor
-    private class SaveTask {
-        var task: BukkitTask? = null
-        var saveAction: Runnable? = null
-    }
+    private class SaveTask(val task: BukkitTask, val saveAction: Runnable)
 
-    @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
-    class ConfigDataBuilder<T> {
-        private val config: IHaveConfig? = null
-        private val path: String? = null
+    class ConfigDataBuilder<T> internal constructor(private val config: IHaveConfig, private val path: String) {
         private var def: T? = null
         private var primitiveDef: Any? = null
-        private var getter: Function<Any?, T?>? = null
-        private var setter: Function<T?, Any?>? = null
+
+        @Suppress("UNCHECKED_CAST")
+        private var getter: Function<Any?, T> = Function { it as T }
+        private var setter: Function<T, Any?> = Function { it }
 
         /**
          * The default value to use, as used in code. If not a primitive type, use the [.getter] and [.setter] methods.
@@ -145,7 +122,7 @@ open class ConfigData<T> internal constructor(
          * @param getter A function that receives the primitive type and returns the runtime type
          * @return This builder
          */
-        fun getter(getter: Function<Any?, T>?): ConfigDataBuilder<T> {
+        fun getter(getter: Function<Any?, T>): ConfigDataBuilder<T> {
             this.getter = getter
             return this
         }
@@ -157,7 +134,7 @@ open class ConfigData<T> internal constructor(
          * @param setter A function that receives the runtime type and returns the primitive type
          * @return This builder
          */
-        fun setter(setter: Function<T, Any?>?): ConfigDataBuilder<T> {
+        fun setter(setter: Function<T, Any?>): ConfigDataBuilder<T> {
             this.setter = setter
             return this
         }
@@ -167,9 +144,9 @@ open class ConfigData<T> internal constructor(
          *
          * @return A ConfigData instance.
          */
-        fun build(): ConfigData<T?> {
+        fun build(): ConfigData<T> {
             val config = ConfigData(config, path, def, primitiveDef, getter, setter)
-            this.config!!.onConfigBuild(config)
+            this.config.onConfigBuild(config)
             return config
         }
 
@@ -178,26 +155,26 @@ open class ConfigData<T> internal constructor(
          *
          * @return A ReadOnlyConfigData instance.
          */
-        fun buildReadOnly(): ReadOnlyConfigData<T?> {
+        fun buildReadOnly(): ReadOnlyConfigData<T> {
             val config = ReadOnlyConfigData(config, path, def, primitiveDef, getter, setter)
-            this.config!!.onConfigBuild(config)
+            this.config.onConfigBuild(config)
             return config
         }
 
         override fun toString(): String {
-            return "ConfigData.ConfigDataBuilder(config=" + config + ", path=" + path + ", def=" + def + ", primitiveDef=" + primitiveDef + ", getter=" + getter + ", setter=" + setter + ")"
+            return "ConfigData.ConfigDataBuilder(config=$config, path=$path, def=$def, primitiveDef=$primitiveDef, getter=$getter, setter=$setter)"
         }
     }
 
     companion object {
         private val saveTasks = HashMap<Configuration, SaveTask>()
-        fun signalChange(config: IHaveConfig?) {
-            val cc = config!!.getConfig<Any>()
+        fun signalChange(config: IHaveConfig) {
+            val cc = config.config
             val sa = config.saveAction
-            if (!saveTasks.containsKey(cc.getRoot())) {
+            if (!saveTasks.containsKey(cc.root)) {
                 synchronized(saveTasks) {
                     saveTasks.put(
-                        cc.getRoot(),
+                        cc.root,
                         SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, {
                             synchronized(
                                 saveTasks
@@ -216,16 +193,16 @@ open class ConfigData<T> internal constructor(
             synchronized(saveTasks) {
                 val st = saveTasks[config]
                 if (st != null) {
-                    st.task!!.cancel()
+                    st.task.cancel()
                     saveTasks.remove(config)
-                    st.saveAction!!.run()
+                    st.saveAction.run()
                     return true
                 }
             }
             return false
         }
 
-        fun <T> builder(config: IHaveConfig?, path: String?): ConfigDataBuilder<T> {
+        fun <T> builder(config: IHaveConfig, path: String): ConfigDataBuilder<T> {
             return ConfigDataBuilder(config, path)
         }
     }
