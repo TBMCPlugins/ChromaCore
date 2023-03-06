@@ -12,7 +12,6 @@ import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import com.mojang.brigadier.tree.CommandNode
 import com.mojang.brigadier.tree.LiteralCommandNode
-import lombok.RequiredArgsConstructor
 import org.bukkit.Bukkit
 import java.lang.reflect.Method
 import java.util.function.Function
@@ -24,8 +23,17 @@ import java.util.stream.Collectors
  * The method name is the subcommand, use underlines (_) to add further subcommands.
  * The args may be null if the conversion failed and it's optional.
  */
-@RequiredArgsConstructor
-abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
+abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
+    /**
+     * The first character in the command line that shows that it's a command.
+     */
+    private val commandChar: Char,
+
+    /**
+     * Whether the command's actual code has to be run on the primary thread.
+     */
+    private val runOnPrimaryThread: Boolean
+) {
     /**
      * Parameters annotated with this receive all the remaining arguments
      */
@@ -44,16 +52,10 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
          */
         val helpText: Array<String> = [],
         /**
-         * The main permission which allows using this command (individual access can be still revoked with "chroma.command.X").
-         * Used to be "tbmc.admin". The [.MOD_GROUP] is provided to use with this.
+         * Aliases for the subcommand that can be used to invoke it in addition to the method name.
          */
-        val permGroup: String = "", val aliases: Array<String> = []) {
-        companion object {
-            /**
-             * Allowed for OPs only by default
-             */
-            const val MOD_GROUP = "mod"
-        }
+        val aliases: Array<String> = [] // TODO
+    ) {
     }
 
     @Target(AnnotationTarget.VALUE_PARAMETER)
@@ -65,16 +67,6 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
     protected val paramConverters = HashMap<Class<*>, ParamConverter<*>>()
     private val commandHelp = ArrayList<String>() //Mainly needed by Discord
     private val dispatcher = CommandDispatcher<TP>()
-
-    /**
-     * The first character in the command line that shows that it's a command.
-     */
-    private val commandChar = 0.toChar()
-
-    /**
-     * Whether the command's actual code has to be run on the primary thread.
-     */
-    private val runOnPrimaryThread = false
 
     /**
      * Adds a param converter that obtains a specific object from a string parameter.
@@ -96,13 +88,17 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
             return false // Unknown command
         }
         //Needed because permission checking may load the (perhaps offline) sender's file which is disallowed on the main thread
-        Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance) {
+        Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance) { _ ->
             try {
                 dispatcher.execute(results)
             } catch (e: CommandSyntaxException) {
                 sender.sendMessage(e.message)
             } catch (e: Exception) {
-                TBMCCoreAPI.SendException("Command execution failed for sender " + sender.name + "(" + sender.javaClass.canonicalName + ") and message " + commandline, e, MainPlugin.Instance)
+                TBMCCoreAPI.SendException(
+                    "Command execution failed for sender " + sender.name + "(" + sender.javaClass.canonicalName + ") and message " + commandline,
+                    e,
+                    MainPlugin.Instance
+                )
             }
         }
         return true //We found a method
@@ -342,7 +338,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
 			invokeCommand.run();*/return 0
     }
 
-    abstract fun hasPermission(sender: TP, command: TC, subcommand: Method?): Boolean
+    abstract fun hasPermission(context: CommandContext<TP>): Boolean
     val commandsText: Array<String> get() = commandHelp.toTypedArray()
 
     /**
@@ -392,5 +388,12 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender> {
         // Can't use getCoreChildren() here because the collection needs to be modifiable
         root.children.removeIf { node -> node.coreExecutable<TP, TC>()?.let { condition.test(it) } ?: false }
         for (child in root.children) unregisterCommandIf(condition, child.core())
+    }
+
+    /**
+     * Get all subcommands of the specified command. Only returns executable nodes.
+     */
+    fun getSubcommands(mainCommand: LiteralCommandNode<TP>): List<CoreCommandNode<TP, TC, SubcommandData<TC, TP>>> {
+        return dispatcher.root.children.mapNotNull { it.coreExecutable<TP, TC>() } // TODO: Needs more depth
     }
 }

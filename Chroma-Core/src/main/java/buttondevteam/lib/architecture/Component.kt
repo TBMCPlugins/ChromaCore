@@ -5,7 +5,6 @@ import buttondevteam.core.ComponentManager
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.exceptions.UnregisteredComponentException
 import buttondevteam.lib.chat.ICommand2MC
-import lombok.Getter
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.event.Listener
 import org.bukkit.plugin.java.JavaPlugin
@@ -24,7 +23,6 @@ abstract class Component<TP : JavaPlugin?> {
 
     val config = IHaveConfig(null)
 
-    @Getter
     private val data //TODO
         : IHaveConfig? = null
 

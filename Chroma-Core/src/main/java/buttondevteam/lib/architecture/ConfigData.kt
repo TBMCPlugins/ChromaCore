@@ -2,7 +2,6 @@ package buttondevteam.lib.architecture
 
 import buttondevteam.core.MainPlugin
 import buttondevteam.lib.ChromaUtils
-import lombok.*
 import org.bukkit.Bukkit
 import org.bukkit.configuration.Configuration
 import org.bukkit.scheduler.BukkitTask

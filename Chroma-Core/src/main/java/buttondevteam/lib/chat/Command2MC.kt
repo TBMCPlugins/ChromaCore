@@ -5,6 +5,8 @@ import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.ButtonPlugin
 import buttondevteam.lib.architecture.Component
 import buttondevteam.lib.chat.commands.CommandUtils
+import buttondevteam.lib.chat.commands.CommandUtils.subcommandPath
+import buttondevteam.lib.chat.commands.MCCommandSettings
 import buttondevteam.lib.chat.commands.SubcommandData
 import buttondevteam.lib.player.ChromaGamerBase
 import com.mojang.brigadier.arguments.StringArgumentType
@@ -57,44 +59,52 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
             Bukkit.getPluginManager().addPermission(Permission(perm,
                 PermissionDefault.TRUE)) //Allow commands by default, it will check mod-only
-        for (method in command.javaClass.methods) {
-            if (!method.isAnnotationPresent(Subcommand::class.java)) continue
-            val path = CommandUtils.getCommandPath(method.name, '.')
+        for (node in getSubcommands(commandNode)) {
             if (path.length > 0) {
                 val subperm = perm + path
                 if (Bukkit.getPluginManager().getPermission(subperm) == null) //Check needed for plugin reset
-                    Bukkit.getPluginManager().addPermission(Permission(subperm,
-                        PermissionDefault.TRUE)) //Allow commands by default, it will check mod-only
+                    Bukkit.getPluginManager().addPermission(
+                        Permission(
+                            subperm,
+                            PermissionDefault.TRUE
+                        )
+                    ) //Allow commands by default, it will check mod-only
             }
-            val pg = permGroup(command, method)
-            if (pg.length == 0) continue
+            val pg = permGroup(node.data)
+            if (pg.isEmpty()) continue
             val permGroup = "chroma.$pg"
             if (Bukkit.getPluginManager().getPermission(permGroup) == null) //It may occur multiple times
-                Bukkit.getPluginManager().addPermission(Permission(permGroup,
-                    PermissionDefault.OP)) //Do not allow any commands that belong to a group
+                Bukkit.getPluginManager().addPermission(
+                    Permission(
+                        permGroup,
+                        PermissionDefault.OP
+                    )
+                ) //Do not allow any commands that belong to a group
         }
     }
 
-    override fun hasPermission(sender: Command2MCSender, command: ICommand2MC, method: Method): Boolean {
-        return hasPermission(sender.sender, command, method)
+    override fun hasPermission(context: CommandContext<Command2MCSender>): Boolean {
+        return hasPermission(context.source.sender, context.subcommandPath)
     }
 
-    fun hasPermission(sender: CommandSender, command: ICommand2MC?, method: Method): Boolean {
+    fun hasPermission(sender: CommandSender, path: String): Boolean {
         if (sender is ConsoleCommandSender) return true //Always allow the console
-        if (command == null) return true //Allow viewing the command - it doesn't do anything anyway
         var pg: String
         var p = true
-        val cmdperm = "chroma.command." + command.commandPath.replace(' ', '.')
-        val path = CommandUtils.getCommandPath(method.name, '.')
+        val cmdperm = "chroma.command.$path"
+        // TODO: Register a permission for the main command as well - the previous implementation relied on the way the commands were defined
         val perms = arrayOf(
-            if (path.length > 0) cmdperm + path else null,
-            cmdperm,
+            cmdperm + path,
             if (permGroup(command, method).also { pg = it }.length > 0) "chroma.$pg" else null
         )
         for (perm in perms) {
             if (perm != null) {
                 if (p) { //Use OfflinePlayer to avoid fetching player data
-                    p = if (sender is OfflinePlayer) MainPlugin.permission.playerHas(if (sender is Player) sender.location.world.name else null, sender as OfflinePlayer, perm) else false //Use sender's method
+                    p = if (sender is OfflinePlayer) MainPlugin.permission.playerHas(
+                        if (sender is Player) sender.location.world.name else null,
+                        sender as OfflinePlayer,
+                        perm
+                    ) else false //Use sender's method
                     if (!p) p = sender.hasPermission(perm)
                 } else break //If any of the permissions aren't granted then don't allow
             }
@@ -108,14 +118,11 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
      * @param method The subcommand to check
      * @return The permission group for the subcommand or empty string
      */
-    private fun permGroup(command: ICommand2MC, method: Method?): String {
-        if (method != null) {
-            val sc = method.getAnnotation(Subcommand::class.java)
-            if (sc != null && sc.permGroup().length > 0) {
-                return sc.permGroup()
-            }
-        }
-        return if (getAnnForValue(command.javaClass, CommandClass::class.java, Function { obj: CommandClass -> obj.modOnly() }, false)) Subcommand.MOD_GROUP else getAnnForValue(command.javaClass, CommandClass::class.java, Function<CommandClass, String> { obj: CommandClass -> obj.permGroup() }, "")
+    private fun permGroup(data: SubcommandData<ICommand2MC, Command2MCSender>): String {
+        val group = data.annotations.filterIsInstance<MCCommandSettings>().map {
+            if (it.permGroup.isEmpty() && it.modOnly) MCCommandSettings.MOD_GROUP else ""
+        }.firstOrNull()
+        return group ?: ""
     }
 
     /**

@@ -3,6 +3,7 @@ package buttondevteam.lib.chat.commands
 import buttondevteam.lib.chat.Command2Sender
 import buttondevteam.lib.chat.CoreCommandNode
 import buttondevteam.lib.chat.ICommand2
+import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.tree.CommandNode
 import java.util.*
 
@@ -34,4 +35,9 @@ object CommandUtils {
         val ret = core<TP, TC, NoOpSubcommandData>()
         return if (ret.data is SubcommandData<*, *>) ret.core() else null
     }
+
+    val <TP : Command2Sender> CommandContext<TP>.subcommandPath
+        get(): String {
+            TODO("Return command path")
+        }
 }

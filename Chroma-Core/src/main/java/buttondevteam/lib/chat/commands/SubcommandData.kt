@@ -41,7 +41,11 @@ class SubcommandData<TC : ICommand2<*>, TP : Command2Sender>(
     /**
      * A function that determines whether the user has permission to run this subcommand.
      */
-    private val permissionCheck: (TP) -> Boolean
+    private val permissionCheck: (TP) -> Boolean,
+    /**
+     * All annotations implemented by the method that executes the command. Can be used to add custom metadata when implementing a platform.
+     */
+    val annotations: Array<Annotation>
 ) : NoOpSubcommandData(helpTextGetter) {
 
     /**
