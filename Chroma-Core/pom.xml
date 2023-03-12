@@ -120,10 +120,6 @@
             <url>https://ci.ender.zone/plugin/repository/everything/</url>
         </repository>
         <repository>
-            <id>Votifier</id>
-            <url>https://dl.bintray.com/nuvotifier/maven/</url>
-        </repository>
-        <repository>
             <id>Multiverse-Core</id>
             <url>https://repo.onarandombox.com/content/groups/public/</url>
         </repository>
@@ -180,10 +176,11 @@
 			<version>2.17.1</version>
 			<scope>provided</scope>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.github.NuVotifier.NuVotifier/nuvotifier-bukkit -->
 		<dependency>
-			<groupId>com.vexsoftware</groupId>
-			<artifactId>nuvotifier-universal</artifactId>
-			<version>2.3.4</version>
+			<groupId>com.github.NuVotifier.NuVotifier</groupId>
+			<artifactId>nuvotifier-bukkit</artifactId>
+			<version>v2.7.1</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
