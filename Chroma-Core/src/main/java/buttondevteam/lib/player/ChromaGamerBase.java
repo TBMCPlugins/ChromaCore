@@ -25,6 +25,9 @@ import java.util.function.Supplier;
 public abstract class ChromaGamerBase {
 	private static final String TBMC_PLAYERS_DIR = "TBMC/players/";
 	private static final ArrayList<Function<CommandSender, ? extends Optional<? extends ChromaGamerBase>>> senderConverters = new ArrayList<>();
+	/**
+	 * Holds data per user class
+	 */
 	private static final HashMap<Class<? extends ChromaGamerBase>, StaticUserData<?>> staticDataMap = new HashMap<>();
 
 	/**
@@ -56,6 +59,7 @@ public abstract class ChromaGamerBase {
 			throw new RuntimeException("Class not registered as a user class! Use @UserClass or TBMCPlayerBase");
 		var sud = new StaticUserData<T>(folderName);
 		sud.getConstructors().put(cl, constructor);
+		sud.getConstructors().put(userclass, constructor); // Alawys register abstract and prototype class (TBMCPlayerBase and TBMCPlayer)
 		staticDataMap.put(userclass, sud);
 	}
 
