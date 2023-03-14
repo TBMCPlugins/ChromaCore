@@ -5,7 +5,6 @@ import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.ButtonPlugin
 import buttondevteam.lib.architecture.Component
 import buttondevteam.lib.chat.commands.CommandUtils
-import buttondevteam.lib.chat.commands.CommandUtils.subcommandPath
 import buttondevteam.lib.chat.commands.MCCommandSettings
 import buttondevteam.lib.chat.commands.SubcommandData
 import buttondevteam.lib.player.ChromaGamerBase
@@ -83,29 +82,26 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         }
     }
 
-    override fun hasPermission(context: CommandContext<Command2MCSender>): Boolean {
-        return hasPermission(context.source.sender, context.subcommandPath)
-    }
+    override fun hasPermission(sender: Command2MCSender, data: SubcommandData<ICommand2MC, Command2MCSender>): Boolean {
+        val mcsender = sender.sender
+        if (mcsender is ConsoleCommandSender) return true //Always allow the console
 
-    fun hasPermission(sender: CommandSender, path: String): Boolean {
-        if (sender is ConsoleCommandSender) return true //Always allow the console
-        var pg: String
         var p = true
-        val cmdperm = "chroma.command.$path"
+        val cmdperm = "chroma.command.${data.fullPath.replace(' ', '.')}"
         // TODO: Register a permission for the main command as well - the previous implementation relied on the way the commands were defined
         val perms = arrayOf(
-            cmdperm + path,
-            if (permGroup(command, method).also { pg = it }.length > 0) "chroma.$pg" else null
+            cmdperm,
+            permGroup(data).let { if (it.isEmpty()) null else "chroma.$it" }
         )
         for (perm in perms) {
             if (perm != null) {
                 if (p) { //Use OfflinePlayer to avoid fetching player data
-                    p = if (sender is OfflinePlayer) MainPlugin.permission.playerHas(
-                        if (sender is Player) sender.location.world.name else null,
-                        sender as OfflinePlayer,
+                    p = if (mcsender is OfflinePlayer) MainPlugin.permission.playerHas(
+                        if (mcsender is Player) mcsender.location.world?.name else null,
+                        mcsender as OfflinePlayer,
                         perm
                     ) else false //Use sender's method
-                    if (!p) p = sender.hasPermission(perm)
+                    if (!p) p = mcsender.hasPermission(perm)
                 } else break //If any of the permissions aren't granted then don't allow
             }
         }
@@ -123,28 +119,6 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
             if (it.permGroup.isEmpty() && it.modOnly) MCCommandSettings.MOD_GROUP else ""
         }.firstOrNull()
         return group ?: ""
-    }
-
-    /**
-     * Loops until it finds a value that is **not** the same as def
-     *
-     * @param sourceCl  The class which has the annotation
-     * @param annCl     The annotation to get
-     * @param annMethod The annotation method to check
-     * @param def       The value to ignore when looking for the result
-     * @param <T>       The annotation type
-     * @param <V>       The type of the value
-     * @return The value returned by the first superclass or def
-    </V></T> */
-    private fun <T : Annotation?, V> getAnnForValue(sourceCl: Class<*>, annCl: Class<T>, annMethod: Function<T, V>, def: V): V {
-        var cl: Class<*>? = sourceCl
-        while (cl != null) {
-            val cc = cl.getAnnotation(annCl)
-            var r: V
-            if (cc != null && annMethod.apply(cc).also { r = it } !== def) return r
-            cl = cl.superclass
-        }
-        return def
     }
 
     /**
@@ -177,7 +151,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
     }
 
     fun unregisterCommands(component: Component<*>) {
-        unregisterCommandIf({ node: CoreCommandNode<Command2MCSender?, ICommand2MC?> ->
+        unregisterCommandIf({ node ->
             Optional.ofNullable(node.data.command).map { obj: ICommand2MC -> obj.plugin }
                 .map { comp: ButtonPlugin -> component.javaClass.simpleName == comp.javaClass.simpleName }.orElse(false)
         }, true)
@@ -190,10 +164,9 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
     private fun handleCommand(sender: Command2MCSender, commandline: String, checkPlugin: Boolean): Boolean {
         val i = commandline.indexOf(' ')
         val mainpath = commandline.substring(1, if (i == -1) commandline.length else i) //Without the slash
-        var pcmd: PluginCommand
-        return if ((!checkPlugin
-                || MainPlugin.Instance.prioritizeCustomCommands.get()) || Bukkit.getPluginCommand(mainpath).also { pcmd = it } == null //Our commands aren't PluginCommands
-            || pcmd.plugin is ButtonPlugin) //Unless it's specified in the plugin.yml
+        //Our commands aren't PluginCommands, unless it's specified in the plugin.yml
+        return if ((!checkPlugin || (MainPlugin.Instance.prioritizeCustomCommands.get() == true))
+            || Bukkit.getPluginCommand(mainpath)?.let { it.plugin is ButtonPlugin } != false)
             super.handleCommand(sender, commandline) else false
     }
 

@@ -40,6 +40,9 @@ class CoreCommandBuilder<S : Command2Sender, TC : ICommand2<*>, TSD : NoOpSubcom
          * @param argumentsInOrder A list of the command arguments in the order they are expected
          * @param command The command object that has this subcommand
          * @param helpTextGetter Custom help text that can depend on the context. The function receives the sender as the command itself receives it.
+         * @param hasPermission A function that determines whether the user has permission to run this subcommand
+         * @param annotations All annotations implemented by the method that executes the command
+         * @param fullPath The full command path of this subcommand.
          */
         fun <S : Command2Sender, TC : ICommand2<*>> literal(
             name: String,
@@ -48,11 +51,13 @@ class CoreCommandBuilder<S : Command2Sender, TC : ICommand2<*>, TSD : NoOpSubcom
             argumentsInOrder: List<CommandArgument>,
             command: TC,
             helpTextGetter: (Any) -> Array<String>,
-            hasPermission: (S) -> Boolean
+            hasPermission: (S, SubcommandData<TC, S>) -> Boolean,
+            annotations: Array<Annotation>,
+            fullPath: String
         ): CoreCommandBuilder<S, TC, SubcommandData<TC, S>> {
             return CoreCommandBuilder(
                 name,
-                SubcommandData(senderType, arguments, argumentsInOrder, command, helpTextGetter, hasPermission)
+                SubcommandData(senderType, arguments, argumentsInOrder, command, helpTextGetter, hasPermission, annotations, fullPath)
             )
         }
 

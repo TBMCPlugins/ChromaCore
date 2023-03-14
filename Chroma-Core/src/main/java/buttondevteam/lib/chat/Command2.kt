@@ -129,9 +129,9 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         var mainCommandNode: LiteralCommandNode<TP>? = null
         for (meth in command.javaClass.methods) {
             val ann = meth.getAnnotation(Subcommand::class.java) ?: continue
-            val methodPath = CommandUtils.getCommandPath(meth.name, ' ')
-            val (lastNode, mainNode, remainingPath) = registerNodeFromPath(command.commandPath + methodPath)
-            lastNode.addChild(getExecutableNode(meth, command, ann, remainingPath, CommandArgumentHelpManager(command)))
+            val fullPath = command.commandPath + CommandUtils.getCommandPath(meth.name, ' ')
+            val (lastNode, mainNode, remainingPath) = registerNodeFromPath(fullPath)
+            lastNode.addChild(getExecutableNode(meth, command, ann, remainingPath, CommandArgumentHelpManager(command), fullPath))
             if (mainCommandNode == null) mainCommandNode = mainNode
             else if (mainNode!!.name != mainCommandNode.name) {
                 MainPlugin.Instance.logger.warning("Multiple commands are defined in the same class! This is not supported. Class: " + command.javaClass.simpleName)
@@ -146,21 +146,29 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
     /**
      * Returns the node that can actually execute the given subcommand.
      *
-     * @param method  The subcommand method
+     * @param method The subcommand method
      * @param command The command object
-     * @param path    The command path
+     * @param ann The subcommand annotation
+     * @param remainingPath The command path
+     * @param argHelpManager The object that gets the usage text from code
+     * @param fullPath The full command path as registered
      * @return The executable node
      */
-    private fun getExecutableNode(method: Method, command: TC, ann: Subcommand, path: String, argHelpManager: CommandArgumentHelpManager<TC, TP>): LiteralCommandNode<TP> {
+    private fun getExecutableNode(method: Method, command: TC, ann: Subcommand, remainingPath: String,
+                                  argHelpManager: CommandArgumentHelpManager<TC, TP>, fullPath: String): LiteralCommandNode<TP> {
         val (params, _) = getCommandParametersAndSender(method, argHelpManager) // Param order is important
         val paramMap = HashMap<String, CommandArgument>()
         for (param in params) {
             paramMap[param.name] = param
         }
         val helpText = command.getHelpText(method, ann)
-        val node = CoreCommandBuilder.literal(path, params[0].type, paramMap, params, command,
+        val node = CoreCommandBuilder.literal(
+            remainingPath, params[0].type, paramMap, params, command,
             { helpText }, // TODO: Help text getter support
-            { sender: TP -> hasPermission(sender, command, method) })
+            { sender: TP, data: SubcommandData<TC, TP> -> hasPermission(sender, data) },
+            method.annotations.filterNot { it is Subcommand }.toTypedArray(),
+            fullPath
+        )
             .executes { context: CommandContext<TP> -> executeCommand(context) }
         var parent: ArgumentBuilder<TP, *> = node
         for (param in params) { // Register parameters in the right order
@@ -224,9 +232,9 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
                             numAnn.lowerLimit,
                             numAnn.upperLimit
                         ),
-                    param.isAnnotationPresent(OptionalArg::class.java),
-                    name)
-            }, parameters[0].type)
+                        param.isAnnotationPresent(OptionalArg::class.java),
+                        name, param.annotations.filterNot { it is OptionalArg || it is NumberArg || it is TextArg }.toTypedArray())
+                }, parameters[0].type)
     }
 
     /**
@@ -338,7 +346,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
 			invokeCommand.run();*/return 0
     }
 
-    abstract fun hasPermission(context: CommandContext<TP>): Boolean
+    abstract fun hasPermission(sender: TP, data: SubcommandData<TC, TP>): Boolean
     val commandsText: Array<String> get() = commandHelp.toTypedArray()
 
     /**

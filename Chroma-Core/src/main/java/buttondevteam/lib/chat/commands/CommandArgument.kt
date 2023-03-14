@@ -9,5 +9,6 @@ class CommandArgument(
     val greedy: Boolean,
     val limits: Pair<Double, Double>,
     val optional: Boolean,
-    val description: String
+    val description: String,
+    val annotations: Array<Annotation> // TODO: Annotations for parameters as well
 )
