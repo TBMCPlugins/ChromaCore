@@ -3,6 +3,7 @@ package buttondevteam.lib.architecture
 import buttondevteam.core.MainPlugin
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.ConfigData.ConfigDataBuilder
+import buttondevteam.lib.architecture.config.IConfigData
 import org.bukkit.Bukkit
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.plugin.java.JavaPlugin
@@ -16,90 +17,72 @@ import java.util.stream.Collectors
 /**
  * A config system
  * May be used in testing.
- *
- * @param saveAction What to do to save the config to disk. Don't use get methods until it's non-null.
  */
-class IHaveConfig(var saveAction: Runnable?) { // TODO: Make non-nullable after adding component builder
-    private val datamap = HashMap<String, ConfigData<*>>()
-
+class IHaveConfig(
+    /**
+     * The way the underlying configuration gets saved to disk
+     */
+    val saveAction: Runnable,
     /**
      * Returns the Bukkit ConfigurationSection. Use [.signalChange] after changing it.
      */
-    var config: ConfigurationSection? = null // TODO: Make non-nullable after removing reset() method
+    val config: ConfigurationSection
+) {
+    private val datamap = HashMap<String, IConfigData<*>>()
 
     /**
-     * Gets a config object for the given path. The def or primitiveDef must be set. If a getter is present, a setter must be present as well.
+     * You may use this method with any data type, but always provide getters and setters that convert to primitive types
+     * if you're not using primitive types directly.
+     * These primitive types are strings, numbers, characters, booleans and lists of these things.
      *
-     * @param path The dot-separated path relative to this config instance
-     * @param <T>  The runtime type of the config value
-     * @return A ConfigData builder to set how to obtain the value
-    </T> */
-    fun <T> getConfig(path: String?): ConfigDataBuilder<T> {
+     * @param path    The path in config to use
+     * @param def     The value to use by default
+     * @param getter  A function that converts a primitive representation to the correct value
+     * @param setter  A function that converts a value to a primitive representation
+     * @param primDef Whether the default value is a primitive value that needs to be converted to the correct type using the getter
+     * @param T       The type of this variable (can be any class)
+     * @return The data object that can be used to get or set the value
+     */
+    fun <T> getConfig(
+        path: String,
+        def: T,
+        getter: Function<Any?, T>? = null,
+        setter: Function<T, Any?>? = null
+    ): ConfigDataBuilder<T> {
         return ConfigData.builder(this, path)
     }
 
-    fun onConfigBuild(config: ConfigData<*>) {
+    fun onConfigBuild(config: IConfigData<*>) {
         datamap[config.path] = config
     }
 
     /**
-     * This method overload should only be used with primitives or String.
+     * You may use this method with any data type, but always provide getters and setters that convert to primitive types
+     * if you're not using primitive types directly.
+     * These primitive types are strings, numbers, characters, booleans and lists of these things.
      *
-     * @param path The path in config to use
-     * @param def  The value to use by default
-     * @param <T>  The type of this variable (only use primitives or String)
-     * @return The data object that can be used to get or set the value
-    </T> */
-    fun <T> getData(path: String, def: T): ConfigData<T> {
-        var data = datamap[path]
-        if (data == null) datamap[path] = ConfigData(this, path, def, def, null, null).also { data = it }
-        @Suppress("UNCHECKED_CAST")
-        return data as ConfigData<T>
-    }
-
-    /**
-     * This method overload may be used with any class.
-     *
-     * @param path   The path in config to use
-     * @param def    The value to use by default
-     * @param getter A function that converts a primitive representation to the correct value
-     * @param setter A function that converts a value to a primitive representation
+     * @param path    The path in config to use
+     * @param def     The value to use by default
+     * @param getter  A function that converts a primitive representation to the correct value
+     * @param setter  A function that converts a value to a primitive representation
+     * @param primDef Whether the default value is a primitive value that needs to be converted to the correct type using the getter
      * @param <T>    The type of this variable (can be any class)
      * @return The data object that can be used to get or set the value
     </T> */
-    fun <T> getData(path: String, def: T, getter: Function<Any?, T>?, setter: Function<T, Any?>): ConfigData<T> {
-        var data = datamap[path]
-        if (data == null) datamap[path] =
-            ConfigData(this, path, def, setter.apply(def), getter, setter).also { data = it }
-        @Suppress("UNCHECKED_CAST")
-        return data as ConfigData<T>
-    }
-
-    /**
-     * This method overload may be used with any class. The given default value will be run through the getter.
-     *
-     * @param path         The path in config to use
-     * @param primitiveDef The **primitive** value to use by default
-     * @param getter       A function that converts a primitive representation to the correct value
-     * @param setter       A function that converts a value to a primitive representation
-     * @param <T>          The type of this variable (can be any class)
-     * @return The data object that can be used to get or set the value
-    </T> */
-    fun <T> getDataPrimDef(
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getData(
         path: String,
-        primitiveDef: Any?,
-        getter: Function<Any?, T>,
-        setter: Function<T, Any?>?
+        def: T,
+        getter: Function<Any?, T>? = null,
+        setter: Function<T, Any?>? = null,
+        readOnly: Boolean = false
     ): ConfigData<T> {
-        var data = datamap[path]
-        if (data == null) datamap[path] =
-            ConfigData(this, path, getter.apply(primitiveDef), primitiveDef, getter, setter).also { data = it }
-        @Suppress("UNCHECKED_CAST")
-        return data as ConfigData<T>
+        return getData(path, getter ?: Function { it as T }, setter ?: Function { it }, def)
     }
 
     /**
-     * This method overload may be used with any class. The given default value will be run through the getter.
+     * You may use this method with any data type and provide a primitive default value.
+     * These primitive types are strings, numbers, characters, booleans and lists of these things.
      *
      * @param path         The path in config to use
      * @param primitiveDef The **primitive** value to use by default
@@ -108,17 +91,17 @@ class IHaveConfig(var saveAction: Runnable?) { // TODO: Make non-nullable after 
      * @param <T>          The type of this variable (can be any class)
      * @return The data object that can be used to get or set the value
     </T> */
-    fun <T> getReadOnlyDataPrimDef(
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getData(
         path: String,
-        primitiveDef: Any?,
         getter: Function<Any?, T>,
-        setter: Function<T, Any?>?
-    ): ReadOnlyConfigData<T> {
-        var data = datamap[path]
-        if (data == null) datamap[path] =
-            ReadOnlyConfigData(this, path, getter.apply(primitiveDef), primitiveDef, getter, setter).also { data = it }
-        @Suppress("UNCHECKED_CAST")
-        return data as ReadOnlyConfigData<T>
+        setter: Function<T, Any?>,
+        primitiveDef: Any?,
+        readOnly: Boolean = false
+    ): ConfigData<T> {
+        val data =
+            datamap[path] ?: ConfigData(this, path, primitiveDef, getter, setter, readOnly).also { datamap[path] = it }
+        return data as ConfigData<T>
     }
 
     /**
@@ -134,31 +117,6 @@ class IHaveConfig(var saveAction: Runnable?) { // TODO: Make non-nullable after 
         if (data == null) {
             val defval = def.get()
             datamap[path] = ConfigData(this, path, defval, defval, null, null).also { data = it }
-        }
-        @Suppress("UNCHECKED_CAST")
-        return data as ConfigData<T>
-    }
-
-    /**
-     * This method overload may be used with any class.
-     *
-     * @param path   The path in config to use
-     * @param def    The value to use by default
-     * @param getter A function that converts a primitive representation to the correct value
-     * @param setter A function that converts a value to a primitive representation
-     * @param <T>    The type of this variable (can be any class)
-     * @return The data object that can be used to get or set the value
-    </T> */
-    fun <T> getData(
-        path: String,
-        def: Supplier<T>,
-        getter: Function<Any?, T>?,
-        setter: Function<T, Any?>
-    ): ConfigData<T> {
-        var data = datamap[path]
-        if (data == null) {
-            val defval = def.get()
-            datamap[path] = ConfigData(this, path, defval, setter.apply(defval), getter, setter).also { data = it }
         }
         @Suppress("UNCHECKED_CAST")
         return data as ConfigData<T>
