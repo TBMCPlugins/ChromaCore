@@ -43,13 +43,14 @@ class IHaveConfig(
      * @param T       The type of this variable (can be any class)
      * @return The data object that can be used to get or set the value
      */
-    fun <T> getConfig(
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getConfig( // TODO: Remove
         path: String,
         def: T,
         getter: Function<Any?, T>? = null,
         setter: Function<T, Any?>? = null
     ): ConfigDataBuilder<T> {
-        return ConfigData.builder(this, path)
+        return ConfigData.builder(this, path, if (setter != null) setter.apply(def) else def, getter ?: Function { it as T }, setter ?: Function { it })
     }
 
     fun onConfigBuild(config: IConfigData<*>) {
@@ -77,7 +78,7 @@ class IHaveConfig(
         setter: Function<T, Any?>? = null,
         readOnly: Boolean = false
     ): ConfigData<T> {
-        return getData(path, getter ?: Function { it as T }, setter ?: Function { it }, def)
+        return getData(path, getter ?: Function { it as T }, setter ?: Function { it }, def, readOnly)
     }
 
     /**
@@ -112,7 +113,7 @@ class IHaveConfig(
      * @param <T>  The type of this variable (only use primitives or String)
      * @return The data object that can be used to get or set the value
     </T> */
-    fun <T> getData(path: String, def: Supplier<T>): ConfigData<T> {
+    fun <T> getData(path: String, def: Supplier<T>): ConfigData<T> { // TODO: Remove
         var data = datamap[path]
         if (data == null) {
             val defval = def.get()

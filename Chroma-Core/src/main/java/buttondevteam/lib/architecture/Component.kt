@@ -16,12 +16,12 @@ import java.util.stream.Collectors
  * Configuration is based on class name
  */
 @HasConfig(global = false) //Used for obtaining javadoc
-abstract class Component<TP : JavaPlugin?> {
+abstract class Component<TP : JavaPlugin> {
     var isEnabled = false
+    private var wrapper: ButtonComponent<TP>? = null
 
-    var plugin: TP? = null
-
-    val config = IHaveConfig(null)
+    val config get() = wrapper!!.config
+    val plugin get() = wrapper!!.plugin
 
     private val data //TODO
         : IHaveConfig? = null
@@ -32,11 +32,11 @@ abstract class Component<TP : JavaPlugin?> {
             .orElse(true))
 
     fun log(message: String) {
-        plugin!!.logger.info("[$className] $message")
+        plugin.logger.info("[$className] $message")
     }
 
     fun logWarn(message: String) {
-        plugin!!.logger.warning("[$className] $message")
+        plugin.logger.warning("[$className] $message")
     }
 
     /**
@@ -45,7 +45,7 @@ abstract class Component<TP : JavaPlugin?> {
      *
      * @param plugin Plugin object
      */
-    protected open fun register(plugin: JavaPlugin?) {}
+    protected open fun register(plugin: JavaPlugin) {}
 
     /**
      * Unregisters the module, when called by the JavaPlugin class.
@@ -54,7 +54,7 @@ abstract class Component<TP : JavaPlugin?> {
      *
      * @param plugin Plugin object
      */
-    protected open fun unregister(plugin: JavaPlugin?) {}
+    protected open fun unregister(plugin: JavaPlugin) {}
 
     /**
      * Enables the module, when called by the JavaPlugin class. Call
@@ -100,25 +100,19 @@ abstract class Component<TP : JavaPlugin?> {
      * @param defaultProvider A mapping between config paths and config generators
      * @return A map containing configs
      */
-    fun getConfigMap(key: String?, defaultProvider: Map<String, Consumer<IHaveConfig?>>): Map<String, IHaveConfig> {
+    fun getConfigMap(key: String, defaultProvider: Map<String, Consumer<IHaveConfig>>): Map<String, IHaveConfig> {
         val c: ConfigurationSection = config.config
         var cs = c.getConfigurationSection(key)
         if (cs == null) cs = c.createSection(key)
-        val res = cs!!.getValues(false).entries.stream()
-            .filter { (_, value): Map.Entry<String?, Any?> -> value is ConfigurationSection }
-            .collect(
-                Collectors.toMap<Map.Entry<String?, Any?>, String, IHaveConfig>(
-                    { it.key },
-                    { (_, value): Map.Entry<String?, Any?> ->
-                        val conf = IHaveConfig { plugin!!.saveConfig() }
-                        conf.reset(value as ConfigurationSection?)
-                        conf
-                    })
-            )
+        val res = cs.getValues(false).entries.stream()
+            .filter { (_, value) -> value is ConfigurationSection }
+            .collect(Collectors.toMap(
+                { it.key },
+                { (_, value) -> IHaveConfig(plugin::saveConfig, value as ConfigurationSection) }
+            ))
         if (res.isEmpty()) {
             for ((key1, value) in defaultProvider) {
-                val conf = IHaveConfig { plugin!!.saveConfig() }
-                conf.reset(cs.createSection(key1))
+                val conf = IHaveConfig(plugin::saveConfig, cs.createSection(key1))
                 value.accept(conf)
                 res[key1] = conf
             }
@@ -159,7 +153,7 @@ abstract class Component<TP : JavaPlugin?> {
             return registerUnregisterComponent(plugin, component, false)
         }
 
-        fun <T : JavaPlugin> registerUnregisterComponent(
+        private fun <T : JavaPlugin> registerUnregisterComponent(
             plugin: T,
             component: Component<T>,
             register: Boolean
@@ -184,9 +178,7 @@ abstract class Component<TP : JavaPlugin?> {
                         )
                         return false
                     }
-                    component.plugin = plugin // TODO: Perhaps construct a new object with these initialized
-                    component.config.saveAction = Runnable { plugin.saveConfig() }
-                    updateConfig(plugin, component)
+                    val wrapper = ButtonComponent(plugin, { plugin.saveConfig() }, getConfigSection(plugin, component))
                     component.register(plugin)
                     components[component.javaClass] = component
                     if (plugin is ButtonPlugin) (plugin as ButtonPlugin).componentStack.push(component)
@@ -250,7 +242,7 @@ abstract class Component<TP : JavaPlugin?> {
             if (component.isEnabled == enabled) return  //Don't do anything
             if (enabled.also { component.isEnabled = it }) {
                 try {
-                    updateConfig(component.plugin!!, component)
+                    getConfigSection(component.plugin!!, component)
                     component.enable()
                     if (ButtonPlugin.configGenAllowed(component)) {
                         IHaveConfig.pregenConfig(component, null)
@@ -276,15 +268,13 @@ abstract class Component<TP : JavaPlugin?> {
             }
         }
 
-        @JvmStatic
-        fun updateConfig(plugin: JavaPlugin, component: Component<*>) {
-            if (plugin.config != null) { //Production
-                var compconf = plugin.config.getConfigurationSection("components")
-                if (compconf == null) compconf = plugin.config.createSection("components")
-                var configSect = compconf!!.getConfigurationSection(component.className)
-                if (configSect == null) configSect = compconf.createSection(component.className)
-                component.config.reset(configSect)
-            } //Testing: it's already set
+        private fun getConfigSection(plugin: JavaPlugin, component: Component<*>): ConfigurationSection {
+            var compconf = plugin.config.getConfigurationSection("components")
+            if (compconf == null) compconf = plugin.config.createSection("components")
+            var configSect = compconf.getConfigurationSection(component.className)
+            if (configSect == null) configSect = compconf.createSection(component.className)
+            return configSect
+            // TODO: Support tests (provide Bukkit configuration for tests)
         }
 
         /**

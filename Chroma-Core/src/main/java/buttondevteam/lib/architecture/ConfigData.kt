@@ -44,8 +44,9 @@ class ConfigData<T> internal constructor(
         value = null
     }
 
-    override fun get(): T? {
-        if (value != null) return value //Speed things up
+    override fun get(): T {
+        val cachedValue = value
+        if (cachedValue != null) return cachedValue //Speed things up
         val config = config?.config
         var `val`: Any?
         if (config == null || !config.isSet(path)) {
@@ -54,14 +55,14 @@ class ConfigData<T> internal constructor(
         } else `val` = config.get(path) //config==null: testing
         if (`val` == null) //If it's set to null explicitly
             `val` = pdef
-        fun convert(_val: Any?, _pdef: Any?): Any? {
-            return if (_pdef is Number) //If we expect a number
-                if (_val is Number)
-                    ChromaUtils.convertNumber(_val as Number?, _pdef.javaClass as Class<out Number?>)
-                else _pdef //If we didn't get a number, return default (which is a number)
-            else if (_val is List<*> && _pdef != null && _pdef.javaClass.isArray)
-                _val.toTypedArray()
-            else _val
+        fun convert(cval: Any?, cpdef: Any?): Any? {
+            return if (cpdef is Number) //If we expect a number
+                if (cval is Number)
+                    ChromaUtils.convertNumber(cval, cpdef.javaClass)
+                else cpdef //If we didn't get a number, return default (which is a number)
+            else if (cval is List<*> && cpdef != null && cpdef.javaClass.isArray)
+                cval.toTypedArray()
+            else cval
         }
         return getter.apply(convert(`val`, pdef)).also { value = it }
     }
@@ -113,16 +114,19 @@ class ConfigData<T> internal constructor(
         fun signalChange(config: IHaveConfig) {
             val cc = config.config
             val sa = config.saveAction
+            val root = cc.root
+            if (root == null) {
+                MainPlugin.Instance.logger.warning("Attempted to save config with no root! Name: ${config.config.name}")
+                return
+            }
             if (!saveTasks.containsKey(cc.root)) {
                 synchronized(saveTasks) {
                     saveTasks.put(
-                        cc.root,
+                        root,
                         SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, {
-                            synchronized(
-                                saveTasks
-                            ) {
-                                saveTasks.remove(cc.getRoot())
-                                sa!!.run()
+                            synchronized(saveTasks) {
+                                saveTasks.remove(root)
+                                sa.run()
                             }
                         }, 100), sa)
                     )
@@ -144,8 +148,8 @@ class ConfigData<T> internal constructor(
             return false
         }
 
-        fun <T> builder(config: IHaveConfig, path: String): ConfigDataBuilder<T> {
-            return ConfigDataBuilder(config, path)
+        fun <T> builder(config: IHaveConfig, path: String, primitiveDef: Any?, getter: Function<Any?, T>, setter: Function<T, Any?>): ConfigDataBuilder<T> {
+            return ConfigDataBuilder(config, path, primitiveDef, getter, setter)
         }
     }
 }
