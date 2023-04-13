@@ -1,66 +1,81 @@
-package buttondevteam.core;
+package buttondevteam.core
 
-import buttondevteam.lib.TBMCCoreAPI;
-import buttondevteam.lib.architecture.ButtonPlugin;
-import buttondevteam.lib.architecture.Component;
-import lombok.val;
+import buttondevteam.lib.TBMCCoreAPI
+import buttondevteam.lib.architecture.ButtonPlugin
+import buttondevteam.lib.architecture.Component
+import buttondevteam.lib.architecture.Component.Companion.components
+import buttondevteam.lib.architecture.Component.Companion.setComponentEnabled
+import buttondevteam.lib.architecture.Component.Companion.unregisterComponent
+import org.bukkit.plugin.java.JavaPlugin
 
-public final class ComponentManager {
-	private ComponentManager() {}
+object ComponentManager {
+    private var componentsEnabled = false
 
-	private static boolean componentsEnabled = false;
+    /**
+     * This flag is used to enable components registered after the others were enabled.
+     * @return Whether already registered components have been enabled
+     */
+    fun areComponentsEnabled(): Boolean {
+        return componentsEnabled
+    }
 
-	/**
-	 * This flag is used to enable components registered after the others were enabled.
-	 * @return Whether already registered components have been enabled
-	 */
-	public static boolean areComponentsEnabled() { return componentsEnabled; }
+    /**
+     * Enables components based on a configuration - any component registered afterwards will be also enabled
+     */
+    fun enableComponents() {
+        components.values.stream().filter { c: Component<out JavaPlugin> -> c.shouldBeEnabled.get() }
+            .forEach { c ->
+                try {
+                    setComponentEnabled(c, true)
+                } catch (e: Exception) {
+                    TBMCCoreAPI.SendException("Failed to enable one of the components: " + c.javaClass.simpleName, e, c)
+                } catch (e: NoClassDefFoundError) {
+                    TBMCCoreAPI.SendException("Failed to enable one of the components: " + c.javaClass.simpleName, e, c)
+                }
+            }
+        componentsEnabled = true
+    }
 
-	/**
-	 * Enables components based on a configuration - any component registered afterwards will be also enabled
-	 */
-	public static void enableComponents() {
-		//Component.getComponents().values().stream().filter(c->cs.getConfigurationSection(c.getClass().getSimpleName()).getBoolean("enabled")).forEach(c-> {
-		Component.getComponents().values().stream().filter(c -> c.shouldBeEnabled.get()).forEach(c -> {
-			try {
-				Component.setComponentEnabled(c, true);
-			} catch (Exception | NoClassDefFoundError e) {
-				TBMCCoreAPI.SendException("Failed to enable one of the components: " + c.getClass().getSimpleName(), e, c);
-			}
-		});
-		componentsEnabled = true;
-	}
+    /**
+     * Unregister all components of a plugin that are enabled - called on [ButtonPlugin] disable
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T : ButtonPlugin> unregComponents(plugin: T) {
+        while (!plugin.componentStack.empty()) //Unregister in reverse order
+            unregisterComponent(plugin, plugin.componentStack.pop() as Component<T>) //Components are pushed on register
+    }
 
-	/**
-	 * Unregister all components of a plugin that are enabled - called on {@link ButtonPlugin} disable
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T extends ButtonPlugin> void unregComponents(T plugin) {
-		while (!plugin.getComponentStack().empty()) //Unregister in reverse order
-			Component.unregisterComponent(plugin, (Component<T>) plugin.getComponentStack().pop()); //Components are pushed on register
-		//componentsEnabled = false; - continue enabling new components after a plugin gets disabled
-	}
+    /**
+     * Will also return false if the component is not registered.
+     *
+     * @param cl The component class
+     * @return Whether the component is registered and enabled
+     */
+    @JvmStatic
+    fun isEnabled(cl: Class<out Component<*>?>?): Boolean {
+        val c = components[cl]
+        return c != null && c.isEnabled
+    }
 
-	/**
-	 * Will also return false if the component is not registered.
-	 *
-	 * @param cl The component class
-	 * @return Whether the component is registered and enabled
-	 */
-	public static boolean isEnabled(Class<? extends Component> cl) {
-		val c = Component.getComponents().get(cl);
-		return c != null && c.isEnabled();
-	}
+    /**
+     * Will also return null if the component is not registered.
+     *
+     * @param cl The component class
+     * @return The component if it's registered and enabled
+     */
+    @JvmStatic
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Component<*>> getIfEnabled(cl: Class<T>): T? {
+        val c = components[cl]
+        return if (c != null && c.isEnabled) c as T else null
+    }
 
-	/**
-	 * Will also return null if the component is not registered.
-	 *
-	 * @param cl The component class
-	 * @return The component if it's registered and enabled
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T extends Component> T getIfEnabled(Class<T> cl) {
-		val c = Component.getComponents().get(cl);
-		return c != null && c.isEnabled() ? (T) c : null;
-	}
+    /**
+     * It will return null if the component is not registered. Use this method if you don't want to check if the component is enabled.
+     */
+    @JvmStatic
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Component<*>> get(cl: Class<T>): T? {
+        return components[cl] as T?
+    }
 }

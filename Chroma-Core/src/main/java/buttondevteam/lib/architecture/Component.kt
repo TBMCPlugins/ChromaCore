@@ -18,10 +18,10 @@ import java.util.stream.Collectors
 @HasConfig(global = false) //Used for obtaining javadoc
 abstract class Component<TP : JavaPlugin> {
     var isEnabled = false
-    private var wrapper: ButtonComponent<TP>? = null
+    internal var componentData: ComponentData<TP>? = null
 
-    val config get() = wrapper!!.config
-    val plugin get() = wrapper!!.plugin
+    val config get() = componentData!!.config
+    val plugin get() = componentData!!.plugin
 
     private val data //TODO
         : IHaveConfig? = null
@@ -120,11 +120,34 @@ abstract class Component<TP : JavaPlugin> {
         return res
     }
 
-    private val className: String
-        get() = javaClass.simpleName
+    private val className: String get() = javaClass.simpleName
+
+    internal fun updateComponentData(plugin: TP = this.plugin) {
+        componentData = ComponentData(plugin, { plugin.saveConfig() }, this.getConfigSection(plugin))
+    }
+
+    private fun getConfigSection(plugin: JavaPlugin): ConfigurationSection {
+        var compconf = plugin.config.getConfigurationSection("components")
+        if (compconf == null) compconf = plugin.config.createSection("components")
+        var configSect = compconf.getConfigurationSection(className)
+        if (configSect == null) configSect = compconf.createSection(className)
+        return configSect
+        // TODO: Support tests (provide Bukkit configuration for tests)
+    }
 
     companion object {
-        private val components = HashMap<Class<out Component<*>>, Component<out JavaPlugin>>()
+        private val _components = HashMap<Class<out Component<*>>, Component<out JavaPlugin>>()
+
+        /**
+         * Returns the currently registered components<br></br>
+         *
+         * @return The currently registered components
+         */
+        @JvmStatic
+        val components: Map<Class<out Component<*>>, Component<out JavaPlugin>>
+            get() {
+                return Collections.unmodifiableMap(_components)
+            }
 
         /**
          * Registers a component checking it's dependencies and calling [.register].<br></br>
@@ -178,10 +201,11 @@ abstract class Component<TP : JavaPlugin> {
                         )
                         return false
                     }
-                    val wrapper = ButtonComponent(plugin, { plugin.saveConfig() }, getConfigSection(plugin, component))
                     component.register(plugin)
-                    components[component.javaClass] = component
-                    if (plugin is ButtonPlugin) (plugin as ButtonPlugin).componentStack.push(component)
+                    // The plugin is saved with this call, so it must be specified
+                    component.updateComponentData(plugin)
+                    _components[component.javaClass] = component
+                    if (plugin is ButtonPlugin) plugin.componentStack.push(component)
                     if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled.get()) {
                         return try { //Enable components registered after the previous ones getting enabled
                             setComponentEnabled(component, true)
@@ -220,7 +244,7 @@ abstract class Component<TP : JavaPlugin> {
                         }
                     }
                     component.unregister(plugin)
-                    components.remove(component.javaClass)
+                    _components.remove(component.javaClass)
                 }
                 true
             } catch (e: Exception) {
@@ -242,7 +266,7 @@ abstract class Component<TP : JavaPlugin> {
             if (component.isEnabled == enabled) return  //Don't do anything
             if (enabled.also { component.isEnabled = it }) {
                 try {
-                    getConfigSection(component.plugin!!, component)
+                    component.getConfigSection(component.plugin)
                     component.enable()
                     if (ButtonPlugin.configGenAllowed(component)) {
                         IHaveConfig.pregenConfig(component, null)
@@ -266,25 +290,6 @@ abstract class Component<TP : JavaPlugin> {
                 component.disable()
                 ButtonPlugin.command2MC.unregisterCommands(component)
             }
-        }
-
-        private fun getConfigSection(plugin: JavaPlugin, component: Component<*>): ConfigurationSection {
-            var compconf = plugin.config.getConfigurationSection("components")
-            if (compconf == null) compconf = plugin.config.createSection("components")
-            var configSect = compconf.getConfigurationSection(component.className)
-            if (configSect == null) configSect = compconf.createSection(component.className)
-            return configSect
-            // TODO: Support tests (provide Bukkit configuration for tests)
-        }
-
-        /**
-         * Returns the currently registered components<br></br>
-         *
-         * @return The currently registered components
-         */
-        @JvmStatic
-        fun getComponents(): Map<Class<out Component<*>>, Component<out JavaPlugin>> {
-            return Collections.unmodifiableMap(components)
         }
     }
 }

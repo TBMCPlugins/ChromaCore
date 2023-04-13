@@ -82,33 +82,6 @@ class ConfigData<T> internal constructor(
 
     private class SaveTask(val task: BukkitTask, val saveAction: Runnable)
 
-    class ConfigDataBuilder<T> internal constructor(
-        private val config: IHaveConfig,
-        private val path: String,
-        private val primitiveDef: Any?,
-        private val getter: Function<Any?, T>,
-        private val setter: Function<T, Any?>
-    ) {
-        /**
-         * Builds a modifiable config representation. Use if you want to change the value *in code*.
-         *
-         * @return A ConfigData instance.
-         */
-        fun build(readOnly: Boolean = false): ConfigData<T> {
-            val config = ConfigData(config, path, primitiveDef, getter, setter, readOnly)
-            this.config.onConfigBuild(config)
-            return config
-        }
-
-        fun buildList(readOnly: Boolean = false): ListConfigData<T> {
-            if (primitiveDef is List<*>) {
-                val config = ListConfigData(config, path, primitiveDef, getter, setter, readOnly)
-                this.config.onConfigBuild(config)
-                return config
-            }
-        }
-    }
-
     companion object {
         private val saveTasks = HashMap<Configuration, SaveTask>()
         fun signalChange(config: IHaveConfig) {
@@ -146,10 +119,6 @@ class ConfigData<T> internal constructor(
                 }
             }
             return false
-        }
-
-        fun <T> builder(config: IHaveConfig, path: String, primitiveDef: Any?, getter: Function<Any?, T>, setter: Function<T, Any?>): ConfigDataBuilder<T> {
-            return ConfigDataBuilder(config, path, primitiveDef, getter, setter)
         }
     }
 }

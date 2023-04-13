@@ -2,7 +2,6 @@ package buttondevteam.lib.architecture
 
 import buttondevteam.core.MainPlugin
 import buttondevteam.lib.TBMCCoreAPI
-import buttondevteam.lib.architecture.ConfigData.ConfigDataBuilder
 import buttondevteam.lib.architecture.config.IConfigData
 import org.bukkit.Bukkit
 import org.bukkit.configuration.ConfigurationSection
@@ -11,7 +10,6 @@ import java.lang.reflect.InvocationTargetException
 import java.util.*
 import java.util.function.Function
 import java.util.function.Predicate
-import java.util.function.Supplier
 import java.util.stream.Collectors
 
 /**
@@ -29,33 +27,6 @@ class IHaveConfig(
     val config: ConfigurationSection
 ) {
     private val datamap = HashMap<String, IConfigData<*>>()
-
-    /**
-     * You may use this method with any data type, but always provide getters and setters that convert to primitive types
-     * if you're not using primitive types directly.
-     * These primitive types are strings, numbers, characters, booleans and lists of these things.
-     *
-     * @param path    The path in config to use
-     * @param def     The value to use by default
-     * @param getter  A function that converts a primitive representation to the correct value
-     * @param setter  A function that converts a value to a primitive representation
-     * @param primDef Whether the default value is a primitive value that needs to be converted to the correct type using the getter
-     * @param T       The type of this variable (can be any class)
-     * @return The data object that can be used to get or set the value
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun <T> getConfig( // TODO: Remove
-        path: String,
-        def: T,
-        getter: Function<Any?, T>? = null,
-        setter: Function<T, Any?>? = null
-    ): ConfigDataBuilder<T> {
-        return ConfigData.builder(this, path, if (setter != null) setter.apply(def) else def, getter ?: Function { it as T }, setter ?: Function { it })
-    }
-
-    fun onConfigBuild(config: IConfigData<*>) {
-        datamap[config.path] = config
-    }
 
     /**
      * You may use this method with any data type, but always provide getters and setters that convert to primitive types
@@ -109,30 +80,26 @@ class IHaveConfig(
      * This method overload should only be used with primitves or String.
      *
      * @param path The path in config to use
-     * @param def  The value to use by default
      * @param <T>  The type of this variable (only use primitives or String)
      * @return The data object that can be used to get or set the value
     </T> */
-    fun <T> getData(path: String, def: Supplier<T>): ConfigData<T> { // TODO: Remove
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getListData(
+        path: String,
+        def: List<T>,
+        elementGetter: Function<Any?, T>? = null,
+        elementSetter: Function<T, Any?>? = null,
+        readOnly: Boolean = false
+    ): ListConfigData<T> {
         var data = datamap[path]
-        if (data == null) {
-            val defval = def.get()
-            datamap[path] = ConfigData(this, path, defval, defval, null, null).also { data = it }
-        }
-        @Suppress("UNCHECKED_CAST")
-        return data as ConfigData<T>
-    }
-
-    /**
-     * This method overload should only be used with primitves or String.
-     *
-     * @param path The path in config to use
-     * @param <T>  The type of this variable (only use primitives or String)
-     * @return The data object that can be used to get or set the value
-    </T> */
-    fun <T> getListData(path: String): ListConfigData<T> {
-        var data = datamap[path]
-        if (data == null) datamap[path] = ListConfigData(this, path, ListConfigData.List<T>()).also { data = it }
+        if (data == null) datamap[path] = ListConfigData(
+            this,
+            path,
+            def,
+            elementGetter ?: Function { it as T },
+            elementSetter ?: Function { it },
+            readOnly
+        ).also { data = it }
         @Suppress("UNCHECKED_CAST")
         return data as ListConfigData<T>
     }

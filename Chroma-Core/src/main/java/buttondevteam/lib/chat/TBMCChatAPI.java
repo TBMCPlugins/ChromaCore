@@ -35,9 +35,9 @@ public class TBMCChatAPI {
 	 */
 	public static boolean SendChatMessage(ChatMessage cm, Channel channel) {
 		if (!Channel.getChannelList().contains(channel))
-			throw new RuntimeException("Channel " + channel.DisplayName.get() + " not registered!");
-		if (!channel.Enabled.get()) {
-			cm.getSender().sendMessage("§cThe channel '" + channel.DisplayName.get() + "' is disabled!");
+			throw new RuntimeException("Channel " + channel.getDisplayName().get() + " not registered!");
+		if (!channel.isEnabled.get()) {
+			cm.getSender().sendMessage("§cThe channel '" + channel.displayName.get() + "' is disabled!");
 			return true; //Cancel sending if channel is disabled
 		}
 		Supplier<Boolean> task = () -> {
@@ -70,11 +70,11 @@ public class TBMCChatAPI {
 	 */
 	public static boolean SendSystemMessage(Channel channel, RecipientTestResult rtr, String message, TBMCSystemChatEvent.BroadcastTarget target, String... exceptions) {
 		if (!Channel.getChannelList().contains(channel))
-			throw new RuntimeException("Channel " + channel.DisplayName.get() + " not registered!");
-		if (!channel.Enabled.get())
+			throw new RuntimeException("Channel " + channel.displayName.get() + " not registered!");
+		if (!channel.enabled.get())
 			return true; //Cancel sending
 		if (!Arrays.asList(exceptions).contains("Minecraft"))
-			Bukkit.getConsoleSender().sendMessage("[" + channel.DisplayName.get() + "] " + message);
+			Bukkit.getConsoleSender().sendMessage("[" + channel.displayName.get() + "] " + message);
 		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID, exceptions, target);
 		return ChromaUtils.callEventAsync(event);
 	}
@@ -92,6 +92,6 @@ public class TBMCChatAPI {
 	 * @param channel A new {@link Channel} to register
 	 */
 	public static void RegisterChatChannel(Channel channel) {
-		Channel.RegisterChannel(channel);
+		Channel.registerChannel(channel);
 	}
 }

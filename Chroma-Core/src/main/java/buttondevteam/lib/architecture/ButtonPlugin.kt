@@ -3,7 +3,6 @@ package buttondevteam.lib.architecture
 import buttondevteam.buttonproc.HasConfig
 import buttondevteam.core.ComponentManager
 import buttondevteam.lib.TBMCCoreAPI
-import buttondevteam.lib.architecture.Component.Companion.updateConfig
 import buttondevteam.lib.chat.Command2MC
 import buttondevteam.lib.chat.ICommand2MC
 import org.bukkit.configuration.InvalidConfigurationException
@@ -17,7 +16,8 @@ import java.util.function.Consumer
 
 @HasConfig(global = true)
 abstract class ButtonPlugin : JavaPlugin() {
-    protected val iConfig = IHaveConfig { saveConfig() }
+    protected var iConfig = getIConfigInstance()
+        private set
     private var yaml: YamlConfiguration? = null
 
     protected val data //TODO
@@ -52,12 +52,16 @@ abstract class ButtonPlugin : JavaPlugin() {
             IHaveConfig.pregenConfig(this, null)
     }
 
+    private fun getIConfigInstance(): IHaveConfig {
+        return IHaveConfig(
+            ::saveConfig,
+            this.config.getConfigurationSection("global") ?: this.config.createSection("global")
+        )
+    }
+
     private fun reloadIConfig(): Boolean {
-        val config = config
-        var section = config.getConfigurationSection("global")
-        if (section == null) section = config.createSection("global")
-        iConfig.reset(section)
-        return configLoaded // If loading fails, getConfig() returns a temporary instance
+        iConfig = getIConfigInstance()
+        return isConfigLoaded // If loading fails, getConfig() returns a temporary instance
     }
 
     override fun onDisable() {
@@ -79,7 +83,7 @@ abstract class ButtonPlugin : JavaPlugin() {
     fun tryReloadConfig(): Boolean {
         if (!justReload()) return false
         reloadIConfig()
-        componentStack.forEach(Consumer { c: Component<*>? -> updateConfig(this, c!!) })
+        componentStack.forEach(Consumer { c -> c.updateComponentData() })
         return true
     }
 
@@ -122,10 +126,10 @@ abstract class ButtonPlugin : JavaPlugin() {
     }
 
     override fun saveConfig() {
-        if (configLoaded) super.saveConfig()
+        if (isConfigLoaded) super.saveConfig()
     }
 
-    val configLoaded get() = yaml != null
+    val isConfigLoaded get() = yaml != null
 
     /**
      * Registers command and sets its plugin.
@@ -142,6 +146,7 @@ abstract class ButtonPlugin : JavaPlugin() {
     annotation class ConfigOpts(val disableConfigGen: Boolean = false)
     companion object {
         //Needs to be static as we don't know the plugin when a command is handled
+        @JvmStatic
         val command2MC = Command2MC()
         fun configGenAllowed(obj: Any): Boolean {
             return !Optional.ofNullable(obj.javaClass.getAnnotation(ConfigOpts::class.java))

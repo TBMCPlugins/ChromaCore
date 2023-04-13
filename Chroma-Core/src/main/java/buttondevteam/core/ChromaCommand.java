@@ -24,7 +24,7 @@ public class ChromaCommand extends ICommand2MC {
 	@Command2.Subcommand
 	public void reload(CommandSender sender, @Command2.OptionalArg ButtonPlugin plugin) {
 		if (plugin == null)
-			plugin = MainPlugin.Instance;
+			plugin = getPlugin();
 		if (plugin.tryReloadConfig())
 			sender.sendMessage("§b" + plugin.getName() + " config reloaded.");
 		else

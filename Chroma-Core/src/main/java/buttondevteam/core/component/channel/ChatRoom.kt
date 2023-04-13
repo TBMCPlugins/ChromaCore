@@ -1,28 +1,35 @@
-package buttondevteam.core.component.channel;
+package buttondevteam.core.component.channel
 
-import buttondevteam.lib.TBMCSystemChatEvent;
-import buttondevteam.lib.chat.Color;
-import buttondevteam.lib.chat.TBMCChatAPI;
-import org.bukkit.command.CommandSender;
+import buttondevteam.lib.TBMCSystemChatEvent
+import buttondevteam.lib.chat.Color
+import buttondevteam.lib.chat.TBMCChatAPI
+import org.bukkit.command.CommandSender
 
-import java.util.ArrayList;
-import java.util.List;
+class ChatRoom(displayname: String, color: Color, command: String) : Channel(
+    displayname, color, command, null // TODO: Custom filter for rooms using abstract method
+) {
+    private val usersInRoom: MutableList<CommandSender> = ArrayList()
+    private fun isInRoom(sender: CommandSender): Boolean {
+        return usersInRoom.contains(sender)
+    }
 
-public class ChatRoom extends Channel {
-    private final List<CommandSender> usersInRoom = new ArrayList<>();
+    fun joinRoom(sender: CommandSender) {
+        usersInRoom.add(sender)
+        TBMCChatAPI.SendSystemMessage(
+            this,
+            RecipientTestResult.ALL,
+            sender.name + " joined the room",
+            TBMCSystemChatEvent.BroadcastTarget.ALL
+        ) //Always show message in the same kind of channel
+    }
 
-	public ChatRoom(String displayname, Color color, String command) {
-		<ChatRoom>super(displayname, color, command, noScoreResult((this_, s) -> this_.usersInRoom.contains(s),
-				"Not implemented yet. Please report it to the devs along with which platform you're trying to talk from."));
-	}
-
-	public void joinRoom(CommandSender sender) {
-		usersInRoom.add(sender);
-		TBMCChatAPI.SendSystemMessage(this, RecipientTestResult.ALL, sender.getName() + " joined the room", TBMCSystemChatEvent.BroadcastTarget.ALL); //Always show message in the same kind of channel
-	}
-
-	public void leaveRoom(CommandSender sender) {
-		usersInRoom.remove(sender);
-		TBMCChatAPI.SendSystemMessage(this, RecipientTestResult.ALL, sender.getName() + " left the room", ChannelComponent.roomJoinLeave);
-	}
+    fun leaveRoom(sender: CommandSender) {
+        usersInRoom.remove(sender)
+        TBMCChatAPI.SendSystemMessage(
+            this,
+            RecipientTestResult.ALL,
+            sender.name + " left the room",
+            ChannelComponent.roomJoinLeave
+        )
+    }
 }

@@ -125,7 +125,12 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
      * Automatically colors the message red.
      * {@see super#addParamConverter}
      */
-    override fun <T> addParamConverter(cl: Class<T>, converter: Function<String, T>, errormsg: String, allSupplier: Supplier<Iterable<String>>) {
+    override fun <T> addParamConverter(
+        cl: Class<T>,
+        converter: Function<String, T?>,
+        errormsg: String,
+        allSupplier: Supplier<Iterable<String>>
+    ) {
         super.addParamConverter(cl, converter, "§c$errormsg", allSupplier)
     }
 
@@ -213,7 +218,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
 
     private class BukkitCommand(name: String?) : Command(name) {
         override fun execute(sender: CommandSender, commandLabel: String, args: Array<String>): Boolean {
-            return ButtonPlugin.getCommand2MC().executeCommand(sender, this, commandLabel, args)
+            return ButtonPlugin.command2MC.executeCommand(sender, this, commandLabel, args)
         }
 
         @Throws(IllegalArgumentException::class)
@@ -312,10 +317,9 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
                                         j++
                                         continue
                                     }
+                                    //Break if converter is not found or for example, the player provided an invalid plugin name
                                     val converter = getParamConverter(params[j].type, command2MC) ?: break
-                                    val paramValue = converter.converter.apply(paramValueString)
-                                        ?: //For example, the player provided an invalid plugin name
-                                        break
+                                    val paramValue = converter.converter.apply(paramValueString) ?: break
                                     args[j] = paramValue
                                     k++ //Only increment if not CommandSender
                                     j++

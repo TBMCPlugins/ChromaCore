@@ -47,12 +47,12 @@ public class ChannelComponent extends Component<JavaPlugin> {
 
 		@Override
 		public String getCommandPath() {
-			return channel.ID;
+			return channel.identifier;
 		}
 
 		@Override
 		public String[] getCommandPaths() {
-			return channel.IDs.get();
+			return channel.extraIdentifiers.get();
 		}
 
 		@Command2.Subcommand
@@ -74,7 +74,7 @@ public class ChannelComponent extends Component<JavaPlugin> {
 					if (channel instanceof ChatRoom)
 						((ChatRoom) channel).joinRoom(sender);
 				}
-				sender.sendMessage("§6You are now talking in: §b" + user.channel.get().DisplayName.get());
+				sender.sendMessage("§6You are now talking in: §b" + user.channel.get().displayName.get());
 			} else
 				TBMCChatAPI.SendChatMessage(ChatMessage.builder(sender, user, message).fromCommand(true)
 					.permCheck(senderMC.getPermCheck()).build(), channel);

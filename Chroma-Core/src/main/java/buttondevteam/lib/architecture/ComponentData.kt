@@ -6,10 +6,10 @@ import org.bukkit.plugin.java.JavaPlugin
 /**
  * A wrapper for plugin components. This is used internally.
  */
-class ButtonComponent<TP : JavaPlugin>(
+class ComponentData<TP : JavaPlugin>(
     val plugin: TP,
     saveAction: Runnable,
     config: ConfigurationSection
 ) {
-    val config = IHaveConfig(saveAction, config)
+    val config = IHaveConfig(saveAction, config) // TODO: Use lateinit instead of this class
 }

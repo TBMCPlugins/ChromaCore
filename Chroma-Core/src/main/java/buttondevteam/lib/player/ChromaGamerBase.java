@@ -313,5 +313,5 @@ public abstract class ChromaGamerBase {
 	//-----------------------------------------------------------------
 
 	public final ConfigData<Channel> channel = config.getData("channel", Channel.GlobalChat,
-		id -> Channel.getChannels().filter(ch -> ch.ID.equalsIgnoreCase((String) id)).findAny().orElse(null), ch -> ch.ID);
+		id -> Channel.getChannels().filter(ch -> ch.identifier.equalsIgnoreCase((String) id)).findAny().orElse(null), ch -> ch.ID);
 }

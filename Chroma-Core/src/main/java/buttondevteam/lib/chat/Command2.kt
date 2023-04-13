@@ -62,7 +62,11 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
     @Retention(AnnotationRetention.RUNTIME)
     annotation class OptionalArg
 
-    protected class ParamConverter<T>(val converter: Function<String, T>, val errormsg: String, val allSupplier: Supplier<Iterable<String>>)
+    protected class ParamConverter<T>(
+        val converter: Function<String, T?>,
+        val errormsg: String,
+        val allSupplier: Supplier<Iterable<String>>
+    )
 
     protected val paramConverters = HashMap<Class<*>, ParamConverter<*>>()
     private val commandHelp = ArrayList<String>() //Mainly needed by Discord
@@ -70,15 +74,17 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
 
     /**
      * Adds a param converter that obtains a specific object from a string parameter.
-     * The converter may return null.
+     * The converter may return null to signal an error.
      *
      * @param <T>         The type of the result
      * @param cl          The class of the result object
      * @param converter   The converter to use
      * @param allSupplier The supplier of all possible values (ideally)
     </T> */
-    open fun <T> addParamConverter(cl: Class<T>, converter: Function<String, T>, errormsg: String,
-                                   allSupplier: Supplier<Iterable<String>>) {
+    open fun <T> addParamConverter(
+        cl: Class<T>, converter: Function<String, T?>, errormsg: String,
+        allSupplier: Supplier<Iterable<String>>
+    ) {
         paramConverters[cl] = ParamConverter(converter, errormsg, allSupplier)
     }
 
