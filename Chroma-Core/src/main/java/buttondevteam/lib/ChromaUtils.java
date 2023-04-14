@@ -81,7 +81,7 @@ public final class ChromaUtils {
 	 */
 	public static <T> T doItAsync(Supplier<T> what, T def) {
 		if (Bukkit.isPrimaryThread())
-			Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, what::get);
+			Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.instance, what::get);
 		else
 			return what.get();
 		return def;

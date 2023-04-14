@@ -51,7 +51,7 @@ public class ScheduledRestartCommand extends ICommand2MC {
 		sender.sendMessage("Scheduled restart in " + seconds);
 		ScheduledServerRestartEvent e = new ScheduledServerRestartEvent(restarttime, this);
 		Bukkit.getPluginManager().callEvent(e);
-		restarttask = Bukkit.getScheduler().runTaskTimer(MainPlugin.Instance, () -> {
+		restarttask = Bukkit.getScheduler().runTaskTimer(MainPlugin.instance, () -> {
 			if (restartCounter < 0) {
 				restarttask.cancel();
 				restartbar.getPlayers().forEach(p -> restartbar.removePlayer(p));

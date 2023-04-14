@@ -94,7 +94,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             return false // Unknown command
         }
         //Needed because permission checking may load the (perhaps offline) sender's file which is disallowed on the main thread
-        Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance) { _ ->
+        Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.instance) { _ ->
             try {
                 dispatcher.execute(results)
             } catch (e: CommandSyntaxException) {
@@ -103,7 +103,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
                 TBMCCoreAPI.SendException(
                     "Command execution failed for sender " + sender.name + "(" + sender.javaClass.canonicalName + ") and message " + commandline,
                     e,
-                    MainPlugin.Instance
+                    MainPlugin.instance
                 )
             }
         }
@@ -140,7 +140,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             lastNode.addChild(getExecutableNode(meth, command, ann, remainingPath, CommandArgumentHelpManager(command), fullPath))
             if (mainCommandNode == null) mainCommandNode = mainNode
             else if (mainNode!!.name != mainCommandNode.name) {
-                MainPlugin.Instance.logger.warning("Multiple commands are defined in the same class! This is not supported. Class: " + command.javaClass.simpleName)
+                MainPlugin.instance.logger.warning("Multiple commands are defined in the same class! This is not supported. Class: " + command.javaClass.simpleName)
             }
         }
         if (mainCommandNode == null) {

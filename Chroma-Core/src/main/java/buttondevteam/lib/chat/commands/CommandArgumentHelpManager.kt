@@ -32,18 +32,18 @@ class CommandArgumentHelpManager<TC : ICommand2<TP>, TP : Command2Sender>(comman
                     TBMCCoreAPI.SendException(
                         "Error while getting command data!",
                         Exception("Resource not found!"),
-                        MainPlugin.Instance
+                        MainPlugin.instance
                     )
                     return@use
                 }
                 val config = YamlConfiguration.loadConfiguration(InputStreamReader(str))
                 commandConfig = config.getConfigurationSection(commandClass.canonicalName.replace('$', '.'))
                 if (commandConfig == null) {
-                    MainPlugin.Instance.logger.warning("Failed to get command data for $commandClass! Make sure to use 'clean install' when building the project.")
+                    MainPlugin.instance.logger.warning("Failed to get command data for $commandClass! Make sure to use 'clean install' when building the project.")
                 }
             }
         } catch (e: IOException) {
-            TBMCCoreAPI.SendException("Error while getting command data!", e, MainPlugin.Instance)
+            TBMCCoreAPI.SendException("Error while getting command data!", e, MainPlugin.instance)
         }
     }
 
@@ -56,7 +56,7 @@ class CommandArgumentHelpManager<TC : ICommand2<TP>, TP : Command2Sender>(comman
     fun getParameterHelpForMethod(method: Method): String? {
         val cs = commandConfig?.getConfigurationSection(method.name)
         if (cs == null) {
-            MainPlugin.Instance.logger.warning("Failed to get command data for $method! Make sure to use 'clean install' when building the project.")
+            MainPlugin.instance.logger.warning("Failed to get command data for $method! Make sure to use 'clean install' when building the project.")
             return null
         }
         val mname = cs.getString("method")
@@ -68,7 +68,7 @@ class CommandArgumentHelpManager<TC : ICommand2<TP>, TP : Command2Sender>(comman
         } else TBMCCoreAPI.SendException(
             "Error while getting command data for $method!",
             Exception("Method '$method' != $mname or params is $params"),
-            MainPlugin.Instance
+            MainPlugin.instance
         )
         return null
     }

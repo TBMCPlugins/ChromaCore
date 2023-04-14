@@ -23,7 +23,7 @@ class ListConfigData<T> internal constructor(
         listConfig.reset()
     }
 
-    override fun get(): List? {
+    override fun get(): List {
         return listConfig.get()
     }
 

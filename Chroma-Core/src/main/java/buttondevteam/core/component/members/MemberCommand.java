@@ -33,7 +33,7 @@ public class MemberCommand extends ICommand2MC {
 	}
 
 	public boolean addRemove(CommandSender sender, OfflinePlayer op, boolean add) {
-		Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.Instance, () -> {
+		Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.instance, () -> {
 			if (!op.hasPlayedBefore()) {
 				sender.sendMessage("§cCannot find player or haven't played before.");
 				return;

@@ -248,7 +248,7 @@
 		<github.global.server>github</github.global.server>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<noprefix.version>1.0.1</noprefix.version>
-		<kotlin.version>1.8.10</kotlin.version>
+		<kotlin.version>1.8.20</kotlin.version>
 	</properties>
 	<scm>
 		<url>https://github.com/TBMCPlugins/mvn-repo</url>

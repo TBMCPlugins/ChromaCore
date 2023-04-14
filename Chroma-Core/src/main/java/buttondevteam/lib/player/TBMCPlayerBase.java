@@ -49,7 +49,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 		else
 			throw new RuntimeException("Class not defined as player class! Use @PlayerClass");
 
-		var playerData = commonUserData.getPlayerData();
+		var playerData = commonUserData.playerData;
 		var section = playerData.getConfigurationSection(pluginname);
 		if (section == null) section = playerData.createSection(pluginname);
 		config.reset(section);
@@ -76,7 +76,7 @@ public abstract class TBMCPlayerBase extends ChromaGamerBase {
 
 	@Override
 	protected void save() {
-		Set<String> keys = commonUserData.getPlayerData().getKeys(false);
+		Set<String> keys = commonUserData.playerData.getKeys(false);
 		if (keys.size() > 1) // PlayerName is always saved, but we don't need a file for just that
 			super.save();
 	}

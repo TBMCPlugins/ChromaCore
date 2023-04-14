@@ -170,7 +170,7 @@ public class TBMCCoreAPI {
 	}
 
 	public static boolean IsTestServer() {
-		if (MainPlugin.Instance == null) return true;
-		return MainPlugin.Instance.test.get();
+		if (MainPlugin.instance == null) return true;
+		return MainPlugin.instance.test.get();
 	}
 }

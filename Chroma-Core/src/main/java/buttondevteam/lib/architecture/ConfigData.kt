@@ -67,9 +67,9 @@ class ConfigData<T> internal constructor(
         return getter.apply(convert(`val`, pdef)).also { value = it }
     }
 
-    override fun set(value: T?) {
+    override fun set(value: T?) { // TODO: Have a separate method for removing the value from the config and make this non-nullable
         if (readOnly) return  //Safety for Discord channel/role data
-        val `val` = value?.let { setter.apply(value) }
+        val `val` = value?.let { setter.apply(it) }
         setInternal(`val`)
         this.value = value
     }
@@ -89,14 +89,14 @@ class ConfigData<T> internal constructor(
             val sa = config.saveAction
             val root = cc.root
             if (root == null) {
-                MainPlugin.Instance.logger.warning("Attempted to save config with no root! Name: ${config.config.name}")
+                MainPlugin.instance.logger.warning("Attempted to save config with no root! Name: ${config.config.name}")
                 return
             }
             if (!saveTasks.containsKey(cc.root)) {
                 synchronized(saveTasks) {
                     saveTasks.put(
                         root,
-                        SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.Instance, {
+                        SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.instance, {
                             synchronized(saveTasks) {
                                 saveTasks.remove(root)
                                 sa.run()

@@ -179,7 +179,7 @@ class IHaveConfig(
                             .filter(Predicate<ConfigData<Any?>> { obj: ConfigData<Any?>? -> Objects.nonNull(obj) })
                             .collect(Collectors.toList())
                     } else {
-                        if (TBMCCoreAPI.IsTestServer()) MainPlugin.Instance.logger.warning(
+                        if (TBMCCoreAPI.IsTestServer()) MainPlugin.instance.logger.warning(
                             "Method " + mName + " returns a config but its parameters are unknown: " + Arrays.toString(
                                 m.parameterTypes
                             )
@@ -187,7 +187,7 @@ class IHaveConfig(
                         continue
                     }
                     for (c in configList) {
-                        if (c.path.length == 0) c.setPath(mName) else if (c.path != mName) MainPlugin.Instance.logger.warning(
+                        if (c.path.length == 0) c.setPath(mName) else if (c.path != mName) MainPlugin.instance.logger.warning(
                             "Config name does not match: " + c.path + " instead of " + mName
                         )
                         c.get() //Saves the default value if needed - also checks validity

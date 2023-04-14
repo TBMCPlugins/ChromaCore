@@ -170,8 +170,9 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         val i = commandline.indexOf(' ')
         val mainpath = commandline.substring(1, if (i == -1) commandline.length else i) //Without the slash
         //Our commands aren't PluginCommands, unless it's specified in the plugin.yml
-        return if ((!checkPlugin || (MainPlugin.Instance.prioritizeCustomCommands.get() == true))
-            || Bukkit.getPluginCommand(mainpath)?.let { it.plugin is ButtonPlugin } != false)
+        return if ((!checkPlugin || (MainPlugin.instance.prioritizeCustomCommands.get() == true))
+            || Bukkit.getPluginCommand(mainpath)?.let { it.plugin is ButtonPlugin } != false
+        )
             super.handleCommand(sender, commandline) else false
     }
 
@@ -207,7 +208,11 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
     private fun executeCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
         val user = ChromaGamerBase.getFromSender(sender)
         if (user == null) {
-            TBMCCoreAPI.SendException("Failed to run Bukkit command for user!", Throwable("No Chroma user found"), MainPlugin.Instance)
+            TBMCCoreAPI.SendException(
+                "Failed to run Bukkit command for user!",
+                Throwable("No Chroma user found"),
+                MainPlugin.instance
+            )
             sender.sendMessage("§cAn internal error occurred.")
             return true
         }
@@ -250,9 +255,16 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
 
         private fun registerTabcomplete(command2MC: ICommand2MC, commandNode: LiteralCommandNode<Command2MCSender>, bukkitCommand: Command) {
             if (commodore == null) {
-                commodore = CommodoreProvider.getCommodore(MainPlugin.Instance) //Register all to the Core, it's easier
-                commodore.register(LiteralArgumentBuilder.literal<Any?>("un").redirect(RequiredArgumentBuilder.argument<Any?, String>("unsomething",
-                    StringArgumentType.word()).suggests { context: CommandContext<Any?>?, builder: SuggestionsBuilder -> builder.suggest("untest").buildFuture() }.build()))
+                commodore = CommodoreProvider.getCommodore(MainPlugin.instance) //Register all to the Core, it's easier
+                commodore.register(LiteralArgumentBuilder.literal<Any?>("un")
+                    .redirect(RequiredArgumentBuilder.argument<Any?, String>(
+                        "unsomething",
+                        StringArgumentType.word()
+                    ).suggests { context: CommandContext<Any?>?, builder: SuggestionsBuilder ->
+                        builder.suggest("untest").buildFuture()
+                    }.build()
+                    )
+                )
             }
             commodore!!.dispatcher.root.getChild(commandNode.name) // TODO: Probably unnecessary
             val customTCmethods = Arrays.stream(command2MC.javaClass.declaredMethods) //val doesn't recognize the type arguments

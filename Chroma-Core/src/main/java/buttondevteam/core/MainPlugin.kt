@@ -26,17 +26,10 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.command.ConsoleCommandSender
 import org.bukkit.entity.Player
-import org.bukkit.plugin.Plugin
-import java.io.File
-import java.io.IOException
-import java.nio.file.Files
 import java.util.*
-import java.util.function.Function
 import java.util.function.Supplier
-import java.util.logging.Logger
 
 class MainPlugin : ButtonPlugin() {
-    private var logger: Logger? = null
     private var economy: Economy? = null
 
     /**
@@ -44,12 +37,6 @@ class MainPlugin : ButtonPlugin() {
      * Other chat plugins handling messages from other platforms should set this to false.
      */
     var isChatHandlerEnabled = true
-
-    /**
-     * Sets whether the plugin should write a list of installed plugins in a txt file.
-     * It can be useful if some other software needs to know the plugins.
-     */
-    private val writePluginList = iConfig.getData("writePluginList", false)
 
     /**
      * The chat format to use for messages from other platforms if Chroma-Chat is not installed.
@@ -68,12 +55,11 @@ class MainPlugin : ButtonPlugin() {
      */
     val prioritizeCustomCommands = iConfig.getData("prioritizeCustomCommands", false)
     public override fun pluginEnable() {
-        Instance = this
+        instance = this
         val pdf = description
-        logger = getLogger()
         if (!setupPermissions()) throw NullPointerException("No permission plugin found!")
         if (!setupEconomy()) //Though Essentials always provides economy, but we don't require Essentials
-            getLogger().warning("No economy plugin found! Components using economy will not be registered.")
+            logger.warning("No economy plugin found! Components using economy will not be registered.")
         saveConfig()
         registerComponent(this, RestartComponent())
         registerComponent(this, ChannelComponent())
@@ -125,31 +111,20 @@ class MainPlugin : ButtonPlugin() {
         TBMCChatAPI.RegisterChatChannel(ChatRoom("§aGREEN§f", Color.Green, "green"))
         TBMCChatAPI.RegisterChatChannel(ChatRoom("§bBLUE§f", Color.Blue, "blue"))
         TBMCChatAPI.RegisterChatChannel(ChatRoom("§5PURPLE§f", Color.DarkPurple, "purple"))
-        val playerSupplier = Supplier { Bukkit.getOnlinePlayers().map { obj: Player -> obj.name }.asIterable() }
-        command2MC.addParamConverter(OfflinePlayer::class.java, { name: String? ->
-            Bukkit.getOfflinePlayer(
-                name!!
-            )
-        }, "Player not found!", playerSupplier)
-        command2MC.addParamConverter<Player>(
-            Player::class.java, Function { name: String ->
-                Bukkit.getPlayer(name)
-            }, "Online player not found!", playerSupplier
+        val playerSupplier = Supplier { Bukkit.getOnlinePlayers().map { obj -> obj.name }.asIterable() }
+        command2MC.addParamConverter(
+            OfflinePlayer::class.java,
+            { name -> Bukkit.getOfflinePlayer(name) },
+            "Player not found!",
+            playerSupplier
         )
-        if (writePluginList.get()) {
-            try {
-                Files.write(File("plugins", "plugins.txt").toPath(), Iterable {
-                    Arrays.stream(Bukkit.getPluginManager().plugins)
-                        .map { p: Plugin -> p.dataFolder.name as CharSequence }
-                        .iterator()
-                })
-            } catch (e: IOException) {
-                TBMCCoreAPI.SendException("Failed to write plugin list!", e, this)
-            }
-        }
-        if (server.pluginManager.isPluginEnabled("Essentials")) ess = getPlugin(
-            Essentials::class.java
+        command2MC.addParamConverter(
+            Player::class.java,
+            { name -> Bukkit.getPlayer(name) },
+            "Online player not found!",
+            playerSupplier
         )
+        if (server.pluginManager.isPluginEnabled("Essentials")) ess = getPlugin(Essentials::class.java)
         logger!!.info(pdf.name + " has been Enabled (V." + pdf.version + ") Test: " + test.get() + ".")
     }
 
@@ -182,8 +157,7 @@ class MainPlugin : ButtonPlugin() {
     }
 
     companion object {
-        @JvmField
-        var Instance: MainPlugin = null
+        lateinit var instance: MainPlugin
 
         @JvmField
         var permission: Permission? = null
