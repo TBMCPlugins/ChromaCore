@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 public class TestPrepare {
 
 	public static void PrepareServer() {
-		ChromaUtils.setTest(); //Needs to be in a separate class because of the potential lack of Mockito
+		ChromaUtils.setTest(true); //Needs to be in a separate class because of the potential lack of Mockito
 		Bukkit.setServer(Mockito.mock(Server.class, new Answer<Object>() {
 
 			@Override
@@ -45,6 +45,6 @@ public class TestPrepare {
 			}
 		}));
 		Component.registerComponent(Mockito.mock(JavaPlugin.class), new ChannelComponent());
-		TBMCChatAPI.RegisterChatChannel(Channel.GlobalChat = new Channel("§fg§f", Color.White, "g", null));
+		TBMCChatAPI.RegisterChatChannel(Channel.globalChat = new Channel("§fg§f", Color.White, "g", null));
 	}
 }

@@ -12,7 +12,6 @@ import org.bukkit.command.CommandSender
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
 import java.util.*
-import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Supplier
 
@@ -20,30 +19,21 @@ import java.util.function.Supplier
 abstract class ChromaGamerBase {
     lateinit var config: IHaveConfig
 
-    @JvmField
-    protected var commonUserData: CommonUserData<*>? = null
+    protected lateinit var commonUserData: CommonUserData<out ChromaGamerBase>
     protected open fun init() {
-        config.reset(commonUserData!!.playerData)
     }
 
-    protected fun updateUserConfig() {}
+    protected fun updateUserConfig() {} // TODO: Use this instead of reset()
 
     /**
      * Saves the player. It'll handle all exceptions that may happen. Called automatically.
      */
     protected open fun save() {
         try {
-            if (commonUserData!!.playerData.getKeys(false).size > 0) commonUserData!!.playerData.save(
-                File(
-                    TBMC_PLAYERS_DIR + folder, fileName + ".yml"
-                )
-            )
+            if (commonUserData.playerData.getKeys(false).size > 0)
+                commonUserData.playerData.save(File(TBMC_PLAYERS_DIR + folder, "$fileName.yml"))
         } catch (e: Exception) {
-            TBMCCoreAPI.SendException(
-                "Error while saving player to " + folder + "/" + fileName + ".yml!",
-                e,
-                MainPlugin.instance
-            )
+            TBMCCoreAPI.SendException("Error while saving player to $folder/$fileName.yml!", e, MainPlugin.instance)
         }
     }
 
@@ -51,8 +41,11 @@ abstract class ChromaGamerBase {
      * Removes the user from the cache. This will be called automatically after some time by default.
      */
     fun uncache() {
-        val userCache: HashMap<Class<out Any?>, out ChromaGamerBase> = commonUserData!!.userCache
-        synchronized(userCache) { if (userCache.containsKey(javaClass)) check(userCache.remove(javaClass) === this) { "A different player instance was cached!" } }
+        val userCache = commonUserData.userCache
+        synchronized(userCache) {
+            if (userCache.containsKey(javaClass))
+                check(userCache.remove(javaClass) === this) { "A different player instance was cached!" }
+        }
     }
 
     protected open fun scheduleUncache() {
@@ -68,42 +61,33 @@ abstract class ChromaGamerBase {
      *
      * @param user The account to connect with
      */
-    fun <T : ChromaGamerBase?> connectWith(user: T) {
-        // Set the ID, go through all linked files and connect them as well
-        val ownFolder = folder
-        val userFolder = user!!.folder
-        if (ownFolder.equals(
-                userFolder,
-                ignoreCase = true
-            )
-        ) throw RuntimeException("Do not connect two accounts of the same type! Type: $ownFolder")
-        val ownData = commonUserData!!.playerData
-        val userData = user.commonUserData!!.playerData
-        userData[ownFolder + "_id"] = ownData.getString(ownFolder + "_id")
-        ownData[userFolder + "_id"] = userData.getString(userFolder + "_id")
-        config.signalChange()
-        user.config.signalChange()
-        val sync = Consumer { sourcedata: YamlConfiguration ->
-            val sourcefolder = if (sourcedata === ownData) ownFolder else userFolder
-            val id = sourcedata.getString(sourcefolder + "_id")!!
-            for ((key, value) in staticDataMap) { // Set our ID in all files we can find, both from our connections and the new ones
-                if (key == javaClass || key == user.javaClass) continue
-                val entryFolder = value.folder
-                val otherid = sourcedata.getString(entryFolder + "_id") ?: continue
-                val cg = getUser(otherid, key)!!
-                val cgData = cg.commonUserData!!.playerData
-                cgData[sourcefolder + "_id"] = id // Set new IDs
-                for ((_, value1) in staticDataMap) {
-                    val itemFolder = value1.folder
-                    if (sourcedata.contains(itemFolder + "_id")) {
-                        cgData[itemFolder + "_id"] = sourcedata.getString(itemFolder + "_id") // Set all existing IDs
+    fun <T : ChromaGamerBase> connectWith(user: T) {
+        synchronized(staticDataMap) {
+            // Set the ID, go through all linked files and connect them as well
+            if (folder.equals(user.folder, ignoreCase = true))
+                throw RuntimeException("Do not connect two accounts of the same type! Type: $folder")
+            // This method acts from the point of view of the source, the target is the other way around
+            fun sync(us: ChromaGamerBase, them: ChromaGamerBase) {
+                val ourData = us.commonUserData.playerData
+                // Iterate through the target and their connections and set all our IDs in them
+                for (theirOtherClass in registeredClasses) {
+                    // Skip our own class because we have the IDs
+                    if (theirOtherClass == javaClass) continue
+                    val theirConnected = them.getAs(theirOtherClass) ?: continue
+                    val theirConnectedData = theirConnected.commonUserData.playerData
+                    // Set new IDs
+                    for (ourOtherFolder in registeredFolders) {
+                        if (ourData.contains(ourOtherFolder + "_id")) {
+                            theirConnectedData[ourOtherFolder + "_id"] =
+                                ourData.getString(ourOtherFolder + "_id") // Set all existing IDs
+                        }
                     }
+                    theirConnected.config.signalChange()
                 }
-                cg.config.signalChange()
             }
+            sync(this, user)
+            sync(user, this)
         }
-        sync.accept(ownData)
-        sync.accept(userData)
     }
 
     /**
@@ -112,8 +96,9 @@ abstract class ChromaGamerBase {
      * @param cl The player class to get the ID from
      * @return The ID or null if not found
      */
-    fun <T : ChromaGamerBase?> getConnectedID(cl: Class<T>): String {
-        return commonUserData!!.playerData.getString(getFolderForType(cl) + "_id")!!
+    fun <T : ChromaGamerBase> getConnectedID(cl: Class<T>): String? {
+        val data = staticDataMap[cl] ?: throw RuntimeException("Class $cl is not registered!")
+        return commonUserData.playerData.getString(data.folder + "_id")
     }
 
     /**
@@ -123,17 +108,16 @@ abstract class ChromaGamerBase {
      * @param cl The target player class
      * @return The player as a [T] object or null if the user doesn't have an account there
      */
-    fun <T : ChromaGamerBase?> getAs(cl: Class<T>): T? {
+    fun <T : ChromaGamerBase> getAs(cl: Class<T>): T? {
+        @Suppress("UNCHECKED_CAST")
         if (cl.simpleName == javaClass.simpleName) return this as T
         val newfolder = getFolderForType(cl)
-            ?: throw RuntimeException("The specified class " + cl.simpleName + " isn't registered!")
         if (newfolder == folder) // If in the same folder, the same filename is used
             return getUser(fileName, cl)
-        val playerData = commonUserData!!.playerData
-        return if (!playerData.contains(newfolder + "_id")) null else getUser(
-            playerData.getString(newfolder + "_id")!!,
-            cl
-        )
+        val playerData = commonUserData.playerData
+        return if (playerData.contains(newfolder + "_id"))
+            getUser(playerData.getString(newfolder + "_id")!!, cl)
+        else null
     }
 
     val fileName: String
@@ -141,7 +125,7 @@ abstract class ChromaGamerBase {
          * This method returns the filename for this player data. For example, for Minecraft-related data, MC UUIDs, for Discord data, Discord IDs, etc.<br></br>
          * **Does not include .yml**
          */
-        get() = commonUserData!!.playerData.getString(folder + "_id")!!
+        get() = commonUserData.playerData.getString(folder + "_id")!!
     val folder: String
         /**
          * This method returns the folder that this player data is stored in. For example: "minecraft".
@@ -166,11 +150,11 @@ abstract class ChromaGamerBase {
 
     //-----------------------------------------------------------------
     @JvmField
-    val channel: ConfigData<Channel> = config.getData("channel", Channel.GlobalChat,
+    val channel: ConfigData<Channel> = config.getData("channel", Channel.globalChat,
         { id ->
             getChannels().filter { ch: Channel -> ch.identifier.equals(id as String, ignoreCase = true) }
-                .findAny().orElse(null)
-        }) { ch -> ch.ID }
+                .findAny().orElseThrow { RuntimeException("Channel $id not found!") }
+        }, { ch -> ch.identifier })
 
     companion object {
         private const val TBMC_PLAYERS_DIR = "TBMC/players/"
@@ -179,31 +163,31 @@ abstract class ChromaGamerBase {
         /**
          * Holds data per user class
          */
-        private val staticDataMap = HashMap<Class<out ChromaGamerBase>, StaticUserData<*>>()
+        private val staticDataMap = HashMap<Class<out ChromaGamerBase>, StaticUserData<out ChromaGamerBase>>()
 
         /**
          * Used for connecting with every type of user ([.connectWith]) and to init the configs.
          * Also, to construct an instance if an abstract class is provided.
          */
         @JvmStatic
-        fun <T : ChromaGamerBase?> RegisterPluginUserClass(userclass: Class<T>, constructor: Supplier<T>?) {
-            val cl: Class<out T>
+        fun <T : ChromaGamerBase> registerPluginUserClass(userclass: Class<T>, constructor: Supplier<T>) {
+            val prototype: Class<out T>
             val folderName: String
             if (userclass.isAnnotationPresent(UserClass::class.java)) {
-                cl = userclass
+                prototype = userclass
                 folderName = userclass.getAnnotation(UserClass::class.java).foldername
             } else if (userclass.isAnnotationPresent(AbstractUserClass::class.java)) {
-                val ucl: Class<out ChromaGamerBase> = userclass.getAnnotation(
-                    AbstractUserClass::class.java
-                ).prototype
-                if (!userclass.isAssignableFrom(ucl)) throw RuntimeException("The prototype class (" + ucl.simpleName + ") must be a subclass of the userclass parameter (" + userclass.simpleName + ")!")
-                cl = ucl as Class<out T>
+                val ucl = userclass.getAnnotation(AbstractUserClass::class.java).prototype.java
+                if (!userclass.isAssignableFrom(ucl))
+                    throw RuntimeException("The prototype class (${ucl.simpleName}) must be a subclass of the userclass parameter (${userclass.simpleName})!")
+                @Suppress("UNCHECKED_CAST")
+                prototype = ucl as Class<out T>
                 folderName = userclass.getAnnotation(AbstractUserClass::class.java).foldername
             } else throw RuntimeException("Class not registered as a user class! Use @UserClass or TBMCPlayerBase")
             val sud = StaticUserData<T>(folderName)
-            sud.constructors[cl] = constructor
-            sud.constructors[userclass] =
-                constructor // Alawys register abstract and prototype class (TBMCPlayerBase and TBMCPlayer)
+            // Alawys register abstract and prototype class (TBMCPlayerBase and TBMCPlayer)
+            sud.constructors[prototype] = constructor
+            sud.constructors[userclass] = constructor
             staticDataMap[userclass] = sud
         }
 
@@ -214,13 +198,31 @@ abstract class ChromaGamerBase {
          * @return The folder name for the given type
          * @throws RuntimeException If the class doesn't have the [UserClass] annotation.
          */
-        fun <T : ChromaGamerBase?> getFolderForType(cl: Class<T>): String {
-            if (cl.isAnnotationPresent(UserClass::class.java)) return cl.getAnnotation(UserClass::class.java).foldername else if (cl.isAnnotationPresent(
-                    AbstractUserClass::class.java
-                )
-            ) return cl.getAnnotation(AbstractUserClass::class.java).foldername
+        fun <T : ChromaGamerBase> getFolderForType(cl: Class<T>): String {
+            if (cl.isAnnotationPresent(UserClass::class.java))
+                return cl.getAnnotation(UserClass::class.java).foldername
+            else if (cl.isAnnotationPresent(AbstractUserClass::class.java))
+                return cl.getAnnotation(AbstractUserClass::class.java).foldername
             throw RuntimeException("Class not registered as a user class! Use @UserClass or @AbstractUserClass")
         }
+
+        private inline val registeredFolders: Iterable<String> get() = staticDataMap.values.map { it.folder }
+
+        private inline val registeredClasses get() = staticDataMap.keys
+
+        /**
+         * Returns the (per-user) static data for the given player class.
+         * The static data is only stored once per user class so for example
+         * if you have two different [TBMCPlayerBase] classes, the static data is the same for both.
+         *
+         * @param cl The class to get the data from (like [TBMCPlayerBase] or one of its subclasses)
+         */
+        @Suppress("UNCHECKED_CAST")
+        private fun <T : ChromaGamerBase> getStaticData(cl: Class<out T>) = staticDataMap.entries
+            .filter { (key, _) -> key.isAssignableFrom(cl) }
+            .map { (_, value) -> value as StaticUserData<T> }
+            .firstOrNull()
+            ?: throw RuntimeException("Class $cl not registered as a user class! Use registerUserClass()")
 
         /**
          * Returns the player class for the given folder name.
@@ -228,16 +230,10 @@ abstract class ChromaGamerBase {
          * @param foldername The folder to get the class from (like "minecraft")
          * @return The type for the given folder name or null if not found
          */
-        fun getTypeForFolder(foldername: String?): Class<out ChromaGamerBase> {
+        fun getTypeForFolder(foldername: String?): Class<out ChromaGamerBase>? {
             synchronized(staticDataMap) {
-                return staticDataMap.entries.stream()
-                    .filter { (_, value): Map.Entry<Class<out ChromaGamerBase>, StaticUserData<*>> ->
-                        value.folder.equals(
-                            foldername,
-                            ignoreCase = true
-                        )
-                    }
-                    .map { (key, value) -> java.util.Map.Entry.key }.findAny().orElse(null)
+                return staticDataMap.filter { (_, value) -> value.folder.equals(foldername, ignoreCase = true) }
+                    .map { (key, _) -> key }.singleOrNull()
             }
         }
 
@@ -250,36 +246,32 @@ abstract class ChromaGamerBase {
          */
         @JvmStatic
         @Synchronized
-        fun <T : ChromaGamerBase> getUser(fname: String, cl: Class<T>): T {
-            val staticUserData: StaticUserData<*> = staticDataMap.entries
-                .filter { (key, _) -> key.isAssignableFrom(cl) }
-                .map { (_, value) -> value }
-                .firstOrNull()
-                ?: throw RuntimeException("User class not registered! Use @UserClass or @AbstractUserClass")
+        fun <T : S, S : ChromaGamerBase> getUser(fname: String, cl: Class<T>): T {
+            @Suppress("UNCHECKED_CAST")
+            val staticUserData: StaticUserData<S> = getStaticData(cl)
 
             @Suppress("UNCHECKED_CAST")
-            val commonUserData: CommonUserData<T> = (staticUserData.userDataMap[fname]
+            val commonUserData: CommonUserData<S> = staticUserData.userDataMap[fname]
                 ?: run {
                     val folder = staticUserData.folder
                     val file = File(TBMC_PLAYERS_DIR + folder, "$fname.yml")
                     file.parentFile.mkdirs()
                     val playerData = YamlConfiguration.loadConfiguration(file)
                     playerData[staticUserData.folder + "_id"] = fname
-                    CommonUserData<T>(playerData)
-                }.also { staticUserData.userDataMap[fname] = it }) as CommonUserData<T>
+                    CommonUserData<S>(playerData)
+                }.also { staticUserData.userDataMap[fname] = it }
 
-            return if (commonUserData.userCache.containsKey(cl)) commonUserData.userCache[cl] as T
-            else {
+            return commonUserData.userCache[cl] ?: run {
                 val obj = createNewUser(cl, staticUserData, commonUserData)
-                commonUserData.userCache[cl] = obj
+                commonUserData.userCache.put(obj)
                 obj
             }
         }
 
-        private fun <T : ChromaGamerBase> createNewUser(
+        private fun <T : S, S : ChromaGamerBase> createNewUser(
             cl: Class<T>,
-            staticUserData: StaticUserData<*>,
-            commonUserData: CommonUserData<*>
+            staticUserData: StaticUserData<S>,
+            commonUserData: CommonUserData<S>
         ): T {
             @Suppress("UNCHECKED_CAST")
             val obj = staticUserData.constructors[cl]?.get() as T? ?: run {
@@ -290,6 +282,7 @@ abstract class ChromaGamerBase {
                 }
             }
             obj.commonUserData = commonUserData
+            obj.config = IHaveConfig({ obj.save() }, commonUserData.playerData)
             obj.init()
             obj.scheduleUncache()
             return obj
@@ -300,7 +293,7 @@ abstract class ChromaGamerBase {
          *
          * @param converter The converter that returns an object corresponding to the sender or null, if it's not the right type.
          */
-        fun <T : ChromaGamerBase?> addConverter(converter: Function<CommandSender, Optional<T>>) {
+        fun addConverter(converter: Function<CommandSender, Optional<out ChromaGamerBase>>) {
             senderConverters.add(0, converter)
         }
 

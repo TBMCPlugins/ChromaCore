@@ -92,11 +92,11 @@ class MainPlugin : ButtonPlugin() {
         }
         TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase::class.java) { TBMCPlayer() }
         TBMCChatAPI.RegisterChatChannel(Channel("§fg§f", Color.White, "g", null)
-            .also { Channel.GlobalChat = it }) //The /ooc ID has moved to the config
+            .also { Channel.globalChat = it }) //The /ooc ID has moved to the config
         TBMCChatAPI.RegisterChatChannel(Channel("§cADMIN§f", Color.Red, "a", Channel.inGroupFilter(null))
-            .also { Channel.AdminChat = it })
+            .also { Channel.adminChat = it })
         TBMCChatAPI.RegisterChatChannel(Channel("§9MOD§f", Color.Blue, "mod", Channel.inGroupFilter("mod"))
-            .also { Channel.ModChat = it })
+            .also { Channel.modChat = it })
         TBMCChatAPI.RegisterChatChannel(
             Channel(
                 "§6DEV§f",

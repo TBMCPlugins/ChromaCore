@@ -131,7 +131,7 @@ public class TBMCCoreAPI {
 	}
 
 	public static <T extends ChromaGamerBase> void RegisterUserClass(Class<T> userclass, Supplier<T> constructor) {
-		ChromaGamerBase.RegisterPluginUserClass(userclass, constructor);
+		ChromaGamerBase.registerPluginUserClass(userclass, constructor);
 	}
 
 	/**

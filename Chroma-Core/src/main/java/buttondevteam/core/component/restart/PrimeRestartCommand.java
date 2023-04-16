@@ -27,12 +27,12 @@ public class PrimeRestartCommand extends ICommand2MC {
 		if (Bukkit.getOnlinePlayers().size() > 0) {
 			sender.sendMessage("§bPlayers online, restart delayed.");
 			if (loud)
-				TBMCChatAPI.SendSystemMessage(Channel.GlobalChat, Channel.RecipientTestResult.ALL, ChatColor.DARK_RED + "The server will restart as soon as nobody is online.", component.getRestartBroadcast());
+				TBMCChatAPI.SendSystemMessage(Channel.globalChat, Channel.RecipientTestResult.ALL, ChatColor.DARK_RED + "The server will restart as soon as nobody is online.", component.getRestartBroadcast());
 			plsrestart = true;
 		} else {
 			sender.sendMessage("§bNobody is online. Restarting now.");
 			if (loud)
-				TBMCChatAPI.SendSystemMessage(Channel.GlobalChat, Channel.RecipientTestResult.ALL, "§cNobody is online. Restarting server.", component.getRestartBroadcast());
+				TBMCChatAPI.SendSystemMessage(Channel.globalChat, Channel.RecipientTestResult.ALL, "§cNobody is online. Restarting server.", component.getRestartBroadcast());
 			Bukkit.spigot().restart();
 		}
 	}

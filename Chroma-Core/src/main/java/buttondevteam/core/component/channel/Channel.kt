@@ -211,10 +211,9 @@ open class Channel
             }
         }
 
-        @JvmField
-        var GlobalChat: Channel? = null
-        var AdminChat: Channel? = null
-        var ModChat: Channel? = null
+        lateinit var globalChat: Channel
+        lateinit var adminChat: Channel
+        lateinit var modChat: Channel
 
         @JvmStatic
         fun registerChannel(channel: Channel) {

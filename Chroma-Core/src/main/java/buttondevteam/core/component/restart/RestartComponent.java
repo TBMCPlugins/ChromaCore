@@ -74,12 +74,12 @@ public class RestartComponent extends Component<MainPlugin> implements Listener 
 			&& !event.getQuitMessage().equalsIgnoreCase("Server is restarting")) {
 			if (Bukkit.getOnlinePlayers().size() <= 1) {
 				if (PrimeRestartCommand.isLoud())
-					TBMCChatAPI.SendSystemMessage(Channel.GlobalChat, Channel.RecipientTestResult.ALL, "§cNobody is online anymore. Restarting.", restartBroadcast);
+					TBMCChatAPI.SendSystemMessage(Channel.globalChat, Channel.RecipientTestResult.ALL, "§cNobody is online anymore. Restarting.", restartBroadcast);
 				Bukkit.spigot().restart();
 			} else if (!(event.getPlayer() instanceof IFakePlayer) && System.nanoTime() - 10 * 60 * 1000000000L - lasttime > 0) { //10 minutes passed since last reminder
 				lasttime = System.nanoTime();
 				if (PrimeRestartCommand.isLoud())
-					TBMCChatAPI.SendSystemMessage(Channel.GlobalChat, Channel.RecipientTestResult.ALL, ChatColor.DARK_RED + "The server will restart as soon as nobody is online.", restartBroadcast);
+					TBMCChatAPI.SendSystemMessage(Channel.globalChat, Channel.RecipientTestResult.ALL, ChatColor.DARK_RED + "The server will restart as soon as nobody is online.", restartBroadcast);
 			}
 		}
 	}

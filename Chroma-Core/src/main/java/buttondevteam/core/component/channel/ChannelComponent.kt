@@ -1,6 +1,5 @@
 package buttondevteam.core.component.channel
 
-import buttondevteam.core.MainPlugin
 import buttondevteam.lib.ChromaUtils
 import buttondevteam.lib.TBMCSystemChatEvent.BroadcastTarget
 import buttondevteam.lib.architecture.Component
@@ -12,7 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin
 /**
  * Manages chat channels. If disabled, only global channels will be registered.
  */
-class ChannelComponent : Component<MainPlugin>() {
+class ChannelComponent : Component<JavaPlugin>() {
     override fun register(plugin: JavaPlugin) {
         super.register(plugin)
         roomJoinLeave = BroadcastTarget.add("roomJoinLeave") //Even if it's disabled, global channels continue to work
@@ -27,7 +26,7 @@ class ChannelComponent : Component<MainPlugin>() {
     override fun enable() {}
     override fun disable() {}
     fun registerChannelCommand(channel: Channel) {
-        if (!ChromaUtils.isTest()) registerCommand(ChannelCommand(channel))
+        if (!ChromaUtils.isTest) registerCommand(ChannelCommand(channel))
     }
 
     @CommandClass
@@ -51,7 +50,7 @@ class ChannelComponent : Component<MainPlugin>() {
             if (message == null) {
                 val oldch = user.channel.get()
                 if (oldch is ChatRoom) oldch.leaveRoom(sender)
-                if (oldch == channel) user.channel.set(Channel.GlobalChat) else {
+                if (oldch == channel) user.channel.set(Channel.globalChat) else {
                     user.channel.set(channel)
                     if (channel is ChatRoom) channel.joinRoom(sender)
                 }
