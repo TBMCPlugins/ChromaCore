@@ -80,14 +80,14 @@ class MainPlugin : ButtonPlugin() {
         ChromaGamerBase.addConverter { commandSender: CommandSender ->
             Optional.ofNullable(
                 if (commandSender is ConsoleCommandSender || commandSender is BlockCommandSender)
-                    TBMCPlayer.getPlayer(UUID(0, 0), TBMCPlayer::class.java)
+                    TBMCPlayerBase.getPlayer(UUID(0, 0), TBMCPlayer::class.java)
                 else null
             )
         }
         //Players, has higher priority
         ChromaGamerBase.addConverter { sender: CommandSender ->
             Optional.ofNullable(
-                if (sender is Player) TBMCPlayer.getPlayer(sender.uniqueId, TBMCPlayer::class.java) else null
+                if (sender is Player) TBMCPlayerBase.getPlayer(sender.uniqueId, TBMCPlayer::class.java) else null
             )
         }
         TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase::class.java) { TBMCPlayer() }
@@ -114,7 +114,7 @@ class MainPlugin : ButtonPlugin() {
         val playerSupplier = Supplier { Bukkit.getOnlinePlayers().map { obj -> obj.name }.asIterable() }
         command2MC.addParamConverter(
             OfflinePlayer::class.java,
-            { name -> Bukkit.getOfflinePlayer(name) },
+            { name -> @Suppress("DEPRECATION") Bukkit.getOfflinePlayer(name) },
             "Player not found!",
             playerSupplier
         )
@@ -125,13 +125,13 @@ class MainPlugin : ButtonPlugin() {
             playerSupplier
         )
         if (server.pluginManager.isPluginEnabled("Essentials")) ess = getPlugin(Essentials::class.java)
-        logger!!.info(pdf.name + " has been Enabled (V." + pdf.version + ") Test: " + test.get() + ".")
+        logger.info(pdf.name + " has been Enabled (V." + pdf.version + ") Test: " + test.get() + ".")
     }
 
     public override fun pluginDisable() {
-        logger!!.info("Saving player data...")
+        logger.info("Saving player data...")
         ChromaGamerBase.saveUsers()
-        logger!!.info("Player data saved.")
+        logger.info("Player data saved.")
     }
 
     private fun setupPermissions(): Boolean {

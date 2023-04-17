@@ -1,12 +1,13 @@
 package buttondevteam.lib.player
 
+import buttondevteam.lib.architecture.IHaveConfig
 import org.bukkit.Bukkit
 import java.util.*
 
 @AbstractUserClass(foldername = "minecraft", prototype = TBMCPlayer::class)
 @TBMCPlayerEnforcer
 abstract class TBMCPlayerBase : ChromaGamerBase() {
-    val uniqueId: UUID get() = UUID.fromString(fileName)
+    val uniqueId: UUID by lazy { UUID.fromString(fileName) }
 
     @JvmField
     val playerName = super.config.getData("PlayerName", "")
@@ -17,9 +18,8 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
         else
             throw RuntimeException("Class not defined as player class! Use @PlayerClass")
         val playerData = commonUserData.playerData
-        var section = playerData.getConfigurationSection(pluginName)
-        if (section == null) section = playerData.createSection(pluginName)
-        config.reset(section)
+        val section = playerData.getConfigurationSection(pluginName) ?: playerData.createSection(pluginName)
+        config = IHaveConfig({ save() }, section)
     }
 
     /**

@@ -1,16 +1,9 @@
 package buttondevteam.lib.architecture
 
-import buttondevteam.core.MainPlugin
-import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.config.IConfigData
-import org.bukkit.Bukkit
 import org.bukkit.configuration.ConfigurationSection
-import org.bukkit.plugin.java.JavaPlugin
-import java.lang.reflect.InvocationTargetException
 import java.util.*
 import java.util.function.Function
-import java.util.function.Predicate
-import java.util.stream.Collectors
 
 /**
  * A config system
@@ -111,14 +104,6 @@ class IHaveConfig(
         ConfigData.signalChange(this)
     }
 
-    /**
-     * Clears all caches and loads everything from yaml.
-     */
-    fun reset(config: ConfigurationSection?) { // TODO: Simply replace the object
-        this.config = config
-        datamap.forEach { (_, data) -> data.reset() }
-    }
-
     companion object {
         /**
          * Generates the config YAML.
@@ -127,84 +112,7 @@ class IHaveConfig(
          * @param configMap The result from [Component.getConfigMap]. May be null.
          */
         fun pregenConfig(obj: Any, configMap: Map<String, IHaveConfig?>?) {
-            val ms = obj.javaClass.declaredMethods
-            for (m in ms) {
-                if (m.returnType.name != ConfigData::class.java.name) continue
-                val mName: String
-                run {
-                    val name = m.name
-                    val ind = name.lastIndexOf('$')
-                    mName = if (ind == -1) name else name.substring(ind + 1)
-                }
-                try {
-                    m.isAccessible = true
-                    var configList: List<ConfigData<*>>
-                    configList = if (m.parameterCount == 0) {
-                        listOf(m.invoke(obj) as ConfigData<*>)
-                    } else if (m.parameterCount == 1 && m.parameterTypes[0] == IHaveConfig::class.java) {
-                        if (configMap == null) continue  //Hope it will get called with the param later
-                        configMap.entries.stream().map { (key, value): Map.Entry<String, IHaveConfig?> ->
-                            try {
-                                return@map m.invoke(obj, value) as ConfigData<*>
-                            } catch (e: IllegalAccessException) {
-                                val msg = "Failed to pregenerate $mName for $obj using config $key!"
-                                if (obj is Component<*>) TBMCCoreAPI.SendException(
-                                    msg,
-                                    e,
-                                    obj
-                                ) else if (obj is JavaPlugin) TBMCCoreAPI.SendException(
-                                    msg,
-                                    e,
-                                    obj
-                                ) else TBMCCoreAPI.SendException(msg, e, false) { msg: String? ->
-                                    Bukkit.getLogger().warning(msg)
-                                }
-                                return@map null
-                            } catch (e: InvocationTargetException) {
-                                val msg = "Failed to pregenerate $mName for $obj using config $key!"
-                                if (obj is Component<*>) TBMCCoreAPI.SendException(
-                                    msg,
-                                    e,
-                                    obj
-                                ) else if (obj is JavaPlugin) TBMCCoreAPI.SendException(
-                                    msg,
-                                    e,
-                                    obj
-                                ) else TBMCCoreAPI.SendException(msg, e, false) { msg: String? ->
-                                    Bukkit.getLogger().warning(msg)
-                                }
-                                return@map null
-                            }
-                        }
-                            .filter(Predicate<ConfigData<Any?>> { obj: ConfigData<Any?>? -> Objects.nonNull(obj) })
-                            .collect(Collectors.toList())
-                    } else {
-                        if (TBMCCoreAPI.IsTestServer()) MainPlugin.instance.logger.warning(
-                            "Method " + mName + " returns a config but its parameters are unknown: " + Arrays.toString(
-                                m.parameterTypes
-                            )
-                        )
-                        continue
-                    }
-                    for (c in configList) {
-                        if (c.path.length == 0) c.setPath(mName) else if (c.path != mName) MainPlugin.instance.logger.warning(
-                            "Config name does not match: " + c.path + " instead of " + mName
-                        )
-                        c.get() //Saves the default value if needed - also checks validity
-                    }
-                } catch (e: Exception) {
-                    val msg = "Failed to pregenerate $mName for $obj!"
-                    if (obj is Component<*>) TBMCCoreAPI.SendException(
-                        msg,
-                        e,
-                        obj
-                    ) else if (obj is JavaPlugin) TBMCCoreAPI.SendException(msg, e, obj) else TBMCCoreAPI.SendException(
-                        msg,
-                        e,
-                        false
-                    ) { msg: String? -> Bukkit.getLogger().warning(msg) }
-                }
-            }
+            // TODO: The configs are generated by ConfigData on creation
         }
     }
 }

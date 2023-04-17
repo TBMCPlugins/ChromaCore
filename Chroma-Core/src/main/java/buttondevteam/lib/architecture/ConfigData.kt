@@ -10,7 +10,7 @@ import java.util.function.Function
 
 /**
  * Use the getter/setter constructor if [T] isn't a primitive type or String.<br></br>
- * Use [Component.getConfig] or [ButtonPlugin.getIConfig] then [IHaveConfig.getData] to get an instance.
+ * Use [Component.config] or [ButtonPlugin.iConfig] then [IHaveConfig.getData] to get an instance.
  * @param config May be null for testing
  * @param getter The parameter is of a primitive type as returned by [Configuration.get]
  * @param setter The result should be a primitive type or string that can be retrieved correctly later
@@ -38,10 +38,6 @@ class ConfigData<T> internal constructor(
 
     override fun toString(): String {
         return "ConfigData{path='$path', value=$value}"
-    }
-
-    override fun reset() {
-        value = null
     }
 
     override fun get(): T {
@@ -96,7 +92,7 @@ class ConfigData<T> internal constructor(
                 synchronized(saveTasks) {
                     saveTasks.put(
                         root,
-                        SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.instance, {
+                        SaveTask(Bukkit.getScheduler().runTaskLaterAsynchronously(MainPlugin.instance, Runnable {
                             synchronized(saveTasks) {
                                 saveTasks.remove(root)
                                 sa.run()

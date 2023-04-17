@@ -1,97 +1,99 @@
-package buttondevteam.lib.chat;
+package buttondevteam.lib.chat
 
-import buttondevteam.core.component.channel.Channel;
-import buttondevteam.core.component.channel.Channel.RecipientTestResult;
-import buttondevteam.lib.ChromaUtils;
-import buttondevteam.lib.TBMCChatEvent;
-import buttondevteam.lib.TBMCChatPreprocessEvent;
-import buttondevteam.lib.TBMCSystemChatEvent;
-import lombok.val;
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
+import buttondevteam.core.component.channel.Channel
+import buttondevteam.core.component.channel.Channel.Companion.channelList
+import buttondevteam.core.component.channel.Channel.Companion.registerChannel
+import buttondevteam.core.component.channel.Channel.RecipientTestResult
+import buttondevteam.lib.ChromaUtils.callEventAsync
+import buttondevteam.lib.ChromaUtils.doItAsync
+import buttondevteam.lib.TBMCChatEvent
+import buttondevteam.lib.TBMCChatPreprocessEvent
+import buttondevteam.lib.TBMCSystemChatEvent
+import buttondevteam.lib.TBMCSystemChatEvent.BroadcastTarget
+import org.bukkit.Bukkit
+import org.bukkit.command.CommandSender
+import java.util.*
+import java.util.function.Supplier
 
-import java.util.Arrays;
-import java.util.function.Supplier;
+object TBMCChatAPI {
+    /**
+     * Sends a chat message to Minecraft. Make sure that the channel is registered with [.RegisterChatChannel].<br></br>
+     * This will also send the error message to the sender, if they can't send the message.
+     *
+     * @param cm      The message to send
+     * @param channel The MC channel to send in
+     * @return The event cancelled state
+     */
+    /**
+     * Sends a chat message to Minecraft. Make sure that the channel is registered with [.RegisterChatChannel].<br></br>
+     * This will also send the error message to the sender, if they can't send the message.
+     *
+     * @param cm The message to send
+     * @return The event cancelled state
+     */
+    @JvmOverloads
+    fun SendChatMessage(cm: ChatMessage, channel: Channel = cm.user.channel.get()): Boolean {
+        if (!channelList.contains(channel)) throw RuntimeException(
+            "Channel " + channel.displayName.get() + " not registered!"
+        )
+        if (!channel.isEnabled.get()) {
+            cm.sender.sendMessage("§cThe channel '" + channel.displayName.get() + "' is disabled!")
+            return true //Cancel sending if channel is disabled
+        }
+        val task = Supplier {
+            val permcheck = cm.getPermCheck()
+            val rtr = getScoreOrSendError(channel, permcheck)
+            val score = rtr.score
+            if (score == Channel.SCORE_SEND_NOPE || rtr.groupID == null) return@Supplier true
+            val eventPre = TBMCChatPreprocessEvent(cm.sender, channel, cm.message)
+            Bukkit.getPluginManager().callEvent(eventPre)
+            if (eventPre.isCancelled) return@Supplier true
+            cm.message = eventPre.message
+            val event = TBMCChatEvent(channel, cm, rtr)
+            Bukkit.getPluginManager().callEvent(event)
+            event.isCancelled
+        }
+        return doItAsync(task, false) //Not cancelled if async
+    }
 
-public class TBMCChatAPI {
-	/**
-	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.<br>
-	 * This will also send the error message to the sender, if they can't send the message.
-	 *
-	 * @param cm The message to send
-	 * @return The event cancelled state
-	 */
-	public static boolean SendChatMessage(ChatMessage cm) {
-		return SendChatMessage(cm, cm.getUser().channel.get());
-	}
+    /**
+     * Sends a regular message to Minecraft. Make sure that the channel is registered with [.RegisterChatChannel].
+     *
+     * @param channel    The channel to send to
+     * @param rtr        The score&group to use to find the group - use [RecipientTestResult.ALL] if the channel doesn't have scores
+     * @param message    The message to send
+     * @param exceptions Platforms where this message shouldn't be sent (same as [ChatMessage.getOrigin]
+     * @return The event cancelled state
+     */
+    @JvmStatic
+    fun SendSystemMessage(
+        channel: Channel,
+        rtr: RecipientTestResult,
+        message: String,
+        target: BroadcastTarget?,
+        vararg exceptions: String
+    ): Boolean {
+        if (!channelList.contains(channel)) throw RuntimeException("Channel " + channel.displayName.get() + " not registered!")
+        if (!channel.isEnabled.get()) return true //Cancel sending
+        if (!exceptions.contains("Minecraft")) Bukkit.getConsoleSender()
+            .sendMessage("[" + channel.displayName.get() + "] " + message)
+        val event = TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID!!, exceptions, target!!)
+        return callEventAsync(event)
+    }
 
-	/**
-	 * Sends a chat message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.<br>
-	 * This will also send the error message to the sender, if they can't send the message.
-	 *
-	 * @param cm      The message to send
-	 * @param channel The MC channel to send in
-	 * @return The event cancelled state
-	 */
-	public static boolean SendChatMessage(ChatMessage cm, Channel channel) {
-		if (!Channel.getChannelList().contains(channel))
-			throw new RuntimeException("Channel " + channel.getDisplayName().get() + " not registered!");
-		if (!channel.isEnabled.get()) {
-			cm.getSender().sendMessage("§cThe channel '" + channel.displayName.get() + "' is disabled!");
-			return true; //Cancel sending if channel is disabled
-		}
-		Supplier<Boolean> task = () -> {
-			val permcheck = cm.getPermCheck();
-			RecipientTestResult rtr = getScoreOrSendError(channel, permcheck);
-			int score = rtr.score;
-			if (score == Channel.SCORE_SEND_NOPE || rtr.groupID == null)
-				return true;
-			TBMCChatPreprocessEvent eventPre = new TBMCChatPreprocessEvent(cm.getSender(), channel, cm.getMessage());
-			Bukkit.getPluginManager().callEvent(eventPre);
-			if (eventPre.isCancelled())
-				return true;
-			cm.setMessage(eventPre.getMessage());
-			TBMCChatEvent event;
-			event = new TBMCChatEvent(channel, cm, rtr);
-			Bukkit.getPluginManager().callEvent(event);
-			return event.isCancelled();
-		};
-		return ChromaUtils.doItAsync(task, false); //Not cancelled if async
-	}
+    private fun getScoreOrSendError(channel: Channel, sender: CommandSender): RecipientTestResult {
+        val result = channel.getRTR(sender)
+        if (result.errormessage != null) sender.sendMessage("§c" + result.errormessage)
+        return result
+    }
 
-	/**
-	 * Sends a regular message to Minecraft. Make sure that the channel is registered with {@link #RegisterChatChannel(Channel)}.
-	 *
-	 * @param channel    The channel to send to
-	 * @param rtr        The score&group to use to find the group - use {@link RecipientTestResult#ALL} if the channel doesn't have scores
-	 * @param message    The message to send
-	 * @param exceptions Platforms where this message shouldn't be sent (same as {@link ChatMessage#getOrigin()}
-	 * @return The event cancelled state
-	 */
-	public static boolean SendSystemMessage(Channel channel, RecipientTestResult rtr, String message, TBMCSystemChatEvent.BroadcastTarget target, String... exceptions) {
-		if (!Channel.getChannelList().contains(channel))
-			throw new RuntimeException("Channel " + channel.displayName.get() + " not registered!");
-		if (!channel.enabled.get())
-			return true; //Cancel sending
-		if (!Arrays.asList(exceptions).contains("Minecraft"))
-			Bukkit.getConsoleSender().sendMessage("[" + channel.displayName.get() + "] " + message);
-		TBMCSystemChatEvent event = new TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID, exceptions, target);
-		return ChromaUtils.callEventAsync(event);
-	}
-
-	private static RecipientTestResult getScoreOrSendError(Channel channel, CommandSender sender) {
-		RecipientTestResult result = channel.getRTR(sender);
-		if (result.errormessage != null)
-			sender.sendMessage("§c" + result.errormessage);
-		return result;
-	}
-
-	/**
-	 * Register a chat channel. See {@link Channel#Channel(String, Color, String, java.util.function.Function)} for details.
-	 *
-	 * @param channel A new {@link Channel} to register
-	 */
-	public static void RegisterChatChannel(Channel channel) {
-		Channel.registerChannel(channel);
-	}
+    /**
+     * Register a chat channel. See [Channel.Channel] for details.
+     *
+     * @param channel A new [Channel] to register
+     */
+    @JvmStatic
+    fun RegisterChatChannel(channel: Channel) {
+        registerChannel(channel)
+    }
 }

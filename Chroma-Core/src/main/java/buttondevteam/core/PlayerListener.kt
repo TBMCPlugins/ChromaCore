@@ -87,7 +87,7 @@ class PlayerListener(val plugin: MainPlugin) : Listener {
     @EventHandler(priority = EventPriority.HIGH) //The one in the chat plugin is set to highest
     fun onPlayerChat(event: AsyncPlayerChatEvent) {
         if (event.isCancelled) return  //The chat plugin should cancel it after this handler
-        val cp = TBMCPlayer.getPlayer(event.player.uniqueId, TBMCPlayer::class.java)
+        val cp = TBMCPlayerBase.getPlayer(event.player.uniqueId, TBMCPlayer::class.java)
         TBMCChatAPI.SendChatMessage(ChatMessage.builder(event.player, cp, event.message).build())
         //Not cancelling the original event here, it's cancelled in the chat plugin
         //This way other plugins can deal with the MC formatting if the chat plugin isn't present, but other platforms still get the message

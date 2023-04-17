@@ -19,10 +19,6 @@ class ListConfigData<T> internal constructor(
 
     override val path: String get() = listConfig.path
 
-    override fun reset() {
-        listConfig.reset()
-    }
-
     override fun get(): List {
         return listConfig.get()
     }

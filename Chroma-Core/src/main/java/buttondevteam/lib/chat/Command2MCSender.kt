@@ -1,28 +1,19 @@
-package buttondevteam.lib.chat;
+package buttondevteam.lib.chat
 
-import buttondevteam.core.component.channel.Channel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.bukkit.command.CommandSender;
+import buttondevteam.core.component.channel.Channel
+import org.bukkit.command.CommandSender
 
-@RequiredArgsConstructor
-public class Command2MCSender implements Command2Sender {
-	private @Getter final CommandSender sender;
-	private @Getter final Channel channel;
-	private @Getter final CommandSender permCheck;
+class Command2MCSender(val sender: CommandSender, val channel: Channel, val permCheck: CommandSender) : Command2Sender {
 
-	@Override
-	public void sendMessage(String message) {
-		sender.sendMessage(message);
-	}
+    override fun sendMessage(message: String) {
+        sender.sendMessage(message)
+    }
 
-	@Override
-	public void sendMessage(String[] message) {
-		sender.sendMessage(message);
-	}
+    override fun sendMessage(message: Array<String>) {
+        sender.sendMessage(*message)
+    }
 
-	@Override
-	public String getName() {
-		return sender.getName();
-	}
+    override fun getName(): String {
+        return sender.name
+    }
 }

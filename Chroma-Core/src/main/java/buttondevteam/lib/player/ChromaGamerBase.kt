@@ -18,9 +18,11 @@ import java.util.function.Supplier
 @ChromaGamerEnforcer
 abstract class ChromaGamerBase {
     lateinit var config: IHaveConfig
+        protected set
 
     protected lateinit var commonUserData: CommonUserData<out ChromaGamerBase>
     protected open fun init() {
+        config = IHaveConfig({ save() }, commonUserData.playerData)
     }
 
     protected fun updateUserConfig() {} // TODO: Use this instead of reset()
@@ -96,9 +98,19 @@ abstract class ChromaGamerBase {
      * @param cl The player class to get the ID from
      * @return The ID or null if not found
      */
-    fun <T : ChromaGamerBase> getConnectedID(cl: Class<T>): String? {
-        val data = staticDataMap[cl] ?: throw RuntimeException("Class $cl is not registered!")
-        return commonUserData.playerData.getString(data.folder + "_id")
+    fun getConnectedID(cl: Class<out ChromaGamerBase>): String? {
+        return getConnectedID(getStaticData(cl).folder)
+
+    }
+
+    /**
+     * Returns the ID for the T typed player object connected with this one or null if no connection found.
+     *
+     * @param cl The player class to get the ID from
+     * @return The ID or null if not found
+     */
+    fun getConnectedID(folder: String): String? {
+        return commonUserData.playerData.getString(folder + "_id")
     }
 
     /**
@@ -111,26 +123,24 @@ abstract class ChromaGamerBase {
     fun <T : ChromaGamerBase> getAs(cl: Class<T>): T? {
         @Suppress("UNCHECKED_CAST")
         if (cl.simpleName == javaClass.simpleName) return this as T
-        val newfolder = getFolderForType(cl)
-        if (newfolder == folder) // If in the same folder, the same filename is used
+        val data = getStaticData(cl)
+        if (data.folder == folder) // If in the same folder, the same filename is used
             return getUser(fileName, cl)
-        val playerData = commonUserData.playerData
-        return if (playerData.contains(newfolder + "_id"))
-            getUser(playerData.getString(newfolder + "_id")!!, cl)
-        else null
+        return getConnectedID(data.folder)?.let { getUser(it, cl) }
     }
 
-    val fileName: String
-        /**
-         * This method returns the filename for this player data. For example, for Minecraft-related data, MC UUIDs, for Discord data, Discord IDs, etc.<br></br>
-         * **Does not include .yml**
-         */
-        get() = commonUserData.playerData.getString(folder + "_id")!!
-    val folder: String
-        /**
-         * This method returns the folder that this player data is stored in. For example: "minecraft".
-         */
-        get() = getFolderForType(javaClass)
+    /**
+     * Returns the filename for this player data. For example, for Minecraft-related data, MC UUIDs, for Discord data, Discord IDs, etc.<br></br>
+     * **Does not include .yml**
+     */
+    val fileName: String by lazy {
+        commonUserData.playerData.getString(folder + "_id") ?: throw RuntimeException("ID not set!")
+    }
+
+    /**
+     * Returns the folder that this player data is stored in. For example: "minecraft".
+     */
+    val folder: String by lazy { getStaticData(javaClass).folder }
 
     /**
      * Get player information. This method calls the [TBMCPlayerGetInfoEvent] to get all the player information across the TBMC plugins.
@@ -282,7 +292,6 @@ abstract class ChromaGamerBase {
                 }
             }
             obj.commonUserData = commonUserData
-            obj.config = IHaveConfig({ obj.save() }, commonUserData.playerData)
             obj.init()
             obj.scheduleUncache()
             return obj

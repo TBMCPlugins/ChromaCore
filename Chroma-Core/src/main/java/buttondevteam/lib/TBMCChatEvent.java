@@ -18,7 +18,7 @@ import javax.annotation.Nullable;
 @Getter
 public class TBMCChatEvent extends TBMCChatEventBase {
 	public TBMCChatEvent(Channel channel, ChatMessage cm, Channel.RecipientTestResult rtr) {
-		super(channel, cm.getMessage(), rtr.score, rtr.groupID);
+		super(channel, cm.message, rtr.score, rtr.groupID);
 		this.cm = cm;
     }
 
@@ -28,7 +28,7 @@ public class TBMCChatEvent extends TBMCChatEventBase {
 	private ChatMessage cm;
 
 	private boolean isIgnoreSenderPermissions() {
-		return cm.getPermCheck() != cm.getSender();
+		return cm.getPermCheck() != cm.sender;
 	}
 
     /**
@@ -36,9 +36,9 @@ public class TBMCChatEvent extends TBMCChatEventBase {
      */
     @Override
     public boolean shouldSendTo(CommandSender sender) {
-	    if (isIgnoreSenderPermissions() && sender.equals(this.cm.getSender()))
-            return true; //Allow sending the message no matter what
-        return super.shouldSendTo(sender);
+	    if (isIgnoreSenderPermissions() && sender.equals(this.cm.sender))
+		    return true; //Allow sending the message no matter what
+	    return super.shouldSendTo(sender);
     }
 
     /**
@@ -46,9 +46,9 @@ public class TBMCChatEvent extends TBMCChatEventBase {
      */
     @Override
     public int getMCScore(CommandSender sender) {
-	    if (isIgnoreSenderPermissions() && sender.equals(this.cm.getSender()))
-            return getScore(); //Send in the correct group no matter what
-        return super.getMCScore(sender);
+	    if (isIgnoreSenderPermissions() && sender.equals(this.cm.sender))
+		    return getScore(); //Send in the correct group no matter what
+	    return super.getMCScore(sender);
     }
 
     /**
@@ -57,9 +57,9 @@ public class TBMCChatEvent extends TBMCChatEventBase {
     @Nullable
     @Override
     public String getGroupID(CommandSender sender) {
-	    if (isIgnoreSenderPermissions() && sender.equals(this.cm.getSender()))
-            return getGroupID(); //Send in the correct group no matter what
-        return super.getGroupID(sender);
+	    if (isIgnoreSenderPermissions() && sender.equals(this.cm.sender))
+		    return getGroupID(); //Send in the correct group no matter what
+	    return super.getGroupID(sender);
     }
 
     @Override
