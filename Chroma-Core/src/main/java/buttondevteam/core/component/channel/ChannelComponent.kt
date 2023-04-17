@@ -31,13 +31,10 @@ class ChannelComponent : Component<JavaPlugin>() {
 
     @CommandClass
     private class ChannelCommand(private val channel: Channel) : ICommand2MC() {
-        override fun getCommandPath(): String {
-            return channel.identifier
-        }
-
-        override fun getCommandPaths(): Array<String> {
-            return channel.extraIdentifiers.get().toTypedArray()
-        }
+        override val commandPath: String
+            get() = channel.identifier
+        override val commandPaths: Array<String>
+            get() = channel.extraIdentifiers.get().toTypedArray()
 
         @Subcommand
         fun def(senderMC: Command2MCSender, @OptionalArg @TextArg message: String?) {
@@ -55,7 +52,7 @@ class ChannelComponent : Component<JavaPlugin>() {
                     if (channel is ChatRoom) channel.joinRoom(sender)
                 }
                 sender.sendMessage("§6You are now talking in: §b" + user.channel.get().displayName.get())
-            } else TBMCChatAPI.SendChatMessage(
+            } else TBMCChatAPI.sendChatMessage(
                 ChatMessage.builder(sender, user, message).fromCommand(true)
                     .permCheck(senderMC.permCheck).build(), channel
             )

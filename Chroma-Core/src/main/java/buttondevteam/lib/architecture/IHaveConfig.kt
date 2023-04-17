@@ -35,6 +35,7 @@ class IHaveConfig(
      * @return The data object that can be used to get or set the value
     </T> */
     @Suppress("UNCHECKED_CAST")
+    @JvmOverloads
     fun <T> getData(
         path: String,
         def: T,
@@ -57,6 +58,7 @@ class IHaveConfig(
      * @return The data object that can be used to get or set the value
     </T> */
     @Suppress("UNCHECKED_CAST")
+    @JvmOverloads
     fun <T> getData(
         path: String,
         getter: Function<Any?, T>,
@@ -77,6 +79,7 @@ class IHaveConfig(
      * @return The data object that can be used to get or set the value
     </T> */
     @Suppress("UNCHECKED_CAST")
+    @JvmOverloads
     fun <T> getListData(
         path: String,
         def: List<T>,

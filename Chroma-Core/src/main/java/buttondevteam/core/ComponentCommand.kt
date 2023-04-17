@@ -1,102 +1,98 @@
-package buttondevteam.core;
+package buttondevteam.core
 
-import buttondevteam.lib.TBMCCoreAPI;
-import buttondevteam.lib.architecture.ButtonPlugin;
-import buttondevteam.lib.architecture.Component;
-import buttondevteam.lib.chat.Command2;
-import buttondevteam.lib.chat.Command2.Subcommand;
-import buttondevteam.lib.chat.CommandClass;
-import buttondevteam.lib.chat.CustomTabCompleteMethod;
-import buttondevteam.lib.chat.ICommand2MC;
-import lombok.val;
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.java.JavaPlugin;
+import buttondevteam.lib.TBMCCoreAPI
+import buttondevteam.lib.architecture.ButtonPlugin
+import buttondevteam.lib.architecture.Component
+import buttondevteam.lib.architecture.Component.Companion.components
+import buttondevteam.lib.architecture.Component.Companion.setComponentEnabled
+import buttondevteam.lib.chat.Command2.OptionalArg
+import buttondevteam.lib.chat.Command2.Subcommand
+import buttondevteam.lib.chat.CommandClass
+import buttondevteam.lib.chat.CustomTabCompleteMethod
+import buttondevteam.lib.chat.ICommand2MC
+import org.bukkit.Bukkit
+import org.bukkit.command.CommandSender
+import org.bukkit.plugin.Plugin
+import org.bukkit.plugin.java.JavaPlugin
+import java.util.*
+import java.util.stream.Stream
 
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.stream.Stream;
+@CommandClass(modOnly = true, helpText = ["Component command", "Can be used to enable/disable/list components"])
+class ComponentCommand : ICommand2MC() {
+    init {
+        manager.addParamConverter(
+            Plugin::class.java, { arg -> Bukkit.getPluginManager().getPlugin(arg) },
+            "Plugin not found!"
+        ) { Bukkit.getPluginManager().plugins.map { obj -> obj.name } }
+    }
 
-@CommandClass(modOnly = true, helpText = {
-	"Component command",
-	"Can be used to enable/disable/list components"
-})
-public class ComponentCommand extends ICommand2MC {
-	public ComponentCommand() {
-		getManager().addParamConverter(Plugin.class, arg -> Bukkit.getPluginManager().getPlugin(arg), "Plugin not found!",
-			() -> Arrays.stream(Bukkit.getPluginManager().getPlugins()).map(Plugin::getName)::iterator);
-	}
+    @Subcommand(helpText = ["Enable component", "Temporarily or permanently enables a component."])
+    fun enable(sender: CommandSender, plugin: Plugin, component: String, @OptionalArg permanent: Boolean): Boolean {
+        if (plugin is ButtonPlugin) {
+            if (!plugin.justReload()) {
+                sender.sendMessage("§cCouldn't reload config, check console.")
+                return true
+            }
+        } else plugin.reloadConfig() //Reload config so the new config values are read - All changes are saved to disk on disable
+        return enable_disable(sender, plugin, component, true, permanent)
+    }
 
-	@Subcommand(helpText = {
-		"Enable component",
-		"Temporarily or permanently enables a component."
-	})
-	public boolean enable(CommandSender sender, Plugin plugin, String component, @Command2.OptionalArg boolean permanent) {
-		if (plugin instanceof ButtonPlugin) {
-			if (!((ButtonPlugin) plugin).justReload()) {
-				sender.sendMessage("§cCouldn't reload config, check console.");
-				return true;
-			}
-		} else
-			plugin.reloadConfig(); //Reload config so the new config values are read - All changes are saved to disk on disable
-		return enable_disable(sender, plugin, component, true, permanent);
-	}
+    @Subcommand(helpText = ["Disable component", "Temporarily or permanently disables a component."])
+    fun disable(sender: CommandSender, plugin: Plugin, component: String, @OptionalArg permanent: Boolean): Boolean {
+        return enable_disable(sender, plugin, component, false, permanent)
+    }
 
-	@Subcommand(helpText = {
-		"Disable component",
-		"Temporarily or permanently disables a component."
-	})
-	public boolean disable(CommandSender sender, Plugin plugin, String component, @Command2.OptionalArg boolean permanent) {
-		return enable_disable(sender, plugin, component, false, permanent);
-	}
+    @Subcommand(helpText = ["List components", "Lists all of the registered Chroma components"])
+    fun list(sender: CommandSender, @OptionalArg plugin: String?): Boolean {
+        sender.sendMessage("§6List of components:")
+        //If plugin is null, don't check for it
+        components.values.stream().filter { c -> plugin == null || c.plugin.name.equals(plugin, ignoreCase = true) }
+            .map { c -> "${c.plugin.name} - ${c.javaClass.simpleName} - ${if (c.isEnabled) "en" else "dis"}abled" }
+            .forEach { message -> sender.sendMessage(message) }
+        return true
+    }
 
-	@Subcommand(helpText = {
-		"List components",
-		"Lists all of the registered Chroma components"
-	})
-	public boolean list(CommandSender sender, @Command2.OptionalArg String plugin) {
-		sender.sendMessage("§6List of components:");
-		Component.getComponents().values().stream().filter(c -> plugin == null || c.getPlugin().getName().equalsIgnoreCase(plugin)) //If plugin is null, don't check
-			.map(c -> c.getPlugin().getName() + " - " + c.getClass().getSimpleName() + " - " + (c.isEnabled() ? "en" : "dis") + "abled").forEach(sender::sendMessage);
-		return true;
-	}
+    @CustomTabCompleteMethod(param = "component", subcommand = ["enable", "disable"])
+    fun componentTabcomplete(plugin: Plugin): Iterable<String> {
+        return Iterable { getPluginComponents(plugin).map { c -> c.javaClass.simpleName }.iterator() }
+    }
 
-	@CustomTabCompleteMethod(param = "component", subcommand = {"enable", "disable"})
-	public Iterable<String> componentTabcomplete(Plugin plugin) {
-		return getPluginComponents(plugin).map(c -> c.getClass().getSimpleName())::iterator;
-	}
+    @CustomTabCompleteMethod(param = "plugin", subcommand = ["list", "enable", "disable"], ignoreTypeCompletion = true)
+    fun pluginTabcomplete(): Iterable<String> {
+        return Iterable { components.values.stream().map { it.plugin }.distinct().map { it.name }.iterator() }
+    }
 
-	@CustomTabCompleteMethod(param = "plugin", subcommand = {"list", "enable", "disable"}, ignoreTypeCompletion = true)
-	public Iterable<String> pluginTabcomplete() {
-		return Component.getComponents().values().stream().map(Component::getPlugin)
-			.distinct().map(Plugin::getName)::iterator;
-	}
+    private fun enable_disable(
+        sender: CommandSender,
+        plugin: Plugin,
+        component: String,
+        enable: Boolean,
+        permanent: Boolean
+    ): Boolean {
+        try {
+            val oc = getComponentOrError(plugin, component, sender)
+            if (!oc.isPresent) return true
+            setComponentEnabled(oc.get(), enable)
+            if (permanent) oc.get().shouldBeEnabled.set(enable)
+            sender.sendMessage("${oc.get().javaClass.simpleName} ${if (enable) "en" else "dis"}abled ${if (permanent) "permanently" else "temporarily"}.")
+        } catch (e: Exception) {
+            TBMCCoreAPI.SendException(
+                "Couldn't " + (if (enable) "en" else "dis") + "able component " + component + "!",
+                e,
+                plugin as JavaPlugin
+            )
+        }
+        return true
+    }
 
-	private boolean enable_disable(CommandSender sender, Plugin plugin, String component, boolean enable, boolean permanent) {
-		try {
-			val oc = getComponentOrError(plugin, component, sender);
-			if (!oc.isPresent())
-				return true;
-			Component.setComponentEnabled(oc.get(), enable);
-			if (permanent)
-				oc.get().shouldBeEnabled.set(enable);
-			sender.sendMessage(oc.get().getClass().getSimpleName() + " " + (enable ? "en" : "dis") + "abled " + (permanent ? "permanently" : "temporarily") + ".");
-		} catch (Exception e) {
-			TBMCCoreAPI.SendException("Couldn't " + (enable ? "en" : "dis") + "able component " + component + "!", e, (JavaPlugin) plugin);
-		}
-		return true;
-	}
+    private fun getPluginComponents(plugin: Plugin): Stream<Component<out JavaPlugin>> {
+        return components.values.stream().filter { c -> plugin.name == c.plugin.name }
+    }
 
-	private Stream<Component<? extends JavaPlugin>> getPluginComponents(Plugin plugin) {
-		return Component.getComponents().values().stream()
-			.filter(c -> plugin.getName().equals(c.getPlugin().getName()));
-	}
-
-	private Optional<Component<?>> getComponentOrError(Plugin plugin, String arg, CommandSender sender) {
-		val oc = getPluginComponents(plugin).filter(c -> c.getClass().getSimpleName().equalsIgnoreCase(arg)).findAny();
-		if (!oc.isPresent())
-			sender.sendMessage("§cComponent not found!"); //^ Much simpler to solve in the new command system
-		return oc;
-	}
+    private fun getComponentOrError(plugin: Plugin, arg: String, sender: CommandSender): Optional<Component<*>> {
+        // TODO: Extend param converter to support accessing previous params
+        val oc = getPluginComponents(plugin).filter { it.javaClass.simpleName.equals(arg, ignoreCase = true) }.findAny()
+        if (!oc.isPresent) sender.sendMessage("§cComponent not found!")
+        return oc
+    }
 }

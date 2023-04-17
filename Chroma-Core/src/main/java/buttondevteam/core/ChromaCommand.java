@@ -14,7 +14,7 @@ import java.util.Optional;
 @CommandClass
 public class ChromaCommand extends ICommand2MC {
 	public ChromaCommand() {
-		getManager().addParamConverter(ButtonPlugin.class, name ->
+		manager.addParamConverter(ButtonPlugin.class, name ->
 				(ButtonPlugin) Optional.ofNullable(Bukkit.getPluginManager().getPlugin(name))
 					.filter(plugin -> plugin instanceof ButtonPlugin).orElse(null),
 			"No Chroma plugin found by that name.", () -> Arrays.stream(Bukkit.getPluginManager().getPlugins())

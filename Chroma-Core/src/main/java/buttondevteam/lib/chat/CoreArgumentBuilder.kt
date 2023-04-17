@@ -1,33 +1,41 @@
-package buttondevteam.lib.chat;
+package buttondevteam.lib.chat
 
-import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.builder.ArgumentBuilder;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
-import lombok.RequiredArgsConstructor;
+import com.mojang.brigadier.arguments.ArgumentType
+import com.mojang.brigadier.builder.ArgumentBuilder
+import com.mojang.brigadier.suggestion.SuggestionProvider
 
-@RequiredArgsConstructor
-public class CoreArgumentBuilder<S, T> extends ArgumentBuilder<S, CoreArgumentBuilder<S, T>> {
-	private final String name;
-	private final ArgumentType<T> type;
-	private final boolean optional;
-	private SuggestionProvider<S> suggestionsProvider = null;
+class CoreArgumentBuilder<S, T>(
+    private val name: String,
+    private val type: ArgumentType<T>,
+    private val optional: Boolean
+) : ArgumentBuilder<S, CoreArgumentBuilder<S, T>>() {
+    private var suggestionsProvider: SuggestionProvider<S>? = null
+    fun suggests(provider: SuggestionProvider<S>): CoreArgumentBuilder<S, T> {
+        suggestionsProvider = provider
+        return this
+    }
 
-	public static <S, T> CoreArgumentBuilder<S, T> argument(String name, ArgumentType<T> type, boolean optional) {
-		return new CoreArgumentBuilder<S, T>(name, type, optional);
-	}
+    override fun getThis(): CoreArgumentBuilder<S, T> {
+        return this
+    }
 
-	public CoreArgumentBuilder<S, T> suggests(SuggestionProvider<S> provider) {
-		this.suggestionsProvider = provider;
-		return this;
-	}
+    override fun build(): CoreArgumentCommandNode<S, T> {
+        return CoreArgumentCommandNode(
+            name,
+            type,
+            command,
+            requirement,
+            redirect,
+            redirectModifier,
+            isFork,
+            suggestionsProvider,
+            optional
+        )
+    }
 
-	@Override
-	protected CoreArgumentBuilder<S, T> getThis() {
-		return this;
-	}
-
-	@Override
-	public CoreArgumentCommandNode<S, T> build() {
-		return new CoreArgumentCommandNode<>(name, type, getCommand(), getRequirement(), getRedirect(), getRedirectModifier(), isFork(), suggestionsProvider, optional);
-	}
+    companion object {
+        fun <S, T> argument(name: String, type: ArgumentType<T>, optional: Boolean): CoreArgumentBuilder<S, T> {
+            return CoreArgumentBuilder(name, type, optional)
+        }
+    }
 }

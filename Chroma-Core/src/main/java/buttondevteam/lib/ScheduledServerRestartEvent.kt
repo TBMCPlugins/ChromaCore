@@ -1,25 +1,15 @@
-package buttondevteam.lib;
+package buttondevteam.lib
 
-import buttondevteam.core.component.restart.ScheduledRestartCommand;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.bukkit.event.Event;
-import org.bukkit.event.HandlerList;
+import buttondevteam.core.component.restart.ScheduledRestartCommand
+import org.bukkit.event.Event
+import org.bukkit.event.HandlerList
 
-@Getter
-@RequiredArgsConstructor
-public class ScheduledServerRestartEvent extends Event {
-	private static final HandlerList handlers = new HandlerList();
+class ScheduledServerRestartEvent(val restartTicks: Int, val command: ScheduledRestartCommand) : Event() {
+    override fun getHandlers(): HandlerList {
+        return handlerList
+    }
 
-	private final int restartTicks;
-	private final ScheduledRestartCommand command;
-
-	@Override
-	public HandlerList getHandlers() {
-		return handlers;
-	}
-
-	public static HandlerList getHandlerList() {
-		return handlers;
-	}
+    companion object {
+        val handlerList = HandlerList()
+    }
 }

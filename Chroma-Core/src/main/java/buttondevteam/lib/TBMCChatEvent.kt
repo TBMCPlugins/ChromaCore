@@ -1,73 +1,55 @@
-package buttondevteam.lib;
+package buttondevteam.lib
 
-import buttondevteam.core.component.channel.Channel;
-import buttondevteam.lib.chat.ChatMessage;
-import lombok.Getter;
-import lombok.experimental.Delegate;
-import org.bukkit.command.CommandSender;
-import org.bukkit.event.HandlerList;
-
-import javax.annotation.Nullable;
+import buttondevteam.core.component.channel.Channel
+import buttondevteam.core.component.channel.Channel.RecipientTestResult
+import buttondevteam.lib.chat.ChatMessage
+import buttondevteam.lib.player.ChromaGamerBase
+import org.bukkit.command.CommandSender
+import org.bukkit.event.HandlerList
 
 /**
- * Make sure to only send the message to users where {@link #shouldSendTo(CommandSender)} returns true.
- * 
- * @author NorbiPeti
+ * Make sure to only send the message to users where [.shouldSendTo] returns true.
  *
+ * @author NorbiPeti
  */
-@Getter
-public class TBMCChatEvent extends TBMCChatEventBase {
-	public TBMCChatEvent(Channel channel, ChatMessage cm, Channel.RecipientTestResult rtr) {
-		super(channel, cm.message, rtr.score, rtr.groupID);
-		this.cm = cm;
-    }
+class TBMCChatEvent(
+    channel: Channel,
+    private val cm: ChatMessage,
+    rtr: RecipientTestResult
+) : TBMCChatEventBase(channel, cm.message, rtr.score, rtr.groupID!!) {
 
-	private static final HandlerList handlers = new HandlerList();
-
-	@Delegate //<-- Backwards compatibility
-	private ChatMessage cm;
-
-	private boolean isIgnoreSenderPermissions() {
-		return cm.getPermCheck() != cm.sender;
-	}
+    private val isIgnoreSenderPermissions: Boolean get() = cm.permCheck !== cm.sender
 
     /**
-     * This will allow the sender of the message if {@link #isIgnoreSenderPermissions()} is true.
+     * This will allow the sender of the message if [.isIgnoreSenderPermissions] is true.
      */
-    @Override
-    public boolean shouldSendTo(CommandSender sender) {
-	    if (isIgnoreSenderPermissions() && sender.equals(this.cm.sender))
-		    return true; //Allow sending the message no matter what
-	    return super.shouldSendTo(sender);
+    override fun shouldSendTo(sender: CommandSender): Boolean {
+        return if (isIgnoreSenderPermissions && sender == cm.sender) true else super.shouldSendTo(sender) //Allow sending the message no matter what
     }
 
     /**
-     * This will allow the sender of the message if {@link #isIgnoreSenderPermissions()} is true.
+     * This will allow the sender of the message if [.isIgnoreSenderPermissions] is true.
      */
-    @Override
-    public int getMCScore(CommandSender sender) {
-	    if (isIgnoreSenderPermissions() && sender.equals(this.cm.sender))
-		    return getScore(); //Send in the correct group no matter what
-	    return super.getMCScore(sender);
+    override fun getMCScore(sender: CommandSender): Int {
+        return if (isIgnoreSenderPermissions && sender == cm.sender) score else super.getMCScore(sender) //Send in the correct group no matter what
     }
 
     /**
-     * This will allow the sender of the message if {@link #isIgnoreSenderPermissions()} is true.
+     * This will allow the sender of the message if [.isIgnoreSenderPermissions] is true.
      */
-    @Nullable
-    @Override
-    public String getGroupID(CommandSender sender) {
-	    if (isIgnoreSenderPermissions() && sender.equals(this.cm.sender))
-		    return getGroupID(); //Send in the correct group no matter what
-	    return super.getGroupID(sender);
+    override fun getGroupID(sender: CommandSender): String? {
+        return if (isIgnoreSenderPermissions && sender == cm.sender) groupID else super.getGroupID(sender) //Send in the correct group no matter what
     }
 
-    @Override
-	public HandlerList getHandlers() {
-		return handlers;
-	}
+    override fun getHandlers(): HandlerList {
+        return handlerList
+    }
 
-	public static HandlerList getHandlerList() {
-		return handlers;
-	}
+    val sender: CommandSender get() = cm.sender
+    val user: ChromaGamerBase get() = cm.user
+    val origin: String get() = cm.origin
+
+    companion object {
+        val handlerList = HandlerList()
+    }
 }

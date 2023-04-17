@@ -9,7 +9,6 @@ import buttondevteam.lib.architecture.Component
 import buttondevteam.lib.architecture.ComponentMetadata
 import buttondevteam.lib.chat.IFakePlayer
 import buttondevteam.lib.chat.TBMCChatAPI
-import lombok.Getter
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.event.EventHandler
@@ -26,9 +25,9 @@ import java.time.ZonedDateTime
 @ComponentMetadata(enabledByDefault = false)
 class RestartComponent : Component<MainPlugin>(), Listener {
     public override fun enable() {
-        val scheduledRestartCommand = ScheduledRestartCommand(this)
+        val scheduledRestartCommand = ScheduledRestartCommand()
         registerCommand(scheduledRestartCommand)
-        registerCommand(PrimeRestartCommand(this))
+        registerCommand(PrimeRestartCommand())
         registerListener(this)
         restartBroadcast = add("restartCountdown")
         val restartAt = restartAt.get()
@@ -52,8 +51,10 @@ class RestartComponent : Component<MainPlugin>(), Listener {
     private val restartAt = config.getData("restartAt", 12)
     private var lasttime: Long = 0
 
-    @Getter
-    private var restartBroadcast: BroadcastTarget? = null
+    var isPlsrestart = false
+    var isLoud = false
+
+    lateinit var restartBroadcast: BroadcastTarget
     private fun syncStart(hour: Int): Int {
         val now = ZonedDateTime.now(ZoneId.ofOffset("", ZoneOffset.UTC))
         val secs = now.hour * 3600 + now.minute * 60 + now.second
@@ -69,12 +70,12 @@ class RestartComponent : Component<MainPlugin>(), Listener {
 
     @EventHandler
     fun onPlayerLeave(event: PlayerQuitEvent) {
-        if (PrimeRestartCommand.isPlsrestart()
+        if (isPlsrestart
             && !event.quitMessage.equals("Server closed", ignoreCase = true)
             && !event.quitMessage.equals("Server is restarting", ignoreCase = true)
         ) {
             if (Bukkit.getOnlinePlayers().size <= 1) {
-                if (PrimeRestartCommand.isLoud()) TBMCChatAPI.SendSystemMessage(
+                if (isLoud) TBMCChatAPI.SendSystemMessage(
                     Channel.globalChat,
                     Channel.RecipientTestResult.ALL,
                     "§cNobody is online anymore. Restarting.",
@@ -83,7 +84,7 @@ class RestartComponent : Component<MainPlugin>(), Listener {
                 Bukkit.spigot().restart()
             } else if (event.player !is IFakePlayer && System.nanoTime() - 10 * 60 * 1000000000L - lasttime > 0) { //10 minutes passed since last reminder
                 lasttime = System.nanoTime()
-                if (PrimeRestartCommand.isLoud()) TBMCChatAPI.SendSystemMessage(
+                if (isLoud) TBMCChatAPI.SendSystemMessage(
                     Channel.globalChat,
                     Channel.RecipientTestResult.ALL,
                     ChatColor.DARK_RED.toString() + "The server will restart as soon as nobody is online.",

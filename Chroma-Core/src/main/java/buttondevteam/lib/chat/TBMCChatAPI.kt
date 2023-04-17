@@ -32,7 +32,7 @@ object TBMCChatAPI {
      * @return The event cancelled state
      */
     @JvmOverloads
-    fun SendChatMessage(cm: ChatMessage, channel: Channel = cm.user.channel.get()): Boolean {
+    fun sendChatMessage(cm: ChatMessage, channel: Channel = cm.user.channel.get()): Boolean {
         if (!channelList.contains(channel)) throw RuntimeException(
             "Channel " + channel.displayName.get() + " not registered!"
         )
@@ -41,8 +41,7 @@ object TBMCChatAPI {
             return true //Cancel sending if channel is disabled
         }
         val task = Supplier {
-            val permcheck = cm.getPermCheck()
-            val rtr = getScoreOrSendError(channel, permcheck)
+            val rtr = getScoreOrSendError(channel, cm.permCheck)
             val score = rtr.score
             if (score == Channel.SCORE_SEND_NOPE || rtr.groupID == null) return@Supplier true
             val eventPre = TBMCChatPreprocessEvent(cm.sender, channel, cm.message)
@@ -93,7 +92,7 @@ object TBMCChatAPI {
      * @param channel A new [Channel] to register
      */
     @JvmStatic
-    fun RegisterChatChannel(channel: Channel) {
+    fun registerChatChannel(channel: Channel) {
         registerChannel(channel)
     }
 }

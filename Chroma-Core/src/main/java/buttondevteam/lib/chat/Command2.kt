@@ -82,7 +82,9 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @param allSupplier The supplier of all possible values (ideally)
     </T> */
     open fun <T> addParamConverter(
-        cl: Class<T>, converter: Function<String, T?>, errormsg: String,
+        cl: Class<T>,
+        converter: Function<String, T?>,
+        errormsg: String,
         allSupplier: Supplier<Iterable<String>>
     ) {
         paramConverters[cl] = ParamConverter(converter, errormsg, allSupplier)
