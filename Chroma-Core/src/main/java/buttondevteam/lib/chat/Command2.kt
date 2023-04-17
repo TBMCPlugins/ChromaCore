@@ -133,13 +133,22 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @param command The command to register
      * @return The Brigadier command node if you need it for something (like tab completion)
      */
-    protected fun registerCommandSuper(command: TC): LiteralCommandNode<TP> {
-        var mainCommandNode: LiteralCommandNode<TP>? = null
+    protected fun registerCommandSuper(command: TC): CoreCommandNode<TP, *> {
+        var mainCommandNode: CoreCommandNode<TP, *>? = null
         for (meth in command.javaClass.methods) {
             val ann = meth.getAnnotation(Subcommand::class.java) ?: continue
             val fullPath = command.commandPath + CommandUtils.getCommandPath(meth.name, ' ')
             val (lastNode, mainNode, remainingPath) = registerNodeFromPath(fullPath)
-            lastNode.addChild(getExecutableNode(meth, command, ann, remainingPath, CommandArgumentHelpManager(command), fullPath))
+            lastNode.addChild(
+                getExecutableNode(
+                    meth,
+                    command,
+                    ann,
+                    remainingPath,
+                    CommandArgumentHelpManager(command),
+                    fullPath
+                )
+            )
             if (mainCommandNode == null) mainCommandNode = mainNode
             else if (mainNode!!.name != mainCommandNode.name) {
                 MainPlugin.instance.logger.warning("Multiple commands are defined in the same class! This is not supported. Class: " + command.javaClass.simpleName)
@@ -193,16 +202,17 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @return The last no-op node that can be used to register the executable node,
      * the main command node and the last part of the command path (that isn't registered yet)
      */
-    private fun registerNodeFromPath(path: String): Triple<CommandNode<TP>, LiteralCommandNode<TP>?, String> {
+    private fun registerNodeFromPath(path: String): Triple<CommandNode<TP>, CoreCommandNode<TP, *>?, String> {
         val split = path.split(" ")
         var parent: CommandNode<TP> = dispatcher.root
-        var mainCommand: LiteralCommandNode<TP>? = null
+        var mainCommand: CoreCommandNode<TP, *>? = null
         split.forEachIndexed { i, part ->
             val child = parent.getChild(part)
             if (child == null) parent.addChild(CoreCommandBuilder.literalNoOp<TP, TC>(part, getSubcommandList())
                 .executes(::executeHelpText).build().also { parent = it })
             else parent = child
-            if (i == 0) mainCommand = parent as LiteralCommandNode<TP> // Has to be a literal, if not, well, error
+            if (i == 0) mainCommand =
+                parent as CoreCommandNode<TP, *> // Has to be our own literal node, if not, well, error
         }
         return Triple(parent, mainCommand, split.last())
     }
@@ -362,9 +372,9 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      *
      * @return A set of command node objects containing the commands
      */
-    val commandNodes: Set<CoreCommandNode<TP, TC, NoOpSubcommandData>>
+    val commandNodes: Set<CoreCommandNode<TP, NoOpSubcommandData>>
         get() = dispatcher.root.children.stream()
-            .map { node: CommandNode<TP> -> node.core<TP, TC, NoOpSubcommandData>() }
+            .map { node: CommandNode<TP> -> node.core<TP, NoOpSubcommandData>() }
             .collect(Collectors.toUnmodifiableSet())
 
     /**
@@ -373,7 +383,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @param command The exact name of the command
      * @return A command node
      */
-    fun getCommandNode(command: String): CoreCommandNode<TP, TC, NoOpSubcommandData> { // TODO: What should this return? No-op? Executable? What's the use case?
+    fun getCommandNode(command: String): CoreCommandNode<TP, NoOpSubcommandData> { // TODO: What should this return? No-op? Executable? What's the use case?
         return dispatcher.root.getChild(command).core()
     }
 
@@ -391,14 +401,14 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      *
      * @param condition The condition for removing a given command
      */
-    fun unregisterCommandIf(condition: Predicate<CoreCommandNode<TP, TC, SubcommandData<TC, TP>>>, nested: Boolean) {
+    fun unregisterCommandIf(condition: Predicate<CoreCommandNode<TP, SubcommandData<TC, TP>>>, nested: Boolean) {
         dispatcher.root.children.removeIf { node -> node.coreExecutable<TP, TC>()?.let { condition.test(it) } ?: false }
         if (nested) for (child in dispatcher.root.children) unregisterCommandIf(condition, child.core())
     }
 
     private fun unregisterCommandIf(
-        condition: Predicate<CoreCommandNode<TP, TC, SubcommandData<TC, TP>>>,
-        root: CoreCommandNode<TP, TC, NoOpSubcommandData>
+        condition: Predicate<CoreCommandNode<TP, SubcommandData<TC, TP>>>,
+        root: CoreCommandNode<TP, NoOpSubcommandData>
     ) {
         // TODO: Remvoe no-op nodes without children
         // Can't use getCoreChildren() here because the collection needs to be modifiable
@@ -408,8 +418,24 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
 
     /**
      * Get all subcommands of the specified command. Only returns executable nodes.
+     *
+     * @param mainCommand The command to get the subcommands of
+     * @param deep Whether to get all subcommands recursively or only the direct children
      */
-    fun getSubcommands(mainCommand: LiteralCommandNode<TP>): List<CoreCommandNode<TP, TC, SubcommandData<TC, TP>>> {
-        return dispatcher.root.children.mapNotNull { it.coreExecutable<TP, TC>() } // TODO: Needs more depth
+    fun getSubcommands(
+        mainCommand: LiteralCommandNode<TP>,
+        deep: Boolean = true
+    ): List<CoreCommandNode<TP, SubcommandData<TC, TP>>> {
+        return getSubcommands(mainCommand, deep, mainCommand.core())
+    }
+
+    private fun getSubcommands(
+        mainCommand: LiteralCommandNode<TP>,
+        deep: Boolean = true,
+        root: CoreCommandNode<TP, NoOpSubcommandData>
+    ): List<CoreCommandNode<TP, SubcommandData<TC, TP>>> {
+
+        return root.children.mapNotNull { it.coreExecutable<TP, TC>() } +
+            if (deep) root.children.flatMap { getSubcommands(mainCommand, deep, it.core()) } else emptyList()
     }
 }

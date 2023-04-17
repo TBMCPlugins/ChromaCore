@@ -42,7 +42,4 @@ class PrimeRestartCommand : ICommand2MC() {
             Bukkit.spigot().restart()
         }
     }
-
-    companion object {
-    }
 }

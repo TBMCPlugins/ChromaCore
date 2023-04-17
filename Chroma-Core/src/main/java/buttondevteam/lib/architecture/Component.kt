@@ -77,7 +77,7 @@ abstract class Component<TP : JavaPlugin> {
      * @param command Custom coded command class
      */
     fun registerCommand(command: ICommand2MC) {
-        if (plugin is ButtonPlugin) command.registerToPlugin(plugin as ButtonPlugin)
+        if (plugin is ButtonPlugin) command.registerToPlugin(plugin as ButtonPlugin) // TODO: Require ButtonPlugin
         command.registerToComponent(this)
         ButtonPlugin.command2MC.registerCommand(command)
     }
@@ -102,8 +102,7 @@ abstract class Component<TP : JavaPlugin> {
      */
     fun getConfigMap(key: String, defaultProvider: Map<String, Consumer<IHaveConfig>>): Map<String, IHaveConfig> {
         val c: ConfigurationSection = config.config
-        var cs = c.getConfigurationSection(key)
-        if (cs == null) cs = c.createSection(key)
+        val cs = c.getConfigurationSection(key) ?: c.createSection(key)
         val res = cs.getValues(false).entries.stream()
             .filter { (_, value) -> value is ConfigurationSection }
             .collect(Collectors.toMap(

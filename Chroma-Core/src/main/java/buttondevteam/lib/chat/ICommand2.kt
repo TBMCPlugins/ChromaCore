@@ -13,7 +13,7 @@ import java.util.function.Function
  *
  * @param TP The sender's type
 </TP> */
-abstract class ICommand2<TP : Command2Sender>(manager: Command2<*, TP>) {
+abstract class ICommand2<TP : Command2Sender>(val manager: Command2<*, TP>) {
     /**
      * Default handler for commands, can be used to copy the args too.
      *
@@ -21,7 +21,7 @@ abstract class ICommand2<TP : Command2Sender>(manager: Command2<*, TP>) {
      * @return The success of the command
      */
     @Suppress("UNUSED_PARAMETER")
-    fun def(sender: TP): Boolean {
+    open fun def(sender: TP): Boolean {
         return false
     }
 
@@ -32,6 +32,7 @@ abstract class ICommand2<TP : Command2Sender>(manager: Command2<*, TP>) {
      * @param message The message to send to the sender
      * @return Always true so that the usage isn't shown
      */
+    @Suppress("unused")
     protected fun respond(sender: TP, message: String): Boolean {
         sender.sendMessage(message)
         return true
@@ -49,23 +50,15 @@ abstract class ICommand2<TP : Command2Sender>(manager: Command2<*, TP>) {
         return if (ann.helpText.isNotEmpty() || cc == null) ann.helpText else cc.helpText //If cc is null then it's empty array
     }
 
-    private val path: String
-    val manager: Command2<*, TP>
-    open val commandPath: String
-        /**
-         * The command's path, or name if top-level command.<br></br>
-         * For example:<br></br>
-         * "u admin updateplugin" or "u" for the top level one<br></br>
-         * <u>The path must be lowercase!</u><br></br>
-         *
-         * @return The command path, *which is the command class name by default* (removing any "command" from it) - Change via the [CommandClass] annotation
-         */
-        get() = path
-
-    init {
-        path = getcmdpath()
-        this.manager = manager
-    }
+    /**
+     * The command's path, or name if top-level command.<br></br>
+     * For example:<br></br>
+     * "u admin updateplugin" or "u" for the top level one<br></br>
+     * <u>The path must be lowercase!</u><br></br>
+     *
+     * @return The command path, *which is the command class name by default* (removing any "command" from it) - Change via the [CommandClass] annotation
+     */
+    open val commandPath: String = getcmdpath()
 
     open val commandPaths: Array<String>
         /**
@@ -74,8 +67,7 @@ abstract class ICommand2<TP : Command2Sender>(manager: Command2<*, TP>) {
          *
          * @return The full command paths that this command should be registered under in addition to the default one.
          */
-        get() =// TODO: Deal with this (used for channel IDs)
-            EMPTY_PATHS
+        get() = EMPTY_PATHS // TODO: Deal with this (used for channel IDs)
 
     private fun getcmdpath(): String {
         if (!javaClass.isAnnotationPresent(CommandClass::class.java)) throw RuntimeException(

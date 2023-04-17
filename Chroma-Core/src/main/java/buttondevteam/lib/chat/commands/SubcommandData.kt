@@ -47,7 +47,7 @@ class SubcommandData<TC : ICommand2<*>, TP : Command2Sender>(
      */
     val annotations: Array<Annotation>,
     /**
-     * The full command path of this subcommand.
+     * The space-separated full command path of this subcommand.
      */
     val fullPath: String
 ) : NoOpSubcommandData(helpTextGetter) {

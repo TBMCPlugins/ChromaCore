@@ -14,8 +14,8 @@ class CoreCommandBuilder<S : Command2Sender, TC : ICommand2<*>, TSD : NoOpSubcom
         return this
     }
 
-    override fun build(): CoreCommandNode<S, TC, TSD> {
-        val result = CoreCommandNode<_, TC, _>(
+    override fun build(): CoreCommandNode<S, TSD> {
+        val result = CoreCommandNode<_, _>(
             literal,
             command,
             requirement,

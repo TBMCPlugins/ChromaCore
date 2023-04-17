@@ -57,7 +57,7 @@ class MainPlugin : ButtonPlugin() {
     public override fun pluginEnable() {
         instance = this
         val pdf = description
-        if (!setupPermissions()) throw NullPointerException("No permission plugin found!")
+        setupPermissions()
         if (!setupEconomy()) //Though Essentials always provides economy, but we don't require Essentials
             logger.warning("No economy plugin found! Components using economy will not be registered.")
         saveConfig()
@@ -134,9 +134,8 @@ class MainPlugin : ButtonPlugin() {
         logger.info("Player data saved.")
     }
 
-    private fun setupPermissions(): Boolean {
-        permission = setupProvider(Permission::class.java)
-        return permission != null
+    private fun setupPermissions() {
+        permission = setupProvider(Permission::class.java) ?: throw NullPointerException("No permission plugin found!")
     }
 
     private fun setupEconomy(): Boolean {
@@ -159,8 +158,7 @@ class MainPlugin : ButtonPlugin() {
     companion object {
         lateinit var instance: MainPlugin
 
-        @JvmField
-        var permission: Permission? = null
+        lateinit var permission: Permission
 
         @JvmField
         var ess: Essentials? = null

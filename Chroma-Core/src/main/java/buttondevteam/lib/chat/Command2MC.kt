@@ -5,6 +5,7 @@ import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.ButtonPlugin
 import buttondevteam.lib.architecture.Component
 import buttondevteam.lib.chat.commands.CommandUtils
+import buttondevteam.lib.chat.commands.CommandUtils.coreExecutable
 import buttondevteam.lib.chat.commands.MCCommandSettings
 import buttondevteam.lib.chat.commands.SubcommandData
 import buttondevteam.lib.player.ChromaGamerBase
@@ -29,7 +30,6 @@ import org.bukkit.entity.Player
 import org.bukkit.event.Listener
 import org.bukkit.permissions.Permission
 import org.bukkit.permissions.PermissionDefault
-import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 import java.util.*
 import java.util.function.BiConsumer
@@ -43,42 +43,24 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
      * @param command The command to register
      */
     override fun registerCommand(command: ICommand2MC) {
-        /*String mainpath;
-		var plugin = command.getPlugin();
-		{
-			String cpath = command.getCommandPath();
-			int i = cpath.indexOf(' ');
-			mainpath = cpath.substring(0, i == -1 ? cpath.length() : i);
-		}*/
         val commandNode = super.registerCommandSuper(command)
         val bcmd = registerOfficially(command, commandNode)
         if (bcmd != null) // TODO: Support aliases
             super.registerCommandSuper(command)
-        val perm = "chroma.command." + command.commandPath.replace(' ', '.')
-        if (Bukkit.getPluginManager().getPermission(perm) == null) //Check needed for plugin reset
-            Bukkit.getPluginManager().addPermission(Permission(perm,
-                PermissionDefault.TRUE)) //Allow commands by default, it will check mod-only
-        for (node in getSubcommands(commandNode)) {
-            if (path.length > 0) {
-                val subperm = perm + path
-                if (Bukkit.getPluginManager().getPermission(subperm) == null) //Check needed for plugin reset
-                    Bukkit.getPluginManager().addPermission(
-                        Permission(
-                            subperm,
-                            PermissionDefault.TRUE
-                        )
-                    ) //Allow commands by default, it will check mod-only
-            }
+        val permPrefix = "chroma.command."
+        //Allow commands by default, it will check mod-only
+        val nodes = commandNode.coreExecutable<Command2MCSender, ICommand2MC>()
+            ?.let { getSubcommands(commandNode) + it } ?: getSubcommands(commandNode)
+        for (node in nodes) {
+            val subperm = permPrefix + node.data.fullPath.replace(' ', '.')
+            if (Bukkit.getPluginManager().getPermission(subperm) == null) //Check needed for plugin reset
+                Bukkit.getPluginManager().addPermission(Permission(subperm, PermissionDefault.TRUE))
             val pg = permGroup(node.data)
             if (pg.isEmpty()) continue
             val permGroup = "chroma.$pg"
+            //Do not allow any commands that belong to a group by default
             if (Bukkit.getPluginManager().getPermission(permGroup) == null) //It may occur multiple times
-                Bukkit.getPluginManager().addPermission(
-                    Permission(
-                        permGroup,
-                        PermissionDefault.OP
-                    )
-                ) //Do not allow any commands that belong to a group
+                Bukkit.getPluginManager().addPermission(Permission(permGroup, PermissionDefault.OP))
         }
     }
 
@@ -111,7 +93,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
     /**
      * Returns the first group found in the hierarchy starting from the command method **or** the mod group if *any* of the superclasses are mod only.
      *
-     * @param method The subcommand to check
+     * @param data The data of the subcommand to check
      * @return The permission group for the subcommand or empty string
      */
     private fun permGroup(data: SubcommandData<ICommand2MC, Command2MCSender>): String {
@@ -170,7 +152,8 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         val i = commandline.indexOf(' ')
         val mainpath = commandline.substring(1, if (i == -1) commandline.length else i) //Without the slash
         //Our commands aren't PluginCommands, unless it's specified in the plugin.yml
-        return if ((!checkPlugin || (MainPlugin.instance.prioritizeCustomCommands.get() == true))
+        // So we need to handle the command if it's not a plugin command or if it's a plugin command, but for a ButtonPlugin
+        return if (!checkPlugin || MainPlugin.instance.prioritizeCustomCommands.get()
             || Bukkit.getPluginCommand(mainpath)?.let { it.plugin is ButtonPlugin } != false
         )
             super.handleCommand(sender, commandline) else false
@@ -178,28 +161,30 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
 
     private var shouldRegisterOfficially = true
     private fun registerOfficially(command: ICommand2MC, node: LiteralCommandNode<Command2MCSender>): Command? {
-        return if (!shouldRegisterOfficially || command.plugin == null) null else try {
-            val cmdmap = Bukkit.getServer().javaClass.getMethod("getCommandMap").invoke(Bukkit.getServer()) as SimpleCommandMap
+        return if (!shouldRegisterOfficially) null else try {
+            val cmdmap =
+                Bukkit.getServer().javaClass.getMethod("getCommandMap").invoke(Bukkit.getServer()) as SimpleCommandMap
             val path = command.commandPath
             val x = path.indexOf(' ')
             val mainPath = path.substring(0, if (x == -1) path.length else x)
-            var bukkitCommand: Command
-            run {
-                //Commands conflicting with Essentials have to be registered in plugin.yml
-                val oldcmd = cmdmap.getCommand(command.plugin.name + ":" + mainPath) //The label with the fallback prefix is always registered
-                if (oldcmd == null) {
-                    bukkitCommand = BukkitCommand(mainPath)
-                    cmdmap.register(command.plugin.name, bukkitCommand)
-                } else {
-                    bukkitCommand = oldcmd
-                    if (bukkitCommand is PluginCommand) (bukkitCommand as PluginCommand).executor = CommandExecutor { sender: CommandSender, command: Command, label: String, args: Array<String> -> this.executeCommand(sender, command, label, args) }
-                }
-                bukkitCommand = oldcmd ?: BukkitCommand(mainPath)
+            val bukkitCommand: Command
+            //Commands conflicting with Essentials have to be registered in plugin.yml
+            val oldcmd =
+                cmdmap.getCommand(command.plugin.name + ":" + mainPath) //The label with the fallback prefix is always registered
+            if (oldcmd == null) {
+                bukkitCommand = BukkitCommand(mainPath)
+                cmdmap.register(command.plugin.name, bukkitCommand)
+            } else {
+                bukkitCommand = oldcmd
+                if (bukkitCommand is PluginCommand) bukkitCommand.setExecutor(this::executeCommand)
             }
             if (CommodoreProvider.isSupported()) TabcompleteHelper.registerTabcomplete(command, node, bukkitCommand)
             bukkitCommand
         } catch (e: Exception) {
-            if (command.component == null) TBMCCoreAPI.SendException("Failed to register command in command map!", e, command.plugin) else TBMCCoreAPI.SendException("Failed to register command in command map!", e, command.component)
+            if (command.component == null)
+                TBMCCoreAPI.SendException("Failed to register command in command map!", e, command.plugin)
+            else
+                TBMCCoreAPI.SendException("Failed to register command in command map!", e, command.component)
             shouldRegisterOfficially = false
             null
         }
@@ -216,12 +201,14 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
             sender.sendMessage("§cAn internal error occurred.")
             return true
         }
+        ///trim(): remove space if there are no args
         handleCommand(Command2MCSender(sender, user.channel.get(), sender),
-            ("/" + command.name + " " + java.lang.String.join(" ", *args)).trim { it <= ' ' }, false) ///trim(): remove space if there are no args
+            ("/${command.name} ${args.joinToString(" ")}").trim { it <= ' ' }, false
+        )
         return true
     }
 
-    private class BukkitCommand(name: String?) : Command(name) {
+    private class BukkitCommand(name: String) : Command(name) {
         override fun execute(sender: CommandSender, commandLabel: String, args: Array<String>): Boolean {
             return ButtonPlugin.command2MC.executeCommand(sender, this, commandLabel, args)
         }
@@ -232,20 +219,42 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         }
 
         @Throws(IllegalArgumentException::class)
-        override fun tabComplete(sender: CommandSender, alias: String, args: Array<String>, location: Location): List<String> {
-            return emptyList()
+        override fun tabComplete(
+            sender: CommandSender,
+            alias: String,
+            args: Array<out String>?,
+            location: Location?
+        ): MutableList<String> {
+            return mutableListOf()
         }
     }
 
     private object TabcompleteHelper {
-        private var commodore: Commodore? = null
-        private fun appendSubcommand(path: String, parent: CommandNode<Any>,
-                                     subcommand: SubcommandData<ICommand2MC>?): LiteralCommandNode<Any> {
+        private val commodore: Commodore by lazy {
+            val commodore = CommodoreProvider.getCommodore(MainPlugin.instance) //Register all to the Core, it's easier
+            commodore.register(
+                LiteralArgumentBuilder.literal<Any?>("un") // TODO: This is a test
+                    .redirect(
+                        RequiredArgumentBuilder.argument<Any?, String>(
+                            "unsomething",
+                            StringArgumentType.word()
+                        ).suggests { _, builder ->
+                            builder.suggest("untest").buildFuture()
+                        }.build()
+                    )
+            )
+            commodore
+        }
+
+        private fun appendSubcommand(
+            path: String, parent: CommandNode<Any>,
+            subcommand: SubcommandData<ICommand2MC>?
+        ): LiteralCommandNode<Any> {
             var scmd: LiteralCommandNode<Any>
             if (parent.getChild(path) as LiteralCommandNode<kotlin.Any?>?. also { scmd = it } != null) return scmd
             val scmdBuilder = LiteralArgumentBuilder.literal<Any>(path)
             if (subcommand != null) scmdBuilder.requires { o: Any? ->
-                val sender = commodore!!.getBukkitSender(o)
+                val sender = commodore.getBukkitSender(o)
                 subcommand.hasPermission(sender)
             }
             scmd = scmdBuilder.build()
@@ -253,40 +262,33 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
             return scmd
         }
 
-        private fun registerTabcomplete(command2MC: ICommand2MC, commandNode: LiteralCommandNode<Command2MCSender>, bukkitCommand: Command) {
-            if (commodore == null) {
-                commodore = CommodoreProvider.getCommodore(MainPlugin.instance) //Register all to the Core, it's easier
-                commodore.register(LiteralArgumentBuilder.literal<Any?>("un")
-                    .redirect(RequiredArgumentBuilder.argument<Any?, String>(
-                        "unsomething",
-                        StringArgumentType.word()
-                    ).suggests { context: CommandContext<Any?>?, builder: SuggestionsBuilder ->
-                        builder.suggest("untest").buildFuture()
-                    }.build()
-                    )
-                )
-            }
-            commodore!!.dispatcher.root.getChild(commandNode.name) // TODO: Probably unnecessary
-            val customTCmethods = Arrays.stream(command2MC.javaClass.declaredMethods) //val doesn't recognize the type arguments
-                .flatMap { method: Method ->
-                    Optional.ofNullable(method.getAnnotation(CustomTabCompleteMethod::class.java)).stream()
-                        .flatMap { ctcmAnn: CustomTabCompleteMethod ->
-                            val paths = Optional.of<Array<String?>>(ctcmAnn.subcommand()).filter { s: Array<String?> -> s.size > 0 }
-                                .orElseGet {
-                                    arrayOf(
-                                        CommandUtils.getCommandPath(method.name, ' ').trim { it <= ' ' }
-                                    )
-                                }
-                            Arrays.stream(paths).map { name: String? -> Triplet(name, ctcmAnn, method) }
-                        }
-                }.toList()
+        fun registerTabcomplete(
+            command2MC: ICommand2MC,
+            commandNode: LiteralCommandNode<Command2MCSender>,
+            bukkitCommand: Command
+        ) {
+            commodore.dispatcher.root.getChild(commandNode.name) // TODO: Probably unnecessary
+            val customTCmethods =
+                Arrays.stream(command2MC.javaClass.declaredMethods) //val doesn't recognize the type arguments
+                    .flatMap { method ->
+                        Optional.ofNullable(method.getAnnotation(CustomTabCompleteMethod::class.java)).stream()
+                            .flatMap { ctcmAnn ->
+                                val paths = Optional.of(ctcmAnn.subcommand).filter { s -> s.isNotEmpty() }
+                                    .orElseGet {
+                                        arrayOf(
+                                            CommandUtils.getCommandPath(method.name, ' ').trim { it <= ' ' })
+                                    }
+                                Arrays.stream(paths).map { name: String? -> Triple(name, ctcmAnn, method) }
+                            }
+                    }.toList()
             for (subcmd in subcmds) {
                 val subpathAsOne = CommandUtils.getCommandPath(subcmd.method.getName(), ' ').trim { it <= ' ' }
                 val subpath = subpathAsOne.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                 var scmd: CommandNode<Any> = cmd
-                if (subpath[0].length > 0) { //If the method is def, it will contain one empty string
+                if (subpath[0].isNotEmpty()) { //If the method is def, it will contain one empty string
                     for (s in subpath) {
-                        scmd = appendSubcommand(s, scmd, subcmd) //Add method name part of the path (could_be_multiple())
+                        scmd =
+                            appendSubcommand(s, scmd, subcmd) //Add method name part of the path (could_be_multiple())
                     }
                 }
                 val parameters: Array<Parameter> = subcmd.method.getParameters()
@@ -294,12 +296,13 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
                     val parameter = parameters[i]
                     val customParamType: Boolean
                     // TODO: Arg type
-                    val param: Any = subcmd.parameters.get(i - 1)
+                    val param: String = subcmd.parameters.get(i - 1)
                     val customTC = Optional.ofNullable(parameter.getAnnotation(CustomTabComplete::class.java))
-                        .map(Function<CustomTabComplete, Array<String>> { obj: CustomTabComplete -> obj.value() })
-                    val customTCmethod = customTCmethods.stream().filter { t: Triplet<String?, CustomTabCompleteMethod, Method> -> subpathAsOne.equals(t.value0, ignoreCase = true) }
-                        .filter { t: Triplet<String?, CustomTabCompleteMethod, Method> -> param.replaceAll("[\\[\\]<>]", "").equalsIgnoreCase(t.value1.param()) }
-                        .findAny()
+                        .map { obj -> obj.value }
+                    val customTCmethod =
+                        customTCmethods.stream().filter { t -> subpathAsOne.equals(t.first, ignoreCase = true) }
+                            .filter { t -> param.replace("[\\[\\]<>]", "").equals(t.second.param, ignoreCase = true) }
+                            .findAny()
                     val argb: RequiredArgumentBuilder<S, T> = RequiredArgumentBuilder.argument(param, type)
                         .suggests(SuggestionProvider<S?> { context: CommandContext<S?>, builder: SuggestionsBuilder ->
                             if (parameter.isVarArgs) { //Do it before the builder is used
@@ -310,8 +313,8 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
                             var ignoreCustomParamType = false
                             if (customTCmethod.isPresent) {
                                 val tr = customTCmethod.get()
-                                if (tr.value1.ignoreTypeCompletion()) ignoreCustomParamType = true
-                                val method = tr.value2
+                                if (tr.second.ignoreTypeCompletion) ignoreCustomParamType = true
+                                val method = tr.third
                                 val params = method.parameters
                                 val args = arrayOfNulls<Any>(params.size)
                                 var j = 0
@@ -319,7 +322,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
                                 while (j < args.size && k < subcmd.parameters.length) {
                                     val paramObj = params[j]
                                     if (CommandSender::class.java.isAssignableFrom(paramObj.type)) {
-                                        args[j] = commodore!!.getBukkitSender(context.getSource())
+                                        args[j] = commodore.getBukkitSender(context.getSource())
                                         j++
                                         continue
                                     }
@@ -336,12 +339,18 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
                                     k++ //Only increment if not CommandSender
                                     j++
                                 }
-                                if (args.size == 0 || args[args.size - 1] != null) { //Arguments filled entirely
+                                if (args.isEmpty() || args[args.size - 1] != null) { //Arguments filled entirely
                                     try {
-                                        val suggestions = method.invoke(command2MC, *args)
-                                        if (suggestions is Iterable<*>) {
-                                            for (suggestion in suggestions) if (suggestion is String) builder.suggest(suggestion as String?) else throw ClassCastException("Bad return type! It should return an Iterable<String> or a String[].")
-                                        } else if (suggestions is Array<String>) for (suggestion in suggestions as Array<String?>) builder.suggest(suggestion) else throw ClassCastException("Bad return type! It should return a String[] or an Iterable<String>.")
+                                        when (val suggestions = method.invoke(command2MC, *args)) {
+                                            is Iterable<*> -> {
+                                                for (suggestion in suggestions) if (suggestion is String) builder.suggest(
+                                                    suggestion as String?
+                                                ) else throw ClassCastException("Bad return type! It should return an Iterable<String> or a String[].")
+                                            }
+
+                                            is Array<*> -> for (suggestion in suggestions) builder.suggest(suggestion)
+                                            else -> throw ClassCastException("Bad return type! It should return a String[] or an Iterable<String>.")
+                                        }
                                     } catch (e: Exception) {
                                         val msg = "Failed to run tabcomplete method " + method.name + " for command " + command2MC.javaClass.simpleName
                                         if (command2MC.component == null) TBMCCoreAPI.SendException(msg, e, command2MC.plugin) else TBMCCoreAPI.SendException(msg, e, command2MC.component)
@@ -378,10 +387,12 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
                 val pluginName = command2MC.plugin.name.lowercase(Locale.getDefault())
                 val prefixedcmd = LiteralArgumentBuilder.literal<Any>(pluginName + ":" + path.get(0))
                     .redirect(maincmd).build()
-                commodore!!.register(prefixedcmd)
+                commodore.register(prefixedcmd)
                 for (alias in bukkitCommand.aliases) {
-                    commodore!!.register(LiteralArgumentBuilder.literal<Any>(alias).redirect(maincmd).build())
-                    commodore!!.register(LiteralArgumentBuilder.literal<Any>("$pluginName:$alias").redirect(maincmd).build())
+                    commodore.register(LiteralArgumentBuilder.literal<Any>(alias).redirect(maincmd).build())
+                    commodore.register(
+                        LiteralArgumentBuilder.literal<Any>("$pluginName:$alias").redirect(maincmd).build()
+                    )
                 }
             }
         }
@@ -389,7 +400,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
 
     companion object {
         private fun getParamConverter(cl: Class<*>, command2MC: ICommand2MC): ParamConverter<*>? {
-            val converter = ButtonPlugin.getCommand2MC().paramConverters[cl]
+            val converter = ButtonPlugin.command2MC.paramConverters[cl]
             if (converter == null) {
                 val msg = "Could not find a suitable converter for type " + cl.simpleName
                 val exception: Exception = NullPointerException("converter is null")
