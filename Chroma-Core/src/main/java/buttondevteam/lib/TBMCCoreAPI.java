@@ -89,8 +89,8 @@ public class TBMCCoreAPI {
 				if (!devsOnline.isEmpty()) {
 					DebugPotato potato = new DebugPotato()
 						.setMessage(new String[]{ //
-							"§b§o" + e.getClass().getSimpleName(), //
-							"§c§o" + sourcemsg, //
+							"${ChatColor.AQUA}§o" + e.getClass().getSimpleName(), //
+							"${ChatColor.RED}§o" + sourcemsg, //
 							"§a§oFind a dev to fix this issue"})
 						.setType(e instanceof IOException ? "Throwable Potato"
 							: e instanceof ClassCastException ? "Squished Potato"

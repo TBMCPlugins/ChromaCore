@@ -10,7 +10,7 @@ import org.bukkit.ChatColor
 import org.bukkit.command.CommandSender
 
 @CommandClass(
-    path = "primerestart", modOnly = true, helpText = ["§6---- Prime restart ----",  //
+    path = "primerestart", modOnly = true, helpText = ["Prime restart",  //
         "Restarts the server as soon as nobody is online.",  //
         "To be loud, type something after, like /primerestart lol (it doesn't matter what you write)",  //
         "To be silent, don't type anything" //
@@ -23,7 +23,7 @@ class PrimeRestartCommand : ICommand2MC() {
         val component = component as RestartComponent
         component.isLoud = isLoud
         if (Bukkit.getOnlinePlayers().isNotEmpty()) {
-            sender.sendMessage("§bPlayers online, restart delayed.")
+            sender.sendMessage("${ChatColor.AQUA}Players online, restart delayed.")
             if (isLoud) SendSystemMessage(
                 Channel.globalChat,
                 Channel.RecipientTestResult.ALL,
@@ -32,7 +32,7 @@ class PrimeRestartCommand : ICommand2MC() {
             )
             component.isPlsrestart = true
         } else {
-            sender.sendMessage("§bNobody is online. Restarting now.")
+            sender.sendMessage("${ChatColor.AQUA}Nobody is online. Restarting now.")
             if (isLoud) SendSystemMessage(
                 Channel.globalChat,
                 Channel.RecipientTestResult.ALL,

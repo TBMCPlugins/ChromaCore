@@ -42,7 +42,7 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 	@Override
 	protected void enable() {
 		registerListener(this);
-		registerCommand(new MemberCommand(this));
+		registerCommand(new MemberCommand());
 		try {
 			playtime = new AbstractMap.SimpleEntry<>(Statistic.valueOf("PLAY_ONE_MINUTE"), 60); //1.14
 		} catch (IllegalArgumentException e) {
@@ -64,7 +64,7 @@ public class MemberComponent extends Component<MainPlugin> implements Listener {
 	public Boolean addPlayerAsMember(Player player) {
 		try {
 			if (permission.playerAddGroup(null, player, memberGroup.get())) {
-				player.sendMessage("§bYou are a member now!");
+				player.sendMessage("${ChatColor.AQUA}You are a member now!");
 				log("Added " + player.getName() + " as a member.");
 				return true;
 			} else {

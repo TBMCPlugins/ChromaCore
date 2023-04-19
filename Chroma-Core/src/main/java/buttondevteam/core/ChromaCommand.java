@@ -26,9 +26,9 @@ public class ChromaCommand extends ICommand2MC {
 		if (plugin == null)
 			plugin = getPlugin();
 		if (plugin.tryReloadConfig())
-			sender.sendMessage("§b" + plugin.getName() + " config reloaded.");
+			sender.sendMessage("${ChatColor.AQUA}" + plugin.getName() + " config reloaded.");
 		else
-			sender.sendMessage("§cFailed to reload config. Check console.");
+			sender.sendMessage("${ChatColor.RED}Failed to reload config. Check console.");
 	}
 
 	@Command2.Subcommand

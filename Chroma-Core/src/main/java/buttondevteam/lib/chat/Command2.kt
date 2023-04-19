@@ -308,13 +308,13 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         println("Should be running sync: $runOnPrimaryThread")
 
         /*if (!hasPermission(sender, sd.command, sd.method)) {
-			sender.sendMessage("§cYou don't have permission to use this command");
+			sender.sendMessage("${ChatColor.RED}You don't have permission to use this command");
 			return;
 		}
 		// TODO: WIP
 
             val type = sendertype.simpleName.fold("") { s, ch -> s + if (ch.isUpperCase()) " " + ch.lowercase() else ch }
-            sender.sendMessage("§cYou need to be a $type to use this command.")
+            sender.sendMessage("${ChatColor.RED}You need to be a $type to use this command.")
             sender.sendMessage(sd.getHelpText(sender)) //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
 
 		if (processSenderType(sender, sd, params, parameterTypes)) return; // Checks if the sender is the wrong type

@@ -9,6 +9,7 @@ import buttondevteam.lib.chat.CommandClass
 import buttondevteam.lib.chat.ICommand2MC
 import buttondevteam.lib.chat.TBMCChatAPI.SendSystemMessage
 import org.bukkit.Bukkit
+import org.bukkit.ChatColor
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarFlag
 import org.bukkit.boss.BarStyle
@@ -40,7 +41,7 @@ class ScheduledRestartCommand : ICommand2MC() {
 
     private fun restart(sender: CommandSender, seconds: Int): Boolean {
         if (seconds < 10) {
-            sender.sendMessage("§cError: Seconds must be at least 10.")
+            sender.sendMessage("${ChatColor.RED}Error: Seconds must be at least 10.")
             return false
         }
         restartCounter = seconds * 20
@@ -65,7 +66,7 @@ class ScheduledRestartCommand : ICommand2MC() {
         if (restartCounter % 200 == 0 && Bukkit.getOnlinePlayers().isNotEmpty()) SendSystemMessage(
             Channel.globalChat,
             Channel.RecipientTestResult.ALL,
-            "§c-- The server is restarting in " + restartCounter / 20 + " seconds!",
+            "${ChatColor.RED}-- The server is restarting in " + restartCounter / 20 + " seconds!",
             (component as RestartComponent).restartBroadcast
         )
         restartBar.progress = restartCounter / restartInitialTicks.toDouble()

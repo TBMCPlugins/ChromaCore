@@ -7,11 +7,9 @@ import org.bukkit.*;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.logging.Logger;
-
 // @formatter:off
 @SuppressWarnings("FieldCanBeLocal")@CommandClass(helpText = {
-	"§6---- Random Teleport ----",
+	"Random Teleport",
 	"Teleport player to random location within world border. Every five players teleport to the same general area, and then a new general area is randomly selected for the next five players."
 })
 public class RandomTP extends ICommand2MC
@@ -94,8 +92,8 @@ public class RandomTP extends ICommand2MC
 			&& !newLocation()) 
 		{
 			//if unable to find new location, message player and return false
-			player.sendMessage("§c could not find a location in 10,000 attempts");
-			player.sendMessage("§c (sorry bud... I did try!)");
+			player.sendMessage("${ChatColor.RED} could not find a location in 10,000 attempts");
+			player.sendMessage("${ChatColor.RED} (sorry bud... I did try!)");
 			return false;
 		}
 		
@@ -177,37 +175,25 @@ public class RandomTP extends ICommand2MC
 				southHeadMaterial    == Material.AIR &&
 				eastHeadMaterial     == Material.AIR &&
 				westHeadMaterial     == Material.AIR &&
-				
+
 				centerFeetMaterial   == Material.AIR &&
 				northFeetMaterial    == Material.AIR &&
 				southFeetMaterial    == Material.AIR &&
 				eastFeetMaterial     == Material.AIR &&
 				westFeetMaterial     == Material.AIR &&
-				
+
 				centerGroundMaterial != Material.AIR &&
 				northGroundMaterial  != Material.AIR &&
 				southGroundMaterial  != Material.AIR &&
 				eastGroundMaterial   != Material.AIR &&
 				westGroundMaterial   != Material.AIR &&
-				
-				centerGroundMaterial != Material.STATIONARY_WATER &&
-				northGroundMaterial  != Material.STATIONARY_WATER &&
-				southGroundMaterial  != Material.STATIONARY_WATER &&
-				eastGroundMaterial   != Material.STATIONARY_WATER &&
-				westGroundMaterial   != Material.STATIONARY_WATER &&
-				
+
 				centerGroundMaterial != Material.WATER &&
 				northGroundMaterial  != Material.WATER &&
 				southGroundMaterial  != Material.WATER &&
 				eastGroundMaterial   != Material.WATER &&
 				westGroundMaterial   != Material.WATER &&
-				
-				centerGroundMaterial != Material.STATIONARY_LAVA &&
-				northGroundMaterial  != Material.STATIONARY_LAVA &&
-				southGroundMaterial  != Material.STATIONARY_LAVA &&
-				eastGroundMaterial   != Material.STATIONARY_LAVA &&
-				westGroundMaterial   != Material.STATIONARY_LAVA &&
-				
+
 				centerGroundMaterial != Material.LAVA &&
 				northGroundMaterial  != Material.LAVA &&
 				southGroundMaterial  != Material.LAVA &&

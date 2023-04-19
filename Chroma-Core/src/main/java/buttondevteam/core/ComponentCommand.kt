@@ -11,6 +11,7 @@ import buttondevteam.lib.chat.CommandClass
 import buttondevteam.lib.chat.CustomTabCompleteMethod
 import buttondevteam.lib.chat.ICommand2MC
 import org.bukkit.Bukkit
+import org.bukkit.ChatColor
 import org.bukkit.command.CommandSender
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.java.JavaPlugin
@@ -30,7 +31,7 @@ class ComponentCommand : ICommand2MC() {
     fun enable(sender: CommandSender, plugin: Plugin, component: String, @OptionalArg permanent: Boolean): Boolean {
         if (plugin is ButtonPlugin) {
             if (!plugin.justReload()) {
-                sender.sendMessage("§cCouldn't reload config, check console.")
+                sender.sendMessage("${ChatColor.RED}Couldn't reload config, check console.")
                 return true
             }
         } else plugin.reloadConfig() //Reload config so the new config values are read - All changes are saved to disk on disable
@@ -44,7 +45,7 @@ class ComponentCommand : ICommand2MC() {
 
     @Subcommand(helpText = ["List components", "Lists all of the registered Chroma components"])
     fun list(sender: CommandSender, @OptionalArg plugin: String?): Boolean {
-        sender.sendMessage("§6List of components:")
+        sender.sendMessage("${ChatColor.GOLD}List of components:")
         //If plugin is null, don't check for it
         components.values.stream().filter { c -> plugin == null || c.plugin.name.equals(plugin, ignoreCase = true) }
             .map { c -> "${c.plugin.name} - ${c.javaClass.simpleName} - ${if (c.isEnabled) "en" else "dis"}abled" }
@@ -92,7 +93,7 @@ class ComponentCommand : ICommand2MC() {
     private fun getComponentOrError(plugin: Plugin, arg: String, sender: CommandSender): Optional<Component<*>> {
         // TODO: Extend param converter to support accessing previous params
         val oc = getPluginComponents(plugin).filter { it.javaClass.simpleName.equals(arg, ignoreCase = true) }.findAny()
-        if (!oc.isPresent) sender.sendMessage("§cComponent not found!")
+        if (!oc.isPresent) sender.sendMessage("${ChatColor.RED}Component not found!")
         return oc
     }
 }

@@ -1,72 +1,67 @@
-package buttondevteam.core.component.members;
+package buttondevteam.core.component.members
 
-import buttondevteam.core.MainPlugin;
-import buttondevteam.lib.chat.Command2;
-import buttondevteam.lib.chat.CommandClass;
-import buttondevteam.lib.chat.ICommand2MC;
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import buttondevteam.core.MainPlugin
+import buttondevteam.lib.chat.Command2.Subcommand
+import buttondevteam.lib.chat.CommandClass
+import buttondevteam.lib.chat.ICommand2MC
+import buttondevteam.lib.chat.commands.MCCommandSettings
+import org.bukkit.Bukkit
+import org.bukkit.ChatColor
+import org.bukkit.OfflinePlayer
+import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
+import java.util.concurrent.TimeUnit
 
-import java.util.concurrent.TimeUnit;
+@CommandClass(
+    path = "member", helpText = [ //
+        "Member command",  //
+        "Add or remove server members."]
+)
+class MemberCommand() : ICommand2MC() {
+    @Subcommand
+    @MCCommandSettings(permGroup = MCCommandSettings.MOD_GROUP)
+    fun add(sender: CommandSender, player: OfflinePlayer): Boolean {
+        return addRemove(sender, player, true)
+    }
 
-@CommandClass(path = "member", helpText = { //
-	"Member command", //
-	"Add or remove server members.", //
-})
-public class MemberCommand extends ICommand2MC {
-	private final MemberComponent component;
+    @Subcommand
+    @MCCommandSettings(permGroup = MCCommandSettings.MOD_GROUP)
+    fun remove(sender: CommandSender, player: OfflinePlayer): Boolean {
+        return addRemove(sender, player, false)
+    }
 
-	public MemberCommand(MemberComponent component) {
-		this.component = component;
-	}
+    private fun addRemove(sender: CommandSender, op: OfflinePlayer, add: Boolean): Boolean {
+        Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.instance, Runnable {
+            val component = component as MemberComponent
+            if (!op.hasPlayedBefore()) {
+                sender.sendMessage("${ChatColor.RED}Cannot find player or haven't played before.")
+                return@Runnable
+            }
+            if (if (add) MainPlugin.permission.playerAddGroup(null, op, component.memberGroup.get())
+                else MainPlugin.permission.playerRemoveGroup(null, op, component.memberGroup.get())
+            )
+                sender.sendMessage("${ChatColor.AQUA}${op.name} ${if (add) "added" else "removed"} as a member!")
+            else sender.sendMessage("${ChatColor.RED}Failed to ${if (add) "add" else "remove"} ${op.name} as a member!")
+        })
+        return true
+    }
 
-	@Command2.Subcommand(permGroup = Command2.Subcommand.MOD_GROUP)
-	public boolean add(CommandSender sender, OfflinePlayer player) {
-		return addRemove(sender, player, true);
-	}
-
-	@Command2.Subcommand(permGroup = Command2.Subcommand.MOD_GROUP)
-	public boolean remove(CommandSender sender, OfflinePlayer player) {
-		return addRemove(sender, player, false);
-	}
-
-	public boolean addRemove(CommandSender sender, OfflinePlayer op, boolean add) {
-		Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.instance, () -> {
-			if (!op.hasPlayedBefore()) {
-				sender.sendMessage("§cCannot find player or haven't played before.");
-				return;
-			}
-			if (add ? MainPlugin.permission.playerAddGroup(null, op, component.memberGroup.get())
-				: MainPlugin.permission.playerRemoveGroup(null, op, component.memberGroup.get()))
-				sender.sendMessage("§b" + op.getName() + " " + (add ? "added" : "removed") + " as a member!");
-			else
-				sender.sendMessage("§cFailed to " + (add ? "add" : "remove") + " " + op.getName() + " as a member!");
-		});
-		return true;
-	}
-
-	@Command2.Subcommand
-	public void def(Player player) {
-		String msg;
-		if (!component.checkNotMember(player))
-			msg = "You are a member.";
-		else {
-			double pt = component.getPlayTime(player);
-			long rt = component.getRegTime(player);
-			if (pt == -1 || rt == -1) {
-				Boolean result = component.addPlayerAsMember(player);
-				if (result == null)
-					msg = "Can't assign member group because groups are not supported by the permissions plugin.";
-				else if (result)
-					msg = "You meet all the requirements.";
-				else
-					msg = "You should be a member but failed to add you to the group.";
-			} else
-				msg = String.format("You need to play for %.2f hours total or play for %d more days to become a member.",
-					pt, TimeUnit.MILLISECONDS.toDays(rt));
-		}
-		player.sendMessage(msg);
-	}
+    @Subcommand
+    fun def(player: Player) {
+        val component = component as MemberComponent
+        val msg = if (!component.checkNotMember(player)) "You are a member." else {
+            val pt = component.getPlayTime(player)
+            val rt = component.getRegTime(player)
+            if (pt == -1.0 || rt == -1L) {
+                val result = component.addPlayerAsMember(player)
+                if (result == null) "Can't assign member group because groups are not supported by the permissions plugin."
+                else if (result) "You meet all the requirements."
+                else "You should be a member but failed to add you to the group."
+            } else String.format(
+                "You need to play for %.2f hours total or play for %d more days to become a member.",
+                pt, TimeUnit.MILLISECONDS.toDays(rt)
+            )
+        }
+        player.sendMessage(msg)
+    }
 }

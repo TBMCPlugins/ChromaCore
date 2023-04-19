@@ -20,6 +20,7 @@ import com.earth2me.essentials.Essentials
 import net.milkbowl.vault.economy.Economy
 import net.milkbowl.vault.permission.Permission
 import org.bukkit.Bukkit
+import org.bukkit.ChatColor
 import org.bukkit.OfflinePlayer
 import org.bukkit.command.BlockCommandSender
 import org.bukkit.command.Command
@@ -91,26 +92,36 @@ class MainPlugin : ButtonPlugin() {
             )
         }
         TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase::class.java) { TBMCPlayer() }
-        TBMCChatAPI.registerChatChannel(Channel("§fg§f", Color.White, "g", null)
+        TBMCChatAPI.registerChatChannel(Channel("${ChatColor.WHITE}g${ChatColor.WHITE}", Color.White, "g", null)
             .also { Channel.globalChat = it }) //The /ooc ID has moved to the config
-        TBMCChatAPI.registerChatChannel(Channel("§cADMIN§f", Color.Red, "a", Channel.inGroupFilter(null))
+        TBMCChatAPI.registerChatChannel(Channel(
+            "${ChatColor.RED}ADMIN${ChatColor.WHITE}",
+            Color.Red,
+            "a",
+            Channel.inGroupFilter(null)
+        )
             .also { Channel.adminChat = it })
-        TBMCChatAPI.registerChatChannel(Channel("§9MOD§f", Color.Blue, "mod", Channel.inGroupFilter("mod"))
+        TBMCChatAPI.registerChatChannel(Channel(
+            "§9MOD${ChatColor.WHITE}",
+            Color.Blue,
+            "mod",
+            Channel.inGroupFilter("mod")
+        )
             .also { Channel.modChat = it })
         TBMCChatAPI.registerChatChannel(
             Channel(
-                "§6DEV§f",
+                "${ChatColor.GOLD}DEV${ChatColor.WHITE}",
                 Color.Gold,
                 "dev",
                 Channel.inGroupFilter("developer")
             )
         ) // TODO: Make groups configurable
-        TBMCChatAPI.registerChatChannel(ChatRoom("§cRED§f", Color.DarkRed, "red"))
-        TBMCChatAPI.registerChatChannel(ChatRoom("§6ORANGE§f", Color.Gold, "orange"))
-        TBMCChatAPI.registerChatChannel(ChatRoom("§eYELLOW§f", Color.Yellow, "yellow"))
-        TBMCChatAPI.registerChatChannel(ChatRoom("§aGREEN§f", Color.Green, "green"))
-        TBMCChatAPI.registerChatChannel(ChatRoom("§bBLUE§f", Color.Blue, "blue"))
-        TBMCChatAPI.registerChatChannel(ChatRoom("§5PURPLE§f", Color.DarkPurple, "purple"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.RED}RED${ChatColor.WHITE}", Color.DarkRed, "red"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.GOLD}ORANGE${ChatColor.WHITE}", Color.Gold, "orange"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("§eYELLOW${ChatColor.WHITE}", Color.Yellow, "yellow"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("§aGREEN${ChatColor.WHITE}", Color.Green, "green"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.AQUA}BLUE${ChatColor.WHITE}", Color.Blue, "blue"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("§5PURPLE${ChatColor.WHITE}", Color.DarkPurple, "purple"))
         val playerSupplier = Supplier { Bukkit.getOnlinePlayers().map { obj -> obj.name }.asIterable() }
         command2MC.addParamConverter(
             OfflinePlayer::class.java,
@@ -151,7 +162,7 @@ class MainPlugin : ButtonPlugin() {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
         if (command.name == "dontrunthiscmd") return true //Used in chat preprocess for console
-        sender.sendMessage("§cThis command isn't available.") //In theory, unregistered commands use this method
+        sender.sendMessage("${ChatColor.RED}This command isn't available.") //In theory, unregistered commands use this method
         return true
     }
 

@@ -11,8 +11,8 @@ import buttondevteam.lib.TBMCChatPreprocessEvent
 import buttondevteam.lib.TBMCSystemChatEvent
 import buttondevteam.lib.TBMCSystemChatEvent.BroadcastTarget
 import org.bukkit.Bukkit
+import org.bukkit.ChatColor
 import org.bukkit.command.CommandSender
-import java.util.*
 import java.util.function.Supplier
 
 object TBMCChatAPI {
@@ -24,20 +24,13 @@ object TBMCChatAPI {
      * @param channel The MC channel to send in
      * @return The event cancelled state
      */
-    /**
-     * Sends a chat message to Minecraft. Make sure that the channel is registered with [.RegisterChatChannel].<br></br>
-     * This will also send the error message to the sender, if they can't send the message.
-     *
-     * @param cm The message to send
-     * @return The event cancelled state
-     */
     @JvmOverloads
     fun sendChatMessage(cm: ChatMessage, channel: Channel = cm.user.channel.get()): Boolean {
         if (!channelList.contains(channel)) throw RuntimeException(
             "Channel " + channel.displayName.get() + " not registered!"
         )
         if (!channel.isEnabled.get()) {
-            cm.sender.sendMessage("§cThe channel '" + channel.displayName.get() + "' is disabled!")
+            cm.sender.sendMessage("${ChatColor.RED}The channel '${channel.displayName.get()}' is disabled!")
             return true //Cancel sending if channel is disabled
         }
         val task = Supplier {
@@ -61,7 +54,7 @@ object TBMCChatAPI {
      * @param channel    The channel to send to
      * @param rtr        The score&group to use to find the group - use [RecipientTestResult.ALL] if the channel doesn't have scores
      * @param message    The message to send
-     * @param exceptions Platforms where this message shouldn't be sent (same as [ChatMessage.getOrigin]
+     * @param exceptions Platforms where this message shouldn't be sent (same as [ChatMessage.origin]
      * @return The event cancelled state
      */
     @JvmStatic
@@ -82,12 +75,12 @@ object TBMCChatAPI {
 
     private fun getScoreOrSendError(channel: Channel, sender: CommandSender): RecipientTestResult {
         val result = channel.getRTR(sender)
-        if (result.errormessage != null) sender.sendMessage("§c" + result.errormessage)
+        if (result.errormessage != null) sender.sendMessage("${ChatColor.RED}" + result.errormessage)
         return result
     }
 
     /**
-     * Register a chat channel. See [Channel.Channel] for details.
+     * Register a chat channel. See [Channel] for details.
      *
      * @param channel A new [Channel] to register
      */

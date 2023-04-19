@@ -91,7 +91,7 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 		@Command2.Subcommand
 		public void def(Player player) {
 			if (targetServer.get().length() == 0) {
-				player.sendMessage("§bTeleporting to spawn...");
+				player.sendMessage("${ChatColor.AQUA}Teleporting to spawn...");
 				try {
 					if (MainPlugin.ess != null)
 						MainPlugin.ess.getUser(player).getTeleport()
@@ -99,7 +99,7 @@ public class SpawnComponent extends Component<MainPlugin> implements PluginMessa
 					else
 						player.teleport(spawnloc);
 				} catch (Exception e) {
-					player.sendMessage("§cFailed to teleport: " + e);
+					player.sendMessage("${ChatColor.RED}Failed to teleport: " + e);
 				}
 				return;
 			}

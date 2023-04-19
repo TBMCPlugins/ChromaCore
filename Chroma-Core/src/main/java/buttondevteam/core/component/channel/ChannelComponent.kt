@@ -6,6 +6,7 @@ import buttondevteam.lib.architecture.Component
 import buttondevteam.lib.chat.*
 import buttondevteam.lib.chat.Command2.*
 import buttondevteam.lib.player.ChromaGamerBase
+import org.bukkit.ChatColor
 import org.bukkit.plugin.java.JavaPlugin
 
 /**
@@ -41,7 +42,7 @@ class ChannelComponent : Component<JavaPlugin>() {
             val sender = senderMC.sender
             val user = ChromaGamerBase.getFromSender(sender)
             if (user == null) {
-                sender.sendMessage("§cYou can't use channels from this platform.")
+                sender.sendMessage("${ChatColor.RED}You can't use channels from this platform.")
                 return
             }
             if (message == null) {
@@ -51,7 +52,7 @@ class ChannelComponent : Component<JavaPlugin>() {
                     user.channel.set(channel)
                     if (channel is ChatRoom) channel.joinRoom(sender)
                 }
-                sender.sendMessage("§6You are now talking in: §b" + user.channel.get().displayName.get())
+                sender.sendMessage("${ChatColor.GOLD}You are now talking in: ${ChatColor.AQUA}" + user.channel.get().displayName.get())
             } else TBMCChatAPI.sendChatMessage(
                 ChatMessage.builder(sender, user, message).fromCommand(true)
                     .permCheck(senderMC.permCheck).build(), channel

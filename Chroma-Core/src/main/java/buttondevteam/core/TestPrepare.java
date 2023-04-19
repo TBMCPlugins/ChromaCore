@@ -45,6 +45,6 @@ public class TestPrepare {
 			}
 		}));
 		Component.registerComponent(Mockito.mock(JavaPlugin.class), new ChannelComponent());
-		TBMCChatAPI.registerChatChannel(Channel.globalChat = new Channel("§fg§f", Color.White, "g", null));
+		TBMCChatAPI.registerChatChannel(Channel.globalChat = new Channel("${ChatColor.WHITE}g${ChatColor.WHITE}", Color.White, "g", null));
 	}
 }

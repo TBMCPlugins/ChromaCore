@@ -23,6 +23,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode
 import me.lucko.commodore.Commodore
 import me.lucko.commodore.CommodoreProvider
 import org.bukkit.Bukkit
+import org.bukkit.ChatColor
 import org.bukkit.Location
 import org.bukkit.OfflinePlayer
 import org.bukkit.command.*
@@ -113,7 +114,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         errormsg: String,
         allSupplier: Supplier<Iterable<String>>
     ) {
-        super.addParamConverter(cl, converter, "§c$errormsg", allSupplier)
+        super.addParamConverter(cl, converter, "${ChatColor.RED}$errormsg", allSupplier)
     }
 
     override fun convertSenderType(sender: Command2MCSender, senderType: Class<*>): Any? {
@@ -160,7 +161,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
     }
 
     private var shouldRegisterOfficially = true
-    private fun registerOfficially(command: ICommand2MC, node: LiteralCommandNode<Command2MCSender>): Command? {
+    private fun registerOfficially(command: ICommand2MC, node: CoreCommandNode<Command2MCSender, *>): Command? {
         return if (!shouldRegisterOfficially) null else try {
             val cmdmap =
                 Bukkit.getServer().javaClass.getMethod("getCommandMap").invoke(Bukkit.getServer()) as SimpleCommandMap
@@ -169,8 +170,8 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
             val mainPath = path.substring(0, if (x == -1) path.length else x)
             val bukkitCommand: Command
             //Commands conflicting with Essentials have to be registered in plugin.yml
-            val oldcmd =
-                cmdmap.getCommand(command.plugin.name + ":" + mainPath) //The label with the fallback prefix is always registered
+            //The label with the fallback prefix is always registered
+            val oldcmd = cmdmap.getCommand("${command.plugin.name}:$mainPath")
             if (oldcmd == null) {
                 bukkitCommand = BukkitCommand(mainPath)
                 cmdmap.register(command.plugin.name, bukkitCommand)
@@ -198,7 +199,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
                 Throwable("No Chroma user found"),
                 MainPlugin.instance
             )
-            sender.sendMessage("§cAn internal error occurred.")
+            sender.sendMessage("${ChatColor.RED}An internal error occurred.")
             return true
         }
         ///trim(): remove space if there are no args
@@ -244,22 +245,6 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
                     )
             )
             commodore
-        }
-
-        private fun appendSubcommand(
-            path: String, parent: CommandNode<Any>,
-            subcommand: SubcommandData<ICommand2MC>?
-        ): LiteralCommandNode<Any> {
-            var scmd: LiteralCommandNode<Any>
-            if (parent.getChild(path) as LiteralCommandNode<kotlin.Any?>?. also { scmd = it } != null) return scmd
-            val scmdBuilder = LiteralArgumentBuilder.literal<Any>(path)
-            if (subcommand != null) scmdBuilder.requires { o: Any? ->
-                val sender = commodore.getBukkitSender(o)
-                subcommand.hasPermission(sender)
-            }
-            scmd = scmdBuilder.build()
-            parent.addChild(scmd)
-            return scmd
         }
 
         fun registerTabcomplete(

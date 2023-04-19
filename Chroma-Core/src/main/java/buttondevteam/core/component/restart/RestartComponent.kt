@@ -78,7 +78,7 @@ class RestartComponent : Component<MainPlugin>(), Listener {
                 if (isLoud) TBMCChatAPI.SendSystemMessage(
                     Channel.globalChat,
                     Channel.RecipientTestResult.ALL,
-                    "§cNobody is online anymore. Restarting.",
+                    "${ChatColor.RED}Nobody is online anymore. Restarting.",
                     restartBroadcast
                 )
                 Bukkit.spigot().restart()
