@@ -139,18 +139,9 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             val ann = meth.getAnnotation(Subcommand::class.java) ?: continue
             val fullPath = command.commandPath + CommandUtils.getCommandPath(meth.name, ' ')
             val (lastNode, mainNode, remainingPath) = registerNodeFromPath(fullPath)
-            lastNode.addChild(
-                getExecutableNode(
-                    meth,
-                    command,
-                    ann,
-                    remainingPath,
-                    CommandArgumentHelpManager(command),
-                    fullPath
-                )
-            )
+            lastNode.addChild(getExecutableNode(meth, command, ann, remainingPath, CommandArgumentHelpManager(command), fullPath))
             if (mainCommandNode == null) mainCommandNode = mainNode
-            else if (mainNode!!.name != mainCommandNode.name) {
+            else if (mainNode.name != mainCommandNode.name) {
                 MainPlugin.instance.logger.warning("Multiple commands are defined in the same class! This is not supported. Class: " + command.javaClass.simpleName)
             }
         }
@@ -202,7 +193,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @return The last no-op node that can be used to register the executable node,
      * the main command node and the last part of the command path (that isn't registered yet)
      */
-    private fun registerNodeFromPath(path: String): Triple<CommandNode<TP>, CoreCommandNode<TP, *>?, String> {
+    private fun registerNodeFromPath(path: String): Triple<CommandNode<TP>, CoreCommandNode<TP, *>, String> {
         val split = path.split(" ")
         var parent: CommandNode<TP> = dispatcher.root
         var mainCommand: CoreCommandNode<TP, *>? = null
@@ -214,7 +205,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             if (i == 0) mainCommand =
                 parent as CoreCommandNode<TP, *> // Has to be our own literal node, if not, well, error
         }
-        return Triple(parent, mainCommand, split.last())
+        return Triple(parent, mainCommand!!, split.last())
     }
 
     private fun getSubcommandList(): (Any) -> Array<String> {
@@ -425,17 +416,15 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
     fun getSubcommands(
         mainCommand: LiteralCommandNode<TP>,
         deep: Boolean = true
-    ): List<CoreCommandNode<TP, SubcommandData<TC, TP>>> {
-        return getSubcommands(mainCommand, deep, mainCommand.core())
+    ): List<CoreExecutableNode<TP, TC>> {
+        return getSubcommands(deep, mainCommand.core())
     }
 
     private fun getSubcommands(
-        mainCommand: LiteralCommandNode<TP>,
         deep: Boolean = true,
-        root: CoreCommandNode<TP, NoOpSubcommandData>
-    ): List<CoreCommandNode<TP, SubcommandData<TC, TP>>> {
-
+        root: CoreNoOpNode<TP>
+    ): List<CoreExecutableNode<TP, TC>> {
         return root.children.mapNotNull { it.coreExecutable<TP, TC>() } +
-            if (deep) root.children.flatMap { getSubcommands(mainCommand, deep, it.core()) } else emptyList()
+            if (deep) root.children.flatMap { getSubcommands(deep, it.core()) } else emptyList()
     }
 }

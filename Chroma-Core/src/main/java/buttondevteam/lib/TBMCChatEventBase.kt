@@ -17,6 +17,7 @@ abstract class TBMCChatEventBase(
      */
     val groupID: String,
 ) : Event(true), Cancellable {
+    @JvmField
     var isCancelled: Boolean = false
 
     /**

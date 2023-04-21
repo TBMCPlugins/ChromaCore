@@ -3,9 +3,10 @@ package buttondevteam.lib.chat
 import buttondevteam.lib.chat.commands.CommandArgument
 import buttondevteam.lib.chat.commands.NoOpSubcommandData
 import buttondevteam.lib.chat.commands.SubcommandData
+import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 
-class CoreCommandBuilder<S : Command2Sender, TC : ICommand2<*>, TSD : NoOpSubcommandData> private constructor(
+class CoreCommandBuilder<S : Command2Sender, TC : ICommand2<S>, TSD : NoOpSubcommandData> private constructor(
     literal: String,
     val data: TSD
 ) : LiteralArgumentBuilder<S>(literal) {
@@ -30,6 +31,14 @@ class CoreCommandBuilder<S : Command2Sender, TC : ICommand2<*>, TSD : NoOpSubcom
         return result
     }
 
+    override fun then(argument: ArgumentBuilder<S, *>): LiteralArgumentBuilder<S> {
+        if (argument is CoreArgumentBuilder<*, *> && data is SubcommandData<*, *>) {
+            @Suppress("UNCHECKED_CAST")
+            (argument as CoreArgumentBuilder<S, *>).data = data as SubcommandData<*, S>
+        }
+        return super.then(argument)
+    }
+
     companion object {
         /**
          * Start building an executable command node.
@@ -44,7 +53,7 @@ class CoreCommandBuilder<S : Command2Sender, TC : ICommand2<*>, TSD : NoOpSubcom
          * @param annotations All annotations implemented by the method that executes the command
          * @param fullPath The full command path of this subcommand.
          */
-        fun <S : Command2Sender, TC : ICommand2<*>> literal(
+        fun <S : Command2Sender, TC : ICommand2<S>> literal(
             name: String,
             senderType: Class<*>,
             arguments: Map<String, CommandArgument>,
@@ -67,7 +76,7 @@ class CoreCommandBuilder<S : Command2Sender, TC : ICommand2<*>, TSD : NoOpSubcom
          * @param name The subcommand name as written by the user
          * @param helpTextGetter Custom help text that can depend on the context. The function receives the sender as the command itself receives it.
          */
-        fun <S : Command2Sender, TC : ICommand2<*>> literalNoOp(
+        fun <S : Command2Sender, TC : ICommand2<S>> literalNoOp(
             name: String,
             helpTextGetter: (Any) -> Array<String>,
         ): CoreCommandBuilder<S, TC, NoOpSubcommandData> {
