@@ -37,7 +37,7 @@ abstract class ButtonPlugin : JavaPlugin() {
     /**
      * Called before the components are unregistered
      */
-    protected fun pluginPreDisable() {}
+    protected open fun pluginPreDisable() {}
     override fun onEnable() {
         if (!reloadIConfig()) {
             logger.warning("Please fix the issues and restart the server to load the plugin.")

@@ -14,40 +14,41 @@ import org.bukkit.event.HandlerList
  */
 class TBMCChatEvent(
     channel: Channel,
-    private val cm: ChatMessage,
+    public val chatMessage: ChatMessage,
     rtr: RecipientTestResult
-) : TBMCChatEventBase(channel, cm.message, rtr.score, rtr.groupID!!) {
+) : TBMCChatEventBase(channel, chatMessage.message, rtr.score, rtr.groupID!!) {
 
-    private val isIgnoreSenderPermissions: Boolean get() = cm.permCheck !== cm.sender
+    private val isIgnoreSenderPermissions: Boolean get() = chatMessage.permCheck !== chatMessage.sender
 
     /**
      * This will allow the sender of the message if [.isIgnoreSenderPermissions] is true.
      */
     override fun shouldSendTo(sender: CommandSender): Boolean {
-        return if (isIgnoreSenderPermissions && sender == cm.sender) true else super.shouldSendTo(sender) //Allow sending the message no matter what
+        return if (isIgnoreSenderPermissions && sender == chatMessage.sender) true else super.shouldSendTo(sender) //Allow sending the message no matter what
     }
 
     /**
      * This will allow the sender of the message if [.isIgnoreSenderPermissions] is true.
      */
     override fun getMCScore(sender: CommandSender): Int {
-        return if (isIgnoreSenderPermissions && sender == cm.sender) score else super.getMCScore(sender) //Send in the correct group no matter what
+        return if (isIgnoreSenderPermissions && sender == chatMessage.sender) score else super.getMCScore(sender) //Send in the correct group no matter what
     }
 
     /**
      * This will allow the sender of the message if [.isIgnoreSenderPermissions] is true.
      */
     override fun getGroupID(sender: CommandSender): String? {
-        return if (isIgnoreSenderPermissions && sender == cm.sender) groupID else super.getGroupID(sender) //Send in the correct group no matter what
+        return if (isIgnoreSenderPermissions && sender == chatMessage.sender) groupID else super.getGroupID(sender) //Send in the correct group no matter what
     }
 
     override fun getHandlers(): HandlerList {
         return handlerList
     }
 
-    val sender: CommandSender get() = cm.sender
-    val user: ChromaGamerBase get() = cm.user
-    val origin: String get() = cm.origin
+    val sender: CommandSender get() = chatMessage.sender
+    val user: ChromaGamerBase get() = chatMessage.user
+    val origin: String get() = chatMessage.origin
+    val isFromCommand get() = chatMessage.isFromCommand
 
     companion object {
         val handlerList = HandlerList()

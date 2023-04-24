@@ -240,6 +240,7 @@ abstract class ChromaGamerBase {
          * @param foldername The folder to get the class from (like "minecraft")
          * @return The type for the given folder name or null if not found
          */
+        @JvmStatic
         fun getTypeForFolder(foldername: String?): Class<out ChromaGamerBase>? {
             synchronized(staticDataMap) {
                 return staticDataMap.filter { (_, value) -> value.folder.equals(foldername, ignoreCase = true) }
@@ -302,6 +303,7 @@ abstract class ChromaGamerBase {
          *
          * @param converter The converter that returns an object corresponding to the sender or null, if it's not the right type.
          */
+        @JvmStatic
         fun addConverter(converter: Function<CommandSender, Optional<out ChromaGamerBase>>) {
             senderConverters.add(0, converter)
         }
@@ -312,6 +314,7 @@ abstract class ChromaGamerBase {
          * @param sender The sender to use
          * @return A user as returned by a converter or null if none can supply it
          */
+        @JvmStatic
         fun getFromSender(sender: CommandSender): ChromaGamerBase? { // TODO: Use Command2Sender
             for (converter in senderConverters) {
                 val ocg = converter.apply(sender)

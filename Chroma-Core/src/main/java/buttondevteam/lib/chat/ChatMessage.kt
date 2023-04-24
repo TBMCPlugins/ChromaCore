@@ -66,6 +66,7 @@ class ChatMessage internal constructor(
     }
 
     companion object {
+        @JvmStatic
         fun builder(sender: CommandSender, user: ChromaGamerBase, message: String): ChatMessageBuilder {
             return ChatMessageBuilder(
                 sender, user, message,

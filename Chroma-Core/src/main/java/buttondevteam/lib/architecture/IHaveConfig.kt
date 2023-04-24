@@ -91,7 +91,7 @@ class IHaveConfig(
         if (data == null) datamap[path] = ListConfigData(
             this,
             path,
-            def,
+            ArrayList(def),
             elementGetter ?: Function { it as T },
             elementSetter ?: Function { it },
             readOnly

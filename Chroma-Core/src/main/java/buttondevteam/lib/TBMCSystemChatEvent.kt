@@ -25,9 +25,9 @@ class TBMCSystemChatEvent(
     }
 
     class BroadcastTarget private constructor(val name: String) {
-
         companion object {
             private val targets = HashSet<BroadcastTarget?>()
+            @JvmField
             val ALL = BroadcastTarget("ALL")
 
             @JvmStatic
@@ -42,11 +42,13 @@ class TBMCSystemChatEvent(
                 targets.remove(target)
             }
 
+            @JvmStatic
             operator fun get(name: String?): BroadcastTarget? {
                 return targets.stream().filter { bt: BroadcastTarget? -> bt!!.name.equals(name, ignoreCase = true) }
                     .findAny().orElse(null)
             }
 
+            @JvmStatic
             fun stream(): Stream<BroadcastTarget?> {
                 return targets.stream()
             }

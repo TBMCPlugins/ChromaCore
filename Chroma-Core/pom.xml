@@ -247,7 +247,7 @@
 		<!-- github server corresponds to entry in ~/.m2/settings.xml -->
 		<github.global.server>github</github.global.server>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<noprefix.version>1.0.1</noprefix.version>
+		<noprefix.version>2.0.0</noprefix.version>
 		<kotlin.version>1.8.20</kotlin.version>
 	</properties>
 	<scm>

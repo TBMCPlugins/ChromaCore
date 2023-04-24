@@ -25,6 +25,7 @@ object TBMCChatAPI {
      * @return The event cancelled state
      */
     @JvmOverloads
+    @JvmStatic
     fun sendChatMessage(cm: ChatMessage, channel: Channel = cm.user.channel.get()): Boolean {
         if (!channelList.contains(channel)) throw RuntimeException(
             "Channel " + channel.displayName.get() + " not registered!"

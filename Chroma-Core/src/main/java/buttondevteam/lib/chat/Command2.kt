@@ -374,8 +374,8 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @param command The exact name of the command
      * @return A command node
      */
-    fun getCommandNode(command: String): CoreCommandNode<TP, NoOpSubcommandData> { // TODO: What should this return? No-op? Executable? What's the use case?
-        return dispatcher.root.getChild(command).core()
+    fun getCommandNode(command: String): CoreCommandNode<TP, NoOpSubcommandData>? { // TODO: What should this return? No-op? Executable? What's the use case?
+        return dispatcher.root.getChild(command)?.core()
     }
 
     /**

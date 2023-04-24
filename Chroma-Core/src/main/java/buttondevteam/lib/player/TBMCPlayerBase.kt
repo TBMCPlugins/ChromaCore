@@ -44,6 +44,7 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
          * @param cl   The type of the player
          * @return The requested player object
          */
+        @JvmStatic
         fun <T : TBMCPlayerBase> getPlayer(uuid: UUID, cl: Class<T>): T {
             val player = getUser(uuid.toString(), cl)
             check(player.uniqueId == uuid) { "Player UUID differs after converting from and to string..." }
@@ -57,6 +58,7 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
          * @return The [TBMCPlayer] object for the player
          */
         @Suppress("deprecation")
+        @JvmStatic
         fun <T : TBMCPlayerBase> getFromName(name: String, cl: Class<T>): T {
             val p = Bukkit.getOfflinePlayer(name)
             return getPlayer(p.uniqueId, cl)

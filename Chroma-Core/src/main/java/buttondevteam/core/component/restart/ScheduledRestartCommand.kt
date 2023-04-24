@@ -26,7 +26,7 @@ import kotlin.properties.Delegates
     ]
 )
 class ScheduledRestartCommand : ICommand2MC() {
-    private var restartCounter = 0
+    public var restartCounter = 0
     private lateinit var restartTask: BukkitTask
 
     @Volatile

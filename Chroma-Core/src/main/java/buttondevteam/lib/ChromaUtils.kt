@@ -9,6 +9,7 @@ import org.bukkit.event.Event
 import java.util.function.Supplier
 
 object ChromaUtils {
+    @JvmStatic
     fun getDisplayName(sender: CommandSender): String {
         return when (sender) {
             is IHaveFancyName -> sender.fancyName
@@ -17,6 +18,7 @@ object ChromaUtils {
         }
     }
 
+    @JvmStatic
     fun getFullDisplayName(sender: CommandSender): String {
         return when (sender) {
             is IHaveFancyName -> sender.fancyFullName
@@ -24,6 +26,7 @@ object ChromaUtils {
         }
     }
 
+    @JvmStatic
     fun convertNumber(number: Number, targetcl: Class<out Number>): Number {
         return when {
             targetcl == Long::class.javaPrimitiveType || Long::class.java.isAssignableFrom(targetcl) -> number.toLong()

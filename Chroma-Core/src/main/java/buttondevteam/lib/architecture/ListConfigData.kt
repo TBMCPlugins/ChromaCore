@@ -1,21 +1,21 @@
 package buttondevteam.lib.architecture
 
 import buttondevteam.lib.architecture.config.IConfigData
+import java.util.ArrayList
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.UnaryOperator
-import kotlin.collections.List as KList
 
 class ListConfigData<T> internal constructor(
     config: IHaveConfig?,
     path: String,
-    primitiveDef: kotlin.collections.List<*>,
+    primitiveDef: ArrayList<*>,
     private val elementGetter: Function<Any?, T>,
     private val elementSetter: Function<T, Any?>,
     readOnly: Boolean
 ) : IConfigData<ListConfigData<T>.List> {
     val listConfig: ConfigData<List> =
-        ConfigData(config, path, primitiveDef, { List((it as KList<*>).toMutableList()) }, { it }, readOnly)
+        ConfigData(config, path, primitiveDef, { List((it as ArrayList<*>).toMutableList()) }, { it }, readOnly)
 
     override val path: String get() = listConfig.path
 
