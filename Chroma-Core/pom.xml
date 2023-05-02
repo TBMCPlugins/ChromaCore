@@ -73,6 +73,9 @@
 							<artifactSet>
 								<includes>
 									<include>me.lucko:commodore</include>
+									<include>org.jetbrains.kotlin:kotlin-stdlib</include>
+									<include>com.github.shynixn.mccoroutine:mccoroutine-bukkit-api</include>
+									<include>com.github.shynixn.mccoroutine:mccoroutine-bukkit-core</include>
 								</includes>
 							</artifactSet>
 							<relocations>
@@ -230,6 +233,21 @@
 			<groupId>org.jetbrains.kotlin</groupId>
 			<artifactId>kotlin-stdlib</artifactId>
 			<version>${kotlin.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlinx</groupId>
+			<artifactId>kotlinx-coroutines-core</artifactId>
+			<version>1.6.4</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.shynixn.mccoroutine</groupId>
+			<artifactId>mccoroutine-bukkit-api</artifactId>
+			<version>2.11.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.shynixn.mccoroutine</groupId>
+			<artifactId>mccoroutine-bukkit-core</artifactId>
+			<version>2.11.0</version>
 		</dependency>
 	</dependencies>
 	<organization>

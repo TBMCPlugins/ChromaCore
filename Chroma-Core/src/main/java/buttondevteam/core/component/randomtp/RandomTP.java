@@ -92,8 +92,8 @@ public class RandomTP extends ICommand2MC
 			&& !newLocation()) 
 		{
 			//if unable to find new location, message player and return false
-			player.sendMessage("${ChatColor.RED} could not find a location in 10,000 attempts");
-			player.sendMessage("${ChatColor.RED} (sorry bud... I did try!)");
+			player.sendMessage("§ccould not find a location in 10,000 attempts");
+			player.sendMessage("§c (sorry bud... I did try!)");
 			return false;
 		}
 		

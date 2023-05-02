@@ -176,10 +176,11 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
             TabcompleteHelper.registerTabcomplete(command, node, bukkitCommand)
             bukkitCommand
         } catch (e: Exception) {
-            if (command.component == null)
+            val component = command.component
+            if (component == null)
                 TBMCCoreAPI.SendException("Failed to register command in command map!", e, command.plugin)
             else
-                TBMCCoreAPI.SendException("Failed to register command in command map!", e, command.component)
+                TBMCCoreAPI.SendException("Failed to register command in command map!", e, component)
             shouldRegisterOfficially = false
             null
         }
@@ -302,7 +303,9 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
             if (converter == null) {
                 val msg = "Could not find a suitable converter for type " + cl.simpleName
                 val exception: Exception = NullPointerException("converter is null")
-                if (command2MC.component == null) TBMCCoreAPI.SendException(msg, exception, command2MC.plugin) else TBMCCoreAPI.SendException(msg, exception, command2MC.component)
+                val component = command2MC.component
+                if (component == null) TBMCCoreAPI.SendException(msg, exception, command2MC.plugin)
+                else TBMCCoreAPI.SendException(msg, exception, component)
                 return null
             }
             return converter

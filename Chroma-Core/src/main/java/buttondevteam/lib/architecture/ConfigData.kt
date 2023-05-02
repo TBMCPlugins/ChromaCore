@@ -76,7 +76,10 @@ class ConfigData<T> internal constructor(
         signalChange(config)
     }
 
-    private class SaveTask(val task: BukkitTask, val saveAction: Runnable)
+    /**
+     * @param task The running task, if it was scheduled
+     */
+    private class SaveTask(val task: BukkitTask?, val saveAction: Runnable)
 
     companion object {
         private val saveTasks = HashMap<Configuration, SaveTask>()
@@ -85,10 +88,19 @@ class ConfigData<T> internal constructor(
             val sa = config.saveAction
             val root = cc.root
             if (root == null) {
-                MainPlugin.instance.logger.warning("Attempted to save config with no root! Name: ${config.config.name}")
+                if (MainPlugin.isInitialized) {
+                    MainPlugin.instance.logger.warning("Attempted to save config with no root! Name: ${config.config.name}")
+                } else {
+                    println("Attempted to save config with no root! Name: ${config.config.name}")
+                }
                 return
             }
-            if (!saveTasks.containsKey(cc.root)) {
+            if (!MainPlugin.isInitialized) {
+                // If the plugin isn't initilized, we can't schedule a task - do it when the plugin is enabled
+                synchronized(saveTasks) {
+                    saveTasks.put(root, SaveTask(null, sa))
+                }
+            } else if (!saveTasks.containsKey(cc.root)) {
                 synchronized(saveTasks) {
                     saveTasks.put(
                         root,
@@ -108,7 +120,7 @@ class ConfigData<T> internal constructor(
             synchronized(saveTasks) {
                 val st = saveTasks[config]
                 if (st != null) {
-                    st.task.cancel()
+                    st.task?.cancel()
                     saveTasks.remove(config)
                     st.saveAction.run()
                     return true

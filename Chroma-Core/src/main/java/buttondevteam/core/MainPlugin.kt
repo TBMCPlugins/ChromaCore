@@ -11,6 +11,7 @@ import buttondevteam.core.component.towny.TownyComponent
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.ButtonPlugin
 import buttondevteam.lib.architecture.Component.Companion.registerComponent
+import buttondevteam.lib.architecture.ConfigData
 import buttondevteam.lib.chat.Color
 import buttondevteam.lib.chat.TBMCChatAPI
 import buttondevteam.lib.player.ChromaGamerBase
@@ -55,13 +56,14 @@ class MainPlugin : ButtonPlugin() {
      * If a Chroma command clashes with another plugin's command, this setting determines whether the Chroma command should be executed or the other plugin's.
      */
     val prioritizeCustomCommands = iConfig.getData("prioritizeCustomCommands", false)
+
     public override fun pluginEnable() {
         instance = this
         val pdf = description
         setupPermissions()
         if (!setupEconomy()) //Though Essentials always provides economy, but we don't require Essentials
             logger.warning("No economy plugin found! Components using economy will not be registered.")
-        saveConfig()
+        ConfigData.saveNow(config) // Run pending save tasks
         registerComponent(this, RestartComponent())
         registerComponent(this, ChannelComponent())
         registerComponent(this, RandomTPComponent())
@@ -102,7 +104,7 @@ class MainPlugin : ButtonPlugin() {
         )
             .also { Channel.adminChat = it })
         TBMCChatAPI.registerChatChannel(Channel(
-            "§9MOD${ChatColor.WHITE}",
+            "${ChatColor.BLUE}MOD${ChatColor.WHITE}",
             Color.Blue,
             "mod",
             Channel.inGroupFilter("mod")
@@ -118,10 +120,10 @@ class MainPlugin : ButtonPlugin() {
         ) // TODO: Make groups configurable
         TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.RED}RED${ChatColor.WHITE}", Color.DarkRed, "red"))
         TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.GOLD}ORANGE${ChatColor.WHITE}", Color.Gold, "orange"))
-        TBMCChatAPI.registerChatChannel(ChatRoom("§eYELLOW${ChatColor.WHITE}", Color.Yellow, "yellow"))
-        TBMCChatAPI.registerChatChannel(ChatRoom("§aGREEN${ChatColor.WHITE}", Color.Green, "green"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.YELLOW}YELLOW${ChatColor.WHITE}", Color.Yellow, "yellow"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.GREEN}GREEN${ChatColor.WHITE}", Color.Green, "green"))
         TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.AQUA}BLUE${ChatColor.WHITE}", Color.Blue, "blue"))
-        TBMCChatAPI.registerChatChannel(ChatRoom("§5PURPLE${ChatColor.WHITE}", Color.DarkPurple, "purple"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.LIGHT_PURPLE}PURPLE${ChatColor.WHITE}", Color.DarkPurple, "purple"))
         val playerSupplier = Supplier { Bukkit.getOnlinePlayers().map { obj -> obj.name }.asIterable() }
         command2MC.addParamConverter(
             OfflinePlayer::class.java,
@@ -173,5 +175,7 @@ class MainPlugin : ButtonPlugin() {
 
         @JvmField
         var ess: Essentials? = null
+
+        val isInitialized get() = ::instance.isInitialized
     }
 }
