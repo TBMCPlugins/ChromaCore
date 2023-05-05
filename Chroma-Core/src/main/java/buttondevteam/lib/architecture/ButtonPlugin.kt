@@ -83,7 +83,7 @@ abstract class ButtonPlugin : JavaPlugin() {
     fun tryReloadConfig(): Boolean {
         if (!justReload()) return false
         reloadIConfig()
-        componentStack.forEach(Consumer { c -> c.updateComponentData() })
+        componentStack.forEach(Consumer { c -> c.updateConfig() })
         return true
     }
 

@@ -18,18 +18,17 @@ import java.util.stream.Collectors
 @HasConfig(global = false) //Used for obtaining javadoc
 abstract class Component<TP : JavaPlugin> {
     var isEnabled = false
-    internal var componentData: ComponentData<TP>? = null
 
-    val config get() = componentData!!.config
-    val plugin get() = componentData!!.plugin
+    lateinit var config: IHaveConfig
+        private set
+    lateinit var plugin: TP
+        private set
 
     private val data //TODO
         : IHaveConfig? = null
 
-    @JvmField
-    val shouldBeEnabled: ConfigData<Boolean> = config.getData("enabled",
-        Optional.ofNullable(javaClass.getAnnotation(ComponentMetadata::class.java)).map { it.enabledByDefault }
-            .orElse(true))
+    val shouldBeEnabled: ConfigData<Boolean>
+        get() = config.getData("enabled", javaClass.getAnnotation(ComponentMetadata::class.java)?.enabledByDefault ?: true)
 
     fun log(message: String) {
         plugin.logger.info("[$className] $message")
@@ -58,7 +57,8 @@ abstract class Component<TP : JavaPlugin> {
 
     /**
      * Enables the module, when called by the JavaPlugin class. Call
-     * registerCommand() and registerListener() within this method.<br></br>
+     * registerCommand() and registerListener() within this method.
+     *
      * To access the plugin, use [.getPlugin].
      */
     protected abstract fun enable()
@@ -121,8 +121,8 @@ abstract class Component<TP : JavaPlugin> {
 
     private val className: String get() = javaClass.simpleName
 
-    internal fun updateComponentData(plugin: TP = this.plugin) {
-        componentData = ComponentData(plugin, { plugin.saveConfig() }, this.getConfigSection(plugin))
+    internal fun updateConfig() {
+        this.config = IHaveConfig(plugin::saveConfig, getConfigSection(plugin))
     }
 
     private fun getConfigSection(plugin: JavaPlugin): ConfigurationSection {
@@ -138,7 +138,7 @@ abstract class Component<TP : JavaPlugin> {
         private val _components = HashMap<Class<out Component<*>>, Component<out JavaPlugin>>()
 
         /**
-         * Returns the currently registered components<br></br>
+         * Returns the currently registered components
          *
          * @return The currently registered components
          */
@@ -149,9 +149,12 @@ abstract class Component<TP : JavaPlugin> {
             }
 
         /**
-         * Registers a component checking it's dependencies and calling [.register].<br></br>
-         * Make sure to register the dependencies first.<br></br>
-         * The component will be enabled automatically, regardless of when it was registered.<br></br>
+         * Registers a component checking it's dependencies and calling [.register].
+         *
+         * Make sure to register the dependencies first.
+         *
+         * The component will be enabled automatically, regardless of when it was registered.
+         *
          * **If not using [ButtonPlugin], call [ComponentManager.unregComponents] on plugin disable.**
          *
          * @param component The component to register
@@ -163,8 +166,10 @@ abstract class Component<TP : JavaPlugin> {
         }
 
         /**
-         * Unregisters a component by calling [.unregister].<br></br>
-         * Make sure to unregister the dependencies last.<br></br>
+         * Unregisters a component by calling [.unregister].
+         *
+         * Make sure to unregister the dependencies last.
+         *
          * **Components will be unregistered in opposite order of registering by default by [ButtonPlugin] or [ComponentManager.unregComponents].**
          *
          * @param component The component to unregister
@@ -186,7 +191,7 @@ abstract class Component<TP : JavaPlugin> {
                     val dependencies = metaAnn.depends
                     for (dep in dependencies) { //TODO: Support dependencies at enable/disable as well
                         if (!components.containsKey(dep.java)) {
-                            plugin.logger.warning("Failed to " + (if (register) "" else "un") + "register component " + component.className + " as a required dependency is missing/disabled: " + dep.simpleName)
+                            plugin.logger.warning("Failed to ${if (register) "" else "un"}register component ${component.className} as a required dependency is missing/disabled: ${dep.simpleName}")
                             return false
                         }
                     }
@@ -201,8 +206,8 @@ abstract class Component<TP : JavaPlugin> {
                         return false
                     }
                     component.register(plugin)
-                    // The plugin is saved with this call, so it must be specified
-                    component.updateComponentData(plugin)
+                    component.plugin = plugin
+                    component.updateConfig()
                     _components[component.javaClass] = component
                     if (plugin is ButtonPlugin) plugin.componentStack.push(component)
                     if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled.get()) {
@@ -227,18 +232,10 @@ abstract class Component<TP : JavaPlugin> {
                         try {
                             setComponentEnabled(component, false)
                         } catch (e: Exception) {
-                            TBMCCoreAPI.SendException(
-                                "Failed to disable component " + component.className + "!",
-                                e,
-                                component
-                            )
+                            TBMCCoreAPI.SendException("Failed to disable component ${component.className}!", e, component)
                             return false //If failed to disable, won't unregister either
                         } catch (e: NoClassDefFoundError) {
-                            TBMCCoreAPI.SendException(
-                                "Failed to disable component " + component.className + "!",
-                                e,
-                                component
-                            )
+                            TBMCCoreAPI.SendException("Failed to disable component ${component.className}!", e, component)
                             return false
                         }
                     }
@@ -247,7 +244,7 @@ abstract class Component<TP : JavaPlugin> {
                 }
                 true
             } catch (e: Exception) {
-                TBMCCoreAPI.SendException("Failed to " + (if (register) "" else "un") + "register component " + component.className + "!", e, plugin)
+                TBMCCoreAPI.SendException("Failed to ${if (register) "" else "un"}register component ${component.className}!", e, plugin)
                 false
             }
         }

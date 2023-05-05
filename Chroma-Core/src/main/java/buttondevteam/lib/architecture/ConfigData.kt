@@ -9,8 +9,11 @@ import org.bukkit.scheduler.BukkitTask
 import java.util.function.Function
 
 /**
- * Use the getter/setter constructor if [T] isn't a primitive type or String.<br></br>
- * Use [Component.config] or [ButtonPlugin.iConfig] then [IHaveConfig.getData] to get an instance.
+ * Use the getter/setter constructor if [T] isn't a primitive type or String.
+ *
+ *  Use [Component.config] or [ButtonPlugin.iConfig] then [IHaveConfig.getData] to get an instance.
+ *
+ * **Note:** The instance can become outdated if the config is reloaded.
  * @param config May be null for testing
  * @param getter The parameter is of a primitive type as returned by [Configuration.get]
  * @param setter The result should be a primitive type or string that can be retrieved correctly later

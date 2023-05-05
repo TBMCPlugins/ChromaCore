@@ -11,8 +11,8 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
 
     @JvmField
     val playerName = super.config.getData("PlayerName", "")
-    public override fun init() {
-        super.init()
+    public override fun initConfig() {
+        super.initConfig()
         val pluginName = if (javaClass.isAnnotationPresent(PlayerClass::class.java))
             javaClass.getAnnotation(PlayerClass::class.java).pluginname
         else

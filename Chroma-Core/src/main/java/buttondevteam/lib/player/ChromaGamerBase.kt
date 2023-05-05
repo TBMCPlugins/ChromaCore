@@ -21,11 +21,9 @@ abstract class ChromaGamerBase {
         protected set
 
     protected lateinit var commonUserData: CommonUserData<out ChromaGamerBase>
-    protected open fun init() {
+    protected open fun initConfig() {
         config = IHaveConfig({ save() }, commonUserData.playerData)
     }
-
-    protected fun updateUserConfig() {} // TODO: Use this instead of reset()
 
     /**
      * Saves the player. It'll handle all exceptions that may happen. Called automatically.
@@ -114,7 +112,8 @@ abstract class ChromaGamerBase {
     }
 
     /**
-     * Returns a player instance of the given type that represents the same player. This will return a new instance unless the player is cached.<br></br>
+     * Returns a player instance of the given type that represents the same player. This will return a new instance unless the player is cached.
+     *
      * If the class is a subclass of the current class then the same ID is used, otherwise, a connected ID is used, if found.
      *
      * @param cl The target player class
@@ -130,7 +129,8 @@ abstract class ChromaGamerBase {
     }
 
     /**
-     * Returns the filename for this player data. For example, for Minecraft-related data, MC UUIDs, for Discord data, Discord IDs, etc.<br></br>
+     * Returns the filename for this player data. For example, for Minecraft-related data, MC UUIDs, for Discord data, Discord IDs, etc.
+     *
      * **Does not include .yml**
      */
     val fileName: String by lazy {
@@ -159,12 +159,12 @@ abstract class ChromaGamerBase {
     }
 
     //-----------------------------------------------------------------
-    @JvmField
-    val channel: ConfigData<Channel> = config.getData("channel", Channel.globalChat,
-        { id ->
-            getChannels().filter { ch: Channel -> ch.identifier.equals(id as String, ignoreCase = true) }
-                .findAny().orElseThrow { RuntimeException("Channel $id not found!") }
-        }, { ch -> ch.identifier })
+    val channel: ConfigData<Channel>
+        get() = config.getData("channel", Channel.globalChat,
+            { id ->
+                getChannels().filter { it.identifier.equals(id as String, ignoreCase = true) }
+                    .findAny().orElseThrow { RuntimeException("Channel $id not found!") }
+            }, { ch -> ch.identifier })
 
     companion object {
         private const val TBMC_PLAYERS_DIR = "TBMC/players/"
@@ -258,10 +258,8 @@ abstract class ChromaGamerBase {
         @JvmStatic
         @Synchronized
         fun <T : S, S : ChromaGamerBase> getUser(fname: String, cl: Class<T>): T {
-            @Suppress("UNCHECKED_CAST")
             val staticUserData: StaticUserData<S> = getStaticData(cl)
 
-            @Suppress("UNCHECKED_CAST")
             val commonUserData: CommonUserData<S> = staticUserData.userDataMap[fname]
                 ?: run {
                     val folder = staticUserData.folder
@@ -293,7 +291,7 @@ abstract class ChromaGamerBase {
                 }
             }
             obj.commonUserData = commonUserData
-            obj.init()
+            obj.initConfig()
             obj.scheduleUncache()
             return obj
         }

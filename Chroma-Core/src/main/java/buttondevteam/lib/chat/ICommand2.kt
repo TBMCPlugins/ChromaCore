@@ -39,7 +39,8 @@ abstract class ICommand2<TP : Command2Sender>(val manager: Command2<*, TP>) {
     }
 
     /**
-     * Return null to not add any help text, return an empty array to only print subcommands.<br></br>
+     * Return null to not add any help text, return an empty array to only print subcommands.
+     *
      * By default, returns null if the Subcommand annotation is not present and returns an empty array if no help text can be found.
      *
      * @param method The method of the subcommand
@@ -51,10 +52,13 @@ abstract class ICommand2<TP : Command2Sender>(val manager: Command2<*, TP>) {
     }
 
     /**
-     * The command's path, or name if top-level command.<br></br>
-     * For example:<br></br>
-     * "u admin updateplugin" or "u" for the top level one<br></br>
-     * <u>The path must be lowercase!</u><br></br>
+     * The command's path, or name if top-level command.
+     *
+     * For example:
+     *
+     * "u admin updateplugin" or "u" for the top level one
+     *
+     * __The path must be lowercase!__
      *
      * @return The command path, *which is the command class name by default* (removing any "command" from it) - Change via the [CommandClass] annotation
      */

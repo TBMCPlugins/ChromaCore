@@ -26,7 +26,8 @@ class ChatMessage internal constructor(
      */
     val permCheck: CommandSender,
     /**
-     * The origin of the message, "Minecraft" or "Discord" for example. May be displayed to the user.<br></br>
+     * The origin of the message, "Minecraft" or "Discord" for example. May be displayed to the user.
+     *
      * **This is the user class capitalized folder name by default.**
      */
     val origin: String

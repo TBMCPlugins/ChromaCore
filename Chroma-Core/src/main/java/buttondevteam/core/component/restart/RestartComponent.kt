@@ -48,7 +48,7 @@ class RestartComponent : Component<MainPlugin>(), Listener {
     /**
      * Specifies the hour of day when the server should be restarted. Set to -1 to disable.
      */
-    private val restartAt = config.getData("restartAt", 12)
+    private val restartAt get() = config.getData("restartAt", 12)
     private var lasttime: Long = 0
 
     var isPlsrestart = false

@@ -21,7 +21,8 @@ open class Channel
 /**
  * Creates a channel.
  *
- * @param filterAndErrorMSG Checks all senders against the criteria provided here and sends the message if the index matches the sender's - if no score at all, displays the error.<br></br>
+ * @param filterAndErrorMSG Checks all senders against the criteria provided here and sends the message if the index matches the sender's - if no score at all, displays the error.
+ *
  * May be null to send to everyone.
  */(
     /**
@@ -86,8 +87,7 @@ open class Channel
     }
 
     /**
-     * Note: Errors are sent to the sender automatically<br></br>
-     *
+     * Note: Errors are sent to the sender automatically
      *
      * Null means don't send
      */

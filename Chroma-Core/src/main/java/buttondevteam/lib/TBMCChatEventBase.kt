@@ -35,7 +35,7 @@ abstract class TBMCChatEventBase(
     }
 
     /**
-     * Note: Errors are sent to the sender automatically<br></br>
+     * Note: Errors are sent to the sender automatically
      *
      * Null means don't send
      */

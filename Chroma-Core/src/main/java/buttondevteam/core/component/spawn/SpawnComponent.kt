@@ -1,133 +1,110 @@
-package buttondevteam.core.component.spawn;
+package buttondevteam.core.component.spawn
 
-import buttondevteam.core.MainPlugin;
-import buttondevteam.lib.architecture.Component;
-import buttondevteam.lib.architecture.ComponentMetadata;
-import buttondevteam.lib.architecture.ConfigData;
-import buttondevteam.lib.chat.Command2;
-import buttondevteam.lib.chat.CommandClass;
-import buttondevteam.lib.chat.ICommand2MC;
-import com.earth2me.essentials.Trade;
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
-import com.onarandombox.MultiverseCore.MultiverseCore;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.plugin.messaging.PluginMessageListener;
-
-import java.io.*;
-import java.math.BigDecimal;
+import buttondevteam.core.MainPlugin
+import buttondevteam.lib.architecture.Component
+import buttondevteam.lib.architecture.ComponentMetadata
+import buttondevteam.lib.chat.Command2.Subcommand
+import buttondevteam.lib.chat.CommandClass
+import buttondevteam.lib.chat.ICommand2MC
+import com.earth2me.essentials.Trade
+import com.google.common.io.ByteStreams
+import com.onarandombox.MultiverseCore.MultiverseCore
+import org.bukkit.Bukkit
+import org.bukkit.Location
+import org.bukkit.entity.Player
+import org.bukkit.event.player.PlayerTeleportEvent
+import org.bukkit.plugin.messaging.PluginMessageListener
+import java.io.*
+import java.math.BigDecimal
 
 /**
  * Provides a /spawn command that works with BungeeCord. Make sure to set up on each server.
+ * Requires Multiverse-Core.
  */
 @ComponentMetadata(enabledByDefault = false)
-public class SpawnComponent extends Component<MainPlugin> implements PluginMessageListener {
-	@Override
-	protected void enable() {
-		registerCommand(new SpawnCommand());
-		if (targetServer.get().length() == 0) {
-			spawnloc = MultiverseCore.getPlugin(MultiverseCore.class).getMVWorldManager().getFirstSpawnWorld()
-				.getSpawnLocation();
-		}
+class SpawnComponent : Component<MainPlugin>(), PluginMessageListener {
+    override fun enable() {
+        registerCommand(SpawnCommand())
+        if (targetServer.get().isEmpty()) {
+            spawnloc = MultiverseCore.getPlugin(MultiverseCore::class.java).mvWorldManager.firstSpawnWorld.spawnLocation
+        }
+        Bukkit.getServer().messenger.registerOutgoingPluginChannel(plugin, "BungeeCord")
+        Bukkit.getServer().messenger.registerIncomingPluginChannel(plugin, "BungeeCord", this)
+    }
 
-		Bukkit.getServer().getMessenger().registerOutgoingPluginChannel(getPlugin(), "BungeeCord");
-		Bukkit.getServer().getMessenger().registerIncomingPluginChannel(getPlugin(), "BungeeCord", this);
-	}
+    override fun disable() {
+        Bukkit.getServer().messenger.unregisterIncomingPluginChannel(plugin, "BungeeCord")
+        Bukkit.getServer().messenger.unregisterOutgoingPluginChannel(plugin, "BungeeCord")
+    }
 
-	@Override
-	protected void disable() {
-		Bukkit.getServer().getMessenger().unregisterIncomingPluginChannel(getPlugin(), "BungeeCord");
-		Bukkit.getServer().getMessenger().unregisterOutgoingPluginChannel(getPlugin(), "BungeeCord");
-	}
+    override fun onPluginMessageReceived(channel: String, player: Player, message: ByteArray) {
+        if (channel != "BungeeCord") {
+            return
+        }
+        if (targetServer.get().isNotEmpty()) return
+        val `in` = ByteStreams.newDataInput(message)
+        val subchannel = `in`.readUTF()
+        if ("ChromaCore-Spawn" == subchannel) {
+            // Use the code sample in the 'Response' sections below to read
+            // the data.
+            val len = `in`.readShort()
+            val msgbytes = ByteArray(len.toInt())
+            `in`.readFully(msgbytes)
+            try {
+                val msgin = DataInputStream(ByteArrayInputStream(msgbytes))
+                val somedata = msgin.readUTF() // Read the data in the same way you wrote it
+                if ("SendToSpawn" != somedata) {
+                    println("somedata: $somedata")
+                    return
+                }
+                player.teleport(spawnloc!!)
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        } else println("Subchannel: $subchannel")
+    }
 
-	@Override
-	public void onPluginMessageReceived(String channel, Player player, byte[] message) {
-		if (!channel.equals("BungeeCord")) {
-			return;
-		}
-		if (targetServer.get().length() != 0)
-			return;
-		ByteArrayDataInput in = ByteStreams.newDataInput(message);
-		String subchannel = in.readUTF();
-		if ("ChromaCore-Spawn".equals(subchannel)) {
-			// Use the code sample in the 'Response' sections below to read
-			// the data.
-			short len = in.readShort();
-			byte[] msgbytes = new byte[len];
-			in.readFully(msgbytes);
+    /**
+     * The BungeeCord server that has the spawn. Set to empty if this server is the target.
+     */
+    private val targetServer get() = config.getData("targetServer", "")
+    private var spawnloc: Location? = null
 
-			try {
-				DataInputStream msgin = new DataInputStream(new ByteArrayInputStream(msgbytes));
-				String somedata = msgin.readUTF(); // Read the data in the same way you wrote it
-				if (!"SendToSpawn".equals(somedata)) {
-					System.out.println("somedata: " + somedata);
-					return;
-				}
-				player.teleport(spawnloc);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} else
-			System.out.println("Subchannel: " + subchannel);
-	}
-
-	/**
-	 * The BungeeCord server that has the spawn. Set to empty if this server is the target.
-	 */
-	private final ConfigData<String> targetServer = getConfig().getData("targetServer", "");
-
-	private Location spawnloc;
-
-	@CommandClass(helpText = {
-		"Spawn",
-		"Teleport to spawn."
-	})
-	public class SpawnCommand extends ICommand2MC {
-		@SuppressWarnings("UnstableApiUsage")
-		@Command2.Subcommand
-		public void def(Player player) {
-			if (targetServer.get().length() == 0) {
-				player.sendMessage("${ChatColor.AQUA}Teleporting to spawn...");
-				try {
-					if (MainPlugin.ess != null)
-						MainPlugin.ess.getUser(player).getTeleport()
-							.teleport(spawnloc, new Trade(BigDecimal.ZERO, MainPlugin.ess), PlayerTeleportEvent.TeleportCause.COMMAND);
-					else
-						player.teleport(spawnloc);
-				} catch (Exception e) {
-					player.sendMessage("${ChatColor.RED}Failed to teleport: " + e);
-				}
-				return;
-			}
-			ByteArrayDataOutput out = ByteStreams.newDataOutput();
-			out.writeUTF("Connect");
-			out.writeUTF(targetServer.get());
-
-			player.sendPluginMessage(getPlugin(), "BungeeCord", out.toByteArray());
-
-			Bukkit.getScheduler().runTask(getPlugin(), () -> { //Delay it a bit
-				ByteArrayDataOutput outt = ByteStreams.newDataOutput();
-				outt.writeUTF("ForwardToPlayer"); // So BungeeCord knows to forward it
-				outt.writeUTF(player.getName());
-				outt.writeUTF("ChromaCore-Spawn"); // The channel name to check if this your data
-
-				ByteArrayOutputStream msgbytes = new ByteArrayOutputStream();
-				DataOutputStream msgout = new DataOutputStream(msgbytes);
-				try {
-					msgout.writeUTF("SendToSpawn"); // You can do anything you want with msgout
-				} catch (IOException exception) {
-					exception.printStackTrace();
-				}
-
-				outt.writeShort(msgbytes.toByteArray().length);
-				outt.write(msgbytes.toByteArray());
-
-				player.sendPluginMessage(getPlugin(), "BungeeCord", outt.toByteArray());
-			});
-		}
-	}
+    @CommandClass(helpText = ["Spawn", "Teleport to spawn."])
+    inner class SpawnCommand : ICommand2MC() {
+        @Subcommand
+        fun def(player: Player) {
+            if (targetServer.get().isEmpty()) {
+                player.sendMessage("\${ChatColor.AQUA}Teleporting to spawn...")
+                try {
+                    if (MainPlugin.ess != null) MainPlugin.ess!!.getUser(player).teleport
+                        .teleport(spawnloc, Trade(BigDecimal.ZERO, MainPlugin.ess), PlayerTeleportEvent.TeleportCause.COMMAND) else player.teleport(spawnloc!!)
+                } catch (e: Exception) {
+                    player.sendMessage("\${ChatColor.RED}Failed to teleport: $e")
+                }
+                return
+            }
+            val out = ByteStreams.newDataOutput()
+            out.writeUTF("Connect")
+            out.writeUTF(targetServer.get())
+            player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray())
+            Bukkit.getScheduler().runTask(plugin, Runnable {
+                //Delay it a bit
+                val outt = ByteStreams.newDataOutput()
+                outt.writeUTF("ForwardToPlayer") // So BungeeCord knows to forward it
+                outt.writeUTF(player.name)
+                outt.writeUTF("ChromaCore-Spawn") // The channel name to check if this your data
+                val msgbytes = ByteArrayOutputStream()
+                val msgout = DataOutputStream(msgbytes)
+                try {
+                    msgout.writeUTF("SendToSpawn") // You can do anything you want with msgout
+                } catch (exception: IOException) {
+                    exception.printStackTrace()
+                }
+                outt.writeShort(msgbytes.toByteArray().size)
+                outt.write(msgbytes.toByteArray())
+                player.sendPluginMessage(plugin, "BungeeCord", outt.toByteArray())
+            })
+        }
+    }
 }

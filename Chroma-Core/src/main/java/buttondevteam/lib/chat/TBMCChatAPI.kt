@@ -17,7 +17,8 @@ import java.util.function.Supplier
 
 object TBMCChatAPI {
     /**
-     * Sends a chat message to Minecraft. Make sure that the channel is registered with [.RegisterChatChannel].<br></br>
+     * Sends a chat message to Minecraft. Make sure that the channel is registered with [.RegisterChatChannel].
+     *
      * This will also send the error message to the sender, if they can't send the message.
      *
      * @param cm      The message to send
