@@ -15,18 +15,21 @@ import java.util.function.Function
  *
  * **Note:** The instance can become outdated if the config is reloaded.
  * @param config May be null for testing
- * @param getter The parameter is of a primitive type as returned by [Configuration.get]
- * @param setter The result should be a primitive type or string that can be retrieved correctly later
+ * @param path The path to the config value
+ * @param primitiveDef The default value, as stored in the config. Non-nullable as it needs to be saved to the config
+ * @param getter Function to convert primtive types to [T]. The parameter is of a primitive type as returned by [Configuration.get]
+ * @param setter Function to convert [T] to a primitive type. The result should be a primitive type or string that can be retrieved correctly later
+ * @param readOnly If true, changing the value will have no effect
+ * @param T The type of the config value. May be nullable if the getter cannot always return a value
  */
-class ConfigData<T> internal constructor(
+class ConfigData<T : Any?> internal constructor(
     val config: IHaveConfig?,
     override val path: String,
-    primitiveDef: Any?,
-    private val getter: Function<Any?, T>,
-    private val setter: Function<T, Any?>,
+    private val primitiveDef: Any,
+    private val getter: Function<Any, T>,
+    private val setter: Function<T, Any>,
     private val readOnly: Boolean
 ) : IConfigData<T> {
-    private val pdef: Any?
 
     /**
      * The config value should not change outside this instance
@@ -34,8 +37,6 @@ class ConfigData<T> internal constructor(
     private var value: T? = null
 
     init {
-        this.pdef = primitiveDef
-            ?: throw IllegalArgumentException("Either def or primitiveDef must be set. A getter and setter must be present when using primitiveDef.")
         get() //Generate config automatically
     }
 
@@ -47,28 +48,25 @@ class ConfigData<T> internal constructor(
         val cachedValue = value
         if (cachedValue != null) return cachedValue //Speed things up
         val config = config?.config
-        var `val`: Any?
-        if (config == null || !config.isSet(path)) {
-            `val` = pdef
-            setInternal(pdef) // Save default value even if read-only
-        } else `val` = config.get(path) //config==null: testing
-        if (`val` == null) //If it's set to null explicitly
-            `val` = pdef
-        fun convert(cval: Any?, cpdef: Any?): Any? {
-            return if (cpdef is Number) //If we expect a number
-                if (cval is Number)
-                    ChromaUtils.convertNumber(cval, cpdef.javaClass)
-                else cpdef //If we didn't get a number, return default (which is a number)
-            else if (cval is List<*> && cpdef != null && cpdef.javaClass.isArray)
-                cval.toTypedArray()
-            else cval
-        }
-        return getter.apply(convert(`val`, pdef)).also { value = it }
+        val freshValue = config?.get(path) ?: primitiveDef.also { setInternal(it) }
+        return getter.apply(convertPrimitiveType(freshValue)).also { value = it }
     }
 
-    override fun set(value: T?) { // TODO: Have a separate method for removing the value from the config and make this non-nullable
+    /**
+     * Converts a value to [T] from the representation returned by [Configuration.get].
+     */
+    private fun convertPrimitiveType(value: Any): Any {
+        return if (primitiveDef is Number) //If we expect a number
+            if (value is Number) ChromaUtils.convertNumber(value, primitiveDef.javaClass)
+            else primitiveDef //If we didn't get a number, return default (which is a number)
+        else if (value is List<*> && primitiveDef.javaClass.isArray) // If we got a list and we expected an array
+            value.toTypedArray<Any?>()
+        else value
+    }
+
+    override fun set(value: T) {
         if (readOnly) return  //Safety for Discord channel/role data
-        val `val` = value?.let { setter.apply(it) }
+        val `val` = setter.apply(value)
         setInternal(`val`)
         this.value = value
     }
@@ -86,6 +84,10 @@ class ConfigData<T> internal constructor(
 
     companion object {
         private val saveTasks = HashMap<Configuration, SaveTask>()
+
+        /**
+         * Signals that the config has changed and should be saved
+         */
         fun signalChange(config: IHaveConfig) {
             val cc = config.config
             val sa = config.saveAction
@@ -99,7 +101,7 @@ class ConfigData<T> internal constructor(
                 return
             }
             if (!MainPlugin.isInitialized) {
-                // If the plugin isn't initilized, we can't schedule a task - do it when the plugin is enabled
+                // If the plugin isn't initialized, we can't schedule a task - do it when the plugin is enabled
                 synchronized(saveTasks) {
                     saveTasks.put(root, SaveTask(null, sa))
                 }
@@ -118,6 +120,11 @@ class ConfigData<T> internal constructor(
             }
         }
 
+        /**
+         * Saves the config immediately, if it's scheduled to be saved. Used to save configs when the plugin is disabled or reloaded.
+         *
+         * Also performs cleanup of the save task, so it must be called when the ConfigData is invalidated (which is the above two cases).
+         */
         @JvmStatic
         fun saveNow(config: Configuration): Boolean {
             synchronized(saveTasks) {

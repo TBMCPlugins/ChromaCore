@@ -7,6 +7,8 @@ import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.ConfigData
 import buttondevteam.lib.architecture.ConfigData.Companion.saveNow
 import buttondevteam.lib.architecture.IHaveConfig
+import buttondevteam.lib.chat.Command2MCSender
+import buttondevteam.lib.chat.Command2Sender
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.configuration.file.YamlConfiguration
@@ -168,7 +170,7 @@ abstract class ChromaGamerBase {
 
     companion object {
         private const val TBMC_PLAYERS_DIR = "TBMC/players/"
-        private val senderConverters = ArrayList<Function<CommandSender, out Optional<out ChromaGamerBase>>>()
+        private val senderConverters = ArrayList<Function<Command2Sender, out Optional<out ChromaGamerBase>>>()
 
         /**
          * Holds data per user class
@@ -303,22 +305,41 @@ abstract class ChromaGamerBase {
          */
         @JvmStatic
         fun addConverter(converter: Function<CommandSender, Optional<out ChromaGamerBase>>) {
-            senderConverters.add(0, converter)
+            senderConverters.add(0) { sender ->
+                when (sender) {
+                    is Command2MCSender -> converter.apply(sender.sender)
+                    else -> Optional.empty()
+                }
+            }
         }
 
         /**
-         * Get from the given sender. the object's type will depend on the sender's type. May be null, but shouldn't be.
+         * Get from the given sender. the object's type will depend on the sender's type.
+         * Throws an exception if the sender type is not supported.
          *
          * @param sender The sender to use
-         * @return A user as returned by a converter or null if none can supply it
+         * @return A user as returned by a converter
          */
         @JvmStatic
-        fun getFromSender(sender: CommandSender): ChromaGamerBase? { // TODO: Use Command2Sender
+        @Deprecated("Use Command2Sender instead", ReplaceWith("getFromSender(Command2MCSender(sender, Channel.globalChat, sender))", "buttondevteam.lib.player.ChromaGamerBase.Companion.getFromSender", "buttondevteam.lib.chat.Command2MCSender", "buttondevteam.core.component.channel.Channel"))
+        fun getFromSender(sender: CommandSender): ChromaGamerBase {
+            return getFromSender(Command2MCSender(sender, Channel.globalChat, sender))
+        }
+
+        /**
+         * Get from the given sender. the object's type will depend on the sender's type.
+         * Throws an exception if the sender type is not supported.
+         *
+         * @param sender The sender to use
+         * @return A user as returned by a converter
+         */
+        @JvmStatic
+        fun getFromSender(sender: Command2Sender): ChromaGamerBase {
             for (converter in senderConverters) {
                 val ocg = converter.apply(sender)
                 if (ocg.isPresent) return ocg.get()
             }
-            return null
+            throw RuntimeException("No converter found for sender type ${sender::class.java.simpleName}")
         }
 
         fun saveUsers() {

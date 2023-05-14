@@ -1,7 +1,6 @@
 package buttondevteam.lib.architecture
 
 import buttondevteam.lib.architecture.config.IConfigData
-import java.util.ArrayList
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.UnaryOperator
@@ -23,7 +22,7 @@ class ListConfigData<T> internal constructor(
         return listConfig.get()
     }
 
-    override fun set(value: List?) {
+    override fun set(value: List) {
         listConfig.set(value)
     }
 

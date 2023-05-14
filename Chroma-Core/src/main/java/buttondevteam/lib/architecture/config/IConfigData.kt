@@ -1,8 +1,18 @@
 package buttondevteam.lib.architecture.config
 
 interface IConfigData<T> {
-    fun get(): T?
-    fun set(value: T?)
+    /**
+     * Gets the value from the config using the getter specified for the config. If the config is not set, the default value is returned.
+     */
+    fun get(): T
 
+    /**
+     * Sets the value in the config using the setter specified for the config. If the config is read-only, this does nothing.
+     */
+    fun set(value: T)
+
+    /**
+     * The path to the config value.
+     */
     val path: String
 }

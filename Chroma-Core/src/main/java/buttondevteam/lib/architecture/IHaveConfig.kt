@@ -2,7 +2,6 @@ package buttondevteam.lib.architecture
 
 import buttondevteam.lib.architecture.config.IConfigData
 import org.bukkit.configuration.ConfigurationSection
-import java.util.*
 import java.util.function.Function
 
 /**
@@ -26,12 +25,12 @@ class IHaveConfig(
      * if you're not using primitive types directly.
      * These primitive types are strings, numbers, characters, booleans and lists of these things.
      *
-     * @param path    The path in config to use
-     * @param def     The value to use by default
-     * @param getter  A function that converts a primitive representation to the correct value
-     * @param setter  A function that converts a value to a primitive representation
-     * @param primDef Whether the default value is a primitive value that needs to be converted to the correct type using the getter
-     * @param <T>    The type of this variable (can be any class)
+     * @param path     The path in config to use
+     * @param def      The value to use by default
+     * @param getter   A function that converts a primitive representation to the correct value
+     * @param setter   A function that converts a value to a primitive representation
+     * @param readOnly If true, changing the value will have no effect
+     * @param <T>     The type of this variable (can be any class)
      * @return The data object that can be used to get or set the value
     </T> */
     @Suppress("UNCHECKED_CAST")
@@ -39,11 +38,12 @@ class IHaveConfig(
     fun <T> getData(
         path: String,
         def: T,
-        getter: Function<Any?, T>? = null,
-        setter: Function<T, Any?>? = null,
+        getter: Function<Any, T>? = null,
+        setter: Function<T, Any>? = null,
         readOnly: Boolean = false
     ): ConfigData<T> {
-        return getData(path, getter ?: Function { it as T }, setter ?: Function { it }, def, readOnly)
+        val safeSetter = setter ?: Function { it ?: throw RuntimeException("No setter specified for nullable config data $path!") }
+        return getData(path, getter ?: Function { it as T }, safeSetter, safeSetter.apply(def), readOnly)
     }
 
     /**
@@ -61,9 +61,9 @@ class IHaveConfig(
     @JvmOverloads
     fun <T> getData(
         path: String,
-        getter: Function<Any?, T>,
-        setter: Function<T, Any?>,
-        primitiveDef: Any?,
+        getter: Function<Any, T>,
+        setter: Function<T, Any>,
+        primitiveDef: Any,
         readOnly: Boolean = false
     ): ConfigData<T> {
         val data =

@@ -8,7 +8,7 @@ class ChatMessage internal constructor(
     /**
      * The sender which sends the message.
      */
-    val sender: CommandSender,
+    val sender: Command2Sender,
     /**
      * The Chroma user which sends the message.
      */
