@@ -3,17 +3,17 @@ package buttondevteam.core.component.channel
 import buttondevteam.lib.TBMCSystemChatEvent
 import buttondevteam.lib.chat.Color
 import buttondevteam.lib.chat.TBMCChatAPI
-import org.bukkit.command.CommandSender
+import buttondevteam.lib.player.ChromaGamerBase
 
 class ChatRoom(displayname: String, color: Color, command: String) : Channel(
     displayname, color, command, null // TODO: Custom filter for rooms using abstract method
 ) {
-    private val usersInRoom: MutableList<CommandSender> = ArrayList()
-    private fun isInRoom(sender: CommandSender): Boolean {
+    private val usersInRoom: MutableList<ChromaGamerBase> = ArrayList()
+    private fun isInRoom(sender: ChromaGamerBase): Boolean {
         return usersInRoom.contains(sender)
     }
 
-    fun joinRoom(sender: CommandSender) {
+    fun joinRoom(sender: ChromaGamerBase) {
         usersInRoom.add(sender)
         TBMCChatAPI.SendSystemMessage(
             this,
@@ -23,7 +23,7 @@ class ChatRoom(displayname: String, color: Color, command: String) : Channel(
         ) //Always show message in the same kind of channel
     }
 
-    fun leaveRoom(sender: CommandSender) {
+    fun leaveRoom(sender: ChromaGamerBase) {
         usersInRoom.remove(sender)
         TBMCChatAPI.SendSystemMessage(
             this,

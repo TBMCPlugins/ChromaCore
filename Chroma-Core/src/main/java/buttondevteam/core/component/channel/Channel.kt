@@ -6,6 +6,7 @@ import buttondevteam.lib.architecture.ConfigData
 import buttondevteam.lib.architecture.IHaveConfig
 import buttondevteam.lib.architecture.ListConfigData
 import buttondevteam.lib.chat.Color
+import buttondevteam.lib.player.ChromaGamerBase
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -75,14 +76,14 @@ open class Channel
      * @param sender The user we're sending to
      * @param score  The (source) score to compare with the user's
      */
-    fun shouldSendTo(sender: CommandSender, score: Int): Boolean {
+    fun shouldSendTo(sender: ChromaGamerBase, score: Int): Boolean {
         return score == getMCScore(sender) //If there's any error, the score won't be equal
     }
 
     /**
      * Note: Errors are sent to the sender automatically
      */
-    fun getMCScore(sender: CommandSender): Int {
+    fun getMCScore(sender: ChromaGamerBase): Int {
         return getRTR(sender).score //No need to check if there was an error
     }
 
@@ -91,11 +92,11 @@ open class Channel
      *
      * Null means don't send
      */
-    fun getGroupID(sender: CommandSender): String? {
+    fun getGroupID(sender: ChromaGamerBase): String? {
         return getRTR(sender).groupID //No need to check if there was an error
     }
 
-    fun getRTR(sender: CommandSender): RecipientTestResult {
+    fun getRTR(sender: ChromaGamerBase): RecipientTestResult {
         return filterAndErrorMSG?.apply(sender) ?: RecipientTestResult(SCORE_SEND_OK, GROUP_EVERYONE)
     }
 
@@ -188,13 +189,13 @@ open class Channel
          * @return If has access
          */
         fun inGroupFilter(permgroup: String?): Function<CommandSender, RecipientTestResult> {
+            // TODO: This is Minecraft specific. Change all of this so it supports other ways of checking permissions.
+            // TODO: The commands have to be Minecraft specific, but the channels should be generic.
+            // TODO: Implement a way to check permissions for other platforms. Maybe specific strings, like "admin" or "mod"?
             return noScoreResult(
                 { s ->
                     s.isOp || s is Player && permgroup?.let { pg ->
-                        MainPlugin.permission?.playerInGroup(
-                            s,
-                            pg
-                        )
+                        MainPlugin.permission.playerInGroup(s, pg)
                     } ?: false
                 },
                 "You need to be a(n) " + (permgroup ?: "OP") + " to use this channel."

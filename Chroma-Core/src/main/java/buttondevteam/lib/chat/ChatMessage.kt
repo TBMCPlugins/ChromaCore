@@ -1,16 +1,11 @@
 package buttondevteam.lib.chat
 
 import buttondevteam.lib.player.ChromaGamerBase
-import org.bukkit.command.CommandSender
 import java.util.*
 
 class ChatMessage internal constructor(
     /**
-     * The sender which sends the message.
-     */
-    val sender: Command2Sender,
-    /**
-     * The Chroma user which sends the message.
+     * The Chroma user who sent the message.
      */
     val user: ChromaGamerBase,
     /**
@@ -24,7 +19,7 @@ class ChatMessage internal constructor(
     /**
      * The sender which we should check for permissions. Same as [.sender] by default.
      */
-    val permCheck: CommandSender,
+    val permCheck: ChromaGamerBase,
     /**
      * The origin of the message, "Minecraft" or "Discord" for example. May be displayed to the user.
      *
@@ -34,20 +29,19 @@ class ChatMessage internal constructor(
 ) {
 
     class ChatMessageBuilder internal constructor(
-        private var sender: CommandSender,
         private var user: ChromaGamerBase,
         private var message: String,
         private var origin: String
     ) {
         private var fromCommand = false
-        private var permCheck: CommandSender? = null
+        private var permCheck: ChromaGamerBase? = null
 
         fun fromCommand(fromCommand: Boolean): ChatMessageBuilder {
             this.fromCommand = fromCommand
             return this
         }
 
-        fun permCheck(permCheck: CommandSender): ChatMessageBuilder {
+        fun permCheck(permCheck: ChromaGamerBase): ChatMessageBuilder {
             this.permCheck = permCheck
             return this
         }
@@ -58,20 +52,20 @@ class ChatMessage internal constructor(
         }
 
         fun build(): ChatMessage {
-            return ChatMessage(sender, user, message, fromCommand, permCheck ?: sender, origin)
+            return ChatMessage(user, message, fromCommand, permCheck ?: user, origin)
         }
 
         override fun toString(): String {
-            return "ChatMessage.ChatMessageBuilder(sender=$sender, user=$user, message=$message, fromCommand=$fromCommand, permCheck=$permCheck, origin=$origin)"
+            return "ChatMessage.ChatMessageBuilder(user=$user, message=$message, fromCommand=$fromCommand, permCheck=$permCheck, origin=$origin)"
         }
     }
 
     companion object {
         @JvmStatic
-        fun builder(sender: CommandSender, user: ChromaGamerBase, message: String): ChatMessageBuilder {
+        fun builder(user: ChromaGamerBase, message: String): ChatMessageBuilder {
             return ChatMessageBuilder(
-                sender, user, message,
-                user.folder.substring(0, 1).uppercase(Locale.getDefault()) + user.folder.substring(1)
+                user, message,
+                user.folder.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
             )
         }
     }

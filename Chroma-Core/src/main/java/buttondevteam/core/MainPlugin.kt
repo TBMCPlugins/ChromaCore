@@ -83,7 +83,7 @@ class MainPlugin : ButtonPlugin() {
         ChromaGamerBase.addConverter { commandSender: CommandSender ->
             Optional.ofNullable(
                 if (commandSender is ConsoleCommandSender || commandSender is BlockCommandSender)
-                    TBMCPlayerBase.getPlayer(UUID(0, 0), TBMCPlayer::class.java)
+                    TBMCPlayerBase.getConsole()
                 else null
             )
         }

@@ -1,7 +1,7 @@
 package buttondevteam.lib
 
 import buttondevteam.core.component.channel.Channel
-import org.bukkit.command.CommandSender
+import buttondevteam.lib.player.ChromaGamerBase
 import org.bukkit.event.Cancellable
 import org.bukkit.event.Event
 
@@ -23,14 +23,14 @@ abstract class TBMCChatEventBase(
     /**
      * Note: Errors are sent to the sender automatically
      */
-    open fun shouldSendTo(sender: CommandSender): Boolean {
+    open fun shouldSendTo(sender: ChromaGamerBase): Boolean {
         return channel.shouldSendTo(sender, score)
     }
 
     /**
      * Note: Errors are sent to the sender automatically
      */
-    open fun getMCScore(sender: CommandSender): Int {
+    open fun getMCScore(sender: ChromaGamerBase): Int {
         return channel.getMCScore(sender)
     }
 
@@ -39,7 +39,7 @@ abstract class TBMCChatEventBase(
      *
      * Null means don't send
      */
-    open fun getGroupID(sender: CommandSender): String? {
+    open fun getGroupID(sender: ChromaGamerBase): String? {
         return channel.getGroupID(sender)
     }
 

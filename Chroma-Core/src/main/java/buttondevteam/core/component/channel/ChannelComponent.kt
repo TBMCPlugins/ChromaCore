@@ -5,7 +5,6 @@ import buttondevteam.lib.TBMCSystemChatEvent.BroadcastTarget
 import buttondevteam.lib.architecture.Component
 import buttondevteam.lib.chat.*
 import buttondevteam.lib.chat.Command2.*
-import buttondevteam.lib.player.ChromaGamerBase
 import org.bukkit.ChatColor
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -39,22 +38,17 @@ class ChannelComponent : Component<JavaPlugin>() {
 
         @Subcommand
         fun def(senderMC: Command2MCSender, @OptionalArg @TextArg message: String?) {
-            val sender = senderMC.sender
-            val user = ChromaGamerBase.getFromSender(sender)
-            if (user == null) {
-                sender.sendMessage("${ChatColor.RED}You can't use channels from this platform.")
-                return
-            }
+            val user = senderMC.sender
             if (message == null) {
                 val oldch = user.channel.get()
-                if (oldch is ChatRoom) oldch.leaveRoom(sender)
+                if (oldch is ChatRoom) oldch.leaveRoom(user)
                 if (oldch == channel) user.channel.set(Channel.globalChat) else {
                     user.channel.set(channel)
-                    if (channel is ChatRoom) channel.joinRoom(sender)
+                    if (channel is ChatRoom) channel.joinRoom(user)
                 }
-                sender.sendMessage("${ChatColor.GOLD}You are now talking in: ${ChatColor.AQUA}" + user.channel.get().displayName.get())
+                user.sendMessage("${ChatColor.GOLD}You are now talking in: ${ChatColor.AQUA}" + user.channel.get().displayName.get())
             } else TBMCChatAPI.sendChatMessage(
-                ChatMessage.builder(sender, user, message).fromCommand(true)
+                ChatMessage.builder(user, message).fromCommand(true)
                     .permCheck(senderMC.permCheck).build(), channel
             )
         }

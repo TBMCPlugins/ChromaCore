@@ -10,6 +10,7 @@ import java.util.function.Supplier
 
 object ChromaUtils {
     @JvmStatic
+    @Deprecated("Use ChromaGamingBase.name", ReplaceWith("ChromaGamerBase.getFromSender(sender).name"))
     fun getDisplayName(sender: CommandSender): String {
         return when (sender) {
             is IHaveFancyName -> sender.fancyName

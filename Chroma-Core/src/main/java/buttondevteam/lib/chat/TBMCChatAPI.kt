@@ -28,11 +28,10 @@ object TBMCChatAPI {
     @JvmOverloads
     @JvmStatic
     fun sendChatMessage(cm: ChatMessage, channel: Channel = cm.user.channel.get()): Boolean {
-        if (!channelList.contains(channel)) throw RuntimeException(
-            "Channel " + channel.displayName.get() + " not registered!"
-        )
+        if (!channelList.contains(channel))
+            throw RuntimeException("Channel ${channel.displayName.get()} not registered!")
         if (!channel.isEnabled.get()) {
-            cm.sender.sendMessage("${ChatColor.RED}The channel '${channel.displayName.get()}' is disabled!")
+            cm.user.sendMessage("${ChatColor.RED}The channel '${channel.displayName.get()}' is disabled!")
             return true //Cancel sending if channel is disabled
         }
         val task = Supplier {

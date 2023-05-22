@@ -10,6 +10,7 @@ import buttondevteam.lib.chat.commands.CommandUtils.coreExecutable
 import buttondevteam.lib.chat.commands.MCCommandSettings
 import buttondevteam.lib.chat.commands.SubcommandData
 import buttondevteam.lib.player.ChromaGamerBase
+import buttondevteam.lib.player.TBMCPlayerBase
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder.literal
 import com.mojang.brigadier.builder.RequiredArgumentBuilder
@@ -21,9 +22,7 @@ import me.lucko.commodore.CommodoreProvider
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.Location
-import org.bukkit.OfflinePlayer
 import org.bukkit.command.*
-import org.bukkit.entity.Player
 import org.bukkit.event.Listener
 import org.bukkit.permissions.Permission
 import org.bukkit.permissions.PermissionDefault
@@ -60,8 +59,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
     }
 
     override fun hasPermission(sender: Command2MCSender, data: SubcommandData<ICommand2MC, Command2MCSender>): Boolean {
-        val mcsender = sender.sender
-        if (mcsender is ConsoleCommandSender) return true //Always allow the console
+        if (sender.sender.isConsole) return true //Always allow the console
 
         var p = true
         val cmdperm = "chroma.command.${data.fullPath.replace(' ', '.')}"
@@ -73,12 +71,11 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         for (perm in perms) {
             if (perm != null) {
                 if (p) { //Use OfflinePlayer to avoid fetching player data
-                    p = if (mcsender is OfflinePlayer) MainPlugin.permission.playerHas(
-                        if (mcsender is Player) mcsender.location.world?.name else null,
-                        mcsender as OfflinePlayer,
+                    p = MainPlugin.permission.playerHas(
+                        sender.sender.player?.location?.world?.name,
+                        sender.sender.offlinePlayer,
                         perm
-                    ) else false //Use sender's method
-                    if (!p) p = mcsender.hasPermission(perm)
+                    )
                 } else break //If any of the permissions aren't granted then don't allow
             }
         }
@@ -116,13 +113,13 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         if (original != null) {
             return original
         }
-        // Check Bukkit sender type
+        // Check Bukkit sender type - TODO: This is no longer the Bukkit sender type
         if (senderType.isAssignableFrom(sender.sender.javaClass))
             return sender.sender
         //The command expects a user of our system
         if (ChromaGamerBase::class.java.isAssignableFrom(senderType)) {
-            val cg = ChromaGamerBase.getFromSender(sender.sender)
-            if (cg?.javaClass == senderType)
+            val cg = sender.sender
+            if (cg.javaClass == senderType)
                 return cg
         }
         return null
@@ -187,18 +184,10 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
     }
 
     private fun executeCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
-        val user = ChromaGamerBase.getFromSender(sender)
-        if (user == null) {
-            TBMCCoreAPI.SendException(
-                "Failed to run Bukkit command for user!",
-                Throwable("No Chroma user found"),
-                MainPlugin.instance
-            )
-            sender.sendMessage("${ChatColor.RED}An internal error occurred.")
-            return true
-        }
+        val user = ChromaGamerBase.getFromSender(sender) // TODO: Senders should only be used for TBMCPlayerBase classes.
         ///trim(): remove space if there are no args
-        handleCommand(Command2MCSender(sender, user.channel.get(), sender),
+        handleCommand(
+            Command2MCSender(user as TBMCPlayerBase, user.channel.get(), sender),
             ("/${command.name} ${args.joinToString(" ")}").trim { it <= ' ' }, false
         )
         return true
