@@ -57,6 +57,11 @@ class MainPlugin : ButtonPlugin() {
      */
     val prioritizeCustomCommands = iConfig.getData("prioritizeCustomCommands", false)
 
+    /**
+     * The permission group to use for players who are not in the server.
+     */ // TODO: Combine the channel access test with command permissions (with a generic implementation)
+    val externalPlayerPermissionGroup get() = iConfig.getData("externalPlayerPermissionGroup", "default")
+
     public override fun pluginEnable() {
         instance = this
         val pdf = description

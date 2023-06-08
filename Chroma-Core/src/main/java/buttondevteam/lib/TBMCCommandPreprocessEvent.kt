@@ -2,7 +2,6 @@ package buttondevteam.lib
 
 import buttondevteam.core.component.channel.Channel
 import buttondevteam.lib.player.ChromaGamerBase
-import org.bukkit.command.CommandSender
 import org.bukkit.event.Cancellable
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
@@ -17,7 +16,7 @@ class TBMCCommandPreprocessEvent(
     val sender: ChromaGamerBase,
     val channel: Channel,
     val message: String,
-    val permCheck: CommandSender
+    val permCheck: ChromaGamerBase
 ) : Event(), Cancellable {
     private var cancelled = false
     override fun getHandlers(): HandlerList {

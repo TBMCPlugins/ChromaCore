@@ -1,15 +1,12 @@
 package buttondevteam.core.component.channel
 
 import buttondevteam.core.ComponentManager.get
-import buttondevteam.core.MainPlugin
 import buttondevteam.lib.architecture.ConfigData
 import buttondevteam.lib.architecture.IHaveConfig
 import buttondevteam.lib.architecture.ListConfigData
 import buttondevteam.lib.chat.Color
 import buttondevteam.lib.player.ChromaGamerBase
 import org.bukkit.Bukkit
-import org.bukkit.command.CommandSender
-import org.bukkit.entity.Player
 import java.util.*
 import java.util.function.Function
 import java.util.function.Predicate
@@ -45,7 +42,7 @@ open class Channel
      * Only those with access can see the messages.
      * If null, everyone has access.
      */
-    private val filterAndErrorMSG: Function<CommandSender, RecipientTestResult>?
+    private val filterAndErrorMSG: Function<ChromaGamerBase, RecipientTestResult>?
 ) {
     private val config: IHaveConfig? = null // TODO: Use this
 
@@ -188,28 +185,27 @@ open class Channel
          * @param permgroup The group that can access the channel or **null** to only allow OPs.
          * @return If has access
          */
-        fun inGroupFilter(permgroup: String?): Function<CommandSender, RecipientTestResult> {
-            // TODO: This is Minecraft specific. Change all of this so it supports other ways of checking permissions.
-            // TODO: The commands have to be Minecraft specific, but the channels should be generic.
-            // TODO: Implement a way to check permissions for other platforms. Maybe specific strings, like "admin" or "mod"?
-            return noScoreResult(
-                { s ->
-                    s.isOp || s is Player && permgroup?.let { pg ->
-                        MainPlugin.permission.playerInGroup(s, pg)
-                    } ?: false
-                },
-                "You need to be a(n) " + (permgroup ?: "OP") + " to use this channel."
-            )
+        @JvmStatic
+        fun inGroupFilter(permgroup: String?): Function<ChromaGamerBase, RecipientTestResult> {
+            return Function { it.checkChannelInGroup(permgroup) }
         }
 
+        @JvmStatic
         fun noScoreResult(
-            filter: Predicate<CommandSender>,
+            filter: Predicate<ChromaGamerBase>,
             errormsg: String?
-        ): Function<CommandSender, RecipientTestResult> {
-            return Function { s ->
-                if (filter.test(s)) RecipientTestResult(SCORE_SEND_OK, GROUP_EVERYONE)
-                else RecipientTestResult(errormsg)
-            }
+        ): Function<ChromaGamerBase, RecipientTestResult> {
+            return Function { noScoreResult(filter, errormsg, it) }
+        }
+
+        @JvmStatic
+        fun noScoreResult(
+            filter: Predicate<ChromaGamerBase>,
+            errormsg: String?,
+            user: ChromaGamerBase
+        ): RecipientTestResult {
+            return if (filter.test(user)) RecipientTestResult(SCORE_SEND_OK, GROUP_EVERYONE)
+            else RecipientTestResult(errormsg)
         }
 
         lateinit var globalChat: Channel

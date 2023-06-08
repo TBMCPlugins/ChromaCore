@@ -167,6 +167,13 @@ abstract class ChromaGamerBase : Command2Sender {
                     .findAny().orElseThrow { RuntimeException("Channel $id not found!") }
             }, { ch -> ch.identifier })
 
+    /**
+     * Check channel access by checking if the user is in the given group. If the group is null, check if the user is OP.
+     *
+     * Note that these groups originally come from Minecraft.
+     */ // TODO: Allow if a connected account has access
+    abstract fun checkChannelInGroup(group: String?): Channel.RecipientTestResult
+
     companion object {
         private const val TBMC_PLAYERS_DIR = "TBMC/players/"
         private val senderConverters = ArrayList<Function<CommandSender, out Optional<out ChromaGamerBase>>>()

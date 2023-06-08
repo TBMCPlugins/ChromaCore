@@ -67,7 +67,7 @@ class PlayerListener(val plugin: MainPlugin) : Listener {
     private fun handlePreprocess(sender: CommandSender, message: String, event: Cancellable) {
         if (event.isCancelled) return
         val cg = ChromaGamerBase.getFromSender(sender)
-        val ev = TBMCCommandPreprocessEvent(cg, cg.channel.get(), message, sender)
+        val ev = TBMCCommandPreprocessEvent(cg, cg.channel.get(), message, cg)
         Bukkit.getPluginManager().callEvent(ev)
         if (ev.isCancelled) event.isCancelled = true //Cancel the original event
     }
@@ -76,13 +76,7 @@ class PlayerListener(val plugin: MainPlugin) : Listener {
     fun onTBMCPreprocess(event: TBMCCommandPreprocessEvent) {
         if (event.isCancelled) return
         try {
-            val mcuser = event.sender.getAs(TBMCPlayerBase::class.java)
-            if (mcuser == null) { // TODO: The chat should continue to support unconnected accounts.
-                event.sender.sendMessage("You need to have your Minecraft account connected to send commands.")
-                event.isCancelled = true
-                return
-            }
-            val sender = Command2MCSender(mcuser, event.channel, event.permCheck)
+            val sender = Command2MCSender(event.sender, event.channel, event.permCheck)
             event.isCancelled = ButtonPlugin.command2MC.handleCommand(sender, event.message)
         } catch (e: Exception) {
             TBMCCoreAPI.SendException(

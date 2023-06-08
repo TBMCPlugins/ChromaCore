@@ -59,7 +59,22 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
     }
 
     override fun hasPermission(sender: Command2MCSender, data: SubcommandData<ICommand2MC, Command2MCSender>): Boolean {
-        if (sender.sender.isConsole) return true //Always allow the console
+        val defWorld = Bukkit.getWorlds().first().name
+        val check = if (sender.permCheck !is TBMCPlayerBase) ({
+            MainPlugin.permission.groupHas(
+                defWorld,
+                MainPlugin.instance.externalPlayerPermissionGroup.get(),
+                it
+            )
+        })
+        else if (sender.permCheck.isConsole) ({ true }) //Always allow the console
+        else ({ perm: String ->
+            MainPlugin.permission.playerHas(
+                sender.permCheck.player?.location?.world?.name ?: defWorld,
+                sender.permCheck.offlinePlayer,
+                perm
+            )
+        })
 
         var p = true
         val cmdperm = "chroma.command.${data.fullPath.replace(' ', '.')}"
@@ -71,11 +86,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         for (perm in perms) {
             if (perm != null) {
                 if (p) { //Use OfflinePlayer to avoid fetching player data
-                    p = MainPlugin.permission.playerHas(
-                        sender.sender.player?.location?.world?.name,
-                        sender.sender.offlinePlayer,
-                        perm
-                    )
+                    p = check(perm)
                 } else break //If any of the permissions aren't granted then don't allow
             }
         }
@@ -113,14 +124,18 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         if (original != null) {
             return original
         }
-        // Check Bukkit sender type - TODO: This is no longer the Bukkit sender type
-        if (senderType.isAssignableFrom(sender.sender.javaClass))
-            return sender.sender
+        val cg = sender.sender
+        if (senderType.isAssignableFrom(cg.javaClass))
+            return cg
+        // Check Bukkit sender type
+        if (cg is TBMCPlayerBase) {
+            if (senderType.isAssignableFrom(cg.offlinePlayer.javaClass)) return cg.offlinePlayer
+            if (cg.player?.javaClass?.let { senderType.isAssignableFrom(it) } == true) return cg.player
+        }
         //The command expects a user of our system
         if (ChromaGamerBase::class.java.isAssignableFrom(senderType)) {
-            val cg = sender.sender
-            if (cg.javaClass == senderType)
-                return cg
+            @Suppress("UNCHECKED_CAST")
+            return sender.sender.getAs(senderType as Class<out ChromaGamerBase>)
         }
         return null
     }
@@ -187,7 +202,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         val user = ChromaGamerBase.getFromSender(sender) // TODO: Senders should only be used for TBMCPlayerBase classes.
         ///trim(): remove space if there are no args
         handleCommand(
-            Command2MCSender(user as TBMCPlayerBase, user.channel.get(), sender),
+            Command2MCSender(user as TBMCPlayerBase, user.channel.get(), user),
             ("/${command.name} ${args.joinToString(" ")}").trim { it <= ' ' }, false
         )
         return true

@@ -1,5 +1,7 @@
 package buttondevteam.lib.player
 
+import buttondevteam.core.MainPlugin
+import buttondevteam.core.component.channel.Channel
 import buttondevteam.lib.architecture.IHaveConfig
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
@@ -45,7 +47,6 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
     }
 
     override fun sendMessage(message: String) {
-        // TODO: Random senders (Discord) won't receive messages. Including when trying to chat.
         player?.sendMessage(message)
     }
 
@@ -55,6 +56,18 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
 
     override fun getName(): String {
         return playerName.get()
+    }
+
+    override fun checkChannelInGroup(group: String?): Channel.RecipientTestResult {
+        return Channel.noScoreResult(
+            { s ->
+                s is TBMCPlayerBase && (s.offlinePlayer.isOp || s.player != null && group?.let { pg ->
+                    MainPlugin.permission.playerInGroup(s.player, pg)
+                } ?: false)
+            },
+            "You need to be a(n) ${group ?: "OP"} to use this channel.",
+            this
+        )
     }
 
     companion object {

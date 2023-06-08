@@ -10,9 +10,9 @@ import buttondevteam.lib.TBMCChatEvent
 import buttondevteam.lib.TBMCChatPreprocessEvent
 import buttondevteam.lib.TBMCSystemChatEvent
 import buttondevteam.lib.TBMCSystemChatEvent.BroadcastTarget
+import buttondevteam.lib.player.ChromaGamerBase
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
-import org.bukkit.command.CommandSender
 import java.util.function.Supplier
 
 object TBMCChatAPI {
@@ -38,7 +38,7 @@ object TBMCChatAPI {
             val rtr = getScoreOrSendError(channel, cm.permCheck)
             val score = rtr.score
             if (score == Channel.SCORE_SEND_NOPE || rtr.groupID == null) return@Supplier true
-            val eventPre = TBMCChatPreprocessEvent(cm.sender, channel, cm.message)
+            val eventPre = TBMCChatPreprocessEvent(cm.user, channel, cm.message)
             Bukkit.getPluginManager().callEvent(eventPre)
             if (eventPre.isCancelled) return@Supplier true
             cm.message = eventPre.message
@@ -74,7 +74,7 @@ object TBMCChatAPI {
         return callEventAsync(event)
     }
 
-    private fun getScoreOrSendError(channel: Channel, sender: CommandSender): RecipientTestResult {
+    private fun getScoreOrSendError(channel: Channel, sender: ChromaGamerBase): RecipientTestResult {
         val result = channel.getRTR(sender)
         if (result.errormessage != null) sender.sendMessage("${ChatColor.RED}" + result.errormessage)
         return result
