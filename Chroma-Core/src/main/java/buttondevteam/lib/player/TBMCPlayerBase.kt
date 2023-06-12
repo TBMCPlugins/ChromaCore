@@ -55,7 +55,7 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
     }
 
     override fun getName(): String {
-        return playerName.get()
+        return player?.displayName ?: playerName.get()
     }
 
     override fun checkChannelInGroup(group: String?): Channel.RecipientTestResult {

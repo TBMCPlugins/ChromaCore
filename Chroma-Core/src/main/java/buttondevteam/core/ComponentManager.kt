@@ -23,7 +23,7 @@ object ComponentManager {
      * Enables components based on a configuration - any component registered afterwards will be also enabled
      */
     fun enableComponents() {
-        components.values.stream().filter { c: Component<out JavaPlugin> -> c.shouldBeEnabled.get() }
+        components.values.stream().filter { c: Component<out JavaPlugin> -> c.shouldBeEnabled }
             .forEach { c ->
                 try {
                     setComponentEnabled(c, true)

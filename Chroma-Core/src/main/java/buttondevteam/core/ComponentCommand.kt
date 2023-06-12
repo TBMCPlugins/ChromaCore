@@ -74,7 +74,7 @@ class ComponentCommand : ICommand2MC() {
             val oc = getComponentOrError(plugin, component, sender)
             if (!oc.isPresent) return true
             setComponentEnabled(oc.get(), enable)
-            if (permanent) oc.get().shouldBeEnabled.set(enable)
+            if (permanent) oc.get().shouldBeEnabled = enable
             sender.sendMessage("${oc.get().javaClass.simpleName} ${if (enable) "en" else "dis"}abled ${if (permanent) "permanently" else "temporarily"}.")
         } catch (e: Exception) {
             TBMCCoreAPI.SendException(

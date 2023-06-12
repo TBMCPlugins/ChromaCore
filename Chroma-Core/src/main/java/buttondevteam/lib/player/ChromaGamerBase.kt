@@ -4,7 +4,6 @@ import buttondevteam.core.MainPlugin
 import buttondevteam.core.component.channel.Channel
 import buttondevteam.core.component.channel.Channel.Companion.getChannels
 import buttondevteam.lib.TBMCCoreAPI
-import buttondevteam.lib.architecture.ConfigData
 import buttondevteam.lib.architecture.ConfigData.Companion.saveNow
 import buttondevteam.lib.architecture.IHaveConfig
 import buttondevteam.lib.chat.Command2Sender
@@ -160,7 +159,7 @@ abstract class ChromaGamerBase : Command2Sender {
     }
 
     //-----------------------------------------------------------------
-    val channel: ConfigData<Channel>
+    val channel
         get() = config.getData("channel", Channel.globalChat,
             { id ->
                 getChannels().filter { it.identifier.equals(id as String, ignoreCase = true) }

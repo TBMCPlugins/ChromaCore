@@ -1,5 +1,7 @@
 package buttondevteam.lib.architecture
 
+import buttondevteam.lib.architecture.config.ConfigDataDelegate
+import buttondevteam.lib.architecture.config.ConfigDataDelegate.Companion.delegate
 import buttondevteam.lib.architecture.config.IConfigData
 import org.bukkit.configuration.ConfigurationSection
 import java.util.function.Function
@@ -41,7 +43,7 @@ class IHaveConfig(
         getter: Function<Any, T>? = null,
         setter: Function<T, Any>? = null,
         readOnly: Boolean = false
-    ): ConfigData<T> {
+    ): ConfigDataDelegate<T> {
         val safeSetter = setter ?: Function { it ?: throw RuntimeException("No setter specified for nullable config data $path!") }
         return getData(path, getter ?: Function { it as T }, safeSetter, safeSetter.apply(def), readOnly)
     }
@@ -65,10 +67,10 @@ class IHaveConfig(
         setter: Function<T, Any>,
         primitiveDef: Any,
         readOnly: Boolean = false
-    ): ConfigData<T> {
+    ): ConfigDataDelegate<T> {
         val data =
             datamap[path] ?: ConfigData(this, path, primitiveDef, getter, setter, readOnly).also { datamap[path] = it }
-        return data as ConfigData<T>
+        return (data as ConfigData<T>).delegate()
     }
 
     /**
@@ -86,7 +88,7 @@ class IHaveConfig(
         elementGetter: Function<Any?, T>? = null,
         elementSetter: Function<T, Any?>? = null,
         readOnly: Boolean = false
-    ): ListConfigData<T> {
+    ): ConfigDataDelegate<ListConfigData<T>.List> {
         var data = datamap[path]
         if (data == null) datamap[path] = ListConfigData(
             this,
@@ -97,7 +99,7 @@ class IHaveConfig(
             readOnly
         ).also { data = it }
         @Suppress("UNCHECKED_CAST")
-        return data as ListConfigData<T>
+        return (data as ListConfigData<T>).delegate()
     }
 
     /**

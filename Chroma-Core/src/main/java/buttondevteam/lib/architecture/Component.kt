@@ -27,8 +27,7 @@ abstract class Component<TP : JavaPlugin> {
     private val data //TODO
         : IHaveConfig? = null
 
-    val shouldBeEnabled: ConfigData<Boolean>
-        get() = config.getData("enabled", javaClass.getAnnotation(ComponentMetadata::class.java)?.enabledByDefault ?: true)
+    var shouldBeEnabled by config.getData("enabled", javaClass.getAnnotation(ComponentMetadata::class.java)?.enabledByDefault ?: true)
 
     fun log(message: String) {
         plugin.logger.info("[$className] $message")
@@ -210,7 +209,7 @@ abstract class Component<TP : JavaPlugin> {
                     component.updateConfig()
                     _components[component.javaClass] = component
                     if (plugin is ButtonPlugin) plugin.componentStack.push(component)
-                    if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled.get()) {
+                    if (ComponentManager.areComponentsEnabled() && component.shouldBeEnabled) {
                         return try { //Enable components registered after the previous ones getting enabled
                             setComponentEnabled(component, true)
                             true

@@ -1,9 +1,7 @@
 package buttondevteam.core.component.channel
 
 import buttondevteam.core.ComponentManager.get
-import buttondevteam.lib.architecture.ConfigData
 import buttondevteam.lib.architecture.IHaveConfig
-import buttondevteam.lib.architecture.ListConfigData
 import buttondevteam.lib.chat.Color
 import buttondevteam.lib.player.ChromaGamerBase
 import org.bukkit.Bukkit
@@ -53,16 +51,16 @@ open class Channel
      * Must start with a color code
      */
     @JvmField
-    val displayName: ConfigData<String> =
-        component.config.getData("${this.identifier}.displayName", this.defDisplayName)
+    val displayName = component.config.getData("${this.identifier}.displayName", this.defDisplayName)
 
     @JvmField
-    val color: ConfigData<Color> = component.config.getData("${this.identifier}.color",
+    val color = component.config.getData(
+        "${this.identifier}.color",
         this.defColor, { c -> Color.valueOf((c as String)) }, Color::toString
     )
 
     @JvmField
-    val extraIdentifiers: ListConfigData<String> = component.config.getListData("${this.identifier}.IDs", listOf())
+    val extraIdentifiers = component.config.getListData("${this.identifier}.IDs", listOf<String>())
 
     val isGlobal: Boolean
         get() = filterAndErrorMSG == null
