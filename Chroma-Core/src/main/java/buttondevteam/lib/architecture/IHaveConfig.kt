@@ -1,8 +1,9 @@
 package buttondevteam.lib.architecture
 
 import buttondevteam.lib.architecture.config.ConfigDataDelegate
-import buttondevteam.lib.architecture.config.ConfigDataDelegate.Companion.delegate
 import buttondevteam.lib.architecture.config.IConfigData
+import buttondevteam.lib.architecture.config.ListConfigDataDelegate
+import buttondevteam.lib.architecture.config.delegate
 import org.bukkit.configuration.ConfigurationSection
 import java.util.function.Function
 
@@ -18,7 +19,7 @@ class IHaveConfig(
     /**
      * Returns the Bukkit ConfigurationSection. Use [.signalChange] after changing it.
      */
-    val config: ConfigurationSection
+    var config: ConfigurationSection
 ) {
     private val datamap = HashMap<String, IConfigData<*>>()
 
@@ -88,7 +89,7 @@ class IHaveConfig(
         elementGetter: Function<Any?, T>? = null,
         elementSetter: Function<T, Any?>? = null,
         readOnly: Boolean = false
-    ): ConfigDataDelegate<ListConfigData<T>.List> {
+    ): ListConfigDataDelegate<T> {
         var data = datamap[path]
         if (data == null) datamap[path] = ListConfigData(
             this,
@@ -107,6 +108,11 @@ class IHaveConfig(
      */
     fun signalChange() {
         ConfigData.signalChange(this)
+    }
+
+    fun reload(section: ConfigurationSection) {
+        config = section
+        datamap.forEach { it.value.reload() }
     }
 
     companion object {

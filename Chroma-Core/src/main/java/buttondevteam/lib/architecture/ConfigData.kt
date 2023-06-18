@@ -23,7 +23,7 @@ import java.util.function.Function
  * @param T The type of the config value. May be nullable if the getter cannot always return a value
  */
 class ConfigData<T : Any?> internal constructor(
-    val config: IHaveConfig?,
+    var config: IHaveConfig?,
     override val path: String,
     private val primitiveDef: Any,
     private val getter: Function<Any, T>,
@@ -52,6 +52,10 @@ class ConfigData<T : Any?> internal constructor(
         return getter.apply(convertPrimitiveType(freshValue)).also { value = it }
     }
 
+    override fun reload() {
+        value = null
+    }
+
     /**
      * Converts a value to [T] from the representation returned by [Configuration.get].
      */
@@ -72,9 +76,9 @@ class ConfigData<T : Any?> internal constructor(
     }
 
     private fun setInternal(`val`: Any?) {
-        if (config == null) return
-        config.config.set(path, `val`)
-        signalChange(config)
+        val conf = config ?: return
+        conf.config.set(path, `val`)
+        signalChange(conf)
     }
 
     /**

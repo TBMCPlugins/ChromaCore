@@ -1,6 +1,7 @@
 package buttondevteam.lib.architecture
 
 import buttondevteam.lib.architecture.config.IConfigData
+import buttondevteam.lib.architecture.config.IListConfigData
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.UnaryOperator
@@ -12,19 +13,14 @@ class ListConfigData<T> internal constructor(
     private val elementGetter: Function<Any?, T>,
     private val elementSetter: Function<T, Any?>,
     readOnly: Boolean
-) : IConfigData<ListConfigData<T>.List> {
+) : IConfigData<ListConfigData<T>.List>, IListConfigData<T> {
     val listConfig: ConfigData<List> =
         ConfigData(config, path, primitiveDef, { List((it as ArrayList<*>).toMutableList()) }, { it }, readOnly)
 
-    override val path: String get() = listConfig.path
-
-    override fun get(): List {
-        return listConfig.get()
-    }
-
-    override fun set(value: List) {
-        listConfig.set(value)
-    }
+    override val path get() = listConfig.path
+    override fun get() = listConfig.get()
+    override fun set(value: List) = listConfig.set(value)
+    override fun reload() = listConfig.reload()
 
     inner class List(backingList: MutableList<Any?>) : MutableList<T> {
         private val primitiveList = backingList

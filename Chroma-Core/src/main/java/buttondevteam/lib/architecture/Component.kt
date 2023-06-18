@@ -121,10 +121,11 @@ abstract class Component<TP : JavaPlugin> {
     private val className: String get() = javaClass.simpleName
 
     internal fun updateConfig() {
-        this.config = IHaveConfig(plugin::saveConfig, getConfigSection(plugin))
+        if (!this::config.isInitialized) this.config = IHaveConfig(plugin::saveConfig, getConfigSection())
+        else this.config.reload(getConfigSection())
     }
 
-    private fun getConfigSection(plugin: JavaPlugin): ConfigurationSection {
+    private fun getConfigSection(): ConfigurationSection {
         var compconf = plugin.config.getConfigurationSection("components")
         if (compconf == null) compconf = plugin.config.createSection("components")
         var configSect = compconf.getConfigurationSection(className)
@@ -261,7 +262,7 @@ abstract class Component<TP : JavaPlugin> {
             if (component.isEnabled == enabled) return  //Don't do anything
             if (enabled.also { component.isEnabled = it }) {
                 try {
-                    component.getConfigSection(component.plugin)
+                    component.updateConfig()
                     component.enable()
                     if (ButtonPlugin.configGenAllowed(component)) {
                         IHaveConfig.pregenConfig(component, null)

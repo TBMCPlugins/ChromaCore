@@ -30,7 +30,7 @@ class ComponentCommand : ICommand2MC() {
     @Subcommand(helpText = ["Enable component", "Temporarily or permanently enables a component."])
     fun enable(sender: CommandSender, plugin: Plugin, component: String, @OptionalArg permanent: Boolean): Boolean {
         if (plugin is ButtonPlugin) {
-            if (!plugin.justReload()) {
+            if (!plugin.tryReloadConfig()) {
                 sender.sendMessage("${ChatColor.RED}Couldn't reload config, check console.")
                 return true
             }

@@ -16,9 +16,13 @@ import java.util.function.Consumer
 
 @HasConfig(global = true)
 abstract class ButtonPlugin : JavaPlugin() {
-    protected var iConfig = getIConfigInstance()
-        private set
+    protected val iConfig = IHaveConfig(::saveConfig, section)
     private var yaml: YamlConfiguration? = null
+
+    /**
+     * May change if the config is reloaded
+     */
+    private val section get() = config.getConfigurationSection("global") ?: config.createSection("global")
 
     protected val data //TODO
         : IHaveConfig? = null
@@ -39,7 +43,7 @@ abstract class ButtonPlugin : JavaPlugin() {
      */
     protected open fun pluginPreDisable() {}
     override fun onEnable() {
-        if (!reloadIConfig()) {
+        if (!tryReloadConfig()) {
             logger.warning("Please fix the issues and restart the server to load the plugin.")
             return
         }
@@ -50,18 +54,6 @@ abstract class ButtonPlugin : JavaPlugin() {
         }
         if (configGenAllowed(this)) //If it's not disabled (by default it's not)
             IHaveConfig.pregenConfig(this, null)
-    }
-
-    private fun getIConfigInstance(): IHaveConfig {
-        return IHaveConfig(
-            ::saveConfig,
-            this.config.getConfigurationSection("global") ?: this.config.createSection("global")
-        )
-    }
-
-    private fun reloadIConfig(): Boolean {
-        iConfig = getIConfigInstance()
-        return isConfigLoaded // If loading fails, getConfig() returns a temporary instance
     }
 
     override fun onDisable() {
@@ -81,14 +73,17 @@ abstract class ButtonPlugin : JavaPlugin() {
     }
 
     fun tryReloadConfig(): Boolean {
-        if (!justReload()) return false
-        reloadIConfig()
+        if (!saveAndReloadYaml()) return false
+        iConfig.reload(section)
         componentStack.forEach(Consumer { c -> c.updateConfig() })
         return true
     }
 
-    fun justReload(): Boolean {
-        if (yaml != null && ConfigData.saveNow(config)) {
+    /**
+     * Returns whether the config was loaded successfully. Otherwise, an empty config is used.
+     */
+    private fun saveAndReloadYaml(): Boolean {
+        if (isConfigLoaded && ConfigData.saveNow(config)) {
             logger.warning("Saved pending configuration changes to the file, didn't reload. Apply your changes again.")
             return false
         }
@@ -106,10 +101,8 @@ abstract class ButtonPlugin : JavaPlugin() {
                 e.printStackTrace()
                 return false
             }
-            this.yaml = yaml
-        } else {
-            return false
         }
+        this.yaml = yaml
         val res = getTextResource("configHelp.yml") ?: return true
         val yc = YamlConfiguration.loadConfiguration(res)
         for ((key, value) in yc.getValues(true))
@@ -121,7 +114,7 @@ abstract class ButtonPlugin : JavaPlugin() {
     }
 
     override fun getConfig(): FileConfiguration {
-        if (yaml == null) justReload()
+        if (!isConfigLoaded) saveAndReloadYaml()
         return yaml ?: YamlConfiguration() //Return a temporary instance
     }
 
