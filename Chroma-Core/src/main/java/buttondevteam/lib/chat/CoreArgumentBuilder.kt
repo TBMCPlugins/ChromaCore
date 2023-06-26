@@ -36,6 +36,13 @@ class CoreArgumentBuilder<S : Command2Sender, T>(
         )
     }
 
+    override fun then(argument: ArgumentBuilder<S, *>?): CoreArgumentBuilder<S, T> {
+        if (argument is CoreArgumentBuilder<*, *>) {
+            (argument as CoreArgumentBuilder<S, *>).data = data
+        }
+        return super.then(argument)
+    }
+
     companion object {
         fun <S : Command2Sender, T> argument(name: String, type: ArgumentType<T>, optional: Boolean): CoreArgumentBuilder<S, T> {
             return CoreArgumentBuilder(name, type, optional)

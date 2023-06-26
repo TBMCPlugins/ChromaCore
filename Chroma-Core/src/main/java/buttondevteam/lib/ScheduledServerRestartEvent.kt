@@ -10,6 +10,7 @@ class ScheduledServerRestartEvent(val restartTicks: Int, val command: ScheduledR
     }
 
     companion object {
+        @JvmStatic
         val handlerList = HandlerList()
     }
 }

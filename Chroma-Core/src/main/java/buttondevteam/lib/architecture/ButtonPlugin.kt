@@ -5,6 +5,7 @@ import buttondevteam.core.ComponentManager
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.chat.Command2MC
 import buttondevteam.lib.chat.ICommand2MC
+import org.bukkit.Bukkit
 import org.bukkit.configuration.InvalidConfigurationException
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration
@@ -50,8 +51,9 @@ abstract class ButtonPlugin : JavaPlugin {
      */
     protected open fun pluginPreDisable() {}
     override fun onEnable() {
-        if (!tryReloadConfig()) {
+        if (!isConfigLoaded) {
             logger.warning("Please fix the issues and restart the server to load the plugin.")
+            Bukkit.getPluginManager().disablePlugin(this)
             return
         }
         try {
@@ -65,6 +67,7 @@ abstract class ButtonPlugin : JavaPlugin {
 
     override fun onDisable() {
         try {
+            if (!isConfigLoaded) return
             pluginPreDisable()
             ComponentManager.unregComponents(this)
             pluginDisable()

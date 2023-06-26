@@ -28,6 +28,7 @@ class TBMCCommandPreprocessEvent(
     override fun setCancelled(cancelled: Boolean) = run { this.cancelled = cancelled }
 
     companion object {
+        @JvmStatic
         val handlerList = HandlerList()
     }
 }

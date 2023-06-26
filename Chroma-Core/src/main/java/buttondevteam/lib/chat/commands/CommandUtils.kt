@@ -28,19 +28,20 @@ object CommandUtils {
     }
 
     /**
-     * Casts the node to whatever you say. Use responsibly.
+     * Casts the node to whatever you say if it's a command node. Use responsibly. Returns null if an argument node.
      */
     @Suppress("UNCHECKED_CAST")
-    fun <TP : Command2Sender, TSD : NoOpSubcommandData> CommandNode<TP>.core(): CoreCommandNode<TP, TSD> {
-        return this as CoreCommandNode<TP, TSD>
+    fun <TP : Command2Sender, TSD : NoOpSubcommandData> CommandNode<TP>.coreCommand(): CoreCommandNode<TP, TSD>? {
+        return if (this is CoreCommandNode<*, *>) this as CoreCommandNode<TP, TSD>
+        else null
     }
 
     /**
      * Returns the node as an executable core command node or returns null if it's a no-op node.
      */
     fun <TP : Command2Sender, TC : ICommand2<*>> CommandNode<TP>.coreExecutable(): CoreExecutableNode<TP, TC>? {
-        val ret = core<TP, NoOpSubcommandData>()
-        return if (ret.data is SubcommandData<*, *>) ret.core() else null
+        val ret = this.coreCommand<TP, NoOpSubcommandData>()
+        return if (ret?.data is SubcommandData<*, *>) ret.coreCommand() else null
     }
 
     fun <TP : Command2Sender> CommandNode<TP>.coreArgument(): CoreArgumentCommandNode<TP, *>? {

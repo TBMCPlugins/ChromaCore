@@ -8,6 +8,7 @@ import buttondevteam.core.component.randomtp.RandomTPComponent
 import buttondevteam.core.component.restart.RestartComponent
 import buttondevteam.core.component.spawn.SpawnComponent
 import buttondevteam.core.component.towny.TownyComponent
+import buttondevteam.lib.ChromaUtils
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.ButtonPlugin
 import buttondevteam.lib.architecture.Component.Companion.registerComponent
@@ -17,6 +18,7 @@ import buttondevteam.lib.chat.TBMCChatAPI
 import buttondevteam.lib.player.ChromaGamerBase
 import buttondevteam.lib.player.TBMCPlayer
 import buttondevteam.lib.player.TBMCPlayerBase
+import buttondevteam.lib.test.TestPermissions
 import com.earth2me.essentials.Essentials
 import net.milkbowl.vault.economy.Economy
 import net.milkbowl.vault.permission.Permission
@@ -66,14 +68,16 @@ class MainPlugin : ButtonPlugin {
     val externalPlayerPermissionGroup get() = iConfig.getData("externalPlayerPermissionGroup", "default")
 
     constructor() : super()
-    constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
+    constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File, @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN") test: java.lang.Boolean) : super(loader, description, dataFolder, file) {
+        ChromaUtils.isTest = test.booleanValue()
+    }
 
 
     public override fun pluginEnable() {
         instance = this
         val pdf = description
-        setupPermissions()
-        if (!setupEconomy()) //Though Essentials always provides economy, but we don't require Essentials
+        setupPermissions(ChromaUtils.isTest)
+        if (!setupEconomy() && !ChromaUtils.isTest) //Though Essentials always provides economy, but we don't require Essentials
             logger.warning("No economy plugin found! Components using economy will not be registered.")
         ConfigData.saveNow(config) // Run pending save tasks
         registerComponent(this, RestartComponent())
@@ -159,8 +163,10 @@ class MainPlugin : ButtonPlugin {
         logger.info("Player data saved.")
     }
 
-    private fun setupPermissions() {
-        permission = setupProvider(Permission::class.java) ?: throw NullPointerException("No permission plugin found!")
+    private fun setupPermissions(test: Boolean) {
+        permission = setupProvider(Permission::class.java)
+            ?: if (test) TestPermissions()
+            else throw NullPointerException("No permission plugin found!")
     }
 
     private fun setupEconomy(): Boolean {
@@ -182,6 +188,7 @@ class MainPlugin : ButtonPlugin {
 
     companion object {
         lateinit var instance: MainPlugin
+            private set
 
         lateinit var permission: Permission
 

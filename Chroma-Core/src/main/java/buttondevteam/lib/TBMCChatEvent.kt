@@ -54,6 +54,7 @@ class TBMCChatEvent(
     val isFromCommand get() = chatMessage.isFromCommand
 
     companion object {
+        @JvmStatic
         val handlerList = HandlerList()
     }
 }

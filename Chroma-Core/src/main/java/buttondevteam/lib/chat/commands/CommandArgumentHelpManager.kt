@@ -1,6 +1,7 @@
 package buttondevteam.lib.chat.commands
 
 import buttondevteam.core.MainPlugin
+import buttondevteam.lib.ChromaUtils
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.chat.Command2Sender
 import buttondevteam.lib.chat.ICommand2
@@ -29,11 +30,9 @@ class CommandArgumentHelpManager<TC : ICommand2<TP>, TP : Command2Sender>(comman
         try {
             commandClass.getResourceAsStream("/commands.yml").use { str ->
                 if (str == null) {
-                    TBMCCoreAPI.SendException(
-                        "Error while getting command data!",
-                        Exception("Resource not found!"),
-                        MainPlugin.instance
-                    )
+                    if (!ChromaUtils.isTest) {
+                        ChromaUtils.logWarn("Failed to get command data for $commandClass! No commands.yml file found.")
+                    }
                     return@use
                 }
                 val config = YamlConfiguration.loadConfiguration(InputStreamReader(str))
@@ -56,7 +55,9 @@ class CommandArgumentHelpManager<TC : ICommand2<TP>, TP : Command2Sender>(comman
     fun getParameterHelpForMethod(method: Method): String? {
         val cs = commandConfig?.getConfigurationSection(method.name)
         if (cs == null) {
-            MainPlugin.instance.logger.warning("Failed to get command data for $method! Make sure to use 'clean install' when building the project.")
+            if (!ChromaUtils.isTest) {
+                MainPlugin.instance.logger.warning("Failed to get command data for $method! Make sure to use 'clean install' when building the project.")
+            }
             return null
         }
 

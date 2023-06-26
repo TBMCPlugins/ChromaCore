@@ -24,6 +24,7 @@ class TBMCChatPreprocessEvent(val sender: Command2Sender, val channel: Channel, 
     override fun setCancelled(cancelled: Boolean) = run { this.cancelled = cancelled }
 
     companion object {
+        @JvmStatic
         val handlerList = HandlerList()
     }
 }

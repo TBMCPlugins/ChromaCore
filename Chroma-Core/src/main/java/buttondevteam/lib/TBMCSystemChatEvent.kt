@@ -56,6 +56,7 @@ class TBMCSystemChatEvent(
     }
 
     companion object {
+        @JvmStatic
         val handlerList = HandlerList()
     }
 }

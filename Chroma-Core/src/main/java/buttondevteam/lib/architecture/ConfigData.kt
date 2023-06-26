@@ -80,7 +80,7 @@ class ConfigData<T : Any?> internal constructor(
         if (config != null) {
             config.set(path, `val`)
             signalChange(this.config)
-        } else {
+        } else if (!ChromaUtils.isTest) {
             ChromaUtils.logWarn("Attempted to get/set config value with no config! Path: $path, value: $`val`")
         }
     }

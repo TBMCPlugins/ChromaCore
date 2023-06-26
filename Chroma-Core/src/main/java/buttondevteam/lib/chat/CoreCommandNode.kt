@@ -12,8 +12,8 @@ class CoreCommandNode<T : Command2Sender, TSD : NoOpSubcommandData>(
     literal: String,
     command: Command<T>,
     requirement: Predicate<T>,
-    redirect: CommandNode<T>,
-    modifier: RedirectModifier<T>,
+    redirect: CommandNode<T>?,
+    modifier: RedirectModifier<T>?,
     forks: Boolean,
     val data: TSD
 ) : LiteralCommandNode<T>(literal, command, requirement, redirect, modifier, forks)

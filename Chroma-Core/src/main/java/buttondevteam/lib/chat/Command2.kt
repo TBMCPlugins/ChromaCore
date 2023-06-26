@@ -3,7 +3,7 @@ package buttondevteam.lib.chat
 import buttondevteam.core.MainPlugin
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.chat.commands.*
-import buttondevteam.lib.chat.commands.CommandUtils.core
+import buttondevteam.lib.chat.commands.CommandUtils.coreCommand
 import buttondevteam.lib.chat.commands.CommandUtils.coreExecutable
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.*
@@ -164,14 +164,14 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      */
     private fun getExecutableNode(method: Method, command: TC, ann: Subcommand, remainingPath: String,
                                   argHelpManager: CommandArgumentHelpManager<TC, TP>, fullPath: String): LiteralCommandNode<TP> {
-        val (params, _) = getCommandParametersAndSender(method, argHelpManager) // Param order is important
+        val (params, senderType) = getCommandParametersAndSender(method, argHelpManager) // Param order is important
         val paramMap = HashMap<String, CommandArgument>()
         for (param in params) {
             paramMap[param.name] = param
         }
         val helpText = command.getHelpText(method, ann)
         val node = CoreCommandBuilder.literal(
-            remainingPath, params[0].type, paramMap, params, command,
+            remainingPath, senderType, paramMap, params, command,
             { helpText }, // TODO: Help text getter support
             { sender: TP, data: SubcommandData<TC, TP> -> hasPermission(sender, data) },
             method.annotations.filterNot { it is Subcommand }.toTypedArray(),
@@ -364,9 +364,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @return A set of command node objects containing the commands
      */
     val commandNodes: Set<CoreCommandNode<TP, NoOpSubcommandData>>
-        get() = dispatcher.root.children.stream()
-            .map { node: CommandNode<TP> -> node.core<TP, NoOpSubcommandData>() }
-            .collect(Collectors.toUnmodifiableSet())
+        get() = dispatcher.root.children.mapNotNull { it.coreCommand<TP, NoOpSubcommandData>() }.toSet()
 
     /**
      * Get a node that belongs to the given command.
@@ -375,7 +373,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @return A command node
      */
     fun getCommandNode(command: String): CoreCommandNode<TP, NoOpSubcommandData>? { // TODO: What should this return? No-op? Executable? What's the use case?
-        return dispatcher.root.getChild(command)?.core()
+        return dispatcher.root.getChild(command)?.coreCommand()
     }
 
     /**
@@ -394,7 +392,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      */
     fun unregisterCommandIf(condition: Predicate<CoreCommandNode<TP, SubcommandData<TC, TP>>>, nested: Boolean) {
         dispatcher.root.children.removeIf { node -> node.coreExecutable<TP, TC>()?.let { condition.test(it) } ?: false }
-        if (nested) for (child in dispatcher.root.children) unregisterCommandIf(condition, child.core())
+        if (nested) for (child in dispatcher.root.children) child.coreCommand<_, NoOpSubcommandData>()?.let { unregisterCommandIf(condition, it) }
     }
 
     private fun unregisterCommandIf(
@@ -404,7 +402,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         // TODO: Remvoe no-op nodes without children
         // Can't use getCoreChildren() here because the collection needs to be modifiable
         root.children.removeIf { node -> node.coreExecutable<TP, TC>()?.let { condition.test(it) } ?: false }
-        for (child in root.children) unregisterCommandIf(condition, child.core())
+        for (child in root.children) child.coreCommand<_, NoOpSubcommandData>()?.let { unregisterCommandIf(condition, it) }
     }
 
     /**
@@ -417,7 +415,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         mainCommand: LiteralCommandNode<TP>,
         deep: Boolean = true
     ): List<CoreExecutableNode<TP, TC>> {
-        return getSubcommands(deep, mainCommand.core())
+        return mainCommand.coreCommand<_, NoOpSubcommandData>()?.let { getSubcommands(deep, it) } ?: emptyList()
     }
 
     private fun getSubcommands(
@@ -425,6 +423,6 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         root: CoreNoOpNode<TP>
     ): List<CoreExecutableNode<TP, TC>> {
         return root.children.mapNotNull { it.coreExecutable<TP, TC>() } +
-            if (deep) root.children.flatMap { getSubcommands(deep, it.core()) } else emptyList()
+            if (deep) root.children.flatMap { child -> child.coreCommand<_, NoOpSubcommandData>()?.let { getSubcommands(deep, it) } ?: emptyList() } else emptyList()
     }
 }

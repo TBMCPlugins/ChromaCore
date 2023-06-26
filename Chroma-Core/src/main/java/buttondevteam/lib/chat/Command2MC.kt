@@ -1,6 +1,7 @@
 package buttondevteam.lib.chat
 
 import buttondevteam.core.MainPlugin
+import buttondevteam.lib.ChromaUtils
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.ButtonPlugin
 import buttondevteam.lib.architecture.Component
@@ -238,7 +239,11 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
 
         fun registerTabcomplete(command2MC: ICommand2MC, commandNode: CoreCommandNode<Command2MCSender, *>, bukkitCommand: Command) {
             if (!CommodoreProvider.isSupported()) {
-                throw UnsupportedOperationException("Commodore is not supported! Please use 1.14 or higher. Server version: ${Bukkit.getVersion()}")
+                if (ChromaUtils.isTest) {
+                    return
+                } else {
+                    throw UnsupportedOperationException("Commodore is not supported! Please use 1.14 or higher. Server version: ${Bukkit.getVersion()}")
+                }
             }
             // TODO: Allow extending annotation processing for methods and parameters
             val customTabCompleteMethods = command2MC.javaClass.declaredMethods
@@ -316,5 +321,3 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         }
     }
 }
-
-private typealias CNode = CommandNode<Command2MCSender>

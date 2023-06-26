@@ -18,6 +18,7 @@ class TBMCExceptionEvent(val sourceMessage: String, val exception: Throwable) : 
     }
 
     companion object {
+        @JvmStatic
         val handlerList = HandlerList()
     }
 }
