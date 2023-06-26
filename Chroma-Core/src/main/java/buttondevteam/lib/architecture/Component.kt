@@ -19,7 +19,7 @@ import java.util.stream.Collectors
 abstract class Component<TP : JavaPlugin> {
     var isEnabled = false
 
-    lateinit var config: IHaveConfig
+    var config: IHaveConfig = IHaveConfig({ logWarn("Attempted to save config with null section!") }, null)
         private set
     lateinit var plugin: TP
         private set
@@ -100,7 +100,11 @@ abstract class Component<TP : JavaPlugin> {
      * @return A map containing configs
      */
     fun getConfigMap(key: String, defaultProvider: Map<String, Consumer<IHaveConfig>>): Map<String, IHaveConfig> {
-        val c: ConfigurationSection = config.config
+        val c: ConfigurationSection? = config.config
+        if (c == null) {
+            logWarn("Config section is null when getting config map")
+            return defaultProvider.mapValues { kv -> IHaveConfig(plugin::saveConfig, null).also { kv.value.accept(it) } }
+        }
         val cs = c.getConfigurationSection(key) ?: c.createSection(key)
         val res = cs.getValues(false).entries.stream()
             .filter { (_, value) -> value is ConfigurationSection }
@@ -109,11 +113,7 @@ abstract class Component<TP : JavaPlugin> {
                 { (_, value) -> IHaveConfig(plugin::saveConfig, value as ConfigurationSection) }
             ))
         if (res.isEmpty()) {
-            for ((key1, value) in defaultProvider) {
-                val conf = IHaveConfig(plugin::saveConfig, cs.createSection(key1))
-                value.accept(conf)
-                res[key1] = conf
-            }
+            defaultProvider.mapValuesTo(res) { kv -> IHaveConfig(plugin::saveConfig, cs.createSection(kv.key)).also { kv.value.accept(it) } }
         }
         return res
     }
@@ -121,8 +121,7 @@ abstract class Component<TP : JavaPlugin> {
     private val className: String get() = javaClass.simpleName
 
     internal fun updateConfig() {
-        if (!this::config.isInitialized) this.config = IHaveConfig(plugin::saveConfig, getConfigSection())
-        else this.config.reload(getConfigSection())
+        this.config.reload(getConfigSection(), plugin::saveConfig)
     }
 
     private fun getConfigSection(): ConfigurationSection {

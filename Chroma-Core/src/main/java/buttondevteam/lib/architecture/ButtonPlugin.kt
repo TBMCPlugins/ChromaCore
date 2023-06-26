@@ -8,14 +8,16 @@ import buttondevteam.lib.chat.ICommand2MC
 import org.bukkit.configuration.InvalidConfigurationException
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPlugin
+import org.bukkit.plugin.java.JavaPluginLoader
 import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.function.Consumer
 
 @HasConfig(global = true)
-abstract class ButtonPlugin : JavaPlugin() {
+abstract class ButtonPlugin : JavaPlugin {
     protected val iConfig = IHaveConfig(::saveConfig, section)
     private var yaml: YamlConfiguration? = null
 
@@ -31,6 +33,11 @@ abstract class ButtonPlugin : JavaPlugin() {
      * Used to unregister components in the right order - and to reload configs
      */
     val componentStack = Stack<Component<*>>()
+
+    // Support testing with the protected constructor (MockBukkit)
+    constructor() : super()
+    protected constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
+
     protected abstract fun pluginEnable()
 
     /**

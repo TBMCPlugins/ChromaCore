@@ -7,7 +7,7 @@ import java.util.function.Predicate
 import java.util.function.UnaryOperator
 
 class ListConfigData<T> internal constructor(
-    config: IHaveConfig?,
+    config: IHaveConfig,
     path: String,
     primitiveDef: ArrayList<*>,
     private val elementGetter: Function<Any?, T>,
@@ -27,9 +27,7 @@ class ListConfigData<T> internal constructor(
         override val size: Int get() = primitiveList.size
         private fun update() {
             val config = listConfig.config
-            if (config != null) {
-                ConfigData.signalChange(config) //Update the config model and start save task if needed
-            }
+            ConfigData.signalChange(config) //Update the config model and start save task if needed
         }
 
         override fun set(index: Int, element: T): T {

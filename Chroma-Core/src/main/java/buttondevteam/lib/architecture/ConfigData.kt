@@ -14,16 +14,16 @@ import java.util.function.Function
  *  Use [Component.config] or [ButtonPlugin.iConfig] then [IHaveConfig.getData] to get an instance.
  *
  * **Note:** The instance can become outdated if the config is reloaded.
- * @param config May be null for testing
+ * @param config The config object to use for the whole file
  * @param path The path to the config value
- * @param primitiveDef The default value, as stored in the config. Non-nullable as it needs to be saved to the config
+ * @param primitiveDef The default value, as stored in the config. Non-nullable as it needs to be saved sto the config
  * @param getter Function to convert primtive types to [T]. The parameter is of a primitive type as returned by [Configuration.get]
  * @param setter Function to convert [T] to a primitive type. The result should be a primitive type or string that can be retrieved correctly later
  * @param readOnly If true, changing the value will have no effect
  * @param T The type of the config value. May be nullable if the getter cannot always return a value
  */
 class ConfigData<T : Any?> internal constructor(
-    var config: IHaveConfig?,
+    val config: IHaveConfig,
     override val path: String,
     private val primitiveDef: Any,
     private val getter: Function<Any, T>,
@@ -47,7 +47,7 @@ class ConfigData<T : Any?> internal constructor(
     override fun get(): T {
         val cachedValue = value
         if (cachedValue != null) return cachedValue //Speed things up
-        val config = config?.config
+        val config = config.config
         val freshValue = config?.get(path) ?: primitiveDef.also { setInternal(it) }
         return getter.apply(convertPrimitiveType(freshValue)).also { value = it }
     }
@@ -76,9 +76,13 @@ class ConfigData<T : Any?> internal constructor(
     }
 
     private fun setInternal(`val`: Any?) {
-        val conf = config ?: return
-        conf.config.set(path, `val`)
-        signalChange(conf)
+        val config = config.config
+        if (config != null) {
+            config.set(path, `val`)
+            signalChange(this.config)
+        } else {
+            ChromaUtils.logWarn("Attempted to get/set config value with no config! Path: $path, value: $`val`")
+        }
     }
 
     /**
@@ -95,13 +99,9 @@ class ConfigData<T : Any?> internal constructor(
         fun signalChange(config: IHaveConfig) {
             val cc = config.config
             val sa = config.saveAction
-            val root = cc.root
+            val root = cc?.root
             if (root == null) {
-                if (MainPlugin.isInitialized) {
-                    MainPlugin.instance.logger.warning("Attempted to save config with no root! Name: ${config.config.name}")
-                } else {
-                    println("Attempted to save config with no root! Name: ${config.config.name}")
-                }
+                ChromaUtils.logWarn("Attempted to save config with no root! Name: ${cc?.name ?: "NONEXISTENT CONFIG"}")
                 return
             }
             if (!MainPlugin.isInitialized) {

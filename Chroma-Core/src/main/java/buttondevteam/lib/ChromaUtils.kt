@@ -71,6 +71,17 @@ object ChromaUtils {
     }
 
     /**
+     * Log a warning message if the plugin is initialized. If not, just print a regular message.
+     */
+    fun logWarn(message: String) {
+        if (MainPlugin.isInitialized) {
+            MainPlugin.instance.logger.warning(message)
+        } else {
+            println(message)
+        }
+    }
+
+    /**
      * Returns true while unit testing.
      */
     @JvmStatic

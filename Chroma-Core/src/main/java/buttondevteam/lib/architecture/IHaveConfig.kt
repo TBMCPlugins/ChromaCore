@@ -15,12 +15,20 @@ class IHaveConfig(
     /**
      * The way the underlying configuration gets saved to disk
      */
-    val saveAction: Runnable,
+    saveAction: Runnable,
+    config: ConfigurationSection?
+) {
+    /**
+     * The way the underlying configuration gets saved to disk
+     */
+    var saveAction = saveAction
+        private set
+
     /**
      * Returns the Bukkit ConfigurationSection. Use [.signalChange] after changing it.
      */
-    var config: ConfigurationSection
-) {
+    var config = config
+        private set
     private val datamap = HashMap<String, IConfigData<*>>()
 
     /**
@@ -110,8 +118,9 @@ class IHaveConfig(
         ConfigData.signalChange(this)
     }
 
-    fun reload(section: ConfigurationSection) {
+    fun reload(section: ConfigurationSection, saveAction: Runnable = this.saveAction) {
         config = section
+        this.saveAction = saveAction
         datamap.forEach { it.value.reload() }
     }
 
