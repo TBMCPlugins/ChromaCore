@@ -17,12 +17,11 @@ import java.util.function.Supplier
 
 @ChromaGamerEnforcer
 abstract class ChromaGamerBase : Command2Sender {
-    lateinit var config: IHaveConfig
-        protected set
+    val config: IHaveConfig = IHaveConfig({ save() }, null)
 
     protected lateinit var commonUserData: CommonUserData<out ChromaGamerBase>
     protected open fun initConfig() {
-        config = IHaveConfig({ save() }, commonUserData.playerData)
+        config.reload(commonUserData.playerData)
     }
 
     /**

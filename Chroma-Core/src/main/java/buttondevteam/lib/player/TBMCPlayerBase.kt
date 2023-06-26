@@ -2,7 +2,6 @@ package buttondevteam.lib.player
 
 import buttondevteam.core.MainPlugin
 import buttondevteam.core.component.channel.Channel
-import buttondevteam.lib.architecture.IHaveConfig
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import java.util.*
@@ -17,10 +16,9 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
     /**
      * If the player is the console
      */
-    val isConsole = uniqueId == UUID(0, 0)
+    val isConsole by lazy { uniqueId == UUID(0, 0) }
 
-    @JvmField
-    val playerName = super.config.getData("PlayerName", "")
+    var playerName by super.config.getData("PlayerName", "")
     public override fun initConfig() {
         super.initConfig()
         val pluginName = if (javaClass.isAnnotationPresent(PlayerClass::class.java))
@@ -29,7 +27,7 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
             throw RuntimeException("Class not defined as player class! Use @PlayerClass")
         val playerData = commonUserData.playerData
         val section = playerData.getConfigurationSection(pluginName) ?: playerData.createSection(pluginName)
-        config = IHaveConfig({ save() }, section)
+        config.reload(section)
     }
 
     /**
@@ -55,7 +53,7 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
     }
 
     override fun getName(): String {
-        return player?.displayName ?: playerName.get()
+        return player?.displayName ?: playerName
     }
 
     override fun checkChannelInGroup(group: String?): Channel.RecipientTestResult {

@@ -1,5 +1,6 @@
 package buttondevteam.lib.player;
 
+import buttondevteam.lib.ChromaUtils;
 import buttondevteam.lib.player.ChromaGamerBase.InfoTarget;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -24,7 +25,7 @@ public class TBMCPlayerGetInfoEvent extends Event {
 	private final InfoTarget target;
 
 	TBMCPlayerGetInfoEvent(ChromaGamerBase player, InfoTarget target) {
-		super(true);
+		super(!ChromaUtils.isTest());
 		this.player = player;
 		infolines = new ArrayList<>();
 		this.target = target;

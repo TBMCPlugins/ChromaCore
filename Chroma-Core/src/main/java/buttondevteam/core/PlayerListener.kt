@@ -29,13 +29,13 @@ class PlayerListener(val plugin: MainPlugin) : Listener {
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val p = event.player
         val player = TBMCPlayerBase.getPlayer(p.uniqueId, TBMCPlayer::class.java)
-        val pname = player.playerName.get()
+        val pname = player.playerName
         if (pname.isEmpty()) {
-            player.playerName.set(p.name)
-            plugin.logger.info("Player name saved: " + player.playerName.get())
+            player.playerName = p.name
+            plugin.logger.info("Player name saved: " + player.playerName)
         } else if (p.name != pname) {
             plugin.logger.info(pname + " renamed to " + p.name)
-            player.playerName.set(p.name)
+            player.playerName = p.name
         }
     }
 

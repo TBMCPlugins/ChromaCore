@@ -19,8 +19,7 @@ import java.util.stream.Collectors
 abstract class Component<TP : JavaPlugin> {
     var isEnabled = false
 
-    var config: IHaveConfig = IHaveConfig({ logWarn("Attempted to save config with null section!") }, null)
-        private set
+    val config: IHaveConfig = IHaveConfig({ logWarn("Attempted to save config with null section!") }, null)
     lateinit var plugin: TP
         private set
 
