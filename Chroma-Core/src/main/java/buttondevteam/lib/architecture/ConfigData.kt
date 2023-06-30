@@ -16,7 +16,7 @@ import java.util.function.Function
  * **Note:** The instance can become outdated if the config is reloaded.
  * @param config The config object to use for the whole file
  * @param path The path to the config value
- * @param primitiveDef The default value, as stored in the config. Non-nullable as it needs to be saved sto the config
+ * @param primitiveDef The default value, as stored in the config. Non-nullable as it needs to be saved to the config
  * @param getter Function to convert primtive types to [T]. The parameter is of a primitive type as returned by [Configuration.get]
  * @param setter Function to convert [T] to a primitive type. The result should be a primitive type or string that can be retrieved correctly later
  * @param readOnly If true, changing the value will have no effect

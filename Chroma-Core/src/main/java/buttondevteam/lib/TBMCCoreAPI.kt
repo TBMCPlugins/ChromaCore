@@ -169,6 +169,9 @@ object TBMCCoreAPI {
         }
     }
 
+    /**
+     * Returns true if the server is a test/dev/staging server
+     */
     @JvmStatic
     fun IsTestServer(): Boolean {
         return MainPlugin.instance.test.get()
