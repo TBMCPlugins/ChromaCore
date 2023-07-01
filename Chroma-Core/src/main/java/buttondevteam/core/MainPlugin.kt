@@ -143,7 +143,7 @@ class MainPlugin : ButtonPlugin {
         val playerSupplier = Supplier { Bukkit.getOnlinePlayers().map { obj -> obj.name }.asIterable() }
         command2MC.addParamConverter(
             OfflinePlayer::class.java,
-            { name -> @Suppress("DEPRECATION") Bukkit.getOfflinePlayer(name) },
+            { name -> Bukkit.getOfflinePlayer(name) },
             "Player not found!",
             playerSupplier
         )
@@ -187,6 +187,7 @@ class MainPlugin : ButtonPlugin {
     }
 
     companion object {
+        @JvmStatic
         lateinit var instance: MainPlugin
             private set
 

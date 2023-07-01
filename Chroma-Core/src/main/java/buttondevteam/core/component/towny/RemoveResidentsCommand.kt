@@ -35,7 +35,7 @@ class RemoveResidentsCommand : ICommand2MC() {
             if (MainPlugin.ess == null)
                 sender.sendMessage("${ChatColor.RED}Essentials not found, players who haven't joined after changing their names are also listed here.")
             sender.sendMessage("Residents to remove:")
-            res.values.forEach { op: OfflinePlayer -> sender.sendMessage(op.name) }
+            res.values.forEach { op: OfflinePlayer -> sender.sendMessage(op.name!!) }
             if (TownySettings.isDeleteEcoAccount()) sender.sendMessage("${ChatColor.AQUA}Will only remove from town, as delete eco account setting is on") else sender.sendMessage(
                 "${ChatColor.YELLOW}Will completely delete the resident, delete eco account setting is off"
             )

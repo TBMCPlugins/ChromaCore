@@ -6,6 +6,7 @@ import buttondevteam.lib.architecture.config.IConfigData
 import org.bukkit.Bukkit
 import org.bukkit.configuration.Configuration
 import org.bukkit.scheduler.BukkitTask
+import java.lang.reflect.Array.newInstance
 import java.util.function.Function
 
 /**
@@ -37,7 +38,7 @@ class ConfigData<T : Any?> internal constructor(
     private var value: T? = null
 
     init {
-        get() //Generate config automatically
+        get(true) //Generate config automatically
     }
 
     override fun toString(): String {
@@ -45,10 +46,14 @@ class ConfigData<T : Any?> internal constructor(
     }
 
     override fun get(): T {
+        return get(false)
+    }
+
+    private fun get(initialGet: Boolean): T {
         val cachedValue = value
         if (cachedValue != null) return cachedValue //Speed things up
         val config = config.config
-        val freshValue = config?.get(path) ?: primitiveDef.also { setInternal(it) }
+        val freshValue = config?.get(path) ?: primitiveDef.also { setInternal(it, initialGet) }
         return getter.apply(convertPrimitiveType(freshValue)).also { value = it }
     }
 
@@ -56,15 +61,17 @@ class ConfigData<T : Any?> internal constructor(
         value = null
     }
 
+
     /**
      * Converts a value to [T] from the representation returned by [Configuration.get].
      */
+    @Suppress("UNCHECKED_CAST", "DEPRECATION")
     private fun convertPrimitiveType(value: Any): Any {
         return if (primitiveDef is Number) //If we expect a number
             if (value is Number) ChromaUtils.convertNumber(value, primitiveDef.javaClass)
             else primitiveDef //If we didn't get a number, return default (which is a number)
         else if (value is List<*> && primitiveDef.javaClass.isArray) // If we got a list and we expected an array
-            value.toTypedArray<Any?>()
+            value.toArray { newInstance(primitiveDef.javaClass.componentType, it) as Array<T> }
         else value
     }
 
@@ -75,12 +82,12 @@ class ConfigData<T : Any?> internal constructor(
         this.value = value
     }
 
-    private fun setInternal(`val`: Any?) {
+    private fun setInternal(`val`: Any?, initialSet: Boolean = false) { // TODO: Remove initialSet when #109 is done
         val config = config.config
         if (config != null) {
             config.set(path, `val`)
             signalChange(this.config)
-        } else if (!ChromaUtils.isTest) {
+        } else if (!initialSet) {
             ChromaUtils.logWarn("Attempted to get/set config value with no config! Path: $path, value: $`val`")
         }
     }
