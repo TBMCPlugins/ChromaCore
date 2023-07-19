@@ -30,12 +30,12 @@ object ChromaUtils {
     @JvmStatic
     fun convertNumber(number: Number, targetcl: Class<out Number>): Number {
         return when {
-            targetcl == Long::class.javaPrimitiveType || Long::class.java.isAssignableFrom(targetcl) -> number.toLong()
-            targetcl == Int::class.javaPrimitiveType || Int::class.java.isAssignableFrom(targetcl) -> number.toInt() //Needed because the parser can get longs
-            targetcl == Short::class.javaPrimitiveType || Short::class.java.isAssignableFrom(targetcl) -> number.toShort()
-            targetcl == Byte::class.javaPrimitiveType || Byte::class.java.isAssignableFrom(targetcl) -> number.toByte()
-            targetcl == Float::class.javaPrimitiveType || Float::class.java.isAssignableFrom(targetcl) -> number.toFloat()
-            targetcl == Double::class.javaPrimitiveType || Double::class.java.isAssignableFrom(targetcl) -> number.toDouble()
+            targetcl == Long::class.javaPrimitiveType || Long::class.javaObjectType.isAssignableFrom(targetcl) -> number.toLong()
+            targetcl == Int::class.javaPrimitiveType || Int::class.javaObjectType.isAssignableFrom(targetcl) -> number.toInt() //Needed because the parser can get longs
+            targetcl == Short::class.javaPrimitiveType || Short::class.javaObjectType.isAssignableFrom(targetcl) -> number.toShort()
+            targetcl == Byte::class.javaPrimitiveType || Byte::class.javaObjectType.isAssignableFrom(targetcl) -> number.toByte()
+            targetcl == Float::class.javaPrimitiveType || Float::class.javaObjectType.isAssignableFrom(targetcl) -> number.toFloat()
+            targetcl == Double::class.javaPrimitiveType || Double::class.javaObjectType.isAssignableFrom(targetcl) -> number.toDouble()
             else -> number
         }
     }
