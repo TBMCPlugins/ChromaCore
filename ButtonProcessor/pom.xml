@@ -37,7 +37,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.1</version>
 				<configuration>
-					<compilerArgument>-proc:none</compilerArgument>
+					<proc>none</proc>
 					<source>17</source>
 					<target>17</target>
 				</configuration>

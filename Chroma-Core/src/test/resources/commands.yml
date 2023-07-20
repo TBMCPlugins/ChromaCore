@@ -1,0 +1,18 @@
+buttondevteam:
+  lib:
+    chat:
+      test:
+        Command2MCTest:
+          TestCommand:
+            def:
+              method: def()
+              params: ''
+  core:
+    ComponentCommand:
+      def:
+        method: def()
+        params: ''
+    ChromaCommand:
+      def:
+        method: def()
+        params: ''

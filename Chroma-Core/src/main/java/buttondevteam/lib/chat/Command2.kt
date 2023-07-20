@@ -90,8 +90,14 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         paramConverters[cl] = ParamConverter(converter, errormsg, allSupplier)
     }
 
+    /**
+     * Handle the given command line as sent by the sender.
+     *
+     * @param sender The sender who sent the command
+     * @param commandline The command line, including the leading command char
+     */
     open fun handleCommand(sender: TP, commandline: String): Boolean {
-        val results = dispatcher.parse(commandline, sender)
+        val results = dispatcher.parse(commandline.removePrefix("/"), sender)
         if (results.reader.canRead()) {
             return false // Unknown command
         }
@@ -138,6 +144,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         for (meth in command.javaClass.methods) {
             val ann = meth.getAnnotation(Subcommand::class.java) ?: continue
             val fullPath = command.commandPath + CommandUtils.getCommandPath(meth.name, ' ')
+            assert(fullPath.isNotBlank()) { "No path found for command class ${command.javaClass.name} and method ${meth.name}" }
             val (lastNode, mainNode, remainingPath) = registerNodeFromPath(fullPath)
             lastNode.addChild(getExecutableNode(meth, command, ann, remainingPath, CommandArgumentHelpManager(command), fullPath))
             if (mainCommandNode == null) mainCommandNode = mainNode

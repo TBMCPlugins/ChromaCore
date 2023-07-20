@@ -74,32 +74,31 @@ abstract class ICommand2<TP : Command2Sender>(val manager: Command2<*, TP>) {
         get() = EMPTY_PATHS // TODO: Deal with this (used for channel IDs)
 
     private fun getcmdpath(): String {
-        if (!javaClass.isAnnotationPresent(CommandClass::class.java)) throw RuntimeException(
-            "No @CommandClass annotation on command class " + javaClass.simpleName + "!"
-        )
+        if (!javaClass.isAnnotationPresent(CommandClass::class.java))
+            throw RuntimeException("No @CommandClass annotation on command class ${javaClass.simpleName}!")
         val getFromClass = Function { cl: Class<*> ->
             cl.simpleName.lowercase(Locale.getDefault()).replace("commandbase", "") // <-- ...
                 .replace("command", "")
         }
-        var path = javaClass.getAnnotation(CommandClass::class.java).path
-        var prevpath = if (path.isEmpty()) getFromClass.apply(javaClass) else path.also { path = it }
-        var cl: Class<*>? = javaClass.superclass
-        while (cl != null && cl.getPackage().name != ICommand2MC::class.java.getPackage().name) {
-            //
-            var newpath: String
-            val ccann: CommandClass? = cl.getAnnotation(CommandClass::class.java)
-            if (ccann?.path.isNullOrEmpty() || ccann?.path == prevpath) {
-                if (ccann?.excludeFromPath ?: Modifier.isAbstract(cl.modifiers)) {
-                    cl = cl.superclass
-                    continue
-                }
-                newpath = getFromClass.apply(cl)
-            } else newpath = ccann!!.path
-            path = "$newpath $path"
-            prevpath = newpath
-            cl = cl.superclass
+        val classList = mutableListOf<Class<*>>(javaClass)
+        while (true) {
+            val superClass = classList.last().superclass
+            if (superClass != null && superClass.getPackage().name != ICommand2MC::class.java.getPackage().name) {
+                classList.add(superClass)
+            } else {
+                break
+            }
         }
-        return path
+        return classList.reversed().associateWith { it.getAnnotation(CommandClass::class.java) }
+            .mapNotNull {
+                if (it.value?.path.isNullOrEmpty())
+                    if (it.value?.excludeFromPath ?: Modifier.isAbstract(it.key.modifiers))
+                        null
+                    else
+                        it.key.simpleName.lowercase().removeSuffix("commandbase").removeSuffix("command")
+                else
+                    it.value.path
+            }.joinToString(" ")
     }
 
     companion object {
