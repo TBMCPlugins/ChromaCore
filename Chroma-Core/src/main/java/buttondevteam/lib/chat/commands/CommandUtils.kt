@@ -29,22 +29,45 @@ object CommandUtils {
 
     /**
      * Casts the node to whatever you say if it's a command node. Use responsibly. Returns null if an argument node.
+     *
+     * Command nodes are nodes that are subcommands. They may do something or just print their help text.
+     * They are definitely not argument nodes.
      */
     @Suppress("UNCHECKED_CAST")
     fun <TP : Command2Sender, TSD : NoOpSubcommandData> CommandNode<TP>.coreCommand(): CoreCommandNode<TP, TSD>? {
-        return if (this is CoreCommandNode<*, *>) this as CoreCommandNode<TP, TSD>
+        return if (this.isCommand()) this as CoreCommandNode<TP, TSD>
         else null
     }
 
     /**
      * Returns the node as an executable core command node or returns null if it's a no-op node.
+     *
+     * Executable nodes are valid command nodes that do something other than printing help text.
      */
     fun <TP : Command2Sender, TC : ICommand2<*>> CommandNode<TP>.coreExecutable(): CoreExecutableNode<TP, TC>? {
-        val ret = this.coreCommand<TP, NoOpSubcommandData>()
-        return if (ret?.data is SubcommandData<*, *>) ret.coreCommand() else null
+        return if (isExecutable()) coreCommand() else null
     }
 
+    /**
+     * Returns the node as an argument node or returns null if it's not one.
+     *
+     * Argument nodes are children of executable command nodes.
+     */
     fun <TP : Command2Sender> CommandNode<TP>.coreArgument(): CoreArgumentCommandNode<TP, *>? {
         return if (this is CoreArgumentCommandNode<*, *>) this as CoreArgumentCommandNode<TP, *> else null
+    }
+
+    /**
+     * Returns whether the current node is an executable or help text command node.
+     */
+    fun <TP : Command2Sender> CommandNode<TP>.isCommand(): Boolean {
+        return this is CoreCommandNode<*, *>
+    }
+
+    /**
+     * Returns whether the current node is an executable command node.
+     */
+    fun <TP : Command2Sender> CommandNode<TP>.isExecutable(): Boolean {
+        return coreCommand<TP, NoOpSubcommandData>()?.data is SubcommandData<*, *>
     }
 }

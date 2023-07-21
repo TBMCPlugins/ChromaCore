@@ -6,7 +6,7 @@ buttondevteam:
           TestCommand:
             def:
               method: def()
-              params: ''
+              params: 'test'
   core:
     ComponentCommand:
       def:

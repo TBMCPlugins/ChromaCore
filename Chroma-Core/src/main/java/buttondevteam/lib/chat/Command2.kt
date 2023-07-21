@@ -1,6 +1,7 @@
 package buttondevteam.lib.chat
 
 import buttondevteam.core.MainPlugin
+import buttondevteam.lib.ChromaUtils
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.chat.commands.*
 import buttondevteam.lib.chat.commands.CommandUtils.coreCommand
@@ -101,19 +102,24 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         if (results.reader.canRead()) {
             return false // Unknown command
         }
-        //Needed because permission checking may load the (perhaps offline) sender's file which is disallowed on the main thread
-        Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.instance) { _ ->
+        val executeCommand: () -> Unit = {
             try {
                 dispatcher.execute(results)
             } catch (e: CommandSyntaxException) {
                 sender.sendMessage(e.message)
             } catch (e: Exception) {
                 TBMCCoreAPI.SendException(
-                    "Command execution failed for sender " + sender.name + "(" + sender.javaClass.canonicalName + ") and message " + commandline,
+                    "Command execution failed for sender ${sender.name}(${sender.javaClass.canonicalName}) and message $commandline",
                     e,
                     MainPlugin.instance
                 )
             }
+        }
+        if (ChromaUtils.isTest) {
+            executeCommand()
+        } else {
+            //Needed because permission checking may load the (perhaps offline) sender's file which is disallowed on the main thread
+            Bukkit.getScheduler().runTaskAsynchronously(MainPlugin.instance, executeCommand)
         }
         return true //We found a method
     }
@@ -145,8 +151,10 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             val ann = meth.getAnnotation(Subcommand::class.java) ?: continue
             val fullPath = command.commandPath + CommandUtils.getCommandPath(meth.name, ' ')
             assert(fullPath.isNotBlank()) { "No path found for command class ${command.javaClass.name} and method ${meth.name}" }
-            val (lastNode, mainNode, remainingPath) = registerNodeFromPath(fullPath)
-            lastNode.addChild(getExecutableNode(meth, command, ann, remainingPath, CommandArgumentHelpManager(command), fullPath))
+            val (lastNode, mainNodeMaybe, remainingPath) = registerNodeFromPath(fullPath)
+            val execNode = getExecutableNode(meth, command, ann, remainingPath, CommandArgumentHelpManager(command), fullPath)
+            lastNode.addChild(execNode)
+            val mainNode = mainNodeMaybe ?: execNode
             if (mainCommandNode == null) mainCommandNode = mainNode
             else if (mainNode.name != mainCommandNode.name) {
                 MainPlugin.instance.logger.warning("Multiple commands are defined in the same class! This is not supported. Class: " + command.javaClass.simpleName)
@@ -169,8 +177,10 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @param fullPath The full command path as registered
      * @return The executable node
      */
-    private fun getExecutableNode(method: Method, command: TC, ann: Subcommand, remainingPath: String,
-                                  argHelpManager: CommandArgumentHelpManager<TC, TP>, fullPath: String): LiteralCommandNode<TP> {
+    private fun getExecutableNode(
+        method: Method, command: TC, ann: Subcommand, remainingPath: String,
+        argHelpManager: CommandArgumentHelpManager<TC, TP>, fullPath: String
+    ): CoreExecutableNode<TP, TC> {
         val (params, senderType) = getCommandParametersAndSender(method, argHelpManager) // Param order is important
         val paramMap = HashMap<String, CommandArgument>()
         for (param in params) {
@@ -190,7 +200,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             val argType = getArgumentType(param)
             parent.then(CoreArgumentBuilder.argument<TP, _>(param.name, argType, param.optional).also { parent = it })
         }
-        return node.build()
+        return node.build().coreExecutable() ?: throw IllegalStateException("Command node should be executable but isn't: $fullPath")
     }
 
     /**
@@ -200,11 +210,11 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @return The last no-op node that can be used to register the executable node,
      * the main command node and the last part of the command path (that isn't registered yet)
      */
-    private fun registerNodeFromPath(path: String): Triple<CommandNode<TP>, CoreCommandNode<TP, *>, String> {
+    private fun registerNodeFromPath(path: String): Triple<CommandNode<TP>, CoreCommandNode<TP, *>?, String> {
         val split = path.split(" ")
         var parent: CommandNode<TP> = dispatcher.root
         var mainCommand: CoreCommandNode<TP, *>? = null
-        split.forEachIndexed { i, part ->
+        split.dropLast(1).forEachIndexed { i, part ->
             val child = parent.getChild(part)
             if (child == null) parent.addChild(CoreCommandBuilder.literalNoOp<TP, TC>(part, getSubcommandList())
                 .executes(::executeHelpText).build().also { parent = it })
@@ -212,7 +222,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             if (i == 0) mainCommand =
                 parent as CoreCommandNode<TP, *> // Has to be our own literal node, if not, well, error
         }
-        return Triple(parent, mainCommand!!, split.last())
+        return Triple(parent, mainCommand, split.last())
     }
 
     private fun getSubcommandList(): (Any) -> Array<String> {
@@ -235,10 +245,10 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
     ): Pair<List<CommandArgument>, Class<*>> {
         val parameters = method.parameters
         if (parameters.isEmpty()) throw RuntimeException("No sender parameter for method '$method'")
-        val usage = argHelpManager.getParameterHelpForMethod(method)
+        val usage = argHelpManager.getParameterHelpForMethod(method)?.ifEmpty { null }
         val paramNames = usage?.split(" ")
         return Pair(
-            parameters.zip(paramNames ?: (1 until parameters.size).map { i -> "param$i" })
+            parameters.drop(1).zip(paramNames ?: (1 until parameters.size).map { i -> "param$i" })
                 .map { (param, name) ->
                     val numAnn = param.getAnnotation(NumberArg::class.java)
                     CommandArgument(
@@ -398,18 +408,22 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @param condition The condition for removing a given command
      */
     fun unregisterCommandIf(condition: Predicate<CoreCommandNode<TP, SubcommandData<TC, TP>>>, nested: Boolean) {
-        dispatcher.root.children.removeIf { node -> node.coreExecutable<TP, TC>()?.let { condition.test(it) } ?: false }
-        if (nested) for (child in dispatcher.root.children) child.coreCommand<_, NoOpSubcommandData>()?.let { unregisterCommandIf(condition, it) }
+        unregisterCommandIf(condition, dispatcher.root, nested)
     }
 
     private fun unregisterCommandIf(
         condition: Predicate<CoreCommandNode<TP, SubcommandData<TC, TP>>>,
-        root: CoreCommandNode<TP, NoOpSubcommandData>
+        root: CommandNode<TP>,
+        nested: Boolean
     ) {
-        // TODO: Remvoe no-op nodes without children
         // Can't use getCoreChildren() here because the collection needs to be modifiable
-        root.children.removeIf { node -> node.coreExecutable<TP, TC>()?.let { condition.test(it) } ?: false }
-        for (child in root.children) child.coreCommand<_, NoOpSubcommandData>()?.let { unregisterCommandIf(condition, it) }
+        if (nested) for (child in root.children)
+            child.coreCommand<_, NoOpSubcommandData>()?.let { unregisterCommandIf(condition, it, true) }
+        root.children.removeIf { node ->
+            node.coreExecutable<TP, TC>()
+                ?.let { condition.test(it) }
+                ?: node.children.isEmpty()
+        }
     }
 
     /**
