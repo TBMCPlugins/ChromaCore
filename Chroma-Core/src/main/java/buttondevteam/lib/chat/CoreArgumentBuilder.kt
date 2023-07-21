@@ -1,6 +1,5 @@
 package buttondevteam.lib.chat
 
-import buttondevteam.lib.chat.commands.SubcommandData
 import com.mojang.brigadier.arguments.ArgumentType
 import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.suggestion.SuggestionProvider
@@ -11,7 +10,6 @@ class CoreArgumentBuilder<S : Command2Sender, T>(
     private val optional: Boolean
 ) : ArgumentBuilder<S, CoreArgumentBuilder<S, T>>() {
     private var suggestionsProvider: SuggestionProvider<S>? = null
-    internal lateinit var data: SubcommandData<*, S>
     fun suggests(provider: SuggestionProvider<S>): CoreArgumentBuilder<S, T> {
         suggestionsProvider = provider
         return this
@@ -31,15 +29,11 @@ class CoreArgumentBuilder<S : Command2Sender, T>(
             redirectModifier,
             isFork,
             suggestionsProvider,
-            optional,
-            data
+            optional
         )
     }
 
     override fun then(argument: ArgumentBuilder<S, *>?): CoreArgumentBuilder<S, T> {
-        if (argument is CoreArgumentBuilder<*, *>) {
-            (argument as CoreArgumentBuilder<S, *>).data = data
-        }
         return super.then(argument)
     }
 

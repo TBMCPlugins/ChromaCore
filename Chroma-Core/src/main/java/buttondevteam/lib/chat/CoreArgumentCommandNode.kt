@@ -12,9 +12,12 @@ import java.util.function.Predicate
 
 class CoreArgumentCommandNode<S : Command2Sender, T>(
     name: String?, type: ArgumentType<T>?, command: Command<S>?, requirement: Predicate<S>?, redirect: CommandNode<S>?, modifier: RedirectModifier<S>?, forks: Boolean, customSuggestions: SuggestionProvider<S>?,
-    val optional: Boolean, val commandData: SubcommandData<*, S>
+    val optional: Boolean
 ) :
     ArgumentCommandNode<S, T>(name, type, command, requirement, redirect, modifier, forks, customSuggestions) {
+    lateinit var commandData: SubcommandData<*, S>
+        internal set // TODO: This should propagate to other arguments
+
     override fun getUsageText(): String {
         return if (optional) "[$name]" else "<$name>"
     }

@@ -2,6 +2,7 @@ package buttondevteam.lib.chat.commands
 
 import buttondevteam.lib.chat.Command2Sender
 import buttondevteam.lib.chat.ICommand2
+import java.lang.reflect.Method
 
 /**
  * Stores information about the subcommand that can be used to construct the Brigadier setup and to get information while executing the command.
@@ -42,14 +43,21 @@ class SubcommandData<TC : ICommand2<*>, TP : Command2Sender>(
      * A function that determines whether the user has permission to run this subcommand.
      */
     private val permissionCheck: (TP, SubcommandData<TC, TP>) -> Boolean,
+
     /**
      * All annotations implemented by the method that executes the command. Can be used to add custom metadata when implementing a platform.
      */
     val annotations: Array<Annotation>,
+
     /**
      * The space-separated full command path of this subcommand.
      */
-    val fullPath: String
+    val fullPath: String,
+
+    /**
+     * The method to run when executing the command.
+     */
+    private val method: Method
 ) : NoOpSubcommandData(helpTextGetter) {
 
     /**
@@ -60,5 +68,23 @@ class SubcommandData<TC : ICommand2<*>, TP : Command2Sender>(
      */
     fun hasPermission(sender: TP): Boolean {
         return permissionCheck(sender, this)
+    }
+
+    /**
+     * Execute the command and return the result. Doesn't perform any checks.
+     *
+     * @param sender The actual sender as expected by the method
+     * @param args The rest of the method args
+     */
+    fun executeCommand(sender: Any, vararg args: Any?): Any? {
+        method.isAccessible = true
+        return method.invoke(command, sender, *args)
+    }
+
+    /**
+     * Send the help text to the specified sender.
+     */
+    fun sendHelpText(sender: TP) {
+        sender.sendMessage(getHelpText(sender))
     }
 }

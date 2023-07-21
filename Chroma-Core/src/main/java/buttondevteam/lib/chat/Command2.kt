@@ -4,8 +4,11 @@ import buttondevteam.core.MainPlugin
 import buttondevteam.lib.ChromaUtils
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.chat.commands.*
+import buttondevteam.lib.chat.commands.CommandUtils.coreArgument
 import buttondevteam.lib.chat.commands.CommandUtils.coreCommand
 import buttondevteam.lib.chat.commands.CommandUtils.coreExecutable
+import com.google.common.base.Defaults
+import com.google.common.primitives.Primitives
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.*
 import com.mojang.brigadier.builder.ArgumentBuilder
@@ -14,6 +17,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException
 import com.mojang.brigadier.tree.CommandNode
 import com.mojang.brigadier.tree.LiteralCommandNode
 import org.bukkit.Bukkit
+import org.bukkit.ChatColor
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.function.Function
 import java.util.function.Predicate
@@ -192,13 +197,25 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             { helpText }, // TODO: Help text getter support
             { sender: TP, data: SubcommandData<TC, TP> -> hasPermission(sender, data) },
             method.annotations.filterNot { it is Subcommand }.toTypedArray(),
-            fullPath
-        )
-            .executes { context: CommandContext<TP> -> executeCommand(context) }
-        var parent: ArgumentBuilder<TP, *> = node
-        for (param in params) { // Register parameters in the right order
+            fullPath,
+            method
+        ).executes(this::executeHelpText)
+
+        fun getArgNodes(parent: ArgumentBuilder<TP, *>, params: MutableList<CommandArgument>) {
+            // TODO: Implement optional arguments here by making the last non-optional parameter also executable
+            val param = params.removeLast()
             val argType = getArgumentType(param)
-            parent.then(CoreArgumentBuilder.argument<TP, _>(param.name, argType, param.optional).also { parent = it })
+            val arg = CoreArgumentBuilder.argument<TP, _>(param.name, argType, param.optional)
+            if (params.isEmpty()) {
+                arg.executes { context: CommandContext<TP> -> executeCommand(context) }
+            } else {
+                arg.executes(::executeHelpText)
+                getArgNodes(arg, params)
+            }
+            parent.then(arg)
+        }
+        if (params.isNotEmpty()) {
+            getArgNodes(node, params.toMutableList())
         }
         return node.build().coreExecutable() ?: throw IllegalStateException("Command node should be executable but isn't: $fullPath")
     }
@@ -311,65 +328,85 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @param context The command context
      * @return Vanilla command success level (0)
      */
-    private fun executeCommand(context: CommandContext<TP>): Int {
-        println("Execute command")
-        println("Should be running sync: $runOnPrimaryThread")
+    protected open fun executeCommand(context: CommandContext<TP>): Int {
+        assert(context.nodes.lastOrNull()?.node?.coreArgument() != null) // TODO: What if there are no arguments?
+        val node = context.nodes.last().node.coreArgument()!!
+        val sender = context.source
 
-        /*if (!hasPermission(sender, sd.command, sd.method)) {
-			sender.sendMessage("${ChatColor.RED}You don't have permission to use this command");
-			return;
-		}
-		// TODO: WIP
+        @Suppress("UNCHECKED_CAST")
+        val sd = node.commandData as SubcommandData<TC, TP>
+        if (!sd.hasPermission(sender)) {
+            sender.sendMessage("${ChatColor.RED}You don't have permission to use this command")
+            return 1
+        }
+        // TODO: WIP
 
-            val type = sendertype.simpleName.fold("") { s, ch -> s + if (ch.isUpperCase()) " " + ch.lowercase() else ch }
+        val convertedSender = convertSenderType(sender, sd.senderType)
+        if (convertedSender == null) {
+            //TODO: Should have a prettier display of Command2 classes here
+            val type = sd.senderType.simpleName.fold("") { s, ch -> s + if (ch.isUpperCase()) " " + ch.lowercase() else ch }
             sender.sendMessage("${ChatColor.RED}You need to be a $type to use this command.")
             sender.sendMessage(sd.getHelpText(sender)) //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
+            return 0
+        }
 
-		if (processSenderType(sender, sd, params, parameterTypes)) return; // Checks if the sender is the wrong type
-		val args = parsed.getContext().getArguments();
-		for (var arg : sd.arguments.entrySet()) {*/
+        val params = executeGetArguments(sd, context) ?: return executeHelpText(context)
+
         // TODO: Invoke using custom method
-        /*if (pj == commandline.length() + 1) { //No param given
-				if (paramArr[i1].isAnnotationPresent(OptionalArg.class)) {
-					if (cl.isPrimitive())
-						params.add(Defaults.defaultValue(cl));
-					else if (Number.class.isAssignableFrom(cl)
-						|| Number.class.isAssignableFrom(cl))
-						params.add(Defaults.defaultValue(Primitives.unwrap(cl)));
-					else
-						params.add(null);
-					continue; //Fill the remaining params with nulls
-				} else {
-					sender.sendMessage(sd.helpText); //Required param missing
-					return;
-				}
-			}*/
-        /*if (paramArr[i1].isVarArgs()) { - TODO: Varargs support? (colors?)
-				params.add(commandline.substring(j + 1).split(" +"));
-				continue;
-			}*/
+        // TODO: Varargs support? (colors?)
         // TODO: Character handling (strlen)
         // TODO: Param converter
-        /*}
-		Runnable invokeCommand = () -> {
-			try {
-				sd.method.setAccessible(true); //It may be part of a private class
-				val ret = sd.method.invoke(sd.command, params.toArray()); //I FORGOT TO TURN IT INTO AN ARRAY (for a long time)
-				if (ret instanceof Boolean) {
-					if (!(boolean) ret) //Show usage
-						sender.sendMessage(sd.helpText);
-				} else if (ret != null)
-					throw new Exception("Wrong return type! Must return a boolean or void. Return value: " + ret);
-			} catch (InvocationTargetException e) {
-				TBMCCoreAPI.SendException("An error occurred in a command handler for " + subcommand + "!", e.getCause(), MainPlugin.Instance);
-			} catch (Exception e) {
-				TBMCCoreAPI.SendException("Command handling failed for sender " + sender + " and subcommand " + subcommand, e, MainPlugin.Instance);
-			}
-		};
-		if (sync)
-			Bukkit.getScheduler().runTask(MainPlugin.Instance, invokeCommand);
-		else
-			invokeCommand.run();*/return 0
+
+        executeInvokeCommand(sd, sender, convertedSender, params)
+        return 0
+    }
+
+    private fun executeGetArguments(sd: SubcommandData<TC, TP>, context: CommandContext<TP>): MutableList<Any?>? {
+        val params = mutableListOf<Any?>()
+        for (argument in sd.argumentsInOrder) {
+            try {
+                val userArgument = context.getArgument(argument.name, argument.type)
+                params.add(userArgument)
+            } catch (e: IllegalArgumentException) {
+                // TODO: This probably only works with primitive types (argument.type)
+                if (argument.optional) {
+                    if (argument.type.isPrimitive) {
+                        params.add(Defaults.defaultValue(argument.type))
+                    } else if (Number::class.java.isAssignableFrom(argument.type)) {
+                        params.add(Defaults.defaultValue(Primitives.unwrap(argument.type)))
+                    } else {
+                        params.add(null)
+                    }
+                } else {
+                    return null
+                }
+            }
+        }
+        return params
+    }
+
+    /**
+     * Invokes the command method with the given sender and parameters.
+     */
+    private fun executeInvokeCommand(sd: SubcommandData<TC, TP>, sender: TP, actualSender: Any, params: List<Any?>) {
+        val invokeCommand = {
+            try {
+                val ret = sd.executeCommand(actualSender, *params.toTypedArray())
+                if (ret is Boolean) {
+                    if (!ret) //Show usage
+                        sd.sendHelpText(sender)
+                } else if (ret != null)
+                    throw Exception("Wrong return type! Must return a boolean or void. Return value: $ret")
+            } catch (e: InvocationTargetException) {
+                TBMCCoreAPI.SendException("An error occurred in a command handler for ${sd.fullPath}!", e.cause ?: e, MainPlugin.instance)
+            } catch (e: Exception) {
+                TBMCCoreAPI.SendException("Command handling failed for sender $sender and subcommand ${sd.fullPath}", e, MainPlugin.instance)
+            }
+        }
+        if (runOnPrimaryThread && !ChromaUtils.isTest)
+            Bukkit.getScheduler().runTask(MainPlugin.instance, invokeCommand)
+        else
+            invokeCommand()
     }
 
     abstract fun hasPermission(sender: TP, data: SubcommandData<TC, TP>): Boolean

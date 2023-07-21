@@ -1,10 +1,12 @@
 package buttondevteam.lib.chat
 
 import buttondevteam.lib.chat.commands.CommandArgument
+import buttondevteam.lib.chat.commands.CommandUtils.coreArgument
 import buttondevteam.lib.chat.commands.NoOpSubcommandData
 import buttondevteam.lib.chat.commands.SubcommandData
 import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import java.lang.reflect.Method
 
 class CoreCommandBuilder<S : Command2Sender, TC : ICommand2<S>, TSD : NoOpSubcommandData> private constructor(
     literal: String,
@@ -32,11 +34,12 @@ class CoreCommandBuilder<S : Command2Sender, TC : ICommand2<S>, TSD : NoOpSubcom
     }
 
     override fun then(argument: ArgumentBuilder<S, *>): LiteralArgumentBuilder<S> {
-        if (argument is CoreArgumentBuilder<*, *> && data is SubcommandData<*, *>) {
+        super.then(argument)
+        if (data is SubcommandData<*, *>) {
             @Suppress("UNCHECKED_CAST")
-            (argument as CoreArgumentBuilder<S, *>).data = data as SubcommandData<*, S>
+            arguments.forEach { it.coreArgument()?.commandData = data as SubcommandData<*, S> }
         }
-        return super.then(argument)
+        return this
     }
 
     companion object {
@@ -62,11 +65,12 @@ class CoreCommandBuilder<S : Command2Sender, TC : ICommand2<S>, TSD : NoOpSubcom
             helpTextGetter: (Any) -> Array<String>,
             hasPermission: (S, SubcommandData<TC, S>) -> Boolean,
             annotations: Array<Annotation>,
-            fullPath: String
+            fullPath: String,
+            method: Method
         ): CoreCommandBuilder<S, TC, SubcommandData<TC, S>> {
             return CoreCommandBuilder(
                 name,
-                SubcommandData(senderType, arguments, argumentsInOrder, command, helpTextGetter, hasPermission, annotations, fullPath)
+                SubcommandData(senderType, arguments, argumentsInOrder, command, helpTextGetter, hasPermission, annotations, fullPath, method)
             )
         }
 

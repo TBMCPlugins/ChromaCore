@@ -16,7 +16,6 @@ import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder.literal
 import com.mojang.brigadier.builder.RequiredArgumentBuilder
 import com.mojang.brigadier.builder.RequiredArgumentBuilder.argument
-import com.mojang.brigadier.tree.CommandNode
 import com.mojang.brigadier.tree.LiteralCommandNode
 import me.lucko.commodore.Commodore
 import me.lucko.commodore.CommodoreProvider
@@ -40,8 +39,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
     override fun registerCommand(command: ICommand2MC) {
         val commandNode = super.registerCommandSuper(command)
         val bcmd = registerOfficially(command, commandNode)
-        if (bcmd != null) // TODO: Support aliases
-            super.registerCommandSuper(command)
+        // TODO: Support aliases
         val permPrefix = "chroma.command."
         //Allow commands by default, it will check mod-only
         val nodes = commandNode.coreExecutable<Command2MCSender, ICommand2MC>()
@@ -60,7 +58,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
     }
 
     override fun hasPermission(sender: Command2MCSender, data: SubcommandData<ICommand2MC, Command2MCSender>): Boolean {
-        val defWorld = Bukkit.getWorlds().first().name
+        val defWorld = if (ChromaUtils.isTest) "TestWorld" else Bukkit.getWorlds().first().name
         val check = if (sender.permCheck !is TBMCPlayerBase) ({
             MainPlugin.permission.groupHas(
                 defWorld,

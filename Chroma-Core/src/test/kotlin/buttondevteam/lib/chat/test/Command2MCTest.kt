@@ -66,18 +66,29 @@ class Command2MCTest {
     @Order(3)
     fun testHandleCommand() {
         val user = ChromaGamerBase.getUser(UUID.randomUUID().toString(), TBMCPlayer::class.java)
-        assert(ButtonPlugin.command2MC.handleCommand(Command2MCSender(user, Channel.globalChat, user), "/test hmm"))
+        val sender = object : Command2MCSender(user, Channel.globalChat, user) {
+            override fun sendMessage(message: String) {
+                error(message)
+            }
+
+            override fun sendMessage(message: Array<String>) {
+                error(message.joinToString("\n"))
+            }
+        }
+        assert(ButtonPlugin.command2MC.handleCommand(sender, "/test hmm"))
+        assertEquals("hmm", testCommandReceived)
     }
 
     @CommandClass
     object TestCommand : ICommand2MC() {
         @Command2.Subcommand
         fun def(sender: Command2MCSender, test: String) {
-            println(test)
+            testCommandReceived = test
         }
     }
 
     companion object {
         private var initialized = false
+        private var testCommandReceived: String? = null
     }
 }
