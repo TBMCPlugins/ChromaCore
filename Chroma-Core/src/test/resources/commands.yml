@@ -7,6 +7,24 @@ buttondevteam:
             def:
               method: def()
               params: 'test'
+          NoArgTestCommand:
+            def:
+              method: def()
+              params: ''
+            failing:
+              method: failing()
+              params: ''
+          ErroringTestCommand:
+            def:
+              method: def()
+              params: ''
+          MultiArgTestCommand:
+            def:
+              method: def()
+              params: "test test2"
+            test2:
+              method: test2()
+              params: "btest ntest"
   core:
     ComponentCommand:
       def:

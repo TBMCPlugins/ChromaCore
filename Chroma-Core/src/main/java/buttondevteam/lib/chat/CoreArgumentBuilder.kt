@@ -20,7 +20,7 @@ class CoreArgumentBuilder<S : Command2Sender, T>(
     }
 
     override fun build(): CoreArgumentCommandNode<S, T> {
-        return CoreArgumentCommandNode(
+        val result = CoreArgumentCommandNode(
             name,
             type,
             command,
@@ -31,6 +31,10 @@ class CoreArgumentBuilder<S : Command2Sender, T>(
             suggestionsProvider,
             optional
         )
+        for (node in arguments) {
+            result.addChild(node)
+        }
+        return result
     }
 
     override fun then(argument: ArgumentBuilder<S, *>?): CoreArgumentBuilder<S, T> {

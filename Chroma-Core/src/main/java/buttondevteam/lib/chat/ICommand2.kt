@@ -3,8 +3,6 @@ package buttondevteam.lib.chat
 import buttondevteam.lib.chat.Command2.Subcommand
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
-import java.util.*
-import java.util.function.Function
 
 /**
  * This class is used as a base class for all the specific command implementations.
@@ -20,7 +18,6 @@ abstract class ICommand2<TP : Command2Sender>(val manager: Command2<*, TP>) {
      * @param sender The sender which ran the command
      * @return The success of the command
      */
-    @Suppress("UNUSED_PARAMETER")
     open fun def(sender: TP): Boolean {
         return false
     }
@@ -76,10 +73,6 @@ abstract class ICommand2<TP : Command2Sender>(val manager: Command2<*, TP>) {
     private fun getcmdpath(): String {
         if (!javaClass.isAnnotationPresent(CommandClass::class.java))
             throw RuntimeException("No @CommandClass annotation on command class ${javaClass.simpleName}!")
-        val getFromClass = Function { cl: Class<*> ->
-            cl.simpleName.lowercase(Locale.getDefault()).replace("commandbase", "") // <-- ...
-                .replace("command", "")
-        }
         val classList = mutableListOf<Class<*>>(javaClass)
         while (true) {
             val superClass = classList.last().superclass

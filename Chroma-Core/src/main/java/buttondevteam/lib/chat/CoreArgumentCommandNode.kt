@@ -1,5 +1,6 @@
 package buttondevteam.lib.chat
 
+import buttondevteam.lib.chat.commands.CommandUtils.coreArgument
 import buttondevteam.lib.chat.commands.SubcommandData
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.RedirectModifier
@@ -15,8 +16,16 @@ class CoreArgumentCommandNode<S : Command2Sender, T>(
     val optional: Boolean
 ) :
     ArgumentCommandNode<S, T>(name, type, command, requirement, redirect, modifier, forks, customSuggestions) {
-    lateinit var commandData: SubcommandData<*, S>
-        internal set // TODO: This should propagate to other arguments
+    private var _commandData: SubcommandData<*, S>? = null
+    var commandData: SubcommandData<*, S>
+        get() {
+            return _commandData
+                ?: throw UninitializedPropertyAccessException("Command data has not been initialized")
+        }
+        internal set(value) {
+            _commandData = value
+            children.forEach { it.coreArgument()?.commandData = value }
+        }
 
     override fun getUsageText(): String {
         return if (optional) "[$name]" else "<$name>"

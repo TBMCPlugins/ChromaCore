@@ -2,7 +2,6 @@ package buttondevteam.lib.chat
 
 import buttondevteam.core.MainPlugin
 import buttondevteam.lib.ChromaUtils
-import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.chat.commands.*
 import buttondevteam.lib.chat.commands.CommandUtils.coreArgument
 import buttondevteam.lib.chat.commands.CommandUtils.coreCommand
@@ -113,11 +112,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             } catch (e: CommandSyntaxException) {
                 sender.sendMessage(e.message)
             } catch (e: Exception) {
-                TBMCCoreAPI.SendException(
-                    "Command execution failed for sender ${sender.name}(${sender.javaClass.canonicalName}) and message $commandline",
-                    e,
-                    MainPlugin.instance
-                )
+                ChromaUtils.throwWhenTested(e, "Command execution failed for sender ${sender.name}(${sender.javaClass.canonicalName}) and message $commandline")
             }
         }
         if (ChromaUtils.isTest) {
@@ -201,21 +196,26 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             method
         ).executes(this::executeHelpText)
 
-        fun getArgNodes(parent: ArgumentBuilder<TP, *>, params: MutableList<CommandArgument>) {
+        fun getArgNodes(parent: ArgumentBuilder<TP, *>, params: MutableList<CommandArgument>, executable: Boolean) {
             // TODO: Implement optional arguments here by making the last non-optional parameter also executable
-            val param = params.removeLast()
+            val param = params.removeFirst()
             val argType = getArgumentType(param)
             val arg = CoreArgumentBuilder.argument<TP, _>(param.name, argType, param.optional)
-            if (params.isEmpty()) {
+            if (params.isEmpty() || executable) {
                 arg.executes { context: CommandContext<TP> -> executeCommand(context) }
             } else {
                 arg.executes(::executeHelpText)
-                getArgNodes(arg, params)
+            }
+            if (params.isNotEmpty()) {
+                getArgNodes(arg, params, param.optional)
             }
             parent.then(arg)
         }
+
         if (params.isNotEmpty()) {
-            getArgNodes(node, params.toMutableList())
+            getArgNodes(node, params.toMutableList(), false)
+        } else {
+            node.executes(::executeCommand)
         }
         return node.build().coreExecutable() ?: throw IllegalStateException("Command node should be executable but isn't: $fullPath")
     }
@@ -329,12 +329,13 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @return Vanilla command success level (0)
      */
     protected open fun executeCommand(context: CommandContext<TP>): Int {
-        assert(context.nodes.lastOrNull()?.node?.coreArgument() != null) // TODO: What if there are no arguments?
-        val node = context.nodes.last().node.coreArgument()!!
+        @Suppress("UNCHECKED_CAST")
+        val sd = context.nodes.lastOrNull()?.node?.let {
+            it.coreArgument()?.commandData as SubcommandData<TC, TP>?
+                ?: it.coreCommand<_, SubcommandData<TC, TP>>()?.data
+        } ?: throw IllegalStateException("Could not find suitable command node for command ${context.input}")
         val sender = context.source
 
-        @Suppress("UNCHECKED_CAST")
-        val sd = node.commandData as SubcommandData<TC, TP>
         if (!sd.hasPermission(sender)) {
             sender.sendMessage("${ChatColor.RED}You don't have permission to use this command")
             return 1
@@ -398,9 +399,9 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
                 } else if (ret != null)
                     throw Exception("Wrong return type! Must return a boolean or void. Return value: $ret")
             } catch (e: InvocationTargetException) {
-                TBMCCoreAPI.SendException("An error occurred in a command handler for ${sd.fullPath}!", e.cause ?: e, MainPlugin.instance)
+                ChromaUtils.throwWhenTested(e.cause ?: e, "An error occurred in a command handler for ${sd.fullPath}!")
             } catch (e: Exception) {
-                TBMCCoreAPI.SendException("Command handling failed for sender $sender and subcommand ${sd.fullPath}", e, MainPlugin.instance)
+                ChromaUtils.throwWhenTested(e, "Command handling failed for sender $sender and subcommand ${sd.fullPath}")
             }
         }
         if (runOnPrimaryThread && !ChromaUtils.isTest)

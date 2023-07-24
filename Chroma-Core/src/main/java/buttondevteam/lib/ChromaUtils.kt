@@ -82,6 +82,22 @@ object ChromaUtils {
     }
 
     /**
+     * Throws the exception directly during testing but only reports it when running on the server.
+     * This way exceptions get reported properly when running, but they can be checked during testing.
+     *
+     * Useful in code blocks scheduled using the Bukkit API.
+     */
+    fun throwWhenTested(exception: Throwable, message: String) {
+        if (isTest) {
+            // Propagate exception back to the tests
+            throw exception
+        } else {
+            // Otherwise we don't run the code directly, so we need to handle this here
+            TBMCCoreAPI.SendException(message, exception, MainPlugin.instance)
+        }
+    }
+
+    /**
      * Returns true while unit testing.
      */
     @JvmStatic
