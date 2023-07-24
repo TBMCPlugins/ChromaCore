@@ -2,9 +2,9 @@ package buttondevteam.core.component.channel
 
 import buttondevteam.core.ComponentManager.get
 import buttondevteam.lib.architecture.IHaveConfig
-import buttondevteam.lib.chat.Color
 import buttondevteam.lib.player.ChromaGamerBase
 import org.bukkit.Bukkit
+import org.bukkit.ChatColor
 import java.util.*
 import java.util.function.Function
 import java.util.function.Predicate
@@ -28,7 +28,7 @@ open class Channel
     /**
      * The default color of the messages sent in the channel
      */
-    private val defColor: Color,
+    private val defColor: ChatColor,
     /**
      * The channel identifier. It's the same as the command to be used for the channel *without / *. For example "mod".
      * It's also used for scoreboard objective names.
@@ -56,7 +56,7 @@ open class Channel
     @JvmField
     val color = component.config.getData(
         "${this.identifier}.color",
-        this.defColor, { c -> Color.valueOf((c as String)) }, Color::toString
+        this.defColor, { c -> ChatColor.getByChar(c as Char) ?: this.defColor }, ChatColor::getChar
     )
 
     @JvmField

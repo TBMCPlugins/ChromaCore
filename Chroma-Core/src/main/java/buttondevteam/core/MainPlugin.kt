@@ -13,7 +13,6 @@ import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.architecture.ButtonPlugin
 import buttondevteam.lib.architecture.Component.Companion.registerComponent
 import buttondevteam.lib.architecture.ConfigData
-import buttondevteam.lib.chat.Color
 import buttondevteam.lib.chat.TBMCChatAPI
 import buttondevteam.lib.player.ChromaGamerBase
 import buttondevteam.lib.player.TBMCPlayer
@@ -110,18 +109,18 @@ class MainPlugin : ButtonPlugin {
             )
         }
         TBMCCoreAPI.RegisterUserClass(TBMCPlayerBase::class.java) { TBMCPlayer() }
-        TBMCChatAPI.registerChatChannel(Channel("${ChatColor.WHITE}g${ChatColor.WHITE}", Color.White, "g", null)
+        TBMCChatAPI.registerChatChannel(Channel("${ChatColor.WHITE}g${ChatColor.WHITE}", ChatColor.WHITE, "g", null)
             .also { Channel.globalChat = it }) //The /ooc ID has moved to the config
         TBMCChatAPI.registerChatChannel(Channel(
             "${ChatColor.RED}ADMIN${ChatColor.WHITE}",
-            Color.Red,
+            ChatColor.RED,
             "a",
             Channel.inGroupFilter(null)
         )
             .also { Channel.adminChat = it })
         TBMCChatAPI.registerChatChannel(Channel(
             "${ChatColor.BLUE}MOD${ChatColor.WHITE}",
-            Color.Blue,
+            ChatColor.BLUE,
             "mod",
             Channel.inGroupFilter("mod")
         )
@@ -129,17 +128,17 @@ class MainPlugin : ButtonPlugin {
         TBMCChatAPI.registerChatChannel(
             Channel(
                 "${ChatColor.GOLD}DEV${ChatColor.WHITE}",
-                Color.Gold,
+                ChatColor.GOLD,
                 "dev",
                 Channel.inGroupFilter("developer")
             )
         ) // TODO: Make groups configurable
-        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.RED}RED${ChatColor.WHITE}", Color.DarkRed, "red"))
-        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.GOLD}ORANGE${ChatColor.WHITE}", Color.Gold, "orange"))
-        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.YELLOW}YELLOW${ChatColor.WHITE}", Color.Yellow, "yellow"))
-        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.GREEN}GREEN${ChatColor.WHITE}", Color.Green, "green"))
-        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.AQUA}BLUE${ChatColor.WHITE}", Color.Blue, "blue"))
-        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.LIGHT_PURPLE}PURPLE${ChatColor.WHITE}", Color.DarkPurple, "purple"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.RED}RED${ChatColor.WHITE}", ChatColor.DARK_RED, "red"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.GOLD}ORANGE${ChatColor.WHITE}", ChatColor.GOLD, "orange"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.YELLOW}YELLOW${ChatColor.WHITE}", ChatColor.YELLOW, "yellow"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.GREEN}GREEN${ChatColor.WHITE}", ChatColor.GREEN, "green"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.AQUA}BLUE${ChatColor.WHITE}", ChatColor.BLUE, "blue"))
+        TBMCChatAPI.registerChatChannel(ChatRoom("${ChatColor.LIGHT_PURPLE}PURPLE${ChatColor.WHITE}", ChatColor.DARK_PURPLE, "purple"))
         val playerSupplier = Supplier { Bukkit.getOnlinePlayers().map { obj -> obj.name }.asIterable() }
         command2MC.addParamConverter(
             OfflinePlayer::class.java,

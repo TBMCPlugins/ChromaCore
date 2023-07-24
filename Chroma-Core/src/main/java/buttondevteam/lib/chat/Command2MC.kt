@@ -100,7 +100,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
      */
     private fun permGroup(data: SubcommandData<ICommand2MC, Command2MCSender>): String {
         val group = data.annotations.filterIsInstance<MCCommandSettings>().map {
-            if (it.permGroup.isEmpty() && it.modOnly) MCCommandSettings.MOD_GROUP else ""
+            if (it.permGroup.isEmpty() && it.modOnly) MCCommandSettings.MOD_GROUP else "" // TODO: This doesn't seem to return the perm groups themselves
         }.firstOrNull()
         return group ?: ""
     }

@@ -351,7 +351,6 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
 
         // TODO: Varargs support? (colors?)
         // TODO: Character handling (strlen)
-        // TODO: Param converter
 
         executeInvokeCommand(sd, sender, convertedSender, params)
         return 0
