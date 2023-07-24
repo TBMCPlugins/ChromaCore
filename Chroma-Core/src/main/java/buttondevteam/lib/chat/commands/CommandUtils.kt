@@ -70,4 +70,14 @@ object CommandUtils {
     fun <TP : Command2Sender> CommandNode<TP>.isExecutable(): Boolean {
         return coreCommand<TP, NoOpSubcommandData>()?.data is SubcommandData<*, *>
     }
+
+    @Suppress("UNCHECKED_CAST")
+    fun <TP : Command2Sender, TC : ICommand2<TP>> CommandNode<TP>.subcommandData(): SubcommandData<TC, TP>? {
+        return coreArgument()?.commandData as SubcommandData<TC, TP>?
+            ?: coreCommand<_, SubcommandData<TC, TP>>()?.data
+    }
+
+    fun <TP : Command2Sender> CommandNode<TP>.subcommandDataNoOp(): NoOpSubcommandData? {
+        return subcommandData() ?: coreCommand<_, NoOpSubcommandData>()?.data
+    }
 }

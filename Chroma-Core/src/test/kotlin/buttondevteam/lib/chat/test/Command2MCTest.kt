@@ -86,6 +86,11 @@ class Command2MCTest {
         runFailingCommand(sender, "/erroringtest")
         runCommand(sender, "/multiargtest hmm mhm", MultiArgTestCommand, "hmmmhm")
         runCommand(sender, "/multiargtest test2 true 19", MultiArgTestCommand, "true 19")
+        runCommand(sender, "/multiargtest testoptional", MultiArgTestCommand, "false")
+        runCommand(sender, "/multiargtest testoptional true", MultiArgTestCommand, "true")
+        runCommand(sender, "/multiargtest testoptionalmulti true teszt", MultiArgTestCommand, "true teszt")
+        runCommand(sender, "/multiargtest testoptionalmulti true", MultiArgTestCommand, "true null")
+        runCommand(sender, "/multiargtest testoptionalmulti", MultiArgTestCommand, "false null")
         // TODO: Add expected failed param conversions and missing params
     }
 
@@ -143,6 +148,16 @@ class Command2MCTest {
         @Command2.Subcommand
         fun test2(sender: Command2MCSender, btest: Boolean, ntest: Int) {
             testCommandReceived = "$btest $ntest"
+        }
+
+        @Command2.Subcommand
+        fun testOptional(sender: Command2MCSender, @Command2.OptionalArg opt: Boolean) {
+            testCommandReceived = "$opt"
+        }
+
+        @Command2.Subcommand
+        fun testOptionalMulti(sender: Command2MCSender, @Command2.OptionalArg opt1: Boolean, @Command2.OptionalArg opt2: String?) {
+            testCommandReceived = "$opt1 $opt2"
         }
     }
 

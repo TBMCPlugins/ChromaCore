@@ -3,9 +3,10 @@ package buttondevteam.lib.chat
 import buttondevteam.core.MainPlugin
 import buttondevteam.lib.ChromaUtils
 import buttondevteam.lib.chat.commands.*
-import buttondevteam.lib.chat.commands.CommandUtils.coreArgument
 import buttondevteam.lib.chat.commands.CommandUtils.coreCommand
 import buttondevteam.lib.chat.commands.CommandUtils.coreExecutable
+import buttondevteam.lib.chat.commands.CommandUtils.subcommandData
+import buttondevteam.lib.chat.commands.CommandUtils.subcommandDataNoOp
 import com.google.common.base.Defaults
 import com.google.common.primitives.Primitives
 import com.mojang.brigadier.CommandDispatcher
@@ -22,7 +23,6 @@ import java.lang.reflect.Method
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
-import java.util.stream.Collectors
 
 /**
  * The method name is the subcommand, use underlines (_) to add further subcommands.
@@ -196,25 +196,26 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             method
         ).executes(this::executeHelpText)
 
-        fun getArgNodes(parent: ArgumentBuilder<TP, *>, params: MutableList<CommandArgument>, executable: Boolean) {
+        fun getArgNodes(parent: ArgumentBuilder<TP, *>, params: MutableList<CommandArgument>): Boolean {
             // TODO: Implement optional arguments here by making the last non-optional parameter also executable
             val param = params.removeFirst()
             val argType = getArgumentType(param)
             val arg = CoreArgumentBuilder.argument<TP, _>(param.name, argType, param.optional)
-            if (params.isEmpty() || executable) {
+            if (params.isEmpty()) {
                 arg.executes { context: CommandContext<TP> -> executeCommand(context) }
             } else {
                 arg.executes(::executeHelpText)
             }
             if (params.isNotEmpty()) {
-                getArgNodes(arg, params, param.optional)
+                if (getArgNodes(arg, params)) {
+                    arg.executes { context: CommandContext<TP> -> executeCommand(context) }
+                }
             }
             parent.then(arg)
+            return param.optional
         }
 
-        if (params.isNotEmpty()) {
-            getArgNodes(node, params.toMutableList(), false)
-        } else {
+        if (params.isEmpty() || getArgNodes(node, params.toMutableList())) {
             node.executes(::executeCommand)
         }
         return node.build().coreExecutable() ?: throw IllegalStateException("Command node should be executable but isn't: $fullPath")
@@ -276,8 +277,10 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
                             numAnn.upperLimit
                         ),
                         param.isAnnotationPresent(OptionalArg::class.java),
-                        name, param.annotations.filterNot { it is OptionalArg || it is NumberArg || it is TextArg }.toTypedArray())
-                }, parameters[0].type)
+                        name, param.annotations.filterNot { it is OptionalArg || it is NumberArg || it is TextArg }.toTypedArray()
+                    )
+                }, parameters[0].type
+        )
     }
 
     /**
@@ -294,7 +297,8 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         else if (ptype == String::class.java) StringArgumentType.word()
         else if (ptype == Int::class.javaPrimitiveType || ptype == Int::class.java
             || ptype == Byte::class.javaPrimitiveType || ptype == Byte::class.java
-            || ptype == Short::class.javaPrimitiveType || ptype == Short::class.java)
+            || ptype == Short::class.javaPrimitiveType || ptype == Short::class.java
+        )
             IntegerArgumentType.integer(lowerLimit.toInt(), upperLimit.toInt())
         else if (ptype == Long::class.javaPrimitiveType || ptype == Long::class.java)
             LongArgumentType.longArg(lowerLimit.toLong(), upperLimit.toLong())
@@ -315,10 +319,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @return Vanilla command success level (0)
      */
     private fun executeHelpText(context: CommandContext<TP>): Int {
-        println("""
-    Nodes:
-    ${context.nodes.stream().map { node -> node.node.name + "@" + node.range }.collect(Collectors.joining("\n"))}
-    """.trimIndent())
+        context.source.sendMessage(context.nodes.lastOrNull()?.node?.subcommandDataNoOp()?.getHelpText(context.source))
         return 0
     }
 
@@ -329,11 +330,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @return Vanilla command success level (0)
      */
     protected open fun executeCommand(context: CommandContext<TP>): Int {
-        @Suppress("UNCHECKED_CAST")
-        val sd = context.nodes.lastOrNull()?.node?.let {
-            it.coreArgument()?.commandData as SubcommandData<TC, TP>?
-                ?: it.coreCommand<_, SubcommandData<TC, TP>>()?.data
-        } ?: throw IllegalStateException("Could not find suitable command node for command ${context.input}")
+        val sd = context.nodes.lastOrNull()?.node?.subcommandData<_, TC>() ?: throw IllegalStateException("Could not find suitable command node for command ${context.input}")
         val sender = context.source
 
         if (!sd.hasPermission(sender)) {
