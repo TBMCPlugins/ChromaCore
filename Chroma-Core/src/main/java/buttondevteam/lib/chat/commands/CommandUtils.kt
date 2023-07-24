@@ -42,6 +42,15 @@ object CommandUtils {
     }
 
     /**
+     * Returns the node as a probably-not-executable core command node or return null if it's an argument node.
+     *
+     * This method will work for any node as opposed to [CommandUtils.coreCommand].
+     */
+    fun <TP : Command2Sender> CommandNode<TP>.coreCommandNoOp(): CoreCommandNode<TP, NoOpSubcommandData>? {
+        return coreCommand()
+    }
+
+    /**
      * Returns the node as an executable core command node or returns null if it's a no-op node.
      *
      * Executable nodes are valid command nodes that do something other than printing help text.
@@ -76,11 +85,11 @@ object CommandUtils {
     @Suppress("UNCHECKED_CAST")
     fun <TP : Command2Sender, TC : ICommand2<TP>> CommandNode<TP>.subcommandData(): SubcommandData<TC, TP>? {
         return coreArgument()?.commandData as SubcommandData<TC, TP>?
-            ?: coreCommand<_, SubcommandData<TC, TP>>()?.data
+            ?: coreExecutable<TP, TC>()?.data
     }
 
     fun <TP : Command2Sender> CommandNode<TP>.subcommandDataNoOp(): NoOpSubcommandData? {
-        return subcommandData() ?: coreCommand<_, NoOpSubcommandData>()?.data
+        return subcommandData() ?: coreCommandNoOp()?.data
     }
 
     fun Class<*>.isEasilyRepresentable(): Boolean {

@@ -80,11 +80,4 @@ class SubcommandData<TC : ICommand2<*>, TP : Command2Sender>(
         method.isAccessible = true
         return method.invoke(command, sender, *args)
     }
-
-    /**
-     * Send the help text to the specified sender.
-     */
-    fun sendHelpText(sender: TP) {
-        sender.sendMessage(getHelpText(sender))
-    }
 }

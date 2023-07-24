@@ -46,9 +46,13 @@ class Command2MCTest {
         assertEquals("test", coreExecutable?.data?.argumentsInOrder?.firstOrNull()?.name, "Failed to get correct argument name")
         assertEquals(String::class.java, coreExecutable?.data?.arguments?.get("test")?.type, "The argument could not be found or type doesn't match")
         assertEquals(Command2MCSender::class.java, coreExecutable?.data?.senderType, "The sender's type doesn't seem to be stored correctly")
+
         MainPlugin.instance.registerCommand(NoArgTestCommand)
         assertEquals("No sender parameter for method '${ErroringTestCommand::class.java.getMethod("def")}'", assertFails { MainPlugin.instance.registerCommand(ErroringTestCommand) }.message)
         MainPlugin.instance.registerCommand(MultiArgTestCommand)
+
+        MainPlugin.instance.registerCommand(TestNoMainCommand1)
+        MainPlugin.instance.registerCommand(TestNoMainCommand2)
     }
 
     @Test
@@ -72,19 +76,33 @@ class Command2MCTest {
         val user = ChromaGamerBase.getUser(UUID.randomUUID().toString(), TBMCPlayer::class.java)
         user.playerName = "TestPlayer"
         val sender = object : Command2MCSender(user, Channel.globalChat, user) {
+            private var messageReceived: String? = null
+            private var allowMessageReceive = false
+
             override fun sendMessage(message: String) {
-                error(message)
+                if (allowMessageReceive) {
+                    messageReceived = message
+                } else {
+                    error(message)
+                }
             }
 
             override fun sendMessage(message: Array<String>) {
-                error(message.joinToString("\n"))
+                sendMessage(message.joinToString("\n"))
+            }
+
+            fun withMessageReceive(action: () -> Unit): String? {
+                allowMessageReceive = true
+                action()
+                allowMessageReceive = false
+                return messageReceived
             }
         }
         runCommand(sender, "/test hmm", TestCommand, "hmm")
         runCommand(sender, "/noargtest", NoArgTestCommand, "TestPlayer")
         assertFails { ButtonPlugin.command2MC.handleCommand(sender, "/noargtest failing") }
         runFailingCommand(sender, "/erroringtest")
-        runCommand(sender, "/multiargtest hmm mhm", MultiArgTestCommand, "hmmmhm")
+        runCommand(sender, "/multiargtest test hmm mhm", MultiArgTestCommand, "hmmmhm")
         runCommand(sender, "/multiargtest test2 true 19", MultiArgTestCommand, "true 19")
 
         runCommand(sender, "/multiargtest testoptional", MultiArgTestCommand, "false")
@@ -95,7 +113,19 @@ class Command2MCTest {
 
         runCommand(sender, "/test plugin Chroma-Core", TestCommand, "Chroma-Core")
         assertFails { ButtonPlugin.command2MC.handleCommand(sender, "/test playerfail TestPlayer") }
-        // TODO: Add expected missing params
+
+        assertEquals("Test command\n" +
+            "Used for testing\n" +
+            "§6---- Subcommands ----\n" +
+            "/test playerfail\n" +
+            "/test plugin", sender.withMessageReceive { ButtonPlugin.command2MC.handleCommand(sender, "/test") })
+
+        runCommand(sender, "/some test cmd", TestNoMainCommand1, "TestPlayer")
+        runCommand(sender, "/some another cmd", TestNoMainCommand2, "TestPlayer")
+
+        assertEquals("§6---- Subcommands ----\n" +
+            "/some test cmd\n" +
+            "/some another cmd", sender.withMessageReceive { ButtonPlugin.command2MC.handleCommand(sender, "/some") })
     }
 
     private fun runCommand(sender: Command2MCSender, command: String, obj: ITestCommand2MC, expected: String) {
@@ -107,7 +137,7 @@ class Command2MCTest {
         assert(!ButtonPlugin.command2MC.handleCommand(sender, command)) { "Could execute command $command that shouldn't work" }
     }
 
-    @CommandClass
+    @CommandClass(helpText = ["Test command", "Used for testing"])
     object TestCommand : ICommand2MC(), ITestCommand2MC {
         override var testCommandReceived: String? = null
 
@@ -154,7 +184,7 @@ class Command2MCTest {
         override var testCommandReceived: String? = null
 
         @Command2.Subcommand
-        fun def(sender: Command2MCSender, test: String, test2: String) {
+        fun test(sender: Command2MCSender, test: String, test2: String) {
             testCommandReceived = test + test2
         }
 
@@ -171,6 +201,28 @@ class Command2MCTest {
         @Command2.Subcommand
         fun testOptionalMulti(sender: Command2MCSender, @Command2.OptionalArg opt1: Boolean, @Command2.OptionalArg opt2: String?) {
             testCommandReceived = "$opt1 $opt2"
+        }
+    }
+
+    @CommandClass(path = "some test cmd")
+    object TestNoMainCommand1 : ICommand2MC(), ITestCommand2MC {
+        override var testCommandReceived: String? = null
+
+        @Command2.Subcommand
+        override fun def(sender: Command2MCSender): Boolean {
+            testCommandReceived = sender.name
+            return true
+        }
+    }
+
+    @CommandClass(path = "some another cmd")
+    object TestNoMainCommand2 : ICommand2MC(), ITestCommand2MC {
+        override var testCommandReceived: String? = null
+
+        @Command2.Subcommand
+        override fun def(sender: Command2MCSender): Boolean {
+            testCommandReceived = sender.name
+            return true
         }
     }
 

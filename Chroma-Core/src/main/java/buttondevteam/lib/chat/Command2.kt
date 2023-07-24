@@ -4,8 +4,10 @@ import buttondevteam.core.MainPlugin
 import buttondevteam.lib.ChromaUtils
 import buttondevteam.lib.chat.commands.*
 import buttondevteam.lib.chat.commands.CommandUtils.coreCommand
+import buttondevteam.lib.chat.commands.CommandUtils.coreCommandNoOp
 import buttondevteam.lib.chat.commands.CommandUtils.coreExecutable
 import buttondevteam.lib.chat.commands.CommandUtils.getDefaultForEasilyRepresentable
+import buttondevteam.lib.chat.commands.CommandUtils.isCommand
 import buttondevteam.lib.chat.commands.CommandUtils.isEasilyRepresentable
 import buttondevteam.lib.chat.commands.CommandUtils.subcommandData
 import buttondevteam.lib.chat.commands.CommandUtils.subcommandDataNoOp
@@ -233,7 +235,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         var mainCommand: CoreCommandNode<TP, *>? = null
         split.dropLast(1).forEachIndexed { i, part ->
             val child = parent.getChild(part)
-            if (child == null) parent.addChild(CoreCommandBuilder.literalNoOp<TP, TC>(part, getSubcommandList())
+            if (child == null) parent.addChild(CoreCommandBuilder.literalNoOp<TP, TC>(part) { emptyArray() }
                 .executes(::executeHelpText).build().also { parent = it })
             else parent = child
             if (i == 0) mainCommand =
@@ -318,7 +320,12 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @return Vanilla command success level (0)
      */
     private fun executeHelpText(context: CommandContext<TP>): Int {
-        context.source.sendMessage(context.nodes.lastOrNull()?.node?.subcommandDataNoOp()?.getHelpText(context.source))
+        val node = context.nodes.lastOrNull()?.node ?: throw IllegalStateException()
+        val helpText = node.subcommandDataNoOp()?.getHelpText(context.source) ?: throw IllegalStateException()
+        if (node.isCommand()) {
+            val subs = getSubcommands(node.coreCommandNoOp()!!).map { commandChar + it.data.fullPath }
+            context.source.sendMessage(helpText + "${ChatColor.GOLD}---- Subcommands ----" + subs)
+        }
         return 0
     }
 
@@ -343,7 +350,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             //TODO: Should have a prettier display of Command2 classes here
             val type = sd.senderType.simpleName.fold("") { s, ch -> s + if (ch.isUpperCase()) " " + ch.lowercase() else ch }
             sender.sendMessage("${ChatColor.RED}You need to be a $type to use this command.")
-            sender.sendMessage(sd.getHelpText(sender)) //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
+            executeHelpText(context) //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
             return 0
         }
 
@@ -352,7 +359,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         // TODO: Varargs support? (colors?)
         // TODO: Character handling (strlen)
 
-        executeInvokeCommand(sd, sender, convertedSender, params)
+        executeInvokeCommand(sd, sender, convertedSender, params, context)
         return 0
     }
 
@@ -383,13 +390,13 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
     /**
      * Invokes the command method with the given sender and parameters.
      */
-    private fun executeInvokeCommand(sd: SubcommandData<TC, TP>, sender: TP, actualSender: Any, params: List<Any?>) {
+    private fun executeInvokeCommand(sd: SubcommandData<TC, TP>, sender: TP, actualSender: Any, params: List<Any?>, context: CommandContext<TP>) {
         val invokeCommand = {
             try {
                 val ret = sd.executeCommand(actualSender, *params.toTypedArray())
                 if (ret is Boolean) {
                     if (!ret) //Show usage
-                        sd.sendHelpText(sender)
+                        executeHelpText(context)
                 } else if (ret != null)
                     throw Exception("Wrong return type! Must return a boolean or void. Return value: $ret")
             } catch (e: InvocationTargetException) {

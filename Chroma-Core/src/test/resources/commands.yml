@@ -25,6 +25,14 @@ buttondevteam:
             test2:
               method: test2()
               params: "btest ntest"
+          TestNoMainCommand1:
+            def:
+              method: def()
+              params: ''
+          TestNoMainCommand2:
+            def:
+              method: def()
+              params: ''
   core:
     ComponentCommand:
       def:
