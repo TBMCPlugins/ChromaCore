@@ -5,10 +5,10 @@ import buttondevteam.lib.ChromaUtils
 import buttondevteam.lib.chat.commands.*
 import buttondevteam.lib.chat.commands.CommandUtils.coreCommand
 import buttondevteam.lib.chat.commands.CommandUtils.coreExecutable
+import buttondevteam.lib.chat.commands.CommandUtils.getDefaultForEasilyRepresentable
+import buttondevteam.lib.chat.commands.CommandUtils.isEasilyRepresentable
 import buttondevteam.lib.chat.commands.CommandUtils.subcommandData
 import buttondevteam.lib.chat.commands.CommandUtils.subcommandDataNoOp
-import com.google.common.base.Defaults
-import com.google.common.primitives.Primitives
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.*
 import com.mojang.brigadier.builder.ArgumentBuilder
@@ -197,7 +197,6 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         ).executes(this::executeHelpText)
 
         fun getArgNodes(parent: ArgumentBuilder<TP, *>, params: MutableList<CommandArgument>): Boolean {
-            // TODO: Implement optional arguments here by making the last non-optional parameter also executable
             val param = params.removeFirst()
             val argType = getArgumentType(param)
             val arg = CoreArgumentBuilder.argument<TP, _>(param.name, argType, param.optional)
@@ -350,7 +349,6 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
 
         val params = executeGetArguments(sd, context) ?: return executeHelpText(context)
 
-        // TODO: Invoke using custom method
         // TODO: Varargs support? (colors?)
         // TODO: Character handling (strlen)
         // TODO: Param converter
@@ -363,18 +361,18 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         val params = mutableListOf<Any?>()
         for (argument in sd.argumentsInOrder) {
             try {
-                val userArgument = context.getArgument(argument.name, argument.type)
-                params.add(userArgument)
+                if (argument.type.isEasilyRepresentable()) {
+                    val userArgument = context.getArgument(argument.name, argument.type)
+                    params.add(userArgument)
+                } else {
+                    val userArgument = context.getArgument(argument.name, String::class.java)
+                    val converter = paramConverters[argument.type]?.converter
+                        ?: throw IllegalStateException("No suitable converter found for ${argument.type} ${argument.name}")
+                    params.add(converter.apply(userArgument))
+                }
             } catch (e: IllegalArgumentException) {
-                // TODO: This probably only works with primitive types (argument.type)
                 if (argument.optional) {
-                    if (argument.type.isPrimitive) {
-                        params.add(Defaults.defaultValue(argument.type))
-                    } else if (Number::class.java.isAssignableFrom(argument.type)) {
-                        params.add(Defaults.defaultValue(Primitives.unwrap(argument.type)))
-                    } else {
-                        params.add(null)
-                    }
+                    params.add(argument.type.getDefaultForEasilyRepresentable())
                 } else {
                     return null
                 }

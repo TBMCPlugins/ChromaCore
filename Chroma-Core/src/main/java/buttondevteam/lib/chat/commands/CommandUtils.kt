@@ -1,6 +1,8 @@
 package buttondevteam.lib.chat.commands
 
 import buttondevteam.lib.chat.*
+import com.google.common.base.Defaults
+import com.google.common.primitives.Primitives
 import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.tree.CommandNode
 import java.util.*
@@ -79,5 +81,18 @@ object CommandUtils {
 
     fun <TP : Command2Sender> CommandNode<TP>.subcommandDataNoOp(): NoOpSubcommandData? {
         return subcommandData() ?: coreCommand<_, NoOpSubcommandData>()?.data
+    }
+
+    fun Class<*>.isEasilyRepresentable(): Boolean {
+        return isPrimitive || Number::class.java.isAssignableFrom(this)
+            || String::class.java.isAssignableFrom(this)
+    }
+
+    fun Class<*>.getDefaultForEasilyRepresentable(): Any? {
+        return if (isPrimitive) {
+            Defaults.defaultValue(this)
+        } else if (Number::class.java.isAssignableFrom(this)) {
+            Defaults.defaultValue(Primitives.unwrap(this))
+        } else null
     }
 }

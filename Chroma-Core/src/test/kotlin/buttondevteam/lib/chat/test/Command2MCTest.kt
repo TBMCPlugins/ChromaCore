@@ -86,12 +86,16 @@ class Command2MCTest {
         runFailingCommand(sender, "/erroringtest")
         runCommand(sender, "/multiargtest hmm mhm", MultiArgTestCommand, "hmmmhm")
         runCommand(sender, "/multiargtest test2 true 19", MultiArgTestCommand, "true 19")
+
         runCommand(sender, "/multiargtest testoptional", MultiArgTestCommand, "false")
         runCommand(sender, "/multiargtest testoptional true", MultiArgTestCommand, "true")
         runCommand(sender, "/multiargtest testoptionalmulti true teszt", MultiArgTestCommand, "true teszt")
         runCommand(sender, "/multiargtest testoptionalmulti true", MultiArgTestCommand, "true null")
         runCommand(sender, "/multiargtest testoptionalmulti", MultiArgTestCommand, "false null")
-        // TODO: Add expected failed param conversions and missing params
+
+        runCommand(sender, "/test plugin Chroma-Core", TestCommand, "Chroma-Core")
+        assertFails { ButtonPlugin.command2MC.handleCommand(sender, "/test playerfail TestPlayer") }
+        // TODO: Add expected missing params
     }
 
     private fun runCommand(sender: Command2MCSender, command: String, obj: ITestCommand2MC, expected: String) {
@@ -110,6 +114,15 @@ class Command2MCTest {
         @Command2.Subcommand
         fun def(sender: Command2MCSender, test: String) {
             testCommandReceived = test
+        }
+
+        @Command2.Subcommand
+        fun plugin(sender: Command2MCSender, plugin: ButtonPlugin) {
+            testCommandReceived = plugin.name
+        }
+
+        @Command2.Subcommand
+        fun playerFail(sender: Command2MCSender, player: TBMCPlayer) {
         }
     }
 
