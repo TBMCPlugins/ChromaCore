@@ -106,7 +106,15 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
     open fun handleCommand(sender: TP, commandline: String): Boolean {
         val results = dispatcher.parse(commandline.removePrefix("/"), sender)
         if (results.reader.canRead()) {
-            return false // Unknown command
+            if (results.context.nodes.isNotEmpty()) {
+                for ((node, ex) in results.exceptions) {
+                    sender.sendMessage("${ChatColor.RED}${ex.message}")
+                    executeHelpText(results.context.build(results.reader.string))
+                }
+                return true
+            } else {
+                return false // Unknown command
+            }
         }
         val executeCommand: () -> Unit = {
             try {
@@ -321,12 +329,17 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @param context The command context
      * @return Vanilla command success level (0)
      */
-    private fun executeHelpText(context: CommandContext<TP>): Int {
+    private fun executeHelpText(context: CommandContext<TP>): Int { // TODO: Add usage string automatically (and dynamically?)
         val node = context.nodes.lastOrNull()?.node ?: error("No nodes found when executing help text for ${context.input}!")
         val helpText = node.subcommandDataNoOp()?.getHelpText(context.source) ?: error("No subcommand data found when executing help text for ${context.input}")
         if (node.isCommand()) {
             val subs = getSubcommands(node.coreCommandNoOp()!!).map { commandChar + it.data.fullPath }.sorted()
-            context.source.sendMessage(helpText + "${ChatColor.GOLD}---- Subcommands ----" + subs)
+            val messages = if (subs.isNotEmpty()) {
+                helpText + "${ChatColor.GOLD}---- Subcommands ----" + subs
+            } else {
+                helpText
+            }
+            context.source.sendMessage(messages)
         }
         return 0
     }
