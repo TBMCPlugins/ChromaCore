@@ -6,6 +6,7 @@ import buttondevteam.lib.chat.Command2MCSender
 import buttondevteam.lib.chat.CommandClass
 import buttondevteam.lib.chat.ICommand2MC
 import buttondevteam.lib.player.TBMCPlayer
+import org.bukkit.OfflinePlayer
 
 abstract class Command2MCCommands {
     @CommandClass(helpText = ["Test command", "Used for testing"])
@@ -94,6 +95,16 @@ abstract class Command2MCCommands {
         override fun def(sender: Command2MCSender): Boolean {
             testCommandReceived = sender.name
             return true
+        }
+    }
+
+    @CommandClass
+    object TestParamsCommand : ICommand2MC(), ITestCommand2MC {
+        override var testCommandReceived: String? = null
+
+        @Command2.Subcommand
+        fun def(sender: OfflinePlayer, testInt: Int?, testLong: Long?, testDouble: Double?, testDouble2: Double) {
+            testCommandReceived = "$testInt $testLong $testDouble $testDouble2 ${sender.name}"
         }
     }
 

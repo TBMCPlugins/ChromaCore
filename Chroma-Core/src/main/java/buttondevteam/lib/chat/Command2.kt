@@ -219,7 +219,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         if (params.isEmpty() || getArgNodes(node, params.toMutableList())) {
             node.executes(::executeCommand)
         }
-        return node.build().coreExecutable() ?: throw IllegalStateException("Command node should be executable but isn't: $fullPath")
+        return node.build().coreExecutable() ?: error("Command node should be executable but isn't: $fullPath")
     }
 
     /**
@@ -296,19 +296,21 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         val (lowerLimit, upperLimit) = arg.limits
         return if (arg.greedy) StringArgumentType.greedyString()
         else if (ptype == String::class.java) StringArgumentType.word()
-        else if (ptype == Int::class.javaPrimitiveType || ptype == Int::class.java
-            || ptype == Byte::class.javaPrimitiveType || ptype == Byte::class.java
-            || ptype == Short::class.javaPrimitiveType || ptype == Short::class.java
+        else if (ptype == Int::class.javaPrimitiveType || ptype == Int::class.javaObjectType
+            || ptype == Byte::class.javaPrimitiveType || ptype == Byte::class.javaObjectType
+            || ptype == Short::class.javaPrimitiveType || ptype == Short::class.javaObjectType
         )
             IntegerArgumentType.integer(lowerLimit.toInt(), upperLimit.toInt())
-        else if (ptype == Long::class.javaPrimitiveType || ptype == Long::class.java)
+        else if (ptype == Long::class.javaPrimitiveType || ptype == Long::class.javaObjectType)
             LongArgumentType.longArg(lowerLimit.toLong(), upperLimit.toLong())
-        else if (ptype == Float::class.javaPrimitiveType || ptype == Float::class.java)
+        else if (ptype == Float::class.javaPrimitiveType || ptype == Float::class.javaObjectType)
             FloatArgumentType.floatArg(lowerLimit.toFloat(), upperLimit.toFloat())
-        else if (ptype == Double::class.javaPrimitiveType || ptype == Double::class.java)
+        else if (ptype == Double::class.javaPrimitiveType || ptype == Double::class.javaObjectType)
             DoubleArgumentType.doubleArg(lowerLimit, upperLimit)
-        else if (ptype == Char::class.javaPrimitiveType || ptype == Char::class.java) StringArgumentType.word()
-        else if (ptype == Boolean::class.javaPrimitiveType || ptype == Boolean::class.java) BoolArgumentType.bool()
+        else if (ptype == Char::class.javaPrimitiveType || ptype == Char::class.javaObjectType)
+            StringArgumentType.word()
+        else if (ptype == Boolean::class.javaPrimitiveType || ptype == Boolean::class.javaObjectType)
+            BoolArgumentType.bool()
         else StringArgumentType.word()
     }
 
@@ -320,10 +322,10 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @return Vanilla command success level (0)
      */
     private fun executeHelpText(context: CommandContext<TP>): Int {
-        val node = context.nodes.lastOrNull()?.node ?: throw IllegalStateException()
-        val helpText = node.subcommandDataNoOp()?.getHelpText(context.source) ?: throw IllegalStateException()
+        val node = context.nodes.lastOrNull()?.node ?: error("No nodes found when executing help text for ${context.input}!")
+        val helpText = node.subcommandDataNoOp()?.getHelpText(context.source) ?: error("No subcommand data found when executing help text for ${context.input}")
         if (node.isCommand()) {
-            val subs = getSubcommands(node.coreCommandNoOp()!!).map { commandChar + it.data.fullPath }
+            val subs = getSubcommands(node.coreCommandNoOp()!!).map { commandChar + it.data.fullPath }.sorted()
             context.source.sendMessage(helpText + "${ChatColor.GOLD}---- Subcommands ----" + subs)
         }
         return 0
@@ -336,7 +338,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @return Vanilla command success level (0)
      */
     protected open fun executeCommand(context: CommandContext<TP>): Int {
-        val sd = context.nodes.lastOrNull()?.node?.subcommandData<_, TC>() ?: throw IllegalStateException("Could not find suitable command node for command ${context.input}")
+        val sd = context.nodes.lastOrNull()?.node?.subcommandData<_, TC>() ?: error("Could not find suitable command node for command ${context.input}")
         val sender = context.source
 
         if (!sd.hasPermission(sender)) {
@@ -348,7 +350,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         val convertedSender = convertSenderType(sender, sd.senderType)
         if (convertedSender == null) {
             //TODO: Should have a prettier display of Command2 classes here
-            val type = sd.senderType.simpleName.fold("") { s, ch -> s + if (ch.isUpperCase()) " " + ch.lowercase() else ch }
+            val type = sd.senderType.simpleName.fold("") { s, ch -> s + if (ch.isUpperCase()) " " + ch.lowercase() else ch }.trim()
             sender.sendMessage("${ChatColor.RED}You need to be a $type to use this command.")
             executeHelpText(context) //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
             return 0
@@ -373,10 +375,14 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
                 } else {
                     val userArgument = context.getArgument(argument.name, String::class.java)
                     val converter = paramConverters[argument.type]?.converter
-                        ?: throw IllegalStateException("No suitable converter found for ${argument.type} ${argument.name}")
+                        ?: error("No suitable converter found for ${argument.type} ${argument.name}")
                     params.add(converter.apply(userArgument))
                 }
             } catch (e: IllegalArgumentException) {
+                if (ChromaUtils.isTest && e.message?.contains("No such argument '${argument.name}' exists on this command") != true) {
+                    println("For command ${sd.fullPath}:")
+                    e.printStackTrace()
+                }
                 if (argument.optional) {
                     params.add(argument.type.getDefaultForEasilyRepresentable())
                 } else {

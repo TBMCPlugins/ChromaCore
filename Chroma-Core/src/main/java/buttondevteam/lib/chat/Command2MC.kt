@@ -279,7 +279,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
                             for (suggestion in suggestions) sbuilder.suggest(suggestion)
                         }
                     }
-                    if (argData.type === Boolean::class.javaPrimitiveType || argData.type === Boolean::class.java)
+                    if (argData.type === Boolean::class.javaPrimitiveType || argData.type === Boolean::class.javaObjectType)
                         sbuilder.suggest("true").suggest("false")
                     val loweredInput = sbuilder.remaining.lowercase(Locale.getDefault())
                     // The list is automatically ordered, so we need to put the <param> at the end after that

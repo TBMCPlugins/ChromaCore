@@ -2,7 +2,7 @@ buttondevteam:
   lib:
     chat:
       test:
-        Command2MCTest:
+        Command2MCCommands:
           TestCommand:
             def:
               method: def()
@@ -33,6 +33,10 @@ buttondevteam:
             def:
               method: def()
               params: ''
+          TestParamsCommand:
+            def:
+              method: def()
+              params: 'testInt testLong testDouble testDouble2'
   core:
     ComponentCommand:
       def:

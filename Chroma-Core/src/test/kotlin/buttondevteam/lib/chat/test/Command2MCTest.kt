@@ -5,7 +5,9 @@ import buttondevteam.core.MainPlugin
 import buttondevteam.core.component.channel.Channel
 import buttondevteam.lib.architecture.ButtonPlugin
 import buttondevteam.lib.chat.Command2MCSender
+import buttondevteam.lib.chat.ICommand2MC
 import buttondevteam.lib.chat.commands.CommandUtils.coreExecutable
+import buttondevteam.lib.chat.test.Command2MCCommands.*
 import buttondevteam.lib.player.ChromaGamerBase
 import buttondevteam.lib.player.TBMCPlayer
 import org.junit.jupiter.api.MethodOrderer
@@ -34,22 +36,24 @@ class Command2MCTest {
     @Test
     @Order(2)
     fun testRegisterCommand() {
-        MainPlugin.instance.registerCommand(Command2MCCommands.TestCommand)
+        TestCommand.register()
         val nodes = ButtonPlugin.command2MC.commandNodes
         assert(nodes.size == 1)
         assert(nodes.first().literal == "test")
-        val coreExecutable = nodes.first().coreExecutable<Command2MCSender, Command2MCCommands.TestCommand>()
-        assertEquals(Command2MCCommands.TestCommand::class.qualifiedName, coreExecutable?.data?.command?.let { it::class.qualifiedName }, "The command class name doesn't match or command is null")
+        val coreExecutable = nodes.first().coreExecutable<Command2MCSender, TestCommand>()
+        assertEquals(TestCommand::class.qualifiedName, coreExecutable?.data?.command?.let { it::class.qualifiedName }, "The command class name doesn't match or command is null")
         assertEquals("test", coreExecutable?.data?.argumentsInOrder?.firstOrNull()?.name, "Failed to get correct argument name")
         assertEquals(String::class.java, coreExecutable?.data?.arguments?.get("test")?.type, "The argument could not be found or type doesn't match")
         assertEquals(Command2MCSender::class.java, coreExecutable?.data?.senderType, "The sender's type doesn't seem to be stored correctly")
 
-        MainPlugin.instance.registerCommand(Command2MCCommands.NoArgTestCommand)
-        assertEquals("No sender parameter for method '${Command2MCCommands.ErroringTestCommand::class.java.getMethod("def")}'", assertFails { MainPlugin.instance.registerCommand(Command2MCCommands.ErroringTestCommand) }.message)
-        MainPlugin.instance.registerCommand(Command2MCCommands.MultiArgTestCommand)
+        NoArgTestCommand.register()
+        val errCmd = ErroringTestCommand
+        assertEquals("No sender parameter for method '${errCmd::class.java.getMethod("def")}'", assertFails { ErroringTestCommand.register() }.message)
+        MultiArgTestCommand.register()
 
-        MainPlugin.instance.registerCommand(Command2MCCommands.TestNoMainCommand1)
-        MainPlugin.instance.registerCommand(Command2MCCommands.TestNoMainCommand2)
+        TestNoMainCommand1.register()
+        TestNoMainCommand2.register()
+        TestParamsCommand.register()
     }
 
     @Test
@@ -95,20 +99,20 @@ class Command2MCTest {
                 return messageReceived
             }
         }
-        runCommand(sender, "/test hmm", Command2MCCommands.TestCommand, "hmm")
-        runCommand(sender, "/noargtest", Command2MCCommands.NoArgTestCommand, "TestPlayer")
+        sender.runCommand("/test hmm", TestCommand, "hmm")
+        sender.runCommand("/noargtest", NoArgTestCommand, "TestPlayer")
         assertFails { ButtonPlugin.command2MC.handleCommand(sender, "/noargtest failing") }
         runFailingCommand(sender, "/erroringtest")
-        runCommand(sender, "/multiargtest test hmm mhm", Command2MCCommands.MultiArgTestCommand, "hmmmhm")
-        runCommand(sender, "/multiargtest test2 true 19", Command2MCCommands.MultiArgTestCommand, "true 19")
+        sender.runCommand("/multiargtest test hmm mhm", MultiArgTestCommand, "hmmmhm")
+        sender.runCommand("/multiargtest test2 true 19", MultiArgTestCommand, "true 19")
 
-        runCommand(sender, "/multiargtest testoptional", Command2MCCommands.MultiArgTestCommand, "false")
-        runCommand(sender, "/multiargtest testoptional true", Command2MCCommands.MultiArgTestCommand, "true")
-        runCommand(sender, "/multiargtest testoptionalmulti true teszt", Command2MCCommands.MultiArgTestCommand, "true teszt")
-        runCommand(sender, "/multiargtest testoptionalmulti true", Command2MCCommands.MultiArgTestCommand, "true null")
-        runCommand(sender, "/multiargtest testoptionalmulti", Command2MCCommands.MultiArgTestCommand, "false null")
+        sender.runCommand("/multiargtest testoptional", MultiArgTestCommand, "false")
+        sender.runCommand("/multiargtest testoptional true", MultiArgTestCommand, "true")
+        sender.runCommand("/multiargtest testoptionalmulti true teszt", MultiArgTestCommand, "true teszt")
+        sender.runCommand("/multiargtest testoptionalmulti true", MultiArgTestCommand, "true null")
+        sender.runCommand("/multiargtest testoptionalmulti", MultiArgTestCommand, "false null")
 
-        runCommand(sender, "/test plugin Chroma-Core", Command2MCCommands.TestCommand, "Chroma-Core")
+        sender.runCommand("/test plugin Chroma-Core", TestCommand, "Chroma-Core")
         assertFails { ButtonPlugin.command2MC.handleCommand(sender, "/test playerfail TestPlayer") }
 
         assertEquals("Test command\n" +
@@ -117,16 +121,22 @@ class Command2MCTest {
             "/test playerfail\n" +
             "/test plugin", sender.withMessageReceive { ButtonPlugin.command2MC.handleCommand(sender, "/test") })
 
-        runCommand(sender, "/some test cmd", Command2MCCommands.TestNoMainCommand1, "TestPlayer")
-        runCommand(sender, "/some another cmd", Command2MCCommands.TestNoMainCommand2, "TestPlayer")
+        sender.runCommand("/some test cmd", TestNoMainCommand1, "TestPlayer")
+        sender.runCommand("/some another cmd", TestNoMainCommand2, "TestPlayer")
 
         assertEquals("§6---- Subcommands ----\n" +
-            "/some test cmd\n" +
-            "/some another cmd", sender.withMessageReceive { ButtonPlugin.command2MC.handleCommand(sender, "/some") })
+            "/some another cmd\n" +
+            "/some test cmd", sender.withMessageReceive { ButtonPlugin.command2MC.handleCommand(sender, "/some") })
+
+        sender.runCommand("/testparams 12 34 56 78", TestParamsCommand, "12 34 56.0 78.0 Player0")
     }
 
-    private fun runCommand(sender: Command2MCSender, command: String, obj: Command2MCCommands.ITestCommand2MC, expected: String) {
-        assert(ButtonPlugin.command2MC.handleCommand(sender, command)) { "Could not find command $command" }
+    private fun ICommand2MC.register() {
+        MainPlugin.instance.registerCommand(this)
+    }
+
+    private fun Command2MCSender.runCommand(command: String, obj: ITestCommand2MC, expected: String) {
+        assert(ButtonPlugin.command2MC.handleCommand(this, command)) { "Could not find command $command" }
         assertEquals(expected, obj.testCommandReceived)
     }
 
