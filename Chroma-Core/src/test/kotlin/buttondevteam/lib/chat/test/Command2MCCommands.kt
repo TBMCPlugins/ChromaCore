@@ -5,6 +5,7 @@ import buttondevteam.lib.chat.Command2
 import buttondevteam.lib.chat.Command2MCSender
 import buttondevteam.lib.chat.CommandClass
 import buttondevteam.lib.chat.ICommand2MC
+import buttondevteam.lib.player.ChromaGamerBase
 import buttondevteam.lib.player.TBMCPlayer
 import org.bukkit.OfflinePlayer
 
@@ -46,6 +47,11 @@ abstract class Command2MCCommands {
         @Command2.Subcommand
         fun failing(sender: Command2MCSender): Boolean {
             return false
+        }
+
+        @Command2.Subcommand
+        fun senderTest(sender: ChromaGamerBase) {
+            testCommandReceived = sender.name
         }
     }
 

@@ -253,7 +253,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
 
     fun getCommandList(sender: TP): Array<String> {
         return commandNodes.filter { it.data.hasPermission(sender) }
-            .map { commandChar + it.data.fullPath }.toTypedArray()
+            .map { commandChar + it.data.fullPath }.sorted().toTypedArray()
     }
 
     /**

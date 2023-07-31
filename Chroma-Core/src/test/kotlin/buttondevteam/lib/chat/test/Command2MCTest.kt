@@ -2,7 +2,6 @@ package buttondevteam.lib.chat.test
 
 import be.seeseemelk.mockbukkit.MockBukkit
 import buttondevteam.core.MainPlugin
-import buttondevteam.core.component.channel.Channel
 import buttondevteam.lib.architecture.ButtonPlugin
 import buttondevteam.lib.chat.Command2MCSender
 import buttondevteam.lib.chat.ICommand2MC
@@ -76,99 +75,91 @@ class Command2MCTest {
     fun testHandleCommand() {
         val user = ChromaGamerBase.getUser(UUID.randomUUID().toString(), TBMCPlayer::class.java)
         user.playerName = "TestPlayer"
-        val sender = object : Command2MCSender(user, Channel.globalChat, user) {
-            private var messageReceived: String = ""
-            private var allowMessageReceive = false
+        val sender = TestCommand2MCSender(user)
+        sender.runFailingCommand("/erroringtest") // Tests completely missing the sender parameter
+        testTestCommand(sender)
+        testNoArgTestCommand(sender)
+        testMultiArgTestCommand(sender)
+        testTestParamsCommand(sender)
+        testSomeCommand(sender)
+        assertEquals(
+            "/multiargtest test\n" +
+                "/multiargtest test2\n" +
+                "/multiargtest testoptional\n" +
+                "/multiargtest testoptionalmulti\n" +
+                "/noargtest\n" +
+                "/noargtest failing\n" +
+                "/noargtest sendertest\n" +
+                "/some another cmd\n" +
+                "/some test cmd\n" +
+                "/test\n" +
+                "/test errortest\n" +
+                "/test playerfail\n" +
+                "/test plugin\n" +
+                "/testparams", ButtonPlugin.command2MC.getCommandList(sender).joinToString("\n")
+        )
+    }
 
-            override fun sendMessage(message: String) {
-                if (allowMessageReceive) {
-                    messageReceived += message + "\n"
-                } else {
-                    error(message)
-                }
-            }
-
-            override fun sendMessage(message: Array<String>) {
-                sendMessage(message.joinToString("\n"))
-            }
-
-            fun withMessageReceive(action: () -> Unit): String {
-                messageReceived = ""
-                allowMessageReceive = true
-                action()
-                allowMessageReceive = false
-                return messageReceived.trim()
-            }
-
-            fun runCommand(command: String, obj: ITestCommand2MC, expected: String) {
-                assert(ButtonPlugin.command2MC.handleCommand(this, command)) { "Could not find command $command" }
-                assertEquals(expected, obj.testCommandReceived)
-            }
-
-            fun runCommandWithReceive(command: String): String {
-                return withMessageReceive { ButtonPlugin.command2MC.handleCommand(this, command) }
-            }
-
-            fun runFailingCommand(command: String) {
-                assert(!ButtonPlugin.command2MC.handleCommand(this, command)) { "Could execute command $command that shouldn't work" }
-            }
-
-            fun runCrashingCommand(command: String, errorCheck: (Throwable) -> Boolean) {
-                assert(errorCheck(assertFails { ButtonPlugin.command2MC.handleCommand(this, command) })) { "Command exception failed test!" }
-            }
-        }
+    /**
+     * Tests parameter conversion, help text and errors.
+     */
+    private fun testTestCommand(sender: TestCommand2MCSender) {
         sender.runCommand("/test hmm", TestCommand, "hmm")
+        sender.runCommand("/test plugin Chroma-Core", TestCommand, "Chroma-Core")
+        sender.runCrashingCommand("/test playerfail TestPlayer") { it.cause?.message == "No suitable converter found for class buttondevteam.lib.player.TBMCPlayer param1" }
+        assertEquals("§cError: §cNo Chroma plugin found by that name.", sender.runCommandWithReceive("/test plugin asd"))
+        sender.runCrashingCommand("/test errortest") { it.cause?.cause?.message === "Hmm" }
+        assertEquals(
+            "Test command\n" +
+                "Used for testing\n" +
+                "§6---- Subcommands ----\n" +
+                "/test errortest\n" +
+                "/test playerfail\n" +
+                "/test plugin", sender.runCommandWithReceive("/test")
+        )
+    }
+
+    /**
+     * Tests having no arguments for the command and different sender types.
+     */
+    private fun testNoArgTestCommand(sender: TestCommand2MCSender) {
         sender.runCommand("/noargtest", NoArgTestCommand, "TestPlayer")
         sender.runCrashingCommand("/noargtest failing") { it.cause?.cause is IllegalStateException }
-        sender.runFailingCommand("/erroringtest")
+        sender.runCommand("/noargtest sendertest", NoArgTestCommand, "TestPlayer")
+    }
+
+    /**
+     * Tests parameter type conversion with multiple (optional) parameters.
+     */
+    private fun testMultiArgTestCommand(sender: TestCommand2MCSender) {
         sender.runCommand("/multiargtest test hmm mhm", MultiArgTestCommand, "hmmmhm")
         sender.runCommand("/multiargtest test2 true 19", MultiArgTestCommand, "true 19")
-
         sender.runCommand("/multiargtest testoptional", MultiArgTestCommand, "false")
         sender.runCommand("/multiargtest testoptional true", MultiArgTestCommand, "true")
         sender.runCommand("/multiargtest testoptionalmulti true teszt", MultiArgTestCommand, "true teszt")
         sender.runCommand("/multiargtest testoptionalmulti true", MultiArgTestCommand, "true null")
         sender.runCommand("/multiargtest testoptionalmulti", MultiArgTestCommand, "false null")
+    }
 
-        sender.runCommand("/test plugin Chroma-Core", TestCommand, "Chroma-Core")
-        sender.runCrashingCommand("/test playerfail TestPlayer") { it.cause?.message == "No suitable converter found for class buttondevteam.lib.player.TBMCPlayer param1" }
-        assertEquals("§cError: §cNo Chroma plugin found by that name.", sender.runCommandWithReceive("/test plugin asd"))
-        sender.runCrashingCommand("/test errortest") { it.cause?.cause?.message === "Hmm" }
-
-        assertEquals("Test command\n" +
-            "Used for testing\n" +
-            "§6---- Subcommands ----\n" +
-            "/test errortest\n" +
-            "/test playerfail\n" +
-            "/test plugin", sender.runCommandWithReceive("/test")
-        )
-
-        sender.runCommand("/some test cmd", TestNoMainCommand1, "TestPlayer")
-        sender.runCommand("/some another cmd", TestNoMainCommand2, "TestPlayer")
-
-        assertEquals("§6---- Subcommands ----\n" +
-            "/some another cmd\n" +
-            "/some test cmd", sender.runCommandWithReceive("/some")
-        )
-
+    /**
+     * Tests more type of parameters and wrong param type.
+     */
+    private fun testTestParamsCommand(sender: TestCommand2MCSender) {
         sender.runCommand("/testparams 12 34 56 78", TestParamsCommand, "12 34 56.0 78.0 Player0")
         assertEquals("§cExpected integer at position 11: ...estparams <--[HERE]", sender.runCommandWithReceive("/testparams asd 34 56 78"))
         // TODO: Change test when usage help is added
+    }
 
+    /**
+     * Tests a command that has no default handler.
+     */
+    private fun testSomeCommand(sender: TestCommand2MCSender) {
+        sender.runCommand("/some test cmd", TestNoMainCommand1, "TestPlayer")
+        sender.runCommand("/some another cmd", TestNoMainCommand2, "TestPlayer")
         assertEquals(
-            "/test\n" +
-                "/noargtest\n" +
-                "/testparams\n" +
-                "/test plugin\n" +
-                "/test playerfail\n" +
-                "/test errortest\n" +
-                "/noargtest failing\n" +
-                "/multiargtest test\n" +
-                "/multiargtest test2\n" +
-                "/multiargtest testoptional\n" +
-                "/multiargtest testoptionalmulti\n" +
-                "/some test cmd\n" +
-                "/some another cmd", ButtonPlugin.command2MC.getCommandList(sender).joinToString("\n")
+            "§6---- Subcommands ----\n" +
+                "/some another cmd\n" +
+                "/some test cmd", sender.runCommandWithReceive("/some")
         )
     }
 
