@@ -7,7 +7,6 @@ import buttondevteam.lib.architecture.ButtonPlugin
 import buttondevteam.lib.architecture.Component
 import buttondevteam.lib.chat.commands.CommandUtils
 import buttondevteam.lib.chat.commands.CommandUtils.coreArgument
-import buttondevteam.lib.chat.commands.CommandUtils.coreExecutable
 import buttondevteam.lib.chat.commands.MCCommandSettings
 import buttondevteam.lib.chat.commands.SubcommandData
 import buttondevteam.lib.player.ChromaGamerBase
@@ -37,14 +36,12 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
      * @param command The command to register
      */
     override fun registerCommand(command: ICommand2MC) {
-        val commandNode = super.registerCommandSuper(command)
-        val bcmd = registerOfficially(command, commandNode)
-        // TODO: Support aliases
+        val nodes = super.registerCommandSuper(command)
         val permPrefix = "chroma.command."
         //Allow commands by default, it will check mod-only
-        val nodes = commandNode.coreExecutable<Command2MCSender, ICommand2MC>()
-            ?.let { getSubcommands(commandNode) + it } ?: getSubcommands(commandNode)
         for (node in nodes) {
+            val bcmd = registerOfficially(command, node)
+            // TODO: Support aliases
             val subperm = permPrefix + node.data.fullPath.replace(' ', '.')
             if (Bukkit.getPluginManager().getPermission(subperm) == null) //Check needed for plugin reset
                 Bukkit.getPluginManager().addPermission(Permission(subperm, PermissionDefault.TRUE))

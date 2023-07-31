@@ -154,25 +154,21 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @param command The command to register
      * @return The Brigadier command node if you need it for something (like tab completion)
      */
-    protected fun registerCommandSuper(command: TC): CoreCommandNode<TP, *> {
-        var mainCommandNode: CoreCommandNode<TP, *>? = null
+    protected fun registerCommandSuper(command: TC): List<CoreExecutableNode<TP, TC>> {
+        val registeredNodes = mutableListOf<CoreExecutableNode<TP, TC>>()
         for (meth in command.javaClass.methods) {
             val ann = meth.getAnnotation(Subcommand::class.java) ?: continue
             val fullPath = command.commandPath + CommandUtils.getCommandPath(meth.name, ' ')
             assert(fullPath.isNotBlank()) { "No path found for command class ${command.javaClass.name} and method ${meth.name}" }
-            val (lastNode, mainNodeMaybe, remainingPath) = registerNodeFromPath(fullPath)
+            val (lastNode, remainingPath) = registerNodeFromPath(fullPath)
             val execNode = getExecutableNode(meth, command, ann, remainingPath, CommandArgumentHelpManager(command), fullPath)
             lastNode.addChild(execNode)
-            val mainNode = mainNodeMaybe ?: execNode
-            if (mainCommandNode == null) mainCommandNode = mainNode
-            else if (mainNode.name != mainCommandNode.name) {
-                MainPlugin.instance.logger.warning("Multiple commands are defined in the same class! This is not supported. Class: " + command.javaClass.simpleName)
-            }
+            registeredNodes.add(execNode)
         }
-        if (mainCommandNode == null) {
-            throw RuntimeException("There are no subcommands defined in the command class " + command.javaClass.simpleName + "!")
+        if (registeredNodes.isEmpty()) {
+            throw RuntimeException("There are no subcommands defined in the command class ${command.javaClass.simpleName}!")
         }
-        return mainCommandNode
+        return registeredNodes.toList()
     }
 
     /**
@@ -236,19 +232,16 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @return The last no-op node that can be used to register the executable node,
      * the main command node and the last part of the command path (that isn't registered yet)
      */
-    private fun registerNodeFromPath(path: String): Triple<CommandNode<TP>, CoreCommandNode<TP, *>?, String> {
+    private fun registerNodeFromPath(path: String): Pair<CommandNode<TP>, String> {
         val split = path.split(" ")
         var parent: CommandNode<TP> = dispatcher.root
-        var mainCommand: CoreCommandNode<TP, *>? = null
-        split.dropLast(1).forEachIndexed { i, part ->
+        split.dropLast(1).forEach { part ->
             val child = parent.getChild(part)
             if (child == null) parent.addChild(CoreCommandBuilder.literalNoOp<TP, TC>(part) { emptyArray() }
                 .executes(::executeHelpText).build().also { parent = it })
             else parent = child
-            if (i == 0) mainCommand =
-                parent as CoreCommandNode<TP, *> // Has to be our own literal node, if not, well, error
         }
-        return Triple(parent, mainCommand, split.last())
+        return Pair(parent, split.last())
     }
 
     fun getCommandList(sender: TP): Array<String> {

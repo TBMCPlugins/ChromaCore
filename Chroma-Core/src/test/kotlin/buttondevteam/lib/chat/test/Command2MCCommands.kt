@@ -119,6 +119,9 @@ abstract class Command2MCCommands {
         }
     }
 
+    @CommandClass
+    object TestEmptyCommand : ICommand2MC()
+
     interface ITestCommand2MC {
         var testCommandReceived: String?
     }

@@ -53,6 +53,7 @@ class Command2MCTest {
         TestNoMainCommand1.register()
         TestNoMainCommand2.register()
         TestParamsCommand.register()
+        assertEquals("There are no subcommands defined in the command class TestEmptyCommand!", assertFails { TestEmptyCommand.register() }.message)
     }
 
     @Test
