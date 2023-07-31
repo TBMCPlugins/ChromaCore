@@ -76,7 +76,6 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
     )
 
     protected val paramConverters = HashMap<Class<*>, ParamConverter<*>>()
-    private val commandHelp = ArrayList<String>() //Mainly needed by Discord
     private val dispatcher = CommandDispatcher<TP>()
 
     /**
@@ -106,14 +105,14 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
     open fun handleCommand(sender: TP, commandline: String): Boolean {
         val results = dispatcher.parse(commandline.removePrefix("/"), sender)
         if (results.reader.canRead()) {
-            if (results.context.nodes.isNotEmpty()) {
+            return if (results.context.nodes.isNotEmpty()) {
                 for ((node, ex) in results.exceptions) {
                     sender.sendMessage("${ChatColor.RED}${ex.message}")
                     executeHelpText(results.context.build(results.reader.string))
                 }
-                return true
+                true
             } else {
-                return false // Unknown command
+                false // Unknown command
             }
         }
         val executeCommand: () -> Unit = {
@@ -252,10 +251,9 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         return Triple(parent, mainCommand, split.last())
     }
 
-    private fun getSubcommandList(): (Any) -> Array<String> {
-        return {
-            arrayOf("TODO") // TODO: Subcommand list
-        }
+    fun getCommandList(sender: TP): Array<String> {
+        return commandNodes.filter { it.data.hasPermission(sender) }
+            .map { commandChar + it.data.fullPath }.toTypedArray()
     }
 
     /**
@@ -333,7 +331,9 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         val node = context.nodes.lastOrNull()?.node ?: error("No nodes found when executing help text for ${context.input}!")
         val helpText = node.subcommandDataNoOp()?.getHelpText(context.source) ?: error("No subcommand data found when executing help text for ${context.input}")
         if (node.isCommand()) {
-            val subs = getSubcommands(node.coreCommandNoOp()!!).map { commandChar + it.data.fullPath }.sorted()
+            val subs = getSubcommands(node.coreCommandNoOp()!!)
+                .filter { it.data.hasPermission(context.source) }
+                .map { commandChar + it.data.fullPath }.sorted()
             val messages = if (subs.isNotEmpty()) {
                 helpText + "${ChatColor.GOLD}---- Subcommands ----" + subs
             } else {
@@ -369,7 +369,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             return 0
         }
 
-        val params = executeGetArguments(sd, context) ?: return executeHelpText(context)
+        val params = executeGetArguments(sd, context, sender) ?: return executeHelpText(context)
 
         // TODO: Varargs support? (colors?)
         // TODO: Character handling (strlen)
@@ -378,7 +378,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         return 0
     }
 
-    private fun executeGetArguments(sd: SubcommandData<TC, TP>, context: CommandContext<TP>): MutableList<Any?>? {
+    private fun executeGetArguments(sd: SubcommandData<TC, TP>, context: CommandContext<TP>, sender: TP): MutableList<Any?>? {
         val params = mutableListOf<Any?>()
         for (argument in sd.argumentsInOrder) {
             try {
@@ -387,9 +387,14 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
                     params.add(userArgument)
                 } else {
                     val userArgument = context.getArgument(argument.name, String::class.java)
-                    val converter = paramConverters[argument.type]?.converter
+                    val converter = paramConverters[argument.type]
                         ?: error("No suitable converter found for ${argument.type} ${argument.name}")
-                    params.add(converter.apply(userArgument))
+                    val result = converter.converter.apply(userArgument)
+                    if (result == null) {
+                        sender.sendMessage("${ChatColor.RED}Error: ${converter.errormsg}")
+                        return null
+                    }
+                    params.add(result)
                 }
             } catch (e: IllegalArgumentException) {
                 if (ChromaUtils.isTest && e.message?.contains("No such argument '${argument.name}' exists on this command") != true) {
@@ -431,15 +436,14 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
     }
 
     abstract fun hasPermission(sender: TP, data: SubcommandData<TC, TP>): Boolean
-    val commandsText: Array<String> get() = commandHelp.toTypedArray()
 
     /**
      * Get all registered command nodes. This returns all registered Chroma commands with all the information about them.
      *
      * @return A set of command node objects containing the commands
      */
-    val commandNodes: Set<CoreCommandNode<TP, NoOpSubcommandData>>
-        get() = dispatcher.root.children.mapNotNull { it.coreCommand<TP, NoOpSubcommandData>() }.toSet()
+    val commandNodes: Set<CoreExecutableNode<TP, TC>>
+        get() = getSubcommands(true, dispatcher.root).toSet()
 
     /**
      * Get a node that belongs to the given command.
@@ -499,7 +503,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
 
     private fun getSubcommands(
         deep: Boolean = true,
-        root: CoreNoOpNode<TP>
+        root: CommandNode<TP>
     ): List<CoreExecutableNode<TP, TC>> {
         return root.children.mapNotNull { it.coreExecutable<TP, TC>() } +
             if (deep) root.children.flatMap { child -> child.coreCommand<_, NoOpSubcommandData>()?.let { getSubcommands(deep, it) } ?: emptyList() } else emptyList()

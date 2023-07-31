@@ -38,8 +38,8 @@ class Command2MCTest {
     fun testRegisterCommand() {
         TestCommand.register()
         val nodes = ButtonPlugin.command2MC.commandNodes
-        assert(nodes.size == 1)
-        assert(nodes.first().literal == "test")
+        assertEquals(4, nodes.size)
+        assertEquals("test", nodes.first().literal)
         val coreExecutable = nodes.first().coreExecutable<Command2MCSender, TestCommand>()
         assertEquals(TestCommand::class.qualifiedName, coreExecutable?.data?.command?.let { it::class.qualifiedName }, "The command class name doesn't match or command is null")
         assertEquals("test", coreExecutable?.data?.argumentsInOrder?.firstOrNull()?.name, "Failed to get correct argument name")
@@ -108,11 +108,19 @@ class Command2MCTest {
             fun runCommandWithReceive(command: String): String {
                 return withMessageReceive { ButtonPlugin.command2MC.handleCommand(this, command) }
             }
+
+            fun runFailingCommand(command: String) {
+                assert(!ButtonPlugin.command2MC.handleCommand(this, command)) { "Could execute command $command that shouldn't work" }
+            }
+
+            fun runCrashingCommand(command: String, errorCheck: (Throwable) -> Boolean) {
+                assert(errorCheck(assertFails { ButtonPlugin.command2MC.handleCommand(this, command) })) { "Command exception failed test!" }
+            }
         }
         sender.runCommand("/test hmm", TestCommand, "hmm")
         sender.runCommand("/noargtest", NoArgTestCommand, "TestPlayer")
-        assertFails { ButtonPlugin.command2MC.handleCommand(sender, "/noargtest failing") }
-        runFailingCommand(sender, "/erroringtest")
+        sender.runCrashingCommand("/noargtest failing") { it.cause?.cause is IllegalStateException }
+        sender.runFailingCommand("/erroringtest")
         sender.runCommand("/multiargtest test hmm mhm", MultiArgTestCommand, "hmmmhm")
         sender.runCommand("/multiargtest test2 true 19", MultiArgTestCommand, "true 19")
 
@@ -123,11 +131,14 @@ class Command2MCTest {
         sender.runCommand("/multiargtest testoptionalmulti", MultiArgTestCommand, "false null")
 
         sender.runCommand("/test plugin Chroma-Core", TestCommand, "Chroma-Core")
-        assertFails { ButtonPlugin.command2MC.handleCommand(sender, "/test playerfail TestPlayer") }
+        sender.runCrashingCommand("/test playerfail TestPlayer") { it.cause?.message == "No suitable converter found for class buttondevteam.lib.player.TBMCPlayer param1" }
+        assertEquals("§cError: §cNo Chroma plugin found by that name.", sender.runCommandWithReceive("/test plugin asd"))
+        sender.runCrashingCommand("/test errortest") { it.cause?.cause?.message === "Hmm" }
 
         assertEquals("Test command\n" +
             "Used for testing\n" +
             "§6---- Subcommands ----\n" +
+            "/test errortest\n" +
             "/test playerfail\n" +
             "/test plugin", sender.runCommandWithReceive("/test")
         )
@@ -143,14 +154,26 @@ class Command2MCTest {
         sender.runCommand("/testparams 12 34 56 78", TestParamsCommand, "12 34 56.0 78.0 Player0")
         assertEquals("§cExpected integer at position 11: ...estparams <--[HERE]", sender.runCommandWithReceive("/testparams asd 34 56 78"))
         // TODO: Change test when usage help is added
+
+        assertEquals(
+            "/test\n" +
+                "/noargtest\n" +
+                "/testparams\n" +
+                "/test plugin\n" +
+                "/test playerfail\n" +
+                "/test errortest\n" +
+                "/noargtest failing\n" +
+                "/multiargtest test\n" +
+                "/multiargtest test2\n" +
+                "/multiargtest testoptional\n" +
+                "/multiargtest testoptionalmulti\n" +
+                "/some test cmd\n" +
+                "/some another cmd", ButtonPlugin.command2MC.getCommandList(sender).joinToString("\n")
+        )
     }
 
     private fun ICommand2MC.register() {
         MainPlugin.instance.registerCommand(this)
-    }
-
-    private fun runFailingCommand(sender: Command2MCSender, command: String) {
-        assert(!ButtonPlugin.command2MC.handleCommand(sender, command)) { "Could execute command $command that shouldn't work" }
     }
 
     companion object {

@@ -90,7 +90,7 @@ object ChromaUtils {
     fun throwWhenTested(exception: Throwable, message: String) {
         if (isTest) {
             // Propagate exception back to the tests
-            throw exception
+            throw Exception(message, exception)
         } else {
             // Otherwise we don't run the code directly, so we need to handle this here
             TBMCCoreAPI.SendException(message, exception, MainPlugin.instance)

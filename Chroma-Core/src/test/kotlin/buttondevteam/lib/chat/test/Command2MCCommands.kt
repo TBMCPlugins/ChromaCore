@@ -26,6 +26,11 @@ abstract class Command2MCCommands {
         @Command2.Subcommand
         fun playerFail(sender: Command2MCSender, player: TBMCPlayer) {
         }
+
+        @Command2.Subcommand
+        fun errorTest(sender: Command2MCSender) {
+            error("Hmm")
+        }
     }
 
     @CommandClass
