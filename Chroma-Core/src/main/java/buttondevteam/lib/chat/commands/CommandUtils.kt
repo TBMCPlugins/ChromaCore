@@ -1,6 +1,8 @@
 package buttondevteam.lib.chat.commands
 
+import buttondevteam.lib.ChromaUtils
 import buttondevteam.lib.chat.*
+import buttondevteam.lib.test.TestCommandFailedException
 import com.google.common.base.Defaults
 import com.google.common.primitives.Primitives
 import com.mojang.brigadier.builder.ArgumentBuilder
@@ -18,6 +20,14 @@ object CommandUtils {
     fun getCommandPath(methodName: String, replaceChar: Char): String {
         return if (methodName == "def") "" else replaceChar.toString() + methodName.replace('_', replaceChar)
             .lowercase(Locale.getDefault())
+    }
+
+    /**
+     * Sends the given message (with no additional formatting) to the given sender or throws a special exception during testing.
+     */
+    fun reportUserError(sender: Command2Sender, message: String) {
+        if (ChromaUtils.isTest) throw TestCommandFailedException(message)
+        else sender.sendMessage(message)
     }
 
     /**

@@ -137,14 +137,11 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
     }
 
     fun unregisterCommands(plugin: ButtonPlugin) {
-        unregisterCommandIf({ node -> Optional.ofNullable(node.data.command).map { obj -> obj.plugin }.map { obj -> plugin == obj }.orElse(false) }, true)
+        unregisterCommandIf({ node -> node.data.command.plugin == plugin }, true)
     }
 
     fun unregisterCommands(component: Component<*>) {
-        unregisterCommandIf({ node ->
-            Optional.ofNullable(node.data.command).map { obj: ICommand2MC -> obj.plugin }
-                .map { comp: ButtonPlugin -> component.javaClass.simpleName == comp.javaClass.simpleName }.orElse(false)
-        }, true)
+        unregisterCommandIf({ node -> node.data.command.component == component }, true)
     }
 
     override fun handleCommand(sender: Command2MCSender, commandline: String): Boolean {

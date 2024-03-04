@@ -57,11 +57,21 @@ class Command2MCTest {
     }
 
     @Test
+    @Order(5)
     fun testHasPermission() {
     }
 
     @Test
+    @Order(4)
     fun testAddParamConverter() {
+        TestParamConverterCommand.register()
+        ButtonPlugin.command2MC.addParamConverter(TestConvertedParameter::class.java, {
+            if (it == "test") null
+            else TestConvertedParameter(it)
+        }, "Failed to convert test param!") { arrayOf("test1", "test2").asIterable() }
+        val sender = createSender()
+        sender.assertCommand("/testparamconverter hmm", TestParamConverterCommand, "hmm")
+        sender.assertCommandUserError("/testparamconverter test", "§cError: §cFailed to convert test param!")
     }
 
     @Test
@@ -74,10 +84,9 @@ class Command2MCTest {
     @Test
     @Order(3)
     fun testHandleCommand() {
-        val user = ChromaGamerBase.getUser(UUID.randomUUID().toString(), TBMCPlayer::class.java)
-        user.playerName = "TestPlayer"
-        val sender = TestCommand2MCSender(user)
-        sender.runFailingCommand("/erroringtest") // Tests completely missing the sender parameter
+        val sender = createSender()
+        sender.assertFailingCommand("/missingtest")
+        sender.assertFailingCommand("/erroringtest") // Tests completely missing the sender parameter
         testTestCommand(sender)
         testNoArgTestCommand(sender)
         testMultiArgTestCommand(sender)
@@ -101,15 +110,21 @@ class Command2MCTest {
         )
     }
 
+    private fun createSender(): TestCommand2MCSender {
+        val user = ChromaGamerBase.getUser(UUID.randomUUID().toString(), TBMCPlayer::class.java)
+        user.playerName = "TestPlayer"
+        return TestCommand2MCSender(user)
+    }
+
     /**
      * Tests parameter conversion, help text and errors.
      */
     private fun testTestCommand(sender: TestCommand2MCSender) {
-        sender.runCommand("/test hmm", TestCommand, "hmm")
-        sender.runCommand("/test plugin Chroma-Core", TestCommand, "Chroma-Core")
-        sender.runCrashingCommand("/test playerfail TestPlayer") { it.cause?.message == "No suitable converter found for class buttondevteam.lib.player.TBMCPlayer param1" }
-        assertEquals("§cError: §cNo Chroma plugin found by that name.", sender.runCommandWithReceive("/test plugin asd"))
-        sender.runCrashingCommand("/test errortest") { it.cause?.cause?.message === "Hmm" }
+        sender.assertCommand("/test hmm", TestCommand, "hmm")
+        sender.assertCommand("/test plugin Chroma-Core", TestCommand, "Chroma-Core")
+        sender.assertCrashingCommand("/test playerfail TestPlayer") { it.cause?.message == "No suitable converter found for class buttondevteam.lib.player.TBMCPlayer param1" }
+        sender.assertCommandUserError("/test plugin asd", "§cError: §cNo Chroma plugin found by that name.")
+        sender.assertCrashingCommand("/test errortest") { it.cause?.cause?.message === "Hmm" }
         assertEquals(
             "Test command\n" +
                 "Used for testing\n" +
@@ -124,29 +139,29 @@ class Command2MCTest {
      * Tests having no arguments for the command and different sender types.
      */
     private fun testNoArgTestCommand(sender: TestCommand2MCSender) {
-        sender.runCommand("/noargtest", NoArgTestCommand, "TestPlayer")
-        sender.runCrashingCommand("/noargtest failing") { it.cause?.cause is IllegalStateException }
-        sender.runCommand("/noargtest sendertest", NoArgTestCommand, "TestPlayer")
+        sender.assertCommand("/noargtest", NoArgTestCommand, "TestPlayer")
+        sender.assertCommandReceiveMessage("/noargtest failing", "") // Help text
+        sender.assertCommand("/noargtest sendertest", NoArgTestCommand, "TestPlayer")
     }
 
     /**
      * Tests parameter type conversion with multiple (optional) parameters.
      */
     private fun testMultiArgTestCommand(sender: TestCommand2MCSender) {
-        sender.runCommand("/multiargtest test hmm mhm", MultiArgTestCommand, "hmmmhm")
-        sender.runCommand("/multiargtest test2 true 19", MultiArgTestCommand, "true 19")
-        sender.runCommand("/multiargtest testoptional", MultiArgTestCommand, "false")
-        sender.runCommand("/multiargtest testoptional true", MultiArgTestCommand, "true")
-        sender.runCommand("/multiargtest testoptionalmulti true teszt", MultiArgTestCommand, "true teszt")
-        sender.runCommand("/multiargtest testoptionalmulti true", MultiArgTestCommand, "true null")
-        sender.runCommand("/multiargtest testoptionalmulti", MultiArgTestCommand, "false null")
+        sender.assertCommand("/multiargtest test hmm mhm", MultiArgTestCommand, "hmmmhm")
+        sender.assertCommand("/multiargtest test2 true 19", MultiArgTestCommand, "true 19")
+        sender.assertCommand("/multiargtest testoptional", MultiArgTestCommand, "false")
+        sender.assertCommand("/multiargtest testoptional true", MultiArgTestCommand, "true")
+        sender.assertCommand("/multiargtest testoptionalmulti true teszt", MultiArgTestCommand, "true teszt")
+        sender.assertCommand("/multiargtest testoptionalmulti true", MultiArgTestCommand, "true null")
+        sender.assertCommand("/multiargtest testoptionalmulti", MultiArgTestCommand, "false null")
     }
 
     /**
      * Tests more type of parameters and wrong param type.
      */
     private fun testTestParamsCommand(sender: TestCommand2MCSender) {
-        sender.runCommand("/testparams 12 34 56 78", TestParamsCommand, "12 34 56.0 78.0 Player0")
+        sender.assertCommand("/testparams 12 34 56 78", TestParamsCommand, "12 34 56.0 78.0 Player0")
         assertEquals("§cExpected integer at position 11: ...estparams <--[HERE]", sender.runCommandWithReceive("/testparams asd 34 56 78"))
         // TODO: Change test when usage help is added
     }
@@ -155,8 +170,8 @@ class Command2MCTest {
      * Tests a command that has no default handler.
      */
     private fun testSomeCommand(sender: TestCommand2MCSender) {
-        sender.runCommand("/some test cmd", TestNoMainCommand1, "TestPlayer")
-        sender.runCommand("/some another cmd", TestNoMainCommand2, "TestPlayer")
+        sender.assertCommand("/some test cmd", TestNoMainCommand1, "TestPlayer")
+        sender.assertCommand("/some another cmd", TestNoMainCommand2, "TestPlayer")
         assertEquals(
             "§6---- Subcommands ----\n" +
                 "/some another cmd\n" +

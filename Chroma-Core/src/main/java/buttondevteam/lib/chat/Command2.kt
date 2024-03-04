@@ -101,6 +101,8 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      *
      * @param sender The sender who sent the command
      * @param commandline The command line, including the leading command char
+     *
+     * @return Whether the main command exists
      */
     open fun handleCommand(sender: TP, commandline: String): Boolean {
         val results = dispatcher.parse(commandline.removePrefix("/"), sender)
@@ -348,7 +350,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         val sender = context.source
 
         if (!sd.hasPermission(sender)) {
-            sender.sendMessage("${ChatColor.RED}You don't have permission to use this command")
+            CommandUtils.reportUserError(sender, "${ChatColor.RED}You don't have permission to use this command")
             return 1
         }
         // TODO: WIP
@@ -357,7 +359,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         if (convertedSender == null) {
             //TODO: Should have a prettier display of Command2 classes here
             val type = sd.senderType.simpleName.fold("") { s, ch -> s + if (ch.isUpperCase()) " " + ch.lowercase() else ch }.trim()
-            sender.sendMessage("${ChatColor.RED}You need to be a $type to use this command.")
+            CommandUtils.reportUserError(sender, "${ChatColor.RED}You need to be a $type to use this command.")
             executeHelpText(context) //Send what the command is about, could be useful for commands like /member where some subcommands aren't player-only
             return 0
         }
@@ -384,7 +386,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
                         ?: error("No suitable converter found for ${argument.type} ${argument.name}")
                     val result = converter.converter.apply(userArgument)
                     if (result == null) {
-                        sender.sendMessage("${ChatColor.RED}Error: ${converter.errormsg}")
+                        CommandUtils.reportUserError(sender, "${ChatColor.RED}Error: ${converter.errormsg}")
                         return null
                     }
                     params.add(result)

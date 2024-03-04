@@ -122,6 +122,16 @@ abstract class Command2MCCommands {
     @CommandClass
     object TestEmptyCommand : ICommand2MC()
 
+    @CommandClass
+    object TestParamConverterCommand : ICommand2MC(), ITestCommand2MC {
+        override var testCommandReceived: String? = null
+
+        @Command2.Subcommand
+        fun def(sender: Command2MCSender, something: TestConvertedParameter) {
+            testCommandReceived = something.value
+        }
+    }
+
     interface ITestCommand2MC {
         var testCommandReceived: String?
     }

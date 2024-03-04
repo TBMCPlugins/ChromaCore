@@ -1,6 +1,7 @@
 package buttondevteam.lib
 
 import buttondevteam.core.MainPlugin
+import buttondevteam.lib.test.TestException
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -90,7 +91,7 @@ object ChromaUtils {
     fun throwWhenTested(exception: Throwable, message: String) {
         if (isTest) {
             // Propagate exception back to the tests
-            throw Exception(message, exception)
+            throw TestException(message, exception)
         } else {
             // Otherwise we don't run the code directly, so we need to handle this here
             TBMCCoreAPI.SendException(message, exception, MainPlugin.instance)
