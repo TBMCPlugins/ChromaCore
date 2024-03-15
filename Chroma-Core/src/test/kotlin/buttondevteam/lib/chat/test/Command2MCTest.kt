@@ -33,6 +33,15 @@ class Command2MCTest {
     }
 
     @Test
+    @Order(1)
+    fun testUnregisterCommands() {
+        // First test unregistering the builtin command
+        // FIXME should have the init code separate of the plugin init code
+        ButtonPlugin.command2MC.unregisterCommands(MainPlugin.instance)
+        assert(ButtonPlugin.command2MC.commandNodes.isEmpty())
+    }
+
+    @Test
     @Order(2)
     fun testRegisterCommand() {
         TestCommand.register()
@@ -54,31 +63,6 @@ class Command2MCTest {
         TestNoMainCommand2.register()
         TestParamsCommand.register()
         assertEquals("There are no subcommands defined in the command class TestEmptyCommand!", assertFails { TestEmptyCommand.register() }.message)
-    }
-
-    @Test
-    @Order(5)
-    fun testHasPermission() {
-    }
-
-    @Test
-    @Order(4)
-    fun testAddParamConverter() {
-        TestParamConverterCommand.register()
-        ButtonPlugin.command2MC.addParamConverter(TestConvertedParameter::class.java, {
-            if (it == "test") null
-            else TestConvertedParameter(it)
-        }, "Failed to convert test param!") { arrayOf("test1", "test2").asIterable() }
-        val sender = createSender()
-        sender.assertCommand("/testparamconverter hmm", TestParamConverterCommand, "hmm")
-        sender.assertCommandUserError("/testparamconverter test", "§cError: §cFailed to convert test param!")
-    }
-
-    @Test
-    @Order(1)
-    fun testUnregisterCommands() {
-        ButtonPlugin.command2MC.unregisterCommands(MainPlugin.instance) // FIXME should have the init code separate of the plugin init code
-        assert(ButtonPlugin.command2MC.commandNodes.isEmpty())
     }
 
     @Test
@@ -108,6 +92,24 @@ class Command2MCTest {
                 "/test plugin\n" +
                 "/testparams", ButtonPlugin.command2MC.getCommandList(sender).joinToString("\n")
         )
+    }
+
+    @Test
+    @Order(4)
+    fun testAddParamConverter() {
+        TestParamConverterCommand.register()
+        ButtonPlugin.command2MC.addParamConverter(TestConvertedParameter::class.java, {
+            if (it == "test") null
+            else TestConvertedParameter(it)
+        }, "Failed to convert test param!") { arrayOf("test1", "test2").asIterable() }
+        val sender = createSender()
+        sender.assertCommand("/testparamconverter hmm", TestParamConverterCommand, "hmm")
+        sender.assertCommandUserError("/testparamconverter test", "§cError: §cFailed to convert test param!")
+    }
+
+    @Test
+    @Order(5)
+    fun testHasPermission() {
     }
 
     private fun createSender(): TestCommand2MCSender {
