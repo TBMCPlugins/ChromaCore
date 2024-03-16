@@ -8,6 +8,7 @@ import buttondevteam.lib.chat.ICommand2MC
 import buttondevteam.lib.player.ChromaGamerBase
 import buttondevteam.lib.player.TBMCPlayer
 import org.bukkit.OfflinePlayer
+import org.bukkit.entity.Player
 
 abstract class Command2MCCommands {
     @CommandClass(helpText = ["Test command", "Used for testing"])
@@ -117,6 +118,11 @@ abstract class Command2MCCommands {
         fun def(sender: OfflinePlayer, testInt: Int?, testLong: Long?, testDouble: Double?, testDouble2: Double) {
             testCommandReceived = "$testInt $testLong $testDouble $testDouble2 ${sender.name}"
         }
+
+        @Command2.Subcommand
+        fun fail(sender: Player) {
+            testCommandReceived = sender.name
+        }
     }
 
     @CommandClass
@@ -129,6 +135,16 @@ abstract class Command2MCCommands {
         @Command2.Subcommand
         fun def(sender: Command2MCSender, something: TestConvertedParameter) {
             testCommandReceived = something.value
+        }
+    }
+
+    @CommandClass
+    object TestSenderConversionCommand : ICommand2MC(), ITestCommand2MC {
+        override var testCommandReceived: String? = null
+
+        @Command2.Subcommand
+        fun def(sender: Player) {
+            testCommandReceived = sender.name
         }
     }
 

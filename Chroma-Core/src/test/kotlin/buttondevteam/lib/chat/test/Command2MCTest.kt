@@ -9,6 +9,7 @@ import buttondevteam.lib.chat.commands.CommandUtils.coreExecutable
 import buttondevteam.lib.chat.test.Command2MCCommands.*
 import buttondevteam.lib.player.ChromaGamerBase
 import buttondevteam.lib.player.TBMCPlayer
+import buttondevteam.lib.player.TBMCPlayerBase
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
@@ -55,14 +56,13 @@ class Command2MCTest {
         assertEquals(Command2MCSender::class.java, coreExecutable?.data?.senderType, "The sender's type doesn't seem to be stored correctly")
 
         NoArgTestCommand.register()
-        val errCmd = ErroringTestCommand
-        assertEquals("No sender parameter for method '${errCmd::class.java.getMethod("def")}'", assertFails { errCmd.register() }.message)
+        ErroringTestCommand.registerAssertFail("No sender parameter for method '${ErroringTestCommand::class.java.getMethod("def")}'")
         MultiArgTestCommand.register()
 
         TestNoMainCommand1.register()
         TestNoMainCommand2.register()
         TestParamsCommand.register()
-        assertEquals("There are no subcommands defined in the command class TestEmptyCommand!", assertFails { TestEmptyCommand.register() }.message)
+        TestEmptyCommand.registerAssertFail("There are no subcommands defined in the command class TestEmptyCommand!")
     }
 
     @Test
@@ -90,7 +90,8 @@ class Command2MCTest {
                 "/test errortest\n" +
                 "/test playerfail\n" +
                 "/test plugin\n" +
-                "/testparams", ButtonPlugin.command2MC.getCommandList(sender).joinToString("\n")
+                "/testparams\n" +
+                "/testparams fail", ButtonPlugin.command2MC.getCommandList(sender).joinToString("\n")
         )
     }
 
@@ -109,12 +110,27 @@ class Command2MCTest {
 
     @Test
     @Order(5)
+    fun testSenderConversion() {
+        TestSenderConversionCommand.register()
+        val sender = createPlayer()
+        sender.assertCommand("/test something", TestCommand, "something")
+        sender.assertCommand("/testsenderconversion", TestSenderConversionCommand, "Player2")
+    }
+
+    @Test
+    @Order(6)
     fun testHasPermission() {
     }
 
     private fun createSender(): TestCommand2MCSender {
         val user = ChromaGamerBase.getUser(UUID.randomUUID().toString(), TBMCPlayer::class.java)
         user.playerName = "TestPlayer"
+        return TestCommand2MCSender(user)
+    }
+
+    private fun createPlayer(): TestCommand2MCSender {
+        val player = MockBukkit.getMock().addPlayer()
+        val user = TBMCPlayerBase.getPlayer(player.uniqueId, TBMCPlayer::class.java)
         return TestCommand2MCSender(user)
     }
 
@@ -127,13 +143,16 @@ class Command2MCTest {
         sender.assertCrashingCommand("/test playerfail TestPlayer") { it.cause?.message == "No suitable converter found for class buttondevteam.lib.player.TBMCPlayer param1" }
         sender.assertCommandUserError("/test plugin asd", "§cError: §cNo Chroma plugin found by that name.")
         sender.assertCrashingCommand("/test errortest") { it.cause?.cause?.message === "Hmm" }
-        assertEquals(
-            "Test command\n" +
-                "Used for testing\n" +
-                "§6---- Subcommands ----\n" +
-                "/test errortest\n" +
-                "/test playerfail\n" +
-                "/test plugin", sender.runCommandWithReceive("/test")
+        sender.assertCommandReceiveMessage(
+            "/test",
+            """
+                Test command
+                Used for testing
+                §6---- Subcommands ----
+                /test errortest
+                /test playerfail
+                /test plugin
+            """.trimIndent()
         )
     }
 
@@ -164,8 +183,9 @@ class Command2MCTest {
      */
     private fun testTestParamsCommand(sender: TestCommand2MCSender) {
         sender.assertCommand("/testparams 12 34 56 78", TestParamsCommand, "12 34 56.0 78.0 Player0")
-        assertEquals("§cExpected integer at position 11: ...estparams <--[HERE]", sender.runCommandWithReceive("/testparams asd 34 56 78"))
+        sender.assertCommandReceiveMessage("/testparams asd 34 56 78", "§cExpected integer at position 11: ...estparams <--[HERE]\n§6---- Subcommands ----\n/testparams fail")
         // TODO: Change test when usage help is added
+        sender.assertCommandUserError("/testparams fail", "§cYou need to be a player to use this command.")
     }
 
     /**
@@ -174,15 +194,24 @@ class Command2MCTest {
     private fun testSomeCommand(sender: TestCommand2MCSender) {
         sender.assertCommand("/some test cmd", TestNoMainCommand1, "TestPlayer")
         sender.assertCommand("/some another cmd", TestNoMainCommand2, "TestPlayer")
-        assertEquals(
-            "§6---- Subcommands ----\n" +
-                "/some another cmd\n" +
-                "/some test cmd", sender.runCommandWithReceive("/some")
+        sender.assertCommandReceiveMessage(
+            "/some", """
+            §6---- Subcommands ----
+            /some another cmd
+            /some test cmd
+        """.trimIndent()
         )
     }
 
     private fun ICommand2MC.register() {
         MainPlugin.instance.registerCommand(this)
+    }
+
+    /**
+     * Attempts to register a command, expecting the given error (exception) message.
+     */
+    private fun ICommand2MC.registerAssertFail(expected: String) {
+        assertEquals(expected, assertFails { this.register() }.message)
     }
 
     companion object {
