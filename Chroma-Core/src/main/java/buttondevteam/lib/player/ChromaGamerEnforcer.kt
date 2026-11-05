@@ -1,10 +1,8 @@
-package buttondevteam.lib.player;
+package buttondevteam.lib.player
 
-import java.lang.annotation.*;
+import java.lang.annotation.Inherited
 
-@Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.TYPE)
+@Retention(AnnotationRetention.SOURCE)
+@Target(AnnotationTarget.CLASS)
 @Inherited
-public @interface ChromaGamerEnforcer {
-
-}
+annotation class ChromaGamerEnforcer 

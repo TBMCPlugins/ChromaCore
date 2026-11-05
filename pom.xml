@@ -8,9 +8,6 @@
     <artifactId>ChromaCore</artifactId>
     <packaging>pom</packaging>
     <version>master-SNAPSHOT</version>
-    <properties>
-		<lombok.version>1.18.26</lombok.version>
-	</properties>
     <name>Chroma Parent</name>
 
     <modules>
@@ -47,13 +44,6 @@
 			<artifactId>junit-jupiter-api</artifactId>
 			<version>5.9.3</version>
 			<scope>test</scope>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<version>${lombok.version}</version>
-			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 </project>

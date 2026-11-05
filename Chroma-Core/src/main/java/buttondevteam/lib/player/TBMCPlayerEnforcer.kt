@@ -1,11 +1,7 @@
-package buttondevteam.lib.player;
+package buttondevteam.lib.player
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Target;
+import java.lang.annotation.Inherited
 
-@Target(ElementType.TYPE)
+@Target(AnnotationTarget.CLASS)
 @Inherited
-public @interface TBMCPlayerEnforcer {
-
-}
+annotation class TBMCPlayerEnforcer

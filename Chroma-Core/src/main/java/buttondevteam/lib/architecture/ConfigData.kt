@@ -23,7 +23,7 @@ import java.util.function.Function
  * @param readOnly If true, changing the value will have no effect
  * @param T The type of the config value. May be nullable if the getter cannot always return a value
  */
-class ConfigData<T : Any?> internal constructor(
+class ConfigData<T> internal constructor(
     val config: IHaveConfig,
     override val path: String,
     private val primitiveDef: Any,

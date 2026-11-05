@@ -1,15 +1,8 @@
-package buttondevteam.lib.chat;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package buttondevteam.lib.chat
 
 /**
  * Can be used if an argument should be completed with predefined strings.
  */
-@Target(ElementType.PARAMETER)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface CustomTabComplete {
-	String[] value();
-}
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class CustomTabComplete(vararg val value: String)

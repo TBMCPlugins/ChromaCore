@@ -1,51 +1,37 @@
-package buttondevteam.lib;
+package buttondevteam.lib
 
-import org.bukkit.Bukkit;
-import org.bukkit.event.Event;
-import org.bukkit.event.HandlerList;
+import org.bukkit.Bukkit
+import org.bukkit.event.Event
+import org.bukkit.event.HandlerList
 
-public class TBMCDebugMessageEvent extends Event {
-	private static final HandlerList handlers = new HandlerList();
-    private final String message;
-	private boolean sent;
+class TBMCDebugMessageEvent(
+    /**
+     * Gets the message (where did this exception occur, etc.)
+     * 
+     * @return The message
+     */
+    val debugMessage: String?
+) : Event(!Bukkit.isPrimaryThread()) {
+    /**
+     * Gets if this event was handled
+     * 
+     * @return True if it was handled
+     */
+    var isSent: Boolean = false
+        private set
 
-	public TBMCDebugMessageEvent(String message) {
-		super(!Bukkit.isPrimaryThread());
-		this.message = message;
-	}
+    /**
+     * Flags the event as handled
+     */
+    fun setSent() {
+        this.isSent = true
+    }
 
-	/**
-	 * Gets the message (where did this exception occur, etc.)
-	 * 
-	 * @return The message
-	 */
-	public String getDebugMessage() {
-		return message;
-	}
+    override fun getHandlers(): HandlerList {
+        return handlerList
+    }
 
-	/**
-	 * Gets if this event was handled
-	 * 
-	 * @return True if it was handled
-	 */
-	public boolean isSent() {
-		return sent;
-	}
-
-	/**
-	 * Flags the event as handled
-	 */
-	public void setSent() {
-		this.sent = true;
-	}
-
-	@Override
-	public HandlerList getHandlers() {
-		return handlers;
-	}
-
-	public static HandlerList getHandlerList() {
-		return handlers;
-	}
-
+    companion object {
+        val handlerList: HandlerList = HandlerList()
+    }
 }

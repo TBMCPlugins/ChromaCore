@@ -1,19 +1,18 @@
-package buttondevteam.lib.player;
+package buttondevteam.lib.player
 
-import java.lang.annotation.*;
+import java.lang.annotation.Inherited
 
 /**
- * Specifies a {@link ChromaGamerBase} direct subclass which can be instantiated. For Minecraft data, use {@link PlayerClass}
+ * Specifies a [ChromaGamerBase] direct subclass which can be instantiated. For Minecraft data, use [PlayerClass]
  * 
  * @author NorbiPeti
- *
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.CLASS)
 @Inherited
-public @interface UserClass {
-	/**
-	 * Indicates which folder should the player files be saved in. Must be lowercase.
-	 */
-	String foldername();
-}
+annotation class UserClass(
+    /**
+     * Indicates which folder should the player files be saved in. Must be lowercase.
+     */
+    val foldername: String
+)

@@ -1,24 +1,23 @@
-package buttondevteam.lib.player;
+package buttondevteam.lib.player
 
-import java.lang.annotation.*;
+import java.lang.annotation.Inherited
+import kotlin.reflect.KClass
 
 /**
- * Specifies a {@link ChromaGamerBase} direct subclass which's abstract. For Minecraft data, use {@link PlayerClass}
+ * Specifies a [ChromaGamerBase] direct subclass which's abstract. For Minecraft data, use [PlayerClass]
  * 
  * @author NorbiPeti
- *
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.CLASS)
 @Inherited
-public @interface AbstractUserClass {
-	/**
-	 * Indicates which folder should the player files be saved in.
-	 */
-	String foldername();
-
-	/**
-	 * Indicates the class to create when connecting accounts.
-	 */
-	Class<? extends ChromaGamerBase> prototype();
-}
+annotation class AbstractUserClass(
+    /**
+     * Indicates which folder should the player files be saved in.
+     */
+    val foldername: String,
+    /**
+     * Indicates the class to create when connecting accounts.
+     */
+    val prototype: KClass<out ChromaGamerBase>
+)
