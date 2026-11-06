@@ -29,13 +29,10 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.command.ConsoleCommandSender
 import org.bukkit.entity.Player
-import org.bukkit.plugin.PluginDescriptionFile
-import org.bukkit.plugin.java.JavaPluginLoader
-import java.io.File
 import java.util.*
 import java.util.function.Supplier
 
-class MainPlugin : ButtonPlugin {
+class MainPlugin : ButtonPlugin() {
     private var economy: Economy? = null
 
     /**
@@ -65,12 +62,6 @@ class MainPlugin : ButtonPlugin {
      * The permission group to use for players who are not in the server.
      */ // TODO: Combine the channel access test with command permissions (with a generic implementation)
     val externalPlayerPermissionGroup get() = iConfig.getData("externalPlayerPermissionGroup", "default")
-
-    constructor() : super()
-    constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File, @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN") test: java.lang.Boolean) : super(loader, description, dataFolder, file) {
-        ChromaUtils.isTest = test.booleanValue()
-    }
-
 
     public override fun pluginEnable() {
         instance = this

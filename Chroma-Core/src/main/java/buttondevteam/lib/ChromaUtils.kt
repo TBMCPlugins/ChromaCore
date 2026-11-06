@@ -8,6 +8,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.Cancellable
 import org.bukkit.event.Event
 import java.util.function.Supplier
+import kotlin.reflect.KClass
 
 object ChromaUtils {
     @JvmStatic
@@ -29,15 +30,28 @@ object ChromaUtils {
     }
 
     @JvmStatic
-    fun convertNumber(number: Number, targetcl: Class<out Number>): Number {
-        return when {
-            targetcl == Long::class.javaPrimitiveType || Long::class.javaObjectType.isAssignableFrom(targetcl) -> number.toLong()
-            targetcl == Int::class.javaPrimitiveType || Int::class.javaObjectType.isAssignableFrom(targetcl) -> number.toInt() //Needed because the parser can get longs
-            targetcl == Short::class.javaPrimitiveType || Short::class.javaObjectType.isAssignableFrom(targetcl) -> number.toShort()
-            targetcl == Byte::class.javaPrimitiveType || Byte::class.javaObjectType.isAssignableFrom(targetcl) -> number.toByte()
-            targetcl == Float::class.javaPrimitiveType || Float::class.javaObjectType.isAssignableFrom(targetcl) -> number.toFloat()
-            targetcl == Double::class.javaPrimitiveType || Double::class.javaObjectType.isAssignableFrom(targetcl) -> number.toDouble()
+    fun convertNumber(number: Number, targetcl: KClass<out Number>): Number {
+        return when (targetcl) {
+            Long::class -> number.toLong()
+            Int::class -> number.toInt() //Needed because the parser can get longs
+            Short::class -> number.toShort()
+            Byte::class -> number.toByte()
+            Float::class -> number.toFloat()
+            Double::class -> number.toDouble()
             else -> number
+        }
+    }
+
+    @JvmStatic
+    fun convertArray(obj: List<*>, primitiveDef: Array<*>): Any {
+        return when {
+            primitiveDef.isArrayOf<Long>() -> obj.map { it as Long }.toLongArray()
+            primitiveDef.isArrayOf<Int>() -> obj.map { it as Int }.toIntArray()
+            primitiveDef.isArrayOf<Short>() -> obj.map { it as Short }.toShortArray()
+            primitiveDef.isArrayOf<Byte>() -> obj.map { it as Byte }.toByteArray()
+            primitiveDef.isArrayOf<Float>() -> obj.map { it as Float }.toFloatArray()
+            primitiveDef.isArrayOf<Double>() -> obj.map { it as Double }.toDoubleArray()
+            else -> obj.toTypedArray()
         }
     }
 

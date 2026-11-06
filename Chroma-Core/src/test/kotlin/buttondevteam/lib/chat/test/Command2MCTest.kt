@@ -2,6 +2,7 @@ package buttondevteam.lib.chat.test
 
 import be.seeseemelk.mockbukkit.MockBukkit
 import buttondevteam.core.MainPlugin
+import buttondevteam.lib.ChromaUtils
 import buttondevteam.lib.architecture.ButtonPlugin
 import buttondevteam.lib.chat.Command2MCSender
 import buttondevteam.lib.chat.ICommand2MC
@@ -28,7 +29,8 @@ class Command2MCTest {
             } catch (e: IllegalStateException) {
                 throw RuntimeException("Failed to init tests! Something in here fails to initialize. Check the first test case.", e)
             }
-            MockBukkit.load(MainPlugin::class.java, true)
+            MockBukkit.load(MainPlugin::class.java)
+            ChromaUtils.isTest = true
             initialized = true
         }
     }

@@ -1,14 +1,10 @@
-package buttondevteam.buttonproc;
+package buttondevteam.buttonproc
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Target;
+import java.lang.annotation.Inherited
 
 /**
  * Used to generate documentation for the config
  */
-@Target(ElementType.TYPE)
+@Target(AnnotationTarget.CLASS)
 @Inherited
-public @interface HasConfig {
-	boolean global();
-}
+annotation class HasConfig(val global: Boolean)

@@ -3,6 +3,7 @@ package buttondevteam.core.component.members
 import buttondevteam.core.MainPlugin
 import buttondevteam.lib.architecture.Component
 import buttondevteam.lib.architecture.ComponentMetadata
+import org.bukkit.ChatColor
 import org.bukkit.Statistic
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -54,7 +55,7 @@ class MemberComponent : Component<MainPlugin>(), Listener {
     fun addPlayerAsMember(player: Player): Boolean? {
         return try {
             if (MainPlugin.permission.playerAddGroup(null, player, memberGroup.get())) {
-                player.sendMessage("\${ChatColor.AQUA}You are a member now!")
+                player.sendMessage("${ChatColor.AQUA}You are a member now!")
                 log("Added " + player.name + " as a member.")
                 true
             } else {

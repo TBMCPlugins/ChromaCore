@@ -6,6 +6,7 @@ import buttondevteam.lib.chat.Command2.Subcommand
 import buttondevteam.lib.chat.CommandClass
 import buttondevteam.lib.chat.CustomTabComplete
 import buttondevteam.lib.chat.ICommand2MC
+import com.palmergames.bukkit.towny.TownyAPI
 import com.palmergames.bukkit.towny.TownySettings
 import com.palmergames.bukkit.towny.TownyUniverse
 import com.palmergames.bukkit.towny.`object`.Resident
@@ -13,7 +14,6 @@ import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.OfflinePlayer
 import org.bukkit.command.CommandSender
-import java.util.*
 import java.util.function.Consumer
 
 @CommandClass(
@@ -27,7 +27,7 @@ class RemoveResidentsCommand : ICommand2MC() {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, Runnable {
             sender.sendMessage("Starting...")
             val ds = TownyUniverse.getInstance().dataSource
-            val res: Map<Resident, OfflinePlayer> = ds.residents
+            val res: Map<Resident, OfflinePlayer> = TownyAPI.getInstance().residents
                 .mapNotNull { r ->
                     val player = MainPlugin.ess?.getOfflineUser(r.name)?.base ?: Bukkit.getOfflinePlayer(r.name)
                     if (player.hasPlayedBefore()) null else r to player
@@ -40,12 +40,13 @@ class RemoveResidentsCommand : ICommand2MC() {
                 "${ChatColor.YELLOW}Will completely delete the resident, delete eco account setting is off"
             )
             if (remove != null && remove.equals("remove", ignoreCase = true)) {
-                sender.sendMessage("Removing residents...") //Removes from town and deletes town if needed - doesn't delete the resident if the setting is on
+                sender.sendMessage("Removing residents...")
+                //Removes from town and deletes town if needed - doesn't delete the resident if the setting is on
                 //If it did, that could mean the player's economy is deleted too, unless this setting is false
                 res.keys.forEach(if (TownySettings.isDeleteEcoAccount())
                     Consumer { resident -> ds.removeResident(resident) }
                 else
-                    Consumer { resident -> ds.removeResidentList(resident) })
+                    Consumer { resident -> resident.removeTown() })
                 sender.sendMessage("Done")
             }
         })

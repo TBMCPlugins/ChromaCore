@@ -96,7 +96,7 @@ open class DebugPotato {
         meta.displayName(Component.text(this.type ?: "Null Flavoured Debug Potato"))
         meta.lore(this.message?.map { Component.text(it) } ?: listOf(Component.text("nullMessage")))
         potato.itemMeta = meta
-        potato.addUnsafeEnchantment(Enchantment.ARROW_FIRE, 10)
+        potato.addUnsafeEnchantment(Enchantment.FLAME, 10)
         return potato
     }
 

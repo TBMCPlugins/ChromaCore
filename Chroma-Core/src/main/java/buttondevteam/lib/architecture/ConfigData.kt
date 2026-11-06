@@ -6,7 +6,6 @@ import buttondevteam.lib.architecture.config.IConfigData
 import org.bukkit.Bukkit
 import org.bukkit.configuration.Configuration
 import org.bukkit.scheduler.BukkitTask
-import java.lang.reflect.Array.newInstance
 import java.util.function.Function
 
 /**
@@ -68,10 +67,10 @@ class ConfigData<T> internal constructor(
     @Suppress("UNCHECKED_CAST", "DEPRECATION")
     private fun convertPrimitiveType(value: Any): Any {
         return if (primitiveDef is Number) //If we expect a number
-            if (value is Number) ChromaUtils.convertNumber(value, primitiveDef.javaClass)
+            if (value is Number) ChromaUtils.convertNumber(value, primitiveDef::class)
             else primitiveDef //If we didn't get a number, return default (which is a number)
-        else if (value is List<*> && primitiveDef.javaClass.isArray) // If we got a list and we expected an array
-            value.toArray { newInstance(primitiveDef.javaClass.componentType, it) as Array<T> }
+        else if (value is List<*> && primitiveDef is Array<*>) // If we got a list and we expected an array
+            ChromaUtils.convertArray(value, primitiveDef)
         else value
     }
 

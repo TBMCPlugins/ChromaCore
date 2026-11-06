@@ -1,18 +1,16 @@
-package buttondevteam.core.component.towny;
+package buttondevteam.core.component.towny
 
-import buttondevteam.core.MainPlugin;
-import buttondevteam.lib.architecture.Component;
+import buttondevteam.core.MainPlugin
+import buttondevteam.lib.architecture.Component
 
 /**
  * Provides a command to remove invalid Towny residents.
  */
-public class TownyComponent extends Component<MainPlugin> {
-	@Override
-	protected void enable() {
-		registerCommand(new RemoveResidentsCommand());
-	}
+class TownyComponent : Component<MainPlugin>() {
+    override fun enable() {
+        registerCommand(RemoveResidentsCommand())
+    }
 
-	@Override
-	protected void disable() {
-	}
+    override fun disable() {
+    }
 }

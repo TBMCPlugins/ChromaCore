@@ -21,7 +21,10 @@ import me.lucko.commodore.CommodoreProvider
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.Location
-import org.bukkit.command.*
+import org.bukkit.command.Command
+import org.bukkit.command.CommandSender
+import org.bukkit.command.PluginCommand
+import org.bukkit.command.SimpleCommandMap
 import org.bukkit.event.Listener
 import org.bukkit.permissions.Permission
 import org.bukkit.permissions.PermissionDefault
@@ -212,7 +215,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         }
 
         @Throws(IllegalArgumentException::class)
-        override fun tabComplete(sender: CommandSender, alias: String, args: Array<out String>?, location: Location?): MutableList<String> {
+        override fun tabComplete(sender: CommandSender, alias: String, args: Array<out String>, location: Location?): MutableList<String> {
             return mutableListOf()
         }
     }

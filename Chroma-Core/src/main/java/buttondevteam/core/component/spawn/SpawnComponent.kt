@@ -6,16 +6,14 @@ import buttondevteam.lib.architecture.ComponentMetadata
 import buttondevteam.lib.chat.Command2.Subcommand
 import buttondevteam.lib.chat.CommandClass
 import buttondevteam.lib.chat.ICommand2MC
-import com.earth2me.essentials.Trade
 import com.google.common.io.ByteStreams
-import com.onarandombox.MultiverseCore.MultiverseCore
 import org.bukkit.Bukkit
+import org.bukkit.ChatColor
 import org.bukkit.Location
 import org.bukkit.entity.Player
-import org.bukkit.event.player.PlayerTeleportEvent
 import org.bukkit.plugin.messaging.PluginMessageListener
+import org.mvplugins.multiverse.core.MultiverseCoreApi
 import java.io.*
-import java.math.BigDecimal
 
 /**
  * Provides a /spawn command that works with BungeeCord. Make sure to set up on each server.
@@ -26,7 +24,7 @@ class SpawnComponent : Component<MainPlugin>(), PluginMessageListener {
     override fun enable() {
         registerCommand(SpawnCommand())
         if (targetServer.get().isEmpty()) {
-            spawnloc = MultiverseCore.getPlugin(MultiverseCore::class.java).mvWorldManager.firstSpawnWorld.spawnLocation
+            spawnloc = MultiverseCoreApi.get().worldManager.defaultWorld.get().spawnLocation
         }
         Bukkit.getServer().messenger.registerOutgoingPluginChannel(plugin, "BungeeCord")
         Bukkit.getServer().messenger.registerIncomingPluginChannel(plugin, "BungeeCord", this)
@@ -75,12 +73,12 @@ class SpawnComponent : Component<MainPlugin>(), PluginMessageListener {
         @Subcommand
         fun def(player: Player) {
             if (targetServer.get().isEmpty()) {
-                player.sendMessage("\${ChatColor.AQUA}Teleporting to spawn...")
+                player.sendMessage("${ChatColor.AQUA}Teleporting to spawn...")
                 try {
-                    if (MainPlugin.ess != null) MainPlugin.ess!!.getUser(player).teleport
-                        .teleport(spawnloc, Trade(BigDecimal.ZERO, MainPlugin.ess), PlayerTeleportEvent.TeleportCause.COMMAND) else player.teleport(spawnloc!!)
+                    // TODO: Dropped EssentialsX teleport here
+                    player.teleport(spawnloc!!)
                 } catch (e: Exception) {
-                    player.sendMessage("\${ChatColor.RED}Failed to teleport: $e")
+                    player.sendMessage("${ChatColor.RED}Failed to teleport: $e")
                 }
                 return
             }
