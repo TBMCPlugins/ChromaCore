@@ -21,10 +21,7 @@ import me.lucko.commodore.CommodoreProvider
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.Location
-import org.bukkit.command.Command
-import org.bukkit.command.CommandSender
-import org.bukkit.command.PluginCommand
-import org.bukkit.command.SimpleCommandMap
+import org.bukkit.command.*
 import org.bukkit.event.Listener
 import org.bukkit.permissions.Permission
 import org.bukkit.permissions.PermissionDefault
@@ -130,6 +127,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         if (cg is TBMCPlayerBase) {
             if (senderType.isAssignableFrom(cg.offlinePlayer.javaClass)) return cg.offlinePlayer
             if (cg.player?.javaClass?.let { senderType.isAssignableFrom(it) } == true) return cg.player
+            if (senderType.isAssignableFrom(ConsoleCommandSender::class.java)) return Bukkit.getConsoleSender()
         }
         //The command expects a user of our system
         if (ChromaGamerBase::class.java.isAssignableFrom(senderType)) {
@@ -156,7 +154,8 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         val mainpath = commandline.substring(1, if (i == -1) commandline.length else i) //Without the slash
         //Our commands aren't PluginCommands, unless it's specified in the plugin.yml
         // So we need to handle the command if it's not a plugin command or if it's a plugin command, but for a ButtonPlugin
-        return if (!checkPlugin || MainPlugin.instance.prioritizeCustomCommands.get()
+        return if (
+            !checkPlugin || MainPlugin.instance.prioritizeCustomCommands.get()
             || Bukkit.getPluginCommand(mainpath)?.let { it.plugin is ButtonPlugin } != false
         )
             super.handleCommand(sender, commandline) else false
@@ -221,12 +220,14 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
     }
 
     private object TabcompleteHelper {
+        // TODO: Use Paper's API (https://docs.papermc.io/paper/dev/command-api/basics/registration/)
         private val commodore: Commodore by lazy {
             val commodore = CommodoreProvider.getCommodore(MainPlugin.instance) //Register all to the Core, it's easier
             commodore.register(
                 literal<Any?>("un") // TODO: This is a test
-                    .redirect(argument<Any?, String>("unsomething", StringArgumentType.word())
-                        .suggests { _, builder -> builder.suggest("untest").buildFuture() }.build()
+                    .redirect(
+                        argument<Any?, String>("unsomething", StringArgumentType.word())
+                            .suggests { _, builder -> builder.suggest("untest").buildFuture() }.build()
                     )
             )
             commodore

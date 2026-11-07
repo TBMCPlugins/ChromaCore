@@ -108,6 +108,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
         val results = dispatcher.parse(commandline.removePrefix("/"), sender)
         if (results.reader.canRead()) {
             return if (results.context.nodes.isNotEmpty()) {
+                // Found one of our commands but something didn't match
                 for ((node, ex) in results.exceptions) {
                     sender.sendMessage("${ChatColor.RED}${ex.message}")
                     executeHelpText(results.context.build(results.reader.string))
@@ -323,19 +324,18 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
      * @return Vanilla command success level (0)
      */
     private fun executeHelpText(context: CommandContext<TP>): Int { // TODO: Add usage string automatically (and dynamically?)
-        val node = context.nodes.lastOrNull()?.node ?: error("No nodes found when executing help text for ${context.input}!")
+        val node = context.nodes.lastOrNull { it.node.isCommand() }?.node ?: error("No nodes found when executing help text for ${context.input}!")
         val helpText = node.subcommandDataNoOp()?.getHelpText(context.source) ?: error("No subcommand data found when executing help text for ${context.input}")
-        if (node.isCommand()) {
-            val subs = getSubcommands(node.coreCommandNoOp()!!)
-                .filter { it.data.hasPermission(context.source) }
-                .map { commandChar + it.data.fullPath }.sorted()
-            val messages = if (subs.isNotEmpty()) {
-                helpText + "${ChatColor.GOLD}---- Subcommands ----" + subs
-            } else {
-                helpText
-            }
-            context.source.sendMessage(messages)
+
+        val subs = getSubcommands(node.coreCommandNoOp()!!)
+            .filter { it.data.hasPermission(context.source) }
+            .map { commandChar + it.data.fullPath }.sorted()
+        val messages = if (subs.isNotEmpty()) {
+            helpText + "${ChatColor.GOLD}---- Subcommands ----" + subs
+        } else {
+            helpText
         }
+        context.source.sendMessage(messages)
         return 0
     }
 

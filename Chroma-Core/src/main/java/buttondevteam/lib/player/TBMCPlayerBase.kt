@@ -2,6 +2,7 @@ package buttondevteam.lib.player
 
 import buttondevteam.core.MainPlugin
 import buttondevteam.core.component.channel.Channel
+import buttondevteam.lib.TBMCCoreAPI
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import java.util.*
@@ -44,11 +45,13 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
     }
 
     override fun sendMessage(message: String) {
-        player?.sendMessage(message)
+        if (isConsole) Bukkit.getConsoleSender().sendMessage(message)
+        else player?.sendMessage(message) ?: TBMCCoreAPI.SendException("Couldn't deliver message to player $uniqueId!", Exception("No online player found with this ID"), MainPlugin.instance)
     }
 
     override fun sendMessage(message: Array<String>) {
-        player?.sendMessage(*message)
+        if (isConsole) Bukkit.getConsoleSender().sendMessage(*message)
+        else player?.sendMessage(*message) ?: TBMCCoreAPI.SendException("Couldn't deliver message to player $uniqueId!", Exception("No online player found with this ID"), MainPlugin.instance)
     }
 
     override val name get(): String = player?.displayName ?: playerName
