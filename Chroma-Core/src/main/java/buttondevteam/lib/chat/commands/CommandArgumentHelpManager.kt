@@ -62,21 +62,15 @@ class CommandArgumentHelpManager<TC : ICommand2<TP>, TP : Command2Sender>(comman
         }
 
         fun fail(message: String): String? {
-            TBMCCoreAPI.SendException(
-                "Error while getting command data for $method!",
-                Exception(message),
-                MainPlugin.instance
-            )
+            TBMCCoreAPI.SendException("Error while getting command data for $method!", Exception(message), MainPlugin.instance)
             return null
         }
 
         val mname = cs.getString("method") ?: return fail("Method is null")
         val params = cs.getString("params") ?: return fail("Params is null")
-        //Check only the name - the whole method is still stored for backwards compatibility and in case it may be useful
-        val i = mname.indexOf('(')
-        if (i != -1 && method.name == mname.substring(0, i)) {
+        if (method.name == mname) {
             return params
-        } else fail("Method '$method' != $mname")
+        } else fail("Method '${method.name}' != $mname")
         return null
     }
 }

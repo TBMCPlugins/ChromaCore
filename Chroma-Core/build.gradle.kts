@@ -1,9 +1,16 @@
+// Needed for the tests (because of Vault)
+configurations.all {
+    resolutionStrategy.capabilitiesResolution.withCapability("org.bukkit:bukkit") {
+        select("io.papermc.paper:paper-api:26.3.build.+")
+    }
+}
+
 plugins {
     id("java-library")
     id("xyz.jpenilla.run-paper") version "3.1.0"
     kotlin("jvm")
     id("com.gradleup.shadow") version "9.6.1"
-    id("com.google.devtools.ksp") version "2.3.10" apply false
+    id("com.google.devtools.ksp")
 }
 
 repositories {
@@ -24,13 +31,14 @@ dependencies {
     compileOnly("com.palmergames.bukkit.towny:towny:0.103.2.0")
     implementation("me.lucko:commodore:2.2")
     implementation(project(":ButtonProcessor"))
+    ksp(project(":ButtonProcessor"))
 
-    testImplementation(kotlin("test"))
-    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.3:4.119.0")
-}
-
-java {
-    toolchain.languageVersion = JavaLanguageVersion.of(25)
+    testImplementation(kotlin("test-junit5"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.3:4.118.0")
+    testImplementation("io.papermc.paper:paper-api:26.3.build.+")
+    testImplementation("com.github.MilkBowl:Vault:1.7.3")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks {
@@ -56,11 +64,19 @@ tasks {
     }
 
     processResources {
-        val props = mapOf("version" to version)
+        val props = mapOf("version" to version.toString().replace("-SNAPSHOT", ""))
         filesMatching("plugin.yml") {
             expand(props)
         }
     }
+
+    test {
+        useJUnitPlatform()
+    }
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
 }
 
 kotlin {

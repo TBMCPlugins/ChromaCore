@@ -16,7 +16,6 @@ local.properties
 .settings/
 .loadpath
 target/
-.project
 
 # External tool builders
 .externalToolBuilders/
@@ -70,14 +69,12 @@ build/
 *.tlb
 *.tli
 *.tlh
-*.tmp
 *.tmp_proj
 *.log
 *.vspscc
 *.vssscc
 .builds
 *.pidb
-*.log
 *.scc
 
 # Visual C++ cache files
@@ -196,7 +193,6 @@ $RECYCLE.BIN/
 *.egg
 *.egg-info
 dist/
-build/
 eggs/
 parts/
 var/
@@ -242,3 +238,5 @@ hs_err_pid*
 
 # Common working directory
 run
+
+.kotlin

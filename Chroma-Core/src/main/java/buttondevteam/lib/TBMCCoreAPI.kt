@@ -113,7 +113,7 @@ object TBMCCoreAPI {
         synchronized(debugMessagesToSend) { if (!event.isSent) debugMessagesToSend.add(debugMessage) }
     }
 
-    private var eventExceptionCoreHandler: EventExceptionCoreHandler? = null
+    private val eventExceptionCoreHandler by lazy { EventExceptionCoreHandler() }
 
     /**
      * Registers Bukkit events, handling the exceptions occurring in those events
@@ -123,7 +123,6 @@ object TBMCCoreAPI {
      */
     @JvmStatic
     fun RegisterEventsForExceptions(listener: Listener, plugin: Plugin) {
-        if (eventExceptionCoreHandler == null) eventExceptionCoreHandler = EventExceptionCoreHandler()
         EventExceptionHandler.registerEvents(listener, plugin, eventExceptionCoreHandler)
     }
 

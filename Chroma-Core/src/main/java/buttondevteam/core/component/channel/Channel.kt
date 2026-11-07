@@ -56,7 +56,13 @@ open class Channel
     @JvmField
     val color = component.config.getData(
         "${this.identifier}.color",
-        this.defColor, { c -> ChatColor.getByChar((c as String)[0]) ?: this.defColor }, ChatColor::getChar
+        this.defColor, { c ->
+            when (c) {
+                is String -> ChatColor.getByChar(c)
+                is Char -> ChatColor.getByChar(c)
+                else -> null
+            } ?: defColor
+        }, ChatColor::getChar
     )
 
     @JvmField

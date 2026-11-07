@@ -7,7 +7,6 @@ import org.bukkit.entity.Player
 import java.util.*
 
 @AbstractUserClass(foldername = "minecraft", prototype = TBMCPlayer::class)
-@TBMCPlayerEnforcer
 abstract class TBMCPlayerBase : ChromaGamerBase() {
     val uniqueId: UUID by lazy { UUID.fromString(fileName) }
     val player by lazy { Bukkit.getPlayer(uniqueId) }
@@ -48,13 +47,11 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
         player?.sendMessage(message)
     }
 
-    override fun sendMessage(message: Array<out String>) {
+    override fun sendMessage(message: Array<String>) {
         player?.sendMessage(*message)
     }
 
-    override fun getName(): String {
-        return player?.displayName ?: playerName
-    }
+    override val name get(): String = player?.displayName ?: playerName
 
     override fun checkChannelInGroup(group: String?): Channel.RecipientTestResult {
         return Channel.noScoreResult(

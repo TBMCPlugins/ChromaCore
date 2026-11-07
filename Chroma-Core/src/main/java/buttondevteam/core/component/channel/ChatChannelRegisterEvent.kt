@@ -1,27 +1,14 @@
-package buttondevteam.core.component.channel;
+package buttondevteam.core.component.channel
 
-import org.bukkit.event.Event;
-import org.bukkit.event.HandlerList;
+import org.bukkit.event.Event
+import org.bukkit.event.HandlerList
 
-public class ChatChannelRegisterEvent extends Event {
-	private static final HandlerList handlers = new HandlerList();
+class ChatChannelRegisterEvent(val channel: Channel) : Event() {
+    override fun getHandlers(): HandlerList {
+        return handlerList
+    }
 
-    private final Channel channel;
-
-	public ChatChannelRegisterEvent(Channel channel) {
-		this.channel = channel;
-	}
-
-	public Channel getChannel() {
-		return channel;
-	}
-
-	@Override
-	public HandlerList getHandlers() {
-		return handlers;
-	}
-
-	public static HandlerList getHandlerList() {
-		return handlers;
-	}
+    companion object {
+        val handlerList: HandlerList = HandlerList()
+    }
 }

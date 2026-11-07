@@ -15,7 +15,6 @@ import java.util.*
 import java.util.function.Function
 import java.util.function.Supplier
 
-@ChromaGamerEnforcer
 abstract class ChromaGamerBase : Command2Sender {
     val config: IHaveConfig = IHaveConfig({ save() }, null)
 

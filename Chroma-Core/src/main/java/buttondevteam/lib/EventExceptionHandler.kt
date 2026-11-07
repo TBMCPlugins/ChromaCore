@@ -1,7 +1,6 @@
 package buttondevteam.lib
 
 import com.google.common.collect.Lists
-import org.apache.commons.lang.Validate
 import org.bukkit.event.Event
 import org.bukkit.event.EventException
 import org.bukkit.event.HandlerList
@@ -54,10 +53,8 @@ internal abstract class EventExceptionHandler {
          * @param plugin - the current plugin.
          * @param handler - exception handler.
          */
-        fun registerEvents(listener: Listener?, plugin: Plugin?, handler: EventExceptionHandler?) {
-            Validate.notNull(plugin, "Plugin cannot be NULL.")
-
-            registerEvents(plugin!!.server.pluginManager, listener, plugin, handler)
+        fun registerEvents(listener: Listener, plugin: Plugin, handler: EventExceptionHandler) {
+            registerEvents(plugin.server.pluginManager, listener, plugin, handler)
         }
 
         /**
@@ -67,19 +64,14 @@ internal abstract class EventExceptionHandler {
          * @param plugin - the current plugin.
          * @param handler - exception handler.
          */
-        fun registerEvents(manager: PluginManager?, listener: Listener?, plugin: Plugin?, handler: EventExceptionHandler?) {
-            Validate.notNull(manager, "Manager cannot be NULL.")
-            Validate.notNull(listener, "Listener cannot be NULL.")
-            Validate.notNull(plugin, "Plugin cannot be NULL.")
-            Validate.notNull(handler, "Handler cannot be NULL.")
-
-            if (!plugin!!.isEnabled) {
+        fun registerEvents(manager: PluginManager, listener: Listener, plugin: Plugin, handler: EventExceptionHandler) {
+            if (!plugin.isEnabled) {
                 throw IllegalPluginAccessException("Plugin attempted to register $listener while not enabled")
             }
 
 
             // Create normal listeners
-            for (entry in plugin.pluginLoader.createRegisteredListeners(listener!!, plugin).entries) {
+            for (entry in plugin.pluginLoader.createRegisteredListeners(listener, plugin).entries) {
                 // Wrap these listeners in our exception handler
 
                 getHandlerList(entry.key)!!.registerAll(wrapAll(entry.value, handler!!))

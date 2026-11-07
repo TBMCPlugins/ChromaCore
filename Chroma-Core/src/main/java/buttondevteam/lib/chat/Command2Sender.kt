@@ -1,9 +1,10 @@
-package buttondevteam.lib.chat;
+package buttondevteam.lib.chat
 
-public interface Command2Sender { //We don't need the 'extras' of CommandSender on Discord
-	void sendMessage(String message);
+//We don't need the 'extras' of CommandSender on Discord
+interface Command2Sender {
+    fun sendMessage(message: String)
 
-	void sendMessage(String[] message);
+    fun sendMessage(message: Array<String>)
 
-	String getName();
+    val name: String
 }

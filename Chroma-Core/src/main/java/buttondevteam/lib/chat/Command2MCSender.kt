@@ -14,7 +14,5 @@ open class Command2MCSender(val sender: ChromaGamerBase, val channel: Channel, v
         sender.sendMessage(message)
     }
 
-    override fun getName(): String {
-        return sender.name
-    }
+    override val name: String get() = sender.name
 }

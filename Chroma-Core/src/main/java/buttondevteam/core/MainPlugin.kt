@@ -32,7 +32,7 @@ import org.bukkit.entity.Player
 import java.util.*
 import java.util.function.Supplier
 
-class MainPlugin : ButtonPlugin() {
+open class MainPlugin : ButtonPlugin() {
     private var economy: Economy? = null
 
     /**

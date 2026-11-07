@@ -121,7 +121,7 @@ abstract class Command2<TC : ICommand2<TP>, TP : Command2Sender>(
             try {
                 dispatcher.execute(results)
             } catch (e: CommandSyntaxException) {
-                sender.sendMessage(e.message)
+                sender.sendMessage(e.message ?: "Invalid command syntax")
             } catch (e: Exception) {
                 ChromaUtils.throwWhenTested(e, "Command execution failed for sender ${sender.name}(${sender.javaClass.canonicalName}) and message $commandline")
             }

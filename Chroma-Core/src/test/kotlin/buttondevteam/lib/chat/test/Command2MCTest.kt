@@ -1,6 +1,5 @@
 package buttondevteam.lib.chat.test
 
-import be.seeseemelk.mockbukkit.MockBukkit
 import buttondevteam.core.MainPlugin
 import buttondevteam.lib.ChromaUtils
 import buttondevteam.lib.architecture.ButtonPlugin
@@ -15,6 +14,7 @@ import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
+import org.mockbukkit.mockbukkit.MockBukkit
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -29,8 +29,8 @@ class Command2MCTest {
             } catch (e: IllegalStateException) {
                 throw RuntimeException("Failed to init tests! Something in here fails to initialize. Check the first test case.", e)
             }
-            MockBukkit.load(MainPlugin::class.java)
             ChromaUtils.isTest = true
+            MockBukkit.load(MainPlugin::class.java)
             initialized = true
         }
     }
@@ -131,7 +131,7 @@ class Command2MCTest {
     }
 
     private fun createPlayer(): TestCommand2MCSender {
-        val player = MockBukkit.getMock().addPlayer()
+        val player = MockBukkit.getMock()!!.addPlayer()
         val user = TBMCPlayerBase.getPlayer(player.uniqueId, TBMCPlayer::class.java)
         return TestCommand2MCSender(user)
     }
@@ -144,7 +144,7 @@ class Command2MCTest {
         sender.assertCommand("/test plugin Chroma-Core", TestCommand, "Chroma-Core")
         sender.assertCrashingCommand("/test playerfail TestPlayer") { it.cause?.message == "No suitable converter found for class buttondevteam.lib.player.TBMCPlayer param1" }
         sender.assertCommandUserError("/test plugin asd", "§cError: §cNo Chroma plugin found by that name.")
-        sender.assertCrashingCommand("/test errortest") { it.cause?.cause?.message === "Hmm" }
+        sender.assertCrashingCommand("/test errortest") { it.cause?.cause?.message == "Hmm" }
         sender.assertCommandReceiveMessage(
             "/test",
             """
