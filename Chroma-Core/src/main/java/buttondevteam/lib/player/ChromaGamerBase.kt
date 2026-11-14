@@ -157,8 +157,8 @@ abstract class ChromaGamerBase : Command2Sender {
     }
 
     //-----------------------------------------------------------------
-    val channel
-        get() = config.getData("channel", Channel.globalChat,
+    var channel: Channel by config.getData(
+        "channel", Channel.globalChat,
             { id ->
                 getChannels().filter { it.identifier.equals(id as String, ignoreCase = true) }
                     .findAny().orElseThrow { RuntimeException("Channel $id not found!") }

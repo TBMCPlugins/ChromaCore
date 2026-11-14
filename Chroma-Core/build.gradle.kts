@@ -11,6 +11,7 @@ plugins {
     kotlin("jvm")
     id("com.gradleup.shadow") version "9.6.1"
     id("com.google.devtools.ksp")
+    `maven-publish`
 }
 
 repositories {

@@ -197,7 +197,7 @@ class Command2MC : Command2<ICommand2MC, Command2MCSender>('/', true), Listener 
         val user = ChromaGamerBase.getFromSender(sender) // TODO: Senders should only be used for TBMCPlayerBase classes.
         ///trim(): remove space if there are no args
         handleCommand(
-            Command2MCSender(user as TBMCPlayerBase, user.channel.get(), user),
+            Command2MCSender(user as TBMCPlayerBase, user.channel, user),
             ("/${command.name} ${args.joinToString(" ")}").trim { it <= ' ' }, false
         )
         return true

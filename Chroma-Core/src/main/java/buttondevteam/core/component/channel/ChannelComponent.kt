@@ -34,19 +34,19 @@ class ChannelComponent : Component<JavaPlugin>() {
         override val commandPath: String
             get() = channel.identifier
         override val commandPaths: Array<String>
-            get() = channel.extraIdentifiers.get().toTypedArray()
+            get() = channel.extraIdentifiers.toTypedArray()
 
         @Subcommand
         fun def(senderMC: Command2MCSender, @OptionalArg @TextArg message: String?) {
             val user = senderMC.sender
             if (message == null) {
-                val oldch = user.channel.get()
+                val oldch = user.channel
                 if (oldch is ChatRoom) oldch.leaveRoom(user)
-                if (oldch == channel) user.channel.set(Channel.globalChat) else {
-                    user.channel.set(channel)
+                if (oldch == channel) user.channel = Channel.globalChat else {
+                    user.channel = channel
                     if (channel is ChatRoom) channel.joinRoom(user)
                 }
-                user.sendMessage("${ChatColor.GOLD}You are now talking in: ${ChatColor.AQUA}" + user.channel.get().displayName.get())
+                user.sendMessage("${ChatColor.GOLD}You are now talking in: ${ChatColor.AQUA}" + user.channel.displayName)
             } else TBMCChatAPI.sendChatMessage(
                 ChatMessage.builder(user, message).fromCommand(true)
                     .permCheck(senderMC.permCheck).build(), channel

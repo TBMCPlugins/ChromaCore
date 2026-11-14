@@ -12,6 +12,7 @@ import buttondevteam.lib.player.ChromaGamerBase
 import buttondevteam.lib.player.TBMCPlayer
 import buttondevteam.lib.player.TBMCPlayerBase
 import buttondevteam.lib.player.TBMCPlayerBase.Companion.asTBMC
+import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.event.Cancellable
@@ -49,7 +50,7 @@ class PlayerListener(val plugin: MainPlugin) : Listener {
         if (event.isHandled) return
         if (event.exceptions.any { "Minecraft".equals(it, ignoreCase = true) }) return
         Bukkit.getOnlinePlayers().stream().filter { event.shouldSendTo(it.asTBMC()) }
-            .forEach { it.sendMessage(event.channel.displayName.get().substring(0, 2) + event.message) }
+            .forEach { it.sendMessage(event.channel.displayName.substring(0, 2) + event.message) }
         // TODO: Replace the substring call with a proper color code getter.
     }
 
@@ -67,7 +68,7 @@ class PlayerListener(val plugin: MainPlugin) : Listener {
     private fun handlePreprocess(sender: CommandSender, message: String, event: Cancellable) {
         if (event.isCancelled) return
         val cg = ChromaGamerBase.getFromSender(sender)
-        val ev = TBMCCommandPreprocessEvent(cg, cg.channel.get(), message, cg)
+        val ev = TBMCCommandPreprocessEvent(cg, cg.channel, message, cg)
         Bukkit.getPluginManager().callEvent(ev)
         if (ev.isCancelled) event.isCancelled = true //Cancel the original event
     }
@@ -102,12 +103,10 @@ class PlayerListener(val plugin: MainPlugin) : Listener {
         if (!plugin.isChatHandlerEnabled) return
         if (event.origin == "Minecraft") return  //Let other plugins handle MC messages
         val channel = event.channel
-        val msg = plugin.chatFormat.get()
-            .replace("{channel}", channel.displayName.get())
-            .replace("{origin}", event.origin.substring(0, 1))
-            .replace("{name}", event.user.name)
-            .replace("{message}", String.format("§%x%s", channel.color.get().ordinal, event.message))
-        for (player in Bukkit.getOnlinePlayers()) if (event.shouldSendTo(player.asTBMC())) player.sendMessage(msg)
-        Bukkit.getConsoleSender().sendMessage(msg)
+        // TODO: The chatFormat config doesn't work well with text components
+        val message = Component.text("[${event.origin}|${channel.displayName} <${event.user.name}> ")
+            .append(Component.text(event.message, channel.color))
+        for (player in Bukkit.getOnlinePlayers()) if (event.shouldSendTo(player.asTBMC())) player.sendMessage(message)
+        Bukkit.getConsoleSender().sendMessage(message)
     }
 }

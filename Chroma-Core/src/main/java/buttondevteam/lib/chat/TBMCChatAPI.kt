@@ -27,11 +27,11 @@ object TBMCChatAPI {
      */
     @JvmOverloads
     @JvmStatic
-    fun sendChatMessage(cm: ChatMessage, channel: Channel = cm.user.channel.get()): Boolean {
+    fun sendChatMessage(cm: ChatMessage, channel: Channel = cm.user.channel): Boolean {
         if (!channelList.contains(channel))
-            throw RuntimeException("Channel ${channel.displayName.get()} not registered!")
-        if (!channel.isEnabled.get()) {
-            cm.user.sendMessage("${ChatColor.RED}The channel '${channel.displayName.get()}' is disabled!")
+            throw RuntimeException("Channel ${channel.displayName} not registered!")
+        if (!channel.isEnabled) {
+            cm.user.sendMessage("${ChatColor.RED}The channel '${channel.displayName}' is disabled!")
             return true //Cancel sending if channel is disabled
         }
         val task = Supplier {
@@ -66,10 +66,10 @@ object TBMCChatAPI {
         target: BroadcastTarget?,
         vararg exceptions: String
     ): Boolean {
-        if (!channelList.contains(channel)) throw RuntimeException("Channel " + channel.displayName.get() + " not registered!")
-        if (!channel.isEnabled.get()) return true //Cancel sending
+        if (!channelList.contains(channel)) throw RuntimeException("Channel " + channel.displayName + " not registered!")
+        if (!channel.isEnabled) return true //Cancel sending
         if (!exceptions.contains("Minecraft")) Bukkit.getConsoleSender()
-            .sendMessage("[" + channel.displayName.get() + "] " + message)
+            .sendMessage("[" + channel.displayName + "] " + message)
         val event = TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID!!, exceptions, target!!)
         return callEventAsync(event)
     }

@@ -3,9 +3,9 @@ package buttondevteam.core.component.channel
 import buttondevteam.lib.TBMCSystemChatEvent
 import buttondevteam.lib.chat.TBMCChatAPI
 import buttondevteam.lib.player.ChromaGamerBase
-import org.bukkit.ChatColor
+import net.kyori.adventure.text.format.TextColor
 
-class ChatRoom(displayname: String, color: ChatColor, command: String) : Channel(
+class ChatRoom(displayname: String, color: TextColor, command: String) : Channel(
     displayname, color, command, null // TODO: Custom filter for rooms using abstract method
 ) {
     private val usersInRoom: MutableList<ChromaGamerBase> = ArrayList()

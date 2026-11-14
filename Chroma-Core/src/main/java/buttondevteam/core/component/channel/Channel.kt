@@ -3,8 +3,8 @@ package buttondevteam.core.component.channel
 import buttondevteam.core.ComponentManager.get
 import buttondevteam.lib.architecture.IHaveConfig
 import buttondevteam.lib.player.ChromaGamerBase
+import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Bukkit
-import org.bukkit.ChatColor
 import java.util.*
 import java.util.function.Function
 import java.util.function.Predicate
@@ -13,14 +13,7 @@ import java.util.stream.Stream
 /**
  * Represents a chat channel. May only be instantiated after the channel component is registered.
  */
-open class Channel
-/**
- * Creates a channel.
- *
- * @param filterAndErrorMSG Checks all senders against the criteria provided here and sends the message if the index matches the sender's - if no score at all, displays the error.
- *
- * May be null to send to everyone.
- */(
+open class Channel(
     /**
      * The name that should appear at the start of the message. **A chat color is expected at the beginning (§9).**
      */
@@ -28,7 +21,7 @@ open class Channel
     /**
      * The default color of the messages sent in the channel
      */
-    private val defColor: ChatColor,
+    private val defColor: TextColor,
     /**
      * The channel identifier. It's the same as the command to be used for the channel *without / *. For example "mod".
      * It's also used for scoreboard objective names.
@@ -42,31 +35,29 @@ open class Channel
      */
     private val filterAndErrorMSG: Function<ChromaGamerBase, RecipientTestResult>?
 ) {
-    private val config: IHaveConfig? = null // TODO: Use this
+    private val config by lazy {
+        val config = component.config.config ?: throw RuntimeException("The configuration for the channel component could not be found!")
+        IHaveConfig(component.plugin::saveConfig, config.getConfigurationSection(identifier))
+    }
 
-    @JvmField
-    val isEnabled = component.config.getData("${this.identifier}.enabled", true)
+    val isEnabled by config.getData("enabled", true)
 
     /**
      * Must start with a color code
      */
-    @JvmField
-    val displayName = component.config.getData("${this.identifier}.displayName", this.defDisplayName)
+    val displayName by config.getData("displayName", this.defDisplayName)
 
-    @JvmField
-    val color = component.config.getData(
-        "${this.identifier}.color",
-        this.defColor, { c ->
+    val color by config.getData(
+        "color",
+        this.defColor, { c: Any ->
             when (c) {
-                is String -> ChatColor.getByChar(c)
-                is Char -> ChatColor.getByChar(c)
+                is String -> TextColor.fromHexString(c)
                 else -> null
             } ?: defColor
-        }, ChatColor::getChar
+        }, TextColor::asHexString
     )
 
-    @JvmField
-    val extraIdentifiers = component.config.getListData("${this.identifier}.IDs", listOf<String>())
+    val extraIdentifiers by config.getListData("IDs", listOf<String>())
 
     val isGlobal: Boolean
         get() = filterAndErrorMSG == null
@@ -170,7 +161,7 @@ open class Channel
          */
         @JvmStatic
         fun getChannels(): Stream<Channel> {
-            return channels.stream().filter { ch: Channel -> ch.isEnabled.get() }
+            return channels.stream().filter { ch: Channel -> ch.isEnabled }
         }
 
         @JvmStatic
