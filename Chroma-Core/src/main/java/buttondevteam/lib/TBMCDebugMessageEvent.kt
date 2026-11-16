@@ -10,7 +10,7 @@ class TBMCDebugMessageEvent(
      * 
      * @return The message
      */
-    val debugMessage: String?
+    val debugMessage: String
 ) : Event(!Bukkit.isPrimaryThread()) {
     /**
      * Gets if this event was handled

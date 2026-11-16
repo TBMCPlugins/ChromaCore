@@ -13,7 +13,7 @@ class ConfigProcessor(val codeGenerator: CodeGenerator) {
         if (targetcl.modifiers.contains(Modifier.ABSTRACT)) return
         val path = if (hasConfig.global) "global" else "components." + targetcl.simpleName.getShortName()
         println(path)
-        for (e in targetcl.getAllProperties()) {
+        for (e in targetcl.getAllProperties()) { // TODO: Generate the actual config file
             val propertyType = e.type.resolve()
             if (!propertyType.declaration.simpleName.getShortName().contains("ConfigData")) continue
 
