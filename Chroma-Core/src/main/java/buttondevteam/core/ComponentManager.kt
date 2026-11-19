@@ -75,7 +75,7 @@ object ComponentManager {
      */
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
-    fun <T : Component<*>> get(cl: Class<T>): T? {
+    operator fun <T : Component<*>> get(cl: Class<T>): T? { // TODO: Swap with getIfEnabled() so it can be used as an operator in most cases
         return components[cl] as T?
     }
 }

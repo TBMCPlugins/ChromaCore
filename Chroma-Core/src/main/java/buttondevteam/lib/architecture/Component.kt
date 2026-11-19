@@ -141,13 +141,13 @@ abstract class Component<TP : JavaPlugin> {
          * @return The currently registered components
          */
         @JvmStatic
-        val components: Map<Class<out Component<*>>, Component<out JavaPlugin>>
+        val components: Map<Class<out Component<out JavaPlugin>>, Component<out JavaPlugin>>
             get() {
                 return Collections.unmodifiableMap(_components)
             }
 
         /**
-         * Registers a component checking it's dependencies and calling [.register].
+         * Registers a component checking its dependencies and calling [.register].
          *
          * Make sure to register the dependencies first.
          *

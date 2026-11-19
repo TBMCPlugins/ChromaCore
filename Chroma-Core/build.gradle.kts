@@ -45,11 +45,8 @@ dependencies {
 tasks {
     shadowJar {
         dependencies {
-            exclude(dependency("com.mojang:brigadier"))
+            include(project(":ButtonProcessor"))
         }
-
-        /* vvv Replace with the package of your plugin vvv */
-        relocate("me.lucko.commodore", "buttondevteam.core.commodore")
     }
 
     runServer {
