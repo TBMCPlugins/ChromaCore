@@ -1,4 +1,4 @@
-package buttondevteam.buttonproc
+package buttondevteam.annotations
 
 import java.lang.annotation.Inherited
 

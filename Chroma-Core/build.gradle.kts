@@ -31,7 +31,11 @@ dependencies {
     compileOnly("org.mvplugins.multiverse.core:multiverse-core:5.8.2")
     compileOnly("com.palmergames.bukkit.towny:towny:0.103.2.0")
     implementation("me.lucko:commodore:2.2")
-    implementation(project(":ButtonProcessor"))
+    implementation(project(":Annotations"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.11.0")
+    implementation("com.github.shynixn.mccoroutine:mccoroutine-bukkit-api:2.23.0")
+    implementation("com.github.shynixn.mccoroutine:mccoroutine-bukkit-core:2.23.0")
     ksp(project(":ButtonProcessor"))
 
     testImplementation(kotlin("test-junit5"))
@@ -42,11 +46,11 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+project.tasks.findByName("jar")?.enabled = false
+
 tasks {
     shadowJar {
-        dependencies {
-            include(project(":ButtonProcessor"))
-        }
+        archiveClassifier.set("")
     }
 
     runServer {
@@ -63,7 +67,7 @@ tasks {
 
     processResources {
         val props = mapOf("version" to version.toString().replace("-SNAPSHOT", ""))
-        filesMatching("plugin.yml") {
+        filesMatching("paper-plugin.yml") {
             expand(props)
         }
     }

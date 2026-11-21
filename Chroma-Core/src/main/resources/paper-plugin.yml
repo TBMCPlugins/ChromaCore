@@ -1,0 +1,28 @@
+name: Chroma-Core
+version: '${version}'
+main: buttondevteam.core.MainPlugin
+loader: buttondevteam.core.CorePluginLoader
+api-version: '26.3'
+author: NorbiPeti
+dependencies:
+  server:
+    Vault:
+      load: BEFORE
+      required: true
+      join-classpath: true
+    Towny:
+      load: BEFORE
+      required: false
+      join-classpath: true
+    Votifier:
+      load: BEFORE
+      required: false
+      join-classpath: true
+    Multiverse-Core:
+      load: BEFORE
+      required: false
+      join-classpath: true
+    Essentials:
+      load: BEFORE
+      required: false
+      join-classpath: true

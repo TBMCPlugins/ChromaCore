@@ -12,6 +12,7 @@ repositories {
 dependencies {
     implementation("io.papermc.paper:paper-api:26.3.build.+")
     implementation("com.google.devtools.ksp:symbol-processing-api:2.3.6")
+    implementation(project(":Annotations"))
 
     testImplementation(kotlin("test"))
 }

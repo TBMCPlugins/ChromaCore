@@ -1,6 +1,6 @@
 package buttondevteam.lib.architecture
 
-import buttondevteam.buttonproc.HasConfig
+import buttondevteam.annotations.HasConfig
 import buttondevteam.core.ComponentManager
 import buttondevteam.lib.TBMCCoreAPI
 import buttondevteam.lib.chat.Command2MC

@@ -1,5 +1,6 @@
 package buttondevteam.buttonproc
 
+import buttondevteam.annotations.HasConfig
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.CodeGenerator

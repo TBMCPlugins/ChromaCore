@@ -8,4 +8,4 @@ plugins {
 }
 rootProject.name = "ChromaCore"
 
-include("Chroma-Core", "ButtonProcessor")
+include("Annotations", "ButtonProcessor", "Chroma-Core")

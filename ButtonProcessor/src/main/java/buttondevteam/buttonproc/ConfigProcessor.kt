@@ -1,5 +1,6 @@
 package buttondevteam.buttonproc
 
+import buttondevteam.annotations.HasConfig
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.symbol.KSClassDeclaration
