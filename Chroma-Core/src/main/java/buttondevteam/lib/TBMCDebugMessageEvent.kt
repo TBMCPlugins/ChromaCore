@@ -32,6 +32,7 @@ class TBMCDebugMessageEvent(
     }
 
     companion object {
+        @JvmStatic
         val handlerList: HandlerList = HandlerList()
     }
 }

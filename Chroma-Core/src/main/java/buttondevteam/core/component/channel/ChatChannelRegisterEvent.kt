@@ -9,6 +9,7 @@ class ChatChannelRegisterEvent(val channel: Channel) : Event() {
     }
 
     companion object {
+        @JvmStatic
         val handlerList: HandlerList = HandlerList()
     }
 }

@@ -11,6 +11,7 @@ import buttondevteam.lib.TBMCChatPreprocessEvent
 import buttondevteam.lib.TBMCSystemChatEvent
 import buttondevteam.lib.TBMCSystemChatEvent.BroadcastTarget
 import buttondevteam.lib.player.ChromaGamerBase
+import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import java.util.function.Supplier
@@ -69,8 +70,8 @@ object TBMCChatAPI {
         if (!channelList.contains(channel)) throw RuntimeException("Channel " + channel.displayName + " not registered!")
         if (!channel.isEnabled) return true //Cancel sending
         if (!exceptions.contains("Minecraft")) Bukkit.getConsoleSender()
-            .sendMessage("[" + channel.displayName + "] " + message)
-        val event = TBMCSystemChatEvent(channel, message, rtr.score, rtr.groupID!!, exceptions, target!!)
+            .sendMessage("[${channel.displayName}] $message")
+        val event = TBMCSystemChatEvent(channel, Component.text(message), rtr.score, rtr.groupID!!, exceptions, target!!)
         return callEventAsync(event)
     }
 

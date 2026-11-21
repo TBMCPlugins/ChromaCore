@@ -2,12 +2,13 @@ package buttondevteam.lib
 
 import buttondevteam.core.component.channel.Channel
 import buttondevteam.lib.player.ChromaGamerBase
+import net.kyori.adventure.text.Component
 import org.bukkit.event.Cancellable
 import org.bukkit.event.Event
 
 abstract class TBMCChatEventBase(
     val channel: Channel,
-    open val message: String,
+    open val message: Component,
     /**
      * The sender's score.
      */

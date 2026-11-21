@@ -5,6 +5,7 @@ import buttondevteam.lib.TBMCSystemChatEvent.BroadcastTarget
 import buttondevteam.lib.architecture.Component
 import buttondevteam.lib.chat.*
 import buttondevteam.lib.chat.Command2.*
+import net.kyori.adventure.text.Component.text
 import org.bukkit.ChatColor
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -48,7 +49,7 @@ class ChannelComponent : Component<JavaPlugin>() {
                 }
                 user.sendMessage("${ChatColor.GOLD}You are now talking in: ${ChatColor.AQUA}" + user.channel.displayName)
             } else TBMCChatAPI.sendChatMessage(
-                ChatMessage.builder(user, message).fromCommand(true)
+                ChatMessage.builder(user, text(message)).fromCommand(true)
                     .permCheck(senderMC.permCheck).build(), channel
             )
         }

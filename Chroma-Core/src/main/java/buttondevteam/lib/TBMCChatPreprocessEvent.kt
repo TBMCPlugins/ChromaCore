@@ -2,6 +2,7 @@ package buttondevteam.lib
 
 import buttondevteam.core.component.channel.Channel
 import buttondevteam.lib.chat.Command2Sender
+import net.kyori.adventure.text.Component
 import org.bukkit.event.Cancellable
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
@@ -12,7 +13,7 @@ import org.bukkit.event.HandlerList
  *
  * @author NorbiPeti
  */
-class TBMCChatPreprocessEvent(val sender: Command2Sender, val channel: Channel, var message: String) : Event(true),
+class TBMCChatPreprocessEvent(val sender: Command2Sender, val channel: Channel, var message: Component) : Event(true),
     Cancellable {
     private var cancelled = false
     override fun getHandlers(): HandlerList {

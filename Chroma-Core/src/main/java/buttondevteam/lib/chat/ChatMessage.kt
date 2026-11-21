@@ -1,6 +1,7 @@
 package buttondevteam.lib.chat
 
 import buttondevteam.lib.player.ChromaGamerBase
+import net.kyori.adventure.text.Component
 import java.util.*
 
 class ChatMessage internal constructor(
@@ -11,7 +12,7 @@ class ChatMessage internal constructor(
     /**
      * The message to send as the user.
      */
-    var message: String,
+    var message: Component,
     /**
      * Indicates whether the message comes from running a command (like /tableflip). Implemented to be used from Discord.
      */
@@ -30,7 +31,7 @@ class ChatMessage internal constructor(
 
     class ChatMessageBuilder internal constructor(
         private var user: ChromaGamerBase,
-        private var message: String,
+        private var message: Component,
         private var origin: String
     ) {
         private var fromCommand = false
@@ -62,7 +63,7 @@ class ChatMessage internal constructor(
 
     companion object {
         @JvmStatic
-        fun builder(user: ChromaGamerBase, message: String): ChatMessageBuilder {
+        fun builder(user: ChromaGamerBase, message: Component): ChatMessageBuilder {
             return ChatMessageBuilder(
                 user, message,
                 user.folder.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }

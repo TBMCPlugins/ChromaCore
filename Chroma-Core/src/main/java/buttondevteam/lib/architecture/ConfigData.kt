@@ -75,7 +75,7 @@ class ConfigData<T> internal constructor(
     }
 
     override fun set(value: T) {
-        if (readOnly) return  //Safety for Discord channel/role data
+        if (readOnly) return
         val `val` = setter.apply(value)
         setInternal(`val`)
         this.value = value

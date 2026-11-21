@@ -44,6 +44,7 @@ class TBMCPlayerGetInfoEvent internal constructor(
     }
 
     companion object {
+        @JvmStatic
         val handlerList: HandlerList = HandlerList()
     }
 }

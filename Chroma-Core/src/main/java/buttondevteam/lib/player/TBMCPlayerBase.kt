@@ -89,7 +89,6 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
          * @param name The player's name
          * @return The [TBMCPlayer] object for the player
          */
-        @Suppress("deprecation")
         @JvmStatic
         fun <T : TBMCPlayerBase> getFromName(name: String, cl: Class<T>): T {
             val p = Bukkit.getOfflinePlayer(name)
@@ -97,7 +96,9 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
         }
 
         fun <T : TBMCPlayerBase> getConsole(cl: Class<T>): T {
-            return getPlayer(UUID(0, 0), cl)
+            val player = getPlayer(UUID(0, 0), cl)
+            if (player.playerName.isEmpty()) player.playerName = Bukkit.getConsoleSender().name
+            return player
         }
 
         fun getConsole(): TBMCPlayerBase {

@@ -1,6 +1,7 @@
 package buttondevteam.lib
 
 import buttondevteam.core.component.channel.Channel
+import net.kyori.adventure.text.Component
 import org.bukkit.event.HandlerList
 import java.util.*
 import java.util.stream.Stream
@@ -9,10 +10,10 @@ import java.util.stream.Stream
  * Make sure to only send the message to users who [.shouldSendTo] returns true.
  *
  * @author NorbiPeti
- */ // TODO: Rich message
+ */
 class TBMCSystemChatEvent(
     channel: Channel,
-    message: String,
+    message: Component,
     score: Int,
     groupid: String,
     val exceptions: Array<out String>,

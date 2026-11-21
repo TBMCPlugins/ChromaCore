@@ -10,6 +10,7 @@ class TBMCYEEHAWEvent(val sender: CommandSender) : Event() {
     }
 
     companion object {
+        @JvmStatic
         val handlerList: HandlerList = HandlerList()
     }
 }
