@@ -2,6 +2,7 @@ package buttondevteam.lib
 
 import buttondevteam.core.MainPlugin
 import buttondevteam.lib.test.TestException
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -110,6 +111,10 @@ object ChromaUtils {
             // Otherwise we don't run the code directly, so we need to handle this here
             TBMCCoreAPI.SendException(message, exception, MainPlugin.instance)
         }
+    }
+
+    fun net.kyori.adventure.text.Component.asString(): String {
+        return PlainTextComponentSerializer.plainText().serialize(this)
     }
 
     /**
