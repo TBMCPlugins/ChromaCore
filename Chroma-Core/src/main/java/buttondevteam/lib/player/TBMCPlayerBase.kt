@@ -59,7 +59,7 @@ abstract class TBMCPlayerBase : ChromaGamerBase() {
     override fun checkChannelInGroup(group: String?): Channel.RecipientTestResult {
         return Channel.noScoreResult(
             { s ->
-                s is TBMCPlayerBase && (s.offlinePlayer.isOp || s.player != null && group?.let { pg ->
+                s is TBMCPlayerBase && (s.isConsole || s.offlinePlayer.isOp || s.player != null && group?.let { pg ->
                     MainPlugin.permission.playerInGroup(s.player, pg)
                 } ?: false)
             },
